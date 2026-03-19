@@ -202,7 +202,7 @@ class PrefsManager(context: Context) {
                     // 🔥 3️⃣ IMMEDIATELY GET FROM LOCAL (VERIFY)
                     val savedData = get(key, clazz)
 
-                    Log.d("CACHE", "After Save → Fetched from local: ${Gson().toJson(savedData)}")
+                    Log.d("CACHE", "After Save → Fetched from local: ${apiResult}")
 
                     return@withContext savedData
                 }
