@@ -10,73 +10,42 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class BaseResponse<T>(
+
+data class PatientResponse(
     val status: Int,
     val message: String,
-    val responseValue: T
+    val responseValue: List<Patient>
 )
-// Data class for patient (include all fields from your JSON)
+
 data class Patient(
-    val pid: String,
-     @SerializedName("empName")
-     val patientName: String,
-    val registrationDate: String,
-     val ageUnitId: String,
-     val categoryId: String?,
-     val createdDate: String,
-     val educationalQualificationId: String?,
-     val ethinicityId: String?,
-    val gender: String,
-     val guardianAddress: String,
-    val guardianMobileNo: String,
-    val guardianName: String,
-    val guardianRelationId: String?,
-    val height: String,
-     val idNumber: String,
-    val idTypeId: String,
-    val imageURL: String,
-    val languageId: String,
-    val maritalStatusId: String,
-     val occupationId: String?,
-    val raceTypeId: String?,
-    val refferedFrom: String?,
-    val sexualOrientation: String,
-     val status: String,
-//    @SerializedName("empId")
-    val uhID: String,
-    val userId: String,
-    val weight: String,
-     val departmentId: String,
-    val doctorID: String,
-    val patientGender: String,
-    val departmentName: String,
-     val isCashLess: Boolean,
-    val insuranceCompanyId: Int,
-    val policyOrCardNumber: String,
-    val profileUrl: String,
-    var isHoldToSpeak: Int = 0,
-    val id: Int,
-    val empId: String,
-    val mobileNo: String,
-    val genderId: Int,
-    val age: String,
-    val ageType: String,
-    val address: String,
+    val pid: Int,
+    val uhId: String,
+    val firstName: String,
+    val lastName: String?,
     val dob: String,
-    val joiningDate: String,
+    val genderId: Int,
     val countryCallingCode: String,
+    val mobileNo: String,
+    val emailAddress: String,
+    val age: String,
+    val guardianRelationId: Int,
+    val guardianName: String,
     val countryId: Int,
     val stateId: Int,
-    val zip: String,
     val cityId: Int,
-    val emailID: String,
+    val address: String,
+    val imageUrl: String,
     val bloodGroupId: Int,
+    val zip: String,
+    val isActive: Boolean,
     val clientId: Int,
-    val isFirstLoginCompleted: Int,
-
-
-
-    val employeegoalsDetails: String
+    val departmentName: String?,
+    val cityName: String,
+    val stateName: String,
+    val countryName: String,
+    val genderName: String,
+    val guardianRelationName: String?,
+    val bloodGroupName: String?
 )
 data class EmployeeGoal(
     val pid: Int,
@@ -173,17 +142,13 @@ class PrefsManager(context: Context) {
     }
 
     // Optional: Direct property access
-    val currentPatientName: String?
-        get() = getPatient()?.patientName
-
-    val currentPatientUHID: String?
-        get() = getPatient()?.uhID
 
 
 
     suspend fun <T> getData(
         key: String,
         clazz: Class<T>,
+        shouldSave: Boolean = true, // 🔥 NEW FLAG
         apiCall: suspend () -> T?
     ): T? {
         return withContext(Dispatchers.IO) {
@@ -192,19 +157,18 @@ class PrefsManager(context: Context) {
                 // 🔥 1️⃣ API CALL
                 val apiResult = apiCall()
 
-                Log.d("CACHE", "Saved to local")
                 if (apiResult != null) {
 
-                    // 🔥 2️⃣ SAVE DATA
-                    save(key, apiResult)
-                    Log.d("CACHE", "Saved to local")
+                    // 🔥 2️⃣ SAVE ONLY IF ALLOWED
+                    if (shouldSave) {
+                        save(key, apiResult)
+                        Log.d("CACHE", "Saved to local")
+                    } else {
+                        Log.d("CACHE", "Save skipped (shouldSave = false)")
+                    }
 
-                    // 🔥 3️⃣ IMMEDIATELY GET FROM LOCAL (VERIFY)
-                    val savedData = get(key, clazz)
-
-                    Log.d("CACHE", "After Save → Fetched from local: ${apiResult}")
-
-                    return@withContext savedData
+                    // 🔥 3️⃣ RETURN DIRECT RESULT (no need to re-fetch)
+                    return@withContext apiResult
                 }
 
             } catch (e: Exception) {
@@ -215,7 +179,7 @@ class PrefsManager(context: Context) {
             val localData = get(key, clazz)
 
             if (localData != null) {
-                Log.d("CACHE", "Fallback → Fetched from local: ${Gson().toJson(localData)}")
+                Log.d("CACHE", "Fetched from local: ${Gson().toJson(localData)}")
             } else {
                 Log.d("CACHE", "No local data found")
             }

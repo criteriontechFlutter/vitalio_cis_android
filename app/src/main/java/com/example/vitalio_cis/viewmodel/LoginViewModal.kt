@@ -17,8 +17,10 @@ import com.critetiontech.ctvitalio.networking.RetrofitInstance
 import com.critetiontech.ctvitalio.ui.components.MyDialog
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.ctvitalio.utils.ErrorUtils.parseErrorMessage
-import com.example.vitalio_cis.utils.BaseResponse
-import com.example.vitalio_cis.utils.Patient
+import com.example.vitalio_cis.NavigationManager
+import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.ui.screens.OtpScreen
+ import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -160,8 +162,9 @@ class LoginViewModel @Inject constructor() : ViewModel() {
                 )
 
                 val result: String? = prefsCache.getData(
-                    key = "otp_cache",
-                    clazz = String::class.java
+                    key =  ApiEndPointCorporateModule().corporateEmployeeLogin,
+                    clazz = String::class.java,
+                    shouldSave = false
                 ) {
 
                     val response = ApiHelper().callApi(
@@ -191,10 +194,12 @@ class LoginViewModel @Inject constructor() : ViewModel() {
                 if (!result.isNullOrEmpty()) {
 
                     _loginSuccess.value = true
+                    NavigationManager.navigate(Routes.OTP)
                     Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
 
                 } else {
                     _errorMessage.value = "No data available"
+                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
                 }
 
             } catch (e: Exception) {

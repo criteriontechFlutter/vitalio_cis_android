@@ -50,6 +50,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.ui.theme.currentThemeColors
 import com.example.vitalio_cis.ui.theme.getColorScheme
 import com.example.vitalio_cis.utils.CommonTextField
 
@@ -70,7 +71,7 @@ fun FindDoctorsTopSection() {
         // Top Bar with Back button, Title, Date and Calendar Icon
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().background(color = colors.primary )
+            modifier = Modifier.fillMaxWidth().background(color = currentThemeColors().primary )
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,

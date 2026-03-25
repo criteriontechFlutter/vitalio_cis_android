@@ -14,8 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,6 +29,8 @@ import com.example.vitalio_cis.NavigationManager
 
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.utils.Patient
+import com.example.vitalio_cis.utils.PrefsManager
 
 
 data class GridItem(val title: String, val icon: Int)
@@ -102,10 +106,10 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
     NavigationBar(containerColor = Color.White) {
 
         val items = listOf(
-            Triple(R.drawable.home, "Home", 0),
-            Triple(R.drawable.activity, "Activity", 1),
-            Triple(R.drawable.reminders, "Reminders", 2),
-            Triple(R.drawable.chat, "Chat", 3)
+            Triple(R.drawable.home,stringResource(R.string.home), 0),
+            Triple(R.drawable.activity, stringResource(R.string.activity), 1),
+            Triple(R.drawable.reminders, stringResource(R.string.reminders), 2),
+            Triple(R.drawable.chat, stringResource(R.string.chat), 3)
         )
 
         items.forEach { (iconRes, label, index) ->
@@ -129,6 +133,9 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
 // ------------------- Header -------------------
 @Composable
 fun Header() {
+
+    val context = LocalContext.current
+    val patientData= PrefsManager(context).getPatient()
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -145,7 +152,7 @@ fun Header() {
 
         Column(modifier = Modifier.weight(1f)) {
             Text("Good Morning,", color = Color.Gray)
-            Text("Abhay Sharma", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(patientData?.firstName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
 
         Icon(Icons.Default.Search, contentDescription = null)
@@ -217,18 +224,58 @@ fun PrimaryActionsGrid() {
     data class GridItem(
         val title: String,
         val icon: Int,
-        val route: String
+        val type: String
     )
 
     val items = listOf(
-        GridItem("Vitals\nDetails", R.drawable.vital_details, "vitals"),
-        GridItem("Fluid Intake\n/Output", R.drawable.fluid_intake, "fluid"),
-        GridItem("Symptom\nTracker", R.drawable.symptom_tracker, "symptoms"),
-        GridItem("Medicine\nReminder", R.drawable.medicine_reminder, "medicine"),
-        GridItem("Diet\nChecklist", R.drawable.diet_checklist, "diet"),
-        GridItem("Interaction\nChecker", R.drawable.medicine_reminder, "interaction"),
-        GridItem("Appointments", R.drawable.appointments, "appointments"),
-        GridItem("Research Based\nArticles", R.drawable.medicine_reminder, "articles")
+
+            GridItem(
+                title = stringResource(R.string.vitals_details),
+                icon = R.drawable.vital_details,
+                type = "vitals"
+            ),
+
+    GridItem(
+        title = stringResource(R.string.fluid_intake),
+        icon = R.drawable.fluid_intake,
+        type = "fluid"
+    ),
+
+    GridItem(
+        title = stringResource(R.string.symptoms_tracker),
+        icon = R.drawable.symptom_tracker,
+        type = "symptoms"
+    ),
+
+    GridItem(
+        title = stringResource(R.string.medicine_reminder),
+        icon = R.drawable.medicine_reminder,
+        type = "medicine"
+    ),
+
+    GridItem(
+        title = stringResource(R.string.diet_checklist),
+        icon = R.drawable.diet_checklist,
+        type = "diet"
+    ),
+
+    GridItem(
+        title = stringResource(R.string.interactions_checker),
+        icon = R.drawable.medicine_reminder,
+        type = "interaction"
+    ),
+
+    GridItem(
+        title = stringResource(R.string.appointments),
+        icon = R.drawable.appointments,
+        type = "appointments"
+    ),
+
+    GridItem(
+        title = stringResource(R.string.research_based_articles),
+        icon = R.drawable.medicine_reminder,
+        type = "articles"
+    )
     )
 
     LazyVerticalGrid(
@@ -247,7 +294,7 @@ fun PrimaryActionsGrid() {
                     .fillMaxWidth()
                     .height(100.dp)
                     .clickable {
-                        NavigationManager.navigate(item.route)   // ✅ GLOBAL NAV
+                        NavigationManager.navigate(item.type)   // ✅ GLOBAL NAV
                     },
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3))

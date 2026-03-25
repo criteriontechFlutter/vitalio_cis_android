@@ -1,3 +1,37 @@
 <resources>
     <string name="app_name">vitalio_cis</string>
+
+    <string name="primary_action">Primary Actions</string>
+
+    <string name="vitals_details">Vitals\nDetails</string>
+    <string name="fluid_intake">Fluid\nIntake/Output</string>
+    <string name="symptoms_tracker">Symptoms\nTracker</string>
+
+
+    <string name="medicine_reminder">Medicine\nReminder</string>
+    <string name="diet_checklist">Diet\nChecklist</string>
+    <string name="interactions_checker">Interactions\nChecker</string>
+
+    <string name="appointments">Appointments</string>
+    <string name="research_based_articles">Research Based\nArticles</string>
+
+
+
+
+    <string name="home">Home</string>
+    <string name="activity">Activity</string>
+    <string name="reminders">Reminders</string>
+    <string name="chat">Chat</string>
+
+
+
+    <string name="add_vital">Add Vital</string>
+    <string name="vital">Vital</string>
+
+    <string name="symptom_tracker">Symptom Tracker</string>
+    <string name="back_to_previous_question">Back to previous question</string>
+
+
+
+
 </resources>
