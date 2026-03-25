@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
+
 }
 
 android {
@@ -54,6 +55,8 @@ dependencies {
     implementation(libs.androidx.tracing.perfetto.handshake)
     implementation(libs.androidx.constraintlayout.compose)
     implementation(libs.androidx.compose.ui.text)
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.common.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -91,9 +94,14 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
 
+
+
+
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-gif:2.6.0")
+
     implementation("com.google.dagger:hilt-android:2.50")
     kapt("com.google.dagger:hilt-android-compiler:2.50")
+
     implementation("androidx.navigation:navigation-compose:2.7.7")
-}
+ }

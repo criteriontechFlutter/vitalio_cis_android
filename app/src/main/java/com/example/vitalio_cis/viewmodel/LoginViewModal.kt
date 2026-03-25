@@ -17,8 +17,10 @@ import com.critetiontech.ctvitalio.networking.RetrofitInstance
 import com.critetiontech.ctvitalio.ui.components.MyDialog
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.ctvitalio.utils.ErrorUtils.parseErrorMessage
-import com.example.vitalio_cis.utils.BaseResponse
-import com.example.vitalio_cis.utils.Patient
+import com.example.vitalio_cis.NavigationManager
+import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.ui.screens.OtpScreen
+ import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -137,7 +139,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 //                Log.d("LoginViewModel", "Loading finished")
 //            }
 //        }
-//    }
+//    }6307748142
 
 
 
@@ -159,58 +161,45 @@ class LoginViewModel @Inject constructor() : ViewModel() {
                     "ifLoggedOutFromAllDevices" to true
                 )
 
-                // ✅ Correct Generic Type (Array use karo)
-                val patientArray: Array<Patient>? = prefsCache.getData(
-                    key = ApiEndPointCorporateModule().corporateEmployeeLogin,
-                    clazz = Array<Patient>::class.java
+                val result: String? = prefsCache.getData(
+                    key =  ApiEndPointCorporateModule().corporateEmployeeLogin,
+                    clazz = String::class.java,
+                    shouldSave = false
                 ) {
 
-                    // 🔥 DIRECT API CALL (NO ApiHelper)
-                    val response = ApiClients.module4082.queryDynamicRawPost(
-                        url = ApiEndPointCorporateModule().corporateEmployeeLogin,
-                        params = queryParams
-                    )
-
+                    val response = ApiHelper().callApi(
+                        context,
+                        ApiEndPointCorporateModule().corporateEmployeeLogin,
+                        showNoConnectionDialog = true
+                    ) { url ->
+                        ApiClients.module4082.queryDynamicRawPost(
+                            url = url,
+                            params = queryParams,
+                        )
+                    }
 
                     if (response.isSuccessful) {
 
                         val bodyString = response.body()?.string()
 
-                        Log.d("LoginViewModel", "6307748142: $bodyString")
+                        Log.d("LoginViewModel", "API Response: $bodyString")
 
-                        if (!bodyString.isNullOrEmpty()) {
-
-                            val type = object : TypeToken<BaseResponse<List<Patient>>>() {}.type
-                            val parsed: BaseResponse<List<Patient>> =
-                                Gson().fromJson(bodyString, type)
-
-                            // ✅ IMPORTANT: List → Array convert
-                            parsed.responseValue?.toTypedArray()
-
-                        } else {
-                            null
-                        }
-
+                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
                     } else {
                         throw Exception("API Error: ${response.code()}")
                     }
                 }
 
-                // ✅ Convert Array → List
-                val patientList = patientArray?.toList()
-
-                // ✅ Final result handle
-                if (!patientList.isNullOrEmpty()) {
+                // ✅ RESULT HANDLE
+                if (!result.isNullOrEmpty()) {
 
                     _loginSuccess.value = true
-                    Log.d("LoginViewModel", "Login Success (API/Cache)")
-
-                    // Optional: first patient save
-                    val firstPatient = patientList.first()
-                    Log.d("LoginViewModel", "Patient: ${firstPatient.patientName}")
+                    NavigationManager.navigate(Routes.OTP)
+                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
 
                 } else {
                     _errorMessage.value = "No data available"
+                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
                 }
 
             } catch (e: Exception) {

@@ -18,8 +18,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
  
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -150,6 +152,12 @@ class ThemeViewModel : ViewModel() {
         _selectedTheme.value =
             if (_selectedTheme.value == AppTheme.LIGHT) AppTheme.DARK else AppTheme.LIGHT
     }
+}
+
+@Composable
+fun currentThemeColors(): MyColorScheme {
+    val theme = viewModel<ThemeViewModel>().selectedTheme.collectAsState().value
+    return getColorScheme(theme)
 }
 //@Composable
 //fun Vitalio_composeTheme(

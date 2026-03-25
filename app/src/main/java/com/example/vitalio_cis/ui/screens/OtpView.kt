@@ -1,5 +1,6 @@
 package com.example.vitalio_cis.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,12 +18,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.viewmodel.LoginViewModel
+import kotlinx.coroutines.delay
 
 import com.example.vitalio_cis.R
-@Composable
-fun OtpScreen() {
+import com.example.vitalio_cis.viewmodel.OTPViewModel
 
-    var otpValues = remember { mutableStateListOf("", "", "", "") }
+@Composable
+fun OtpScreen(  viewModel: OTPViewModel = viewModel()) {
+
+    val otpValues = remember { mutableStateListOf("", "", "", "", "", "") }
+    val focusRequesters = List(6) { FocusRequester() }
+
+    val context = LocalContext.current
+    // 👉 Auto focus first field
+    LaunchedEffect(Unit) {
+        delay(200)
+        focusRequesters[0].requestFocus()
+    }
 
     Box(
         modifier = Modifier
@@ -51,8 +71,7 @@ fun OtpScreen() {
                 painter = painterResource(id = R.drawable.img),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp),
+                    .fillMaxWidth(),
                 contentScale = ContentScale.Fit
             )
 
@@ -65,8 +84,7 @@ fun OtpScreen() {
             ) {
 
                 Column(
-                    modifier = Modifier
-                        .padding(24.dp),
+                    modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
@@ -100,19 +118,37 @@ fun OtpScreen() {
                                 onValueChange = {
                                     if (it.length <= 1) {
                                         otpValues[index] = it
+
+                                        // 👉 Move to next field
+                                        if (it.isNotEmpty() && index < 5) {
+                                            focusRequesters[index + 1].requestFocus()
+                                        }
+
+                                        // 👉 Move back on delete
+                                        if (it.isEmpty() && index > 0) {
+                                            focusRequesters[index - 1].requestFocus()
+                                        }
                                     }
                                 },
                                 modifier = Modifier
                                     .width(48.dp)
-                                    .height(56.dp).background(color = Color.White)
-                                    .clickable(){
-
-                                },
+                                    .height(56.dp)
+                                    .focusRequester(focusRequesters[index]),
                                 textStyle = TextStyle(
                                     fontSize = 20.sp,
                                     textAlign = TextAlign.Center
                                 ),
-                                singleLine = true
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onNext = {
+                                        if (index < 5) {
+                                            focusRequesters[index + 1].requestFocus()
+                                        }
+                                    }
+                                )
                             )
                         }
                     }
@@ -120,7 +156,13 @@ fun OtpScreen() {
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Button(
-                        onClick = { },
+                        onClick = {
+                            val otp = otpValues.joinToString("")
+                            println("OTP Entered: $otp")
+
+                            viewModel.verifyLogInOTPForSHFCApp(context = context,otp =otp, uhid = "6307748142"
+                            )
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -129,7 +171,6 @@ fun OtpScreen() {
                             containerColor = Color(0xFF1E63D5)
                         )
                     ) {
-
                         Text("Verify")
                     }
 

@@ -1,0 +1,241 @@
+{
+  "project_info": {
+    "project_number": "874216638219",
+    "firebase_url": "https://smartheartfailureclinic-default-rtdb.firebaseio.com",
+    "project_id": "smartheartfailureclinic",
+    "storage_bucket": "smartheartfailureclinic.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874216638219:android:35076b3df1aefe0ffc040e",
+        "android_client_info": {
+          "package_name": "com.criteriontech.watch"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFZMASaP9K4HV-8vpb2jrEoY4v43OKDow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "874216638219-sabs6dh3tp332g9mp9hc2tgsl6hgkiar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.criteriontech.homecare",
+                "app_store_id": "6566179296"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874216638219:android:bc015933702a02d5fc040e",
+        "android_client_info": {
+          "package_name": "com.criterion.nativevitalio"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "874216638219-bldfsnqfso73i9v33c2d2irtvncmjkma.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.criterion.nativevitalio",
+            "certificate_hash": "bd0da3ec1af17049798869163c243ebee107f8d3"
+          }
+        },
+        {
+          "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFZMASaP9K4HV-8vpb2jrEoY4v43OKDow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "874216638219-sabs6dh3tp332g9mp9hc2tgsl6hgkiar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.criteriontech.homecare",
+                "app_store_id": "6566179296"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874216638219:android:d28693e523bf3a6dfc040e",
+        "android_client_info": {
+          "package_name": "com.critetiontech.homecaredoctor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFZMASaP9K4HV-8vpb2jrEoY4v43OKDow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "874216638219-sabs6dh3tp332g9mp9hc2tgsl6hgkiar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.criteriontech.homecare",
+                "app_store_id": "6566179296"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874216638219:android:3edcbebda025b2b3fc040e",
+        "android_client_info": {
+          "package_name": "com.critetiontech.medvantage_patient"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFZMASaP9K4HV-8vpb2jrEoY4v43OKDow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "874216638219-sabs6dh3tp332g9mp9hc2tgsl6hgkiar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.criteriontech.homecare",
+                "app_store_id": "6566179296"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874216638219:android:50819225bc7ebb0ffc040e",
+        "android_client_info": {
+          "package_name": "com.critetiontech.vitalio"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFZMASaP9K4HV-8vpb2jrEoY4v43OKDow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "874216638219-sabs6dh3tp332g9mp9hc2tgsl6hgkiar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.criteriontech.homecare",
+                "app_store_id": "6566179296"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874216638219:android:8df06135769ca5eefc040e",
+        "android_client_info": {
+          "package_name": "com.smartheartfailureclinic.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFZMASaP9K4HV-8vpb2jrEoY4v43OKDow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "874216638219-ch4ms1gm1d1cngt5bpbg1ogglvjlas34.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "874216638219-sabs6dh3tp332g9mp9hc2tgsl6hgkiar.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.criteriontech.homecare",
+                "app_store_id": "6566179296"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
