@@ -3,6 +3,7 @@ package com.example.vitalio_cis.viewmodel
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,6 +12,7 @@ import androidx.navigation.NavController
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
+import com.example.vitalio_cis.model.Problem
 import com.example.vitalio_cis.model.SymptomApiResponse
 import com.example.vitalio_cis.model.SymptomItem
 import com.example.vitalio_cis.model.Vital
@@ -25,6 +27,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import com.example.vitalio_cis.model.ProblemResponse
 
 class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
 
@@ -33,8 +38,21 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
     private val _symptomTrackerList = MutableStateFlow<List<SymptomItem>>(emptyList())
     val symptomTrackerList: StateFlow<List<SymptomItem>> = _symptomTrackerList
 
+
+
+    private val _symptomIconsList = mutableStateOf<List<Problem>>(emptyList())
+    val symptomIconsList: State<List<Problem>> = _symptomIconsList
+
+    private val _searchedsymptomList = mutableStateOf<List<Problem>>(emptyList())
+    val  searchedsymptomList: State<List<Problem>> = _searchedsymptomList
+
     private val _selectedSymptoms = MutableStateFlow<List<SymptomItem>>(emptyList())
     val selectedSymptoms: StateFlow<List<SymptomItem>> = _selectedSymptoms
+    fun updateSelectedSymptoms(){
+        _selectedSymptoms.value=emptyList<SymptomItem>()
+    }
+
+
     fun addSymptom(symptom: SymptomItem) {
         val updatedList = _selectedSymptoms.value.toMutableList()
         if (!updatedList.contains(symptom)) {
@@ -222,4 +240,149 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
             }
         }
     }
+
+    fun getProblemsWithIcon(context: Context,   ) {
+
+        viewModelScope.launch {
+
+            _loading.value = true
+
+            val prefsCache = PrefsManager(context)
+
+            try {
+
+
+                val queryParams = mapOf(
+                    "problemName" to "",
+                    "languageId" to "1"
+                )
+
+                val result: String? = prefsCache.getData(
+                    key =  ApiEndPointCorporateModule().getProblemsWithIcon,
+                    clazz = String::class.java,
+                    shouldSave = true
+                ) {
+
+                    val response = ApiHelper().callApi(
+                        context,
+                        ApiEndPointCorporateModule().getProblemsWithIcon,
+                        showNoConnectionDialog = false
+                    ) { url ->
+                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                            url = url,
+                            body = queryParams,
+                        )
+                    }
+
+
+                    _loading.value = false
+                    if (response.isSuccessful) {
+
+                        val bodyString = response.body()?.string()
+
+                        Log.d("LoginViewModel", "API Response: $bodyString")
+
+                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                    } else {
+                        throw Exception("API Error: ${response.code()}")
+                    }
+                }
+
+                // ✅ RESULT HANDLE
+                if (!result.isNullOrEmpty()) {
+
+
+                    val apiResponse = Gson().fromJson(result, ProblemResponse::class.java)
+
+                    _symptomIconsList.value = apiResponse.responseValue
+
+
+                } else {
+                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                }
+
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Error: ${e.message}", e)
+
+            } finally {
+
+                _loading.value = false
+                Log.d("LoginViewModel", "Loading finished")
+            }
+        }
+    }
+
+
+
+
+
+    fun getAllProblems(context: Context, query: String  ) {
+
+        viewModelScope.launch {
+
+            _loading.value = true
+
+            val prefsCache = PrefsManager(context)
+
+            try {
+
+
+                val queryParams = mapOf(
+                    "alphabet" to query,
+                    "language" to  1
+                )
+
+                val result: String? = prefsCache.getData(
+                    key =  ApiEndPointCorporateModule().getAllProblems,
+                    clazz = String::class.java,
+                    shouldSave = true
+                ) {
+
+                    val response = ApiHelper().callApi(
+                        context,
+                        ApiEndPointCorporateModule().getAllProblems,
+                        showNoConnectionDialog = false
+                    ) { url ->
+                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                            url = url,
+                            body = queryParams,
+                        )
+                    }
+
+                    if (response.isSuccessful) {
+
+                        val bodyString = response.body()?.string()
+
+                        Log.d("LoginViewModel", "API Response: $bodyString")
+
+                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                    } else {
+                        throw Exception("API Error: ${response.code()}")
+                    }
+                }
+
+                // ✅ RESULT HANDLE
+                if (!result.isNullOrEmpty()) {
+
+
+                    val apiResponse = Gson().fromJson(result, ProblemResponse::class.java)
+
+                    _searchedsymptomList.value = apiResponse.responseValue
+
+
+                } else {
+                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                }
+
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Error: ${e.message}", e)
+
+            } finally {
+
+                _loading.value = false
+                Log.d("LoginViewModel", "Loading finished")
+            }
+        }
+    }
+
 }

@@ -45,7 +45,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
+import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
 import com.example.vitalio_cis.viewmodel.VitalDetailViewModel
 
@@ -91,6 +93,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
     val currentQuestion = questions[currentIndex]
     val currentSymptom = symptomList[currentIndex]
 
+    val navController = LocalNavController.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -113,11 +116,11 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(R.drawable.ic_symptom),
+                painter = painterResource(R.drawable.symptom_tacker),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(220.dp)
-                    .alpha(0.2f)
+                    .fillMaxWidth().padding(horizontal = 23.dp),
+                contentScale = ContentScale.FillWidth
             )
         }
 
@@ -149,8 +152,18 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
                     if (currentIndex < questions.lastIndex) currentIndex++
                     else viewModel.submitSymptoms()
+
+                    if (currentIndex == questions.lastIndex) {
+                        viewModel.submitSymptoms()
+                        navController.navigate(Routes.SYMPTOMS)
+                    }
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape( 6.dp), // 🔥 radius
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE2E7F0), // 🔥 background color (Green example)
+                    contentColor = Color.Black // 🔥 text color
+                )
             ) {
                 Text("Yes")
             }
@@ -161,8 +174,19 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
                     if (currentIndex < questions.lastIndex) currentIndex++
                     else viewModel.submitSymptoms()
+
+                    if (currentIndex == questions.lastIndex) {
+                        navController.navigate(Routes.SYMPTOMS)
+                    }
                 },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
+                shape = RoundedCornerShape( 6.dp), // 🔥 radius
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE4EEFF),// 🔥 light background
+                    contentColor = Color.White // 🔥 text visible
+                )
             ) {
                 Text("No")
             }
@@ -179,6 +203,8 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                 Box(
                     modifier = Modifier
                         .padding(4.dp)
+                        .width(if (index == currentIndex) 25.dp else 6.dp)
+                        .height(5.dp)
                         .size(if (index == currentIndex) 12.dp else 6.dp)
                         .clip(CircleShape)
                         .background(
@@ -204,33 +230,12 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                 Text("Back to previous question")
             }
         }
-        Row()
-        {
-            if (currentIndex == questions.lastIndex) {
-                Row {
-                    Button(
-                        onClick = {
-                            viewModel.submitSymptoms()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2F6BFF)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Submit", color = Color.White)
-                    }
-                }
-            }
-        }
+
     }
 
 
 
 
-
-
-
 }
+
+

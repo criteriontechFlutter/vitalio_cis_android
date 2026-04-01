@@ -7,11 +7,13 @@ object Routes {
     const val OTP = "otp"
     const val VITALS = "vitals"
     const val FLUID = "fluid"
+    const val SYMPTOMSTRACKER = "symptomsTracker"
     const val SYMPTOMS = "symptoms"
     const val MEDICINE = "medicine"
     const val DIET = "diet"
     const val INTERACTION = "interaction"
     const val APPOINTMENTS = "appointments"
     const val ARTICLES = "articles"
+    const val MANAGE_MEDICINE = "manageMedicine"
 
 }

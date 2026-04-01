@@ -14,4 +14,7 @@ class ApiEndPointCorporateModule {
     val fetchLastVital = "api/PatientVital/FetchLastVital"
 
     val getSymptoms="api/PatientPrescription/FetchSymtomsOrDiagnosis"
+
+    val getProblemsWithIcon="Patient/getProblemsWithIcon"
+    val getAllProblems="Patient/getAllProblems"
 }

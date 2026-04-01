@@ -64,8 +64,15 @@ class PrefsManager(context: Context) {
         private const val KEY_Emergency = "Emergency_length"
         private const val KEY_SmartWatch = "SmartWatch_length"
         private const val KEY_DEVICE_TOKEN = "deviceToken"
+        private const val KEY_IS_DARK_THEME = "is_dark_theme"
+    }
+    fun saveTheme(isDark: Boolean) {
+        sharedPref.edit().putBoolean(KEY_IS_DARK_THEME, isDark).apply()
     }
 
+    fun getTheme(): Boolean {
+        return sharedPref.getBoolean(KEY_IS_DARK_THEME, false) // default LIGHT
+    }
     // Save patient object
     fun savePatient(patient: Patient) {
         sharedPref.edit {

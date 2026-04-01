@@ -12,6 +12,7 @@ object RetrofitInstance {
 
     // Base URLs
     const val BASE_5082 = "http://182.156.200.178:4082/"
+    const val Digi_doctor_BaseURL = "http://52.172.134.222:205/api/v1.0/"
 //    const val BASE_5096 = "http://182.156.200.177:5096/"
 
     // Default
