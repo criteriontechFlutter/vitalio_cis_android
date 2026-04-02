@@ -150,50 +150,80 @@ class PrefsManager(context: Context) {
 
     // Optional: Direct property access
 
-
-
-    suspend fun <T> getData(
+    suspend fun getData(
         key: String,
-        clazz: Class<T>,
-        shouldSave: Boolean = true, // 🔥 NEW FLAG
-        apiCall: suspend () -> T?
-    ): T? {
-        return withContext(Dispatchers.IO) {
+        shouldSave: Boolean = true,
+        apiCall: suspend () -> String?
+    ): String? = try {
+        val apiResult = apiCall()
 
-            try {
-                // 🔥 1️⃣ API CALL
-                val apiResult = apiCall()
-
-                if (apiResult != null) {
-
-                    // 🔥 2️⃣ SAVE ONLY IF ALLOWED
-                    if (shouldSave) {
-                        save(key, apiResult)
-                        Log.d("CACHE", "Saved to local")
-                    } else {
-                        Log.d("CACHE", "Save skipped (shouldSave = false)")
-                    }
-
-                    // 🔥 3️⃣ RETURN DIRECT RESULT (no need to re-fetch)
-                    return@withContext apiResult
-                }
-
-            } catch (e: Exception) {
-                Log.e("CACHE", "API Failed: ${e.message}")
+        if (!apiResult.isNullOrEmpty()) {
+            if (shouldSave) {
+                save(key, apiResult)
+                println("✅ API result saved to cache: $apiResult")
+                Log.d("CACHE", "✅ API result saved to cache: $apiResult")
             }
 
-            // 🔥 4️⃣ FALLBACK TO LOCAL
-            val localData = get(key, clazz)
+            println("🔥 Returning API result: $apiResult")
+            Log.d("CACHE", "🔥 Returning API result: $apiResult")
 
-            if (localData != null) {
-                Log.d("CACHE", "Fetched from local: ${Gson().toJson(localData)}")
-            } else {
-                Log.d("CACHE", "No local data found")
-            }
-
-            return@withContext localData
+            apiResult  // ✅ Directly return API result
+        } else {
+            val localData = get(key, String::class.java)
+            println("ℹ️ API empty, fallback to cache: $localData")
+            Log.d("CACHE", "ℹ️ API empty, fallback to cache: $localData")
+            localData
         }
+    } catch (e: Exception) {
+        val localData = get(key, String::class.java)
+        println("❌ API failed, fallback to cache: $localData, error: ${e.message}")
+        Log.d("CACHE", "❌ API failed, fallback to cache: $localData, error: ${e.message}")
+        localData
     }
+
+//    suspend fun <T> getData(
+//        key: String,
+//        clazz: Class<T>,
+//        shouldSave: Boolean = true, // 🔥 NEW FLAG
+//        apiCall: suspend () -> T?
+//    ): T? {
+//        return withContext(Dispatchers.IO) {
+//
+//            try {
+//                // 🔥 1️⃣ API CALL
+//                val apiResult = apiCall()
+//
+//                if (apiResult != null) {
+//
+//                    // 🔥 2️⃣ SAVE ONLY IF ALLOWED
+//                    if (shouldSave) {
+//                        save(key, apiResult)
+//                        val localData = get(key, clazz)
+//                        Log.d("CACHE", "Saved tonnnnn local"+localData.toString())
+//                    } else {
+//                        Log.d("CACHE", "Save skipped (shouldSave = false)")
+//                    }
+//
+//                    // 🔥 3️⃣ RETURN DIRECT RESULT (no need to re-fetch)
+//                    return@withContext apiResult
+//                }
+//
+//            } catch (e: Exception) {
+//                Log.e("CACHE", "API Failed: ${e.message}")
+//            }
+//
+//            // 🔥 4️⃣ FALLBACK TO LOCAL
+//            val localData = get(key, clazz)
+//
+//            if (localData != null) {
+//                Log.d("CACHE", "Fetched from local: ${Gson().toJson(localData)}")
+//            } else {
+//                Log.d("CACHE", "No local data found")
+//            }
+//
+//            return@withContext localData
+//        }
+//    }
 
     // Save any object to SharedPreferences as JSON
     private fun <T> save(key: String, obj: T) {

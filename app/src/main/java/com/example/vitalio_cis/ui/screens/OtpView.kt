@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.viewmodel.LoginViewModel
+import com.example.myapplication.utils.LocalNavController
 import kotlinx.coroutines.delay
 
 import com.example.vitalio_cis.R
@@ -34,6 +35,7 @@ import com.example.vitalio_cis.viewmodel.OTPViewModel
 @Composable
 fun OtpScreen(  viewModel: OTPViewModel = viewModel()) {
 
+    val navController = LocalNavController.current
     val otpValues = remember { mutableStateListOf("", "", "", "", "", "") }
     val focusRequesters = List(6) { FocusRequester() }
 
@@ -160,7 +162,11 @@ fun OtpScreen(  viewModel: OTPViewModel = viewModel()) {
                             val otp = otpValues.joinToString("")
                             println("OTP Entered: $otp")
 
-                            viewModel.verifyLogInOTPForSHFCApp(context = context,otp =otp, uhid = "6307748142"
+                            viewModel.verifyLogInOTPForSHFCApp(
+                                context = context,
+                                otp =otp,
+                                uhid = "6307748142",
+                                navController = navController
                             )
                         },
                         modifier = Modifier

@@ -47,7 +47,7 @@ class VitalDetailViewModel   @Inject constructor() : ViewModel() {
 
                 val result: String? = prefsCache.getData(
                     key =  ApiEndPointCorporateModule().fetchLastVital,
-                    clazz = String::class.java,
+
                     shouldSave = true
                 ) {
 

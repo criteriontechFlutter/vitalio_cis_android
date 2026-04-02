@@ -50,13 +50,13 @@ import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
 import com.example.vitalio_cis.viewmodel.VitalDetailViewModel
-
 data class SymptomQuestion(
     val id: Int,
     val prefix: String,
-    val highlight: String,
-    val suffix: String = " ?"
+    val highlight: String = "",
+    val suffix: String = "?"
 )
+
 @Composable
 fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
@@ -71,17 +71,22 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
     val symptomList by viewModel.symptomTrackerList.collectAsState()
     val selectedList by viewModel.selectedSymptoms.collectAsState()
 
-    // 🔹 Convert API → Questions
-    val questions = symptomList.map {
+    // ✅ FIXED: SAFE MAPPING
+    val questions = symptomList.map { item ->
+
+        val id = item.detailId.toInt()
+        val name = item.details ?: ""
+
         SymptomQuestion(
-            id = it.detailId,
+            id = id,
             prefix = "Do you still have ",
-            highlight = it.details
+            highlight = name,
+            suffix = "?"
         )
     }
 
-    // 🔹 Loading
-    if (questions.isEmpty()) {
+    // ✅ FIXED: SAFE EMPTY CHECK
+    if (questions.isEmpty() || symptomList.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Loading...")
         }
@@ -90,10 +95,14 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
     var currentIndex by remember { mutableStateOf(0) }
 
-    val currentQuestion = questions[currentIndex]
-    val currentSymptom = symptomList[currentIndex]
+    // ✅ FIXED: SAFE INDEX
+    val safeIndex = currentIndex.coerceIn(0, questions.lastIndex)
+
+    val currentQuestion = questions[safeIndex]
+    val currentSymptom = symptomList[safeIndex]
 
     val navController = LocalNavController.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -119,7 +128,8 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                 painter = painterResource(R.drawable.symptom_tacker),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth().padding(horizontal = 23.dp),
+                    .fillMaxWidth()
+                    .padding(horizontal = 23.dp),
                 contentScale = ContentScale.FillWidth
             )
         }
@@ -146,46 +156,45 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
         // 🔥 Buttons
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
+            // ✅ YES BUTTON FIXED
             Button(
                 onClick = {
                     viewModel.addSymptom(currentSymptom)
 
-                    if (currentIndex < questions.lastIndex) currentIndex++
-                    else viewModel.submitSymptoms()
-
-                    if (currentIndex == questions.lastIndex) {
-                        viewModel.submitSymptoms()
-                        navController.navigate(Routes.SYMPTOMS)
+                    if (currentIndex < questions.lastIndex) {
+                        currentIndex++
+                    } else {
+                        viewModel.insertSymptoms(context, navController)
                     }
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape( 6.dp), // 🔥 radius
+                shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE2E7F0), // 🔥 background color (Green example)
-                    contentColor = Color.Black // 🔥 text color
+                    containerColor = Color(0xFFE2E7F0),
+                    contentColor = Color.Black
                 )
             ) {
                 Text("Yes")
             }
 
+            // ❌ NO BUTTON FIXED
             Button(
                 onClick = {
                     viewModel.removeSymptom(currentSymptom)
 
-                    if (currentIndex < questions.lastIndex) currentIndex++
-                    else viewModel.submitSymptoms()
-
-                    if (currentIndex == questions.lastIndex) {
-                        navController.navigate(Routes.SYMPTOMS)
+                    if (currentIndex < questions.lastIndex) {
+                        currentIndex++
+                    } else {
+                        viewModel.insertSymptoms(context, navController)
                     }
                 },
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),
-                shape = RoundedCornerShape( 6.dp), // 🔥 radius
+                shape = RoundedCornerShape(6.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE4EEFF),// 🔥 light background
-                    contentColor = Color.White // 🔥 text visible
+                    containerColor = Color(0xFFE4EEFF),
+                    contentColor = Color.White
                 )
             ) {
                 Text("No")
@@ -203,12 +212,11 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                 Box(
                     modifier = Modifier
                         .padding(4.dp)
-                        .width(if (index == currentIndex) 25.dp else 6.dp)
+                        .width(if (index == safeIndex) 25.dp else 6.dp)
                         .height(5.dp)
-                        .size(if (index == currentIndex) 12.dp else 6.dp)
                         .clip(CircleShape)
                         .background(
-                            if (index == currentIndex) Color.Blue
+                            if (index == safeIndex) Color.Blue
                             else Color.LightGray
                         )
                 )
@@ -218,7 +226,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
         Spacer(modifier = Modifier.height(12.dp))
 
         // 🔹 Back
-        if (currentIndex > 0) {
+        if (safeIndex > 0) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -230,12 +238,5 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                 Text("Back to previous question")
             }
         }
-
     }
-
-
-
-
 }
-
-

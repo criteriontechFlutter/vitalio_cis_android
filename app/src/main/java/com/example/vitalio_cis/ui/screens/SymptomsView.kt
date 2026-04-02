@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
 import coil.compose.AsyncImage
+import com.example.vitalio_cis.utils.CommonButton
 import kotlinx.coroutines.delay
 
 @Composable
@@ -42,17 +43,12 @@ fun SymptomsView(viewModel: SymptomTrackerViewModel = viewModel()) {
     var searchText by remember { mutableStateOf("") }
     var selectedSymptoms by remember { mutableStateOf(listOf<Int>()) }
 
-    val defaultList = viewModel.symptomIconsList.value
+    val defaultList by   viewModel.symptomIconsList.collectAsState()
     val searchList = viewModel.searchedsymptomList.value
     val isLoading = viewModel.loading.value
 
     // 🔥 SEARCH API CALL
-    LaunchedEffect(searchText) {
-        if (searchText.isNotEmpty()) {
-            delay(400)
-            viewModel.getAllProblems(context, searchText)
-        }
-    }
+
 
 
     Column(
@@ -111,7 +107,6 @@ fun SymptomsView(viewModel: SymptomTrackerViewModel = viewModel()) {
             Spacer(modifier = Modifier.height(8.dp))
             CircularProgressIndicator()
         }
-
         // 🔥 SEARCH DROPDOWN LIST
         if (searchText.isNotEmpty() && searchList.isNotEmpty()) {
 
@@ -184,6 +179,8 @@ fun SymptomsView(viewModel: SymptomTrackerViewModel = viewModel()) {
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(4),
+                modifier =Modifier
+                    .weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -204,6 +201,15 @@ fun SymptomsView(viewModel: SymptomTrackerViewModel = viewModel()) {
                     )
                 }
             }
+
+
+        CommonButton(
+            text = "Save and Update symptoms",
+            onClick =  {
+
+            },
+
+        )
     }
 }
 

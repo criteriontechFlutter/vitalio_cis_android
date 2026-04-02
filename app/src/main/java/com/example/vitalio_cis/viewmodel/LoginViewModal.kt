@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
@@ -143,7 +144,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
 
 
-    fun sendOTP(context: Context) {
+    fun sendOTP(context: Context,navController: NavController) {
 
         viewModelScope.launch {
 
@@ -163,7 +164,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
                 val result: String? = prefsCache.getData(
                     key =  ApiEndPointCorporateModule().corporateEmployeeLogin,
-                    clazz = String::class.java,
+
                     shouldSave = false
                 ) {
 
@@ -192,10 +193,9 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
                 // ✅ RESULT HANDLE
                 if (!result.isNullOrEmpty()) {
-
                     _loginSuccess.value = true
-                    NavigationManager.navigate(Routes.OTP)
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                    navController.navigate(Routes.OTP)
+                    Log.d("LoginViewModel", "OTP Successsss (API/Cache): $result")
 
                 } else {
                     _errorMessage.value = "No data available"

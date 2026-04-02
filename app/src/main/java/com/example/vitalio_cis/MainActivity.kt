@@ -31,8 +31,8 @@ import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.ui.screens.AppointmentRow
 import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.example.vitalio_cis.ui.screens.FindDoctorsTopSection
-import com.example.vitalio_cis.ui.screens.ManageMedicine
-import com.example.vitalio_cis.ui.screens.MedicineCard
+import com.example.vitalio_cis.ui.screens.ManageMedicationsScreen
+ import com.example.vitalio_cis.ui.screens.MedicineCard
 import com.example.vitalio_cis.ui.screens.MedicineReminderScreen
 import com.example.vitalio_cis.ui.screens.OtpScreen
 import com.example.vitalio_cis.ui.screens.SymptomTrackerScreen
@@ -44,15 +44,18 @@ import com.example.vitalio_cis.ui.theme.MyAppTheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.utils.FCMHelper
 import com.example.vitalio_cis.utils.MyApplication
+import com.example.vitalio_cis.utils.PrefsManager
 import com.google.firebase.FirebaseApp
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContent {
             val navController = rememberNavController()
 
+            val context = LocalContext.current
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {
                     val themeViewModel = LocalThemeViewModel.current
@@ -64,13 +67,17 @@ class MainActivity : ComponentActivity() {
                     ) {
                         NavHost(
                             navController = navController,
-                            startDestination = Routes.DASHBOARD
+                            startDestination = if (PrefsManager(context).getPatient()?.uhId?.isNotEmpty()
+                                    ?: false) Routes.DASHBOARD else Routes.LOGIN
                         ) {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
+                            composable(Routes.LOGIN) { LoginScreen() }
+                            composable(Routes.OTP) { OtpScreen() }
                             composable(Routes.SYMPTOMSTRACKER) { SymptomTrackerScreen() }
                             composable(Routes.APPOINTMENTS) { FindDoctorsTopSection() }
                             composable(Routes.SYMPTOMS) { SymptomsView() }
-                            composable(Routes.MANAGE_MEDICINE) { ManageMedicine() }
+                            composable(Routes.MANAGE_MEDICINE) { ManageMedicationsScreen() }
+                            composable(Routes.MEDICINE) { MedicineReminderScreen() }
                         }
                     }
                 }

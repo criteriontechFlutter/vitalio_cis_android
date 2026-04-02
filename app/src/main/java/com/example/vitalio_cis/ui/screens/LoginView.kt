@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.viewmodel.LoginViewModel
+import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.ui.theme.AppColors
 import com.example.vitalio_cis.utils.CommonButton
@@ -115,6 +116,7 @@ fun DoctorImage(modifier: Modifier = Modifier) {
 @Composable
 fun LoginCard(   viewModel: LoginViewModel = viewModel()) {
 
+    val navController = LocalNavController.current
     val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -165,7 +167,8 @@ fun LoginCard(   viewModel: LoginViewModel = viewModel()) {
                 text = "Send OTP",
                 onClick = {
                     viewModel.sendOTP(
-                        context = context
+                        context = context,
+                        navController = navController
                     );
                     // action
                 }

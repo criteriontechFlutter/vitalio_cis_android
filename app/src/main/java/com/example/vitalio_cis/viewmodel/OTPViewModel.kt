@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
@@ -59,7 +60,7 @@ class OTPViewModel @Inject constructor() : ViewModel() {
 
 
 
-    fun verifyLogInOTPForSHFCApp(context: Context,uhid:String  ,otp: String  ) {
+    fun verifyLogInOTPForSHFCApp(context: Context,uhid:String  ,otp: String ,navController: NavController) {
 
         viewModelScope.launch {
             getPatientDetailsByMobileNo(context)
@@ -81,7 +82,7 @@ class OTPViewModel @Inject constructor() : ViewModel() {
 
                 val result: String? = prefsCache.getData(
                     key =  ApiEndPointCorporateModule().verifyLogInOTPForSHFCApp,
-                    clazz = String::class.java,
+
                     shouldSave = false
                 ) {
 
@@ -112,7 +113,7 @@ class OTPViewModel @Inject constructor() : ViewModel() {
                 if (!result.isNullOrEmpty()) {
 
                     _loginSuccess.value = true
-                    NavigationManager.navigate(Routes.OTP)
+                    navController.navigate(Routes.DASHBOARD)
                     Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
 
                 } else {
@@ -158,7 +159,7 @@ class OTPViewModel @Inject constructor() : ViewModel() {
 
                 val result: String? = prefsCache.getData(
                     key =  ApiEndPointCorporateModule().getPatientDetailsByMobileNo,
-                    clazz = String::class.java,
+
                     shouldSave = false
                 ) {
 
