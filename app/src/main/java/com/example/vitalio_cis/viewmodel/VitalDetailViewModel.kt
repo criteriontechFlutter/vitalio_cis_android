@@ -36,8 +36,6 @@ class VitalDetailViewModel   @Inject constructor() : ViewModel() {
             val prefsCache = PrefsManager(context)
 
             try {
-
-
                 val queryParams = mapOf(
 
                     "uhid" to prefsCache.getPatient()?.uhId.toString(),

@@ -136,7 +136,9 @@ fun MyAppTheme(
     ) {
         content()
     }
-}enum class AppTheme {
+}
+
+enum class AppTheme {
     LIGHT,
     DARK
 }

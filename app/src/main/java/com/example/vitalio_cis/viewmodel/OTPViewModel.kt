@@ -23,8 +23,6 @@ import javax.inject.Inject
 
 class OTPViewModel @Inject constructor() : ViewModel() {
 
-
-
     private val _loading = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loading
 
@@ -60,7 +58,6 @@ class OTPViewModel @Inject constructor() : ViewModel() {
 
 
     fun verifyLogInOTPForSHFCApp(context: Context,uhid:String  ,otp: String  ) {
-
         viewModelScope.launch {
             getPatientDetailsByMobileNo(context)
             _loading.value = true

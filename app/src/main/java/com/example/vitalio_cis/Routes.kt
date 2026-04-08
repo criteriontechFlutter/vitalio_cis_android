@@ -6,7 +6,7 @@ object Routes {
     const val DASHBOARD = "dashboard"
     const val OTP = "otp"
     const val VITALS = "vitals"
-    const val FLUID = "fluid"
+    const val  bLUID = "fluid"
     const val SYMPTOMS = "symptoms"
     const val MEDICINE = "medicine"
     const val DIET = "diet"
