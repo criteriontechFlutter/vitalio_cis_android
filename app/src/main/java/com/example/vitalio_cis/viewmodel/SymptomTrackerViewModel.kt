@@ -3,6 +3,7 @@ package com.example.vitalio_cis.viewmodel
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,6 +12,7 @@ import androidx.navigation.NavController
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
+import com.example.vitalio_cis.model.Problem
 import com.example.vitalio_cis.model.SymptomApiResponse
 import com.example.vitalio_cis.model.SymptomItem
 import com.example.vitalio_cis.model.Vital
@@ -25,6 +27,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.model.ProblemResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
 
@@ -33,13 +41,36 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
     private val _symptomTrackerList = MutableStateFlow<List<SymptomItem>>(emptyList())
     val symptomTrackerList: StateFlow<List<SymptomItem>> = _symptomTrackerList
 
+
+
+    private val _symptomIconsList = MutableStateFlow<List<Problem>>(emptyList())
+    val symptomIconsList: StateFlow<List<Problem>> = _symptomIconsList
+
+    private val _searchedsymptomList = mutableStateOf<List<Problem>>(emptyList())
+    val  searchedsymptomList: State<List<Problem>> = _searchedsymptomList
+
     private val _selectedSymptoms = MutableStateFlow<List<SymptomItem>>(emptyList())
     val selectedSymptoms: StateFlow<List<SymptomItem>> = _selectedSymptoms
+    fun updateSelectedSymptoms(){
+        _selectedSymptoms.value=emptyList<SymptomItem>()
+    }
+
+
     fun addSymptom(symptom: SymptomItem) {
         val updatedList = _selectedSymptoms.value.toMutableList()
-        if (!updatedList.contains(symptom)) {
+
+        val alreadyExists = updatedList.any { it.detailId == symptom.detailId }
+
+        if (!alreadyExists) {
             updatedList.add(symptom)
+
+            println("✅ Added Symptom: ${symptom.details} (ID: ${symptom.detailId})")
+        } else {
+            println("⚠️ Already Exists: ${symptom.details}")
         }
+
+        println("📦 Current Selected List: $updatedList")
+
         _selectedSymptoms.value = updatedList
     }
 
@@ -81,7 +112,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
 
                 val result: String? = prefsCache.getData(
                     key =  ApiEndPointCorporateModule().getSymptoms,
-                    clazz = String::class.java,
+
                     shouldSave = true
                 ) {
 
@@ -117,6 +148,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                     _symptomTrackerList.value = apiResponse.responseValue
 
 
+                    Log.d("LoginViewModel", "OTP SuccessSuccess (API/Cache): $result")
                 } else {
                     Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
                 }
@@ -132,7 +164,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun insertSymptoms(context: Context,   ) {
+    fun insertSymptoms(context: Context, navController: NavController  ) {
 
         viewModelScope.launch {
 
@@ -142,7 +174,6 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
 
             try {
 
-                val dtDataTable = mutableListOf<Map<String, String>>()
 
                 // Get the current timestamp once
                 val now = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -153,37 +184,47 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                 }
 
                 // Populate data table from selected symptoms
-//                selectedSymptoms.forEach { symptom ->
-//                    dtDataTable.add(
-//                        mapOf(
-//                            "detailID" to symptom.pdmID.toString(),
-//                            "detailsDate" to now,
-//                            "details" to symptom.details,
-//                            "pdmId" to "1"
-//                        )
-//                    )
-//                }
+                val dtDataTable = _selectedSymptoms.value.map { symptom ->
+                    mapOf(
+                        "detailID" to symptom.detailId.toString(),
+                        "detailsDate" to now,
+                        "details" to symptom.details,
+                        "pdmId" to "1"
+                    )
+                }
+//
+//                val queryParams = mapOf(
+//                    "uhID" to (prefsCache.getPatient()?.uhId ?: ""),
+//                    "jsonSymtoms" to Gson().toJson(dtDataTable),
+//                    "clientId" to  prefsCache.getPatient()?.clientId.toString(),
+//                    "isFromPatient" to true,
+//                )
 
-                val queryParams = mapOf(
-                    "uhID" to (prefsCache.getPatient()?.uhId ?: ""),
-                    "jsonSymtoms" to Gson().toJson(dtDataTable),
-                    "clientId" to  prefsCache.getPatient()?.clientId.toString(),
-                    "isFromPatient" to true,
+                val queryParams =  mapOf(
+                    "uhId" to "UHID2604500011",
+                    "jsonSymtoms" to "[{\"detailID\":102,\"detailsDate\":\"2026-01-15T11:00:00\", " +
+                            "\"details\":\"Cough and sore throat\",\"pdmId\":2},{\"detailID\":0," +
+                            "\"detailsDate\":\"2026-01-15T12:30:00\",\"details\":" +
+                            "\"Fever with unknown origion\",\"pdmId\":2}]",
+                    "clientId" to "45",
+                    "type" to "Symptoms",
+                    "isFromPatient" to true
                 )
+
                 val result: String? = prefsCache.getData(
-                    key =  ApiEndPointCorporateModule().getSymptoms,
-                    clazz = String::class.java,
+                    key =  ApiEndPointCorporateModule().insertSymtoms,
+
                     shouldSave = true
                 ) {
 
                     val response = ApiHelper().callApi(
                         context,
-                        ApiEndPointCorporateModule().getSymptoms,
+                        ApiEndPointCorporateModule().insertSymtoms,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.module4082.dynamicGet(
+                        ApiClients.module4082.dynamicRawPost(
                             url = url,
-                            params = queryParams,
+                            body = queryParams,
                         )
                     }
 
@@ -203,9 +244,146 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                 if (!result.isNullOrEmpty()) {
 
 
-                    val apiResponse = Gson().fromJson(result, SymptomApiResponse::class.java)
+                    navController.navigate(Routes.SYMPTOMS)
 
-                    _symptomTrackerList.value = apiResponse.responseValue
+                } else {
+                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                }
+
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Error: ${e.message}", e)
+
+            } finally {
+
+                _loading.value = false
+                Log.d("LoginViewModel", "Loading finished")
+            }
+        }
+    }
+
+    fun getProblemsWithIcon(context: Context,   ) {
+
+        viewModelScope.launch {
+
+            _loading.value = true
+
+            val prefsCache = PrefsManager(context)
+
+            try {
+
+
+                val queryParams = mapOf(
+                    "problemName" to "",
+                    "languageId" to "1"
+                )
+
+                val result: String? = prefsCache.getData(
+                    key =  ApiEndPointCorporateModule().getProblemsWithIcon,
+
+                    shouldSave = true
+                ) {
+
+                    val response = ApiHelper().callApi(
+                        context,
+                        ApiEndPointCorporateModule().getProblemsWithIcon,
+                        showNoConnectionDialog = false
+                    ) { url ->
+                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                            url = url,
+                            body = queryParams,
+                        )
+                    }
+
+
+                    _loading.value = false
+                    if (response.isSuccessful) {
+
+                        val bodyString = response.body()?.string()
+
+                        Log.d("LoginViewModel", "API Response: $bodyString")
+
+                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                    } else {
+                        throw Exception("API Error: ${response.code()}")
+                    }
+                }
+                println("✅ Symptoms SymptomsSymptomsSymptoms: ${result}")
+                // ✅ RESULT HANDLE
+                if (!result.isNullOrEmpty()) {
+                    val apiResponse = Gson().fromJson(result, ProblemResponse::class.java)
+                    // StateFlow me update
+                    _symptomIconsList.value = apiResponse.responseValue ?: emptyList()
+                    println("✅ Symptoms fetched: ${_symptomIconsList.value}")
+                } else {
+                    Log.d("LoginViewModel", "API/Cache returned empty: $result")
+                }
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Error: ${e.message}", e)
+
+            } finally {
+
+                _loading.value = false
+                Log.d("LoginViewModel", "Loading finished")
+            }
+        }
+    }
+
+
+
+
+
+    fun getAllProblems(context: Context, query: String  ) {
+
+        viewModelScope.launch {
+
+            _loading.value = true
+
+            val prefsCache = PrefsManager(context)
+
+            try {
+
+
+                val queryParams = mapOf(
+                    "alphabet" to query,
+                    "language" to  1
+                )
+
+                val result: String? = prefsCache.getData(
+                    key =  ApiEndPointCorporateModule().getAllProblems,
+
+                    shouldSave = true
+                ) {
+
+                    val response = ApiHelper().callApi(
+                        context,
+                        ApiEndPointCorporateModule().getAllProblems,
+                        showNoConnectionDialog = false
+                    ) { url ->
+                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                            url = url,
+                            body = queryParams,
+                        )
+                    }
+
+                    if (response.isSuccessful) {
+
+                        val bodyString = response.body()?.string()
+
+                        Log.d("LoginViewModel", "API Response: $bodyString")
+
+                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                    } else {
+                        throw Exception("API Error: ${response.code()}")
+                    }
+                }
+
+                // ✅ RESULT HANDLE
+                if (!result.isNullOrEmpty()) {
+
+
+                    val apiResponse = Gson().fromJson(result, ProblemResponse::class.java)
+
+                    _searchedsymptomList.value = apiResponse.responseValue
 
 
                 } else {
@@ -222,4 +400,5 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
             }
         }
     }
+
 }

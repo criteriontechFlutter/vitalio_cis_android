@@ -50,28 +50,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
-import com.example.vitalio_cis.ui.theme.currentThemeColors
 import com.example.vitalio_cis.ui.theme.getColorScheme
 import com.example.vitalio_cis.utils.CommonTextField
 
 @Composable
 fun FindDoctorsTopSection() {
 
-    val themeViewModel: ThemeViewModel = viewModel()
 
     // Observe the selectedTheme StateFlow
-    val currentTheme by themeViewModel.selectedTheme.collectAsState()
+    val themeViewModel: ThemeViewModel = viewModel()
 
+    // 3️⃣ Collect colors as Compose State to trigger recomposition when theme changes
+    val colors by themeViewModel.colorScheme.collectAsState()
     // Get the color scheme for the current theme
-    val colors = getColorScheme(currentTheme)
-    Column(modifier = Modifier.fillMaxWidth().background(Color.White)
+    Column(modifier = Modifier.fillMaxWidth().background(colors.white)
         .statusBarsPadding()      // Adds padding equal to status bar height
         .padding(16.dp)) {
 
         // Top Bar with Back button, Title, Date and Calendar Icon
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().background(color = currentThemeColors().primary )
+            modifier = Modifier.fillMaxWidth().background(color =colors.primary )
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,

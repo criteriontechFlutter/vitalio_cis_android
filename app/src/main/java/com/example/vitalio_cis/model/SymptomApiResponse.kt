@@ -7,7 +7,6 @@ data class SymptomApiResponse(
 )
 
 data class SymptomItem(
-    val pmId: Int,
     val detailId: Int,
     val details: String
 )

@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -23,12 +24,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.NavigationManager
 
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.ui.theme.getColorScheme
 import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
 
@@ -38,10 +44,14 @@ data class GridItem(val title: String, val icon: Int)
 @Composable
 fun DashboardScreen() {
     var selectedIndex by remember { mutableStateOf(0) }
+    val themeViewModel: ThemeViewModel = viewModel()
+
+    // 3️⃣ Collect colors as Compose State to trigger recomposition when theme changes
+    val colors by themeViewModel.colorScheme.collectAsState()
 
     Scaffold(
         modifier = Modifier
-            .background(Color.White),
+            .background(colors.white),
         bottomBar = {
             BottomNavigationBar(selectedIndex) { selectedIndex = it }
         }
@@ -51,21 +61,23 @@ fun DashboardScreen() {
             Spacer(Modifier.height(20.dp))
             Column(
                 modifier = Modifier
-                    .background(Color.White)
+                    .background(colors.white)
                     .padding(horizontal = 16.dp)
-                    .background(Color.White)
+                    .background(colors.white)
 
             ) {
                 Header()
+                Button(onClick = { themeViewModel.toggleTheme() }) {
+                    Text("Toggle Theme")
+                }
             }
             Column(
                 modifier = Modifier
-                    .padding(padding)
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(colors.white)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
-                    .background(Color.White)
+                    .background(colors.white)
             ) {
 
 
@@ -219,8 +231,8 @@ fun VitalsCard() {
 
 // ------------------- Primary Actions Grid -------------------
 @Composable
-fun PrimaryActionsGrid() {
-
+fun PrimaryActionsGrid(   ) {
+    val navController = LocalNavController.current
     data class GridItem(
         val title: String,
         val icon: Int,
@@ -244,7 +256,7 @@ fun PrimaryActionsGrid() {
     GridItem(
         title = stringResource(R.string.symptoms_tracker),
         icon = R.drawable.symptom_tracker,
-        type = "symptoms"
+        type = "symptomsTracker"
     ),
 
     GridItem(
@@ -294,7 +306,15 @@ fun PrimaryActionsGrid() {
                     .fillMaxWidth()
                     .height(100.dp)
                     .clickable {
-                        NavigationManager.navigate(item.type)   // ✅ GLOBAL NAV
+                        when(item.type) {
+                            "vitals" -> navController.navigate(Routes.VITALS)
+                            "fluid" -> navController.navigate(Routes.FLUID)
+                            "symptomsTracker" -> navController.navigate(Routes.SYMPTOMSTRACKER)
+                            "medicine" -> navController.navigate(Routes.MEDICINE)
+                            "diet" -> navController.navigate(Routes.MANAGE_MEDICINE)
+                            "appointments" -> navController.navigate(Routes.APPOINTMENTS)
+                            "articles" -> navController.navigate(Routes.ARTICLES)
+                        }   // ✅ GLOBAL NAV
                     },
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3))
