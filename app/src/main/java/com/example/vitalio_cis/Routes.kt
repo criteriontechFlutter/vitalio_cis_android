@@ -15,5 +15,7 @@ object Routes {
     const val APPOINTMENTS = "appointments"
     const val ARTICLES = "articles"
     const val MANAGE_MEDICINE = "manageMedicine"
+    const val FINDDOCTOR = "findDoctor"
+    const val DOCTORDETAILS = "doctorDetails"
 
 }

@@ -11,7 +11,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.vitalio_cis.R
+import com.example.vitalio_cis.ui.theme.MyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 
 val latoFont =FontFamily(
@@ -20,11 +22,15 @@ val latoFont =FontFamily(
     Font(R.font.lato_italic, weight = FontWeight.Normal, style = FontStyle.Italic)
 ) // Replace with your Lato font family
 
-class AppTextStyles(private val themeViewModel: ThemeViewModel) {
+object  AppTextStyles  {
 
     /** Collect dynamic theme colors once */
+
     @Composable
-    private fun currentColors() = themeViewModel.colorScheme.collectAsState().value
+    private fun currentColors(): MyColorScheme {
+        val vm: ThemeViewModel = viewModel()
+        return vm.colorScheme.collectAsState().value
+    }
 
     /** Very Large Bold Primary */
     @Composable
@@ -32,7 +38,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 24.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
     @Composable
@@ -40,7 +46,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 24.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
 
@@ -50,7 +56,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 24.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textGreyColor
     )
 
     @Composable
@@ -58,7 +64,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 24.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().textfeild_placehoder_color_grey
+        color = color ?: currentColors().textGreyColor
     )
 
     @Composable
@@ -66,7 +72,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 24.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
     @Composable
@@ -74,7 +80,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 24.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
 
@@ -86,7 +92,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 16.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
     @Composable
@@ -94,7 +100,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 16.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
 
@@ -104,7 +110,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 16.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textGreyColor
     )
 
     @Composable
@@ -112,7 +118,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 16.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().textfeild_placehoder_color_grey
+        color = color ?: currentColors().textGreyColor
     )
 
 
@@ -121,7 +127,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 16.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
     @Composable
@@ -129,7 +135,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 16.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
 
@@ -140,7 +146,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
     @Composable
@@ -148,7 +154,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 18.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
 
@@ -158,7 +164,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
     @Composable
@@ -166,7 +172,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 18.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().textfeild_placehoder_color_grey
+        color = color ?: currentColors().textGreyColor
     )
 
 
@@ -175,7 +181,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
     @Composable
@@ -183,7 +189,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 18.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
 
@@ -193,7 +199,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
     @Composable
@@ -201,7 +207,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textDarkColor
     )
 
 
@@ -211,7 +217,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_black
+        color = color ?: currentColors().textGreyColor
     )
 
     @Composable
@@ -219,7 +225,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().textfeild_placehoder_color_grey
+        color = color ?: currentColors().textGreyColor
     )
 
     /** Very Large Bold Primary */
@@ -228,7 +234,7 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
     @Composable
@@ -236,9 +242,64 @@ class AppTextStyles(private val themeViewModel: ThemeViewModel) {
         fontFamily = latoFont,
         fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
-        color = color ?: currentColors().text_color_white
+        color = color ?: currentColors().textWhiteColor
     )
 
 
     // You can add other styles (WCN, BCB, GCB, etc.) following this pattern
+
+
+    /** Very Large Bold Primary */
+    @Composable
+    fun style12BCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textDarkColor
+    )
+
+    @Composable
+    fun style12BCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textDarkColor
+    )
+
+
+    /** Very Large Bold Primary */
+    @Composable
+    fun style12GCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textGreyColor
+    )
+
+    @Composable
+    fun style12GCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textGreyColor
+    )
+
+    /** Very Large Bold Primary */
+    @Composable
+    fun style12WCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textWhiteColor
+    )
+
+    @Composable
+    fun style12WCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textWhiteColor
+    )
+
+
 }

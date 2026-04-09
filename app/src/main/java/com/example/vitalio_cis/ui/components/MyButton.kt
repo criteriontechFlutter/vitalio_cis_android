@@ -33,8 +33,6 @@ fun MyButton(
     themeViewModel: ThemeViewModel = viewModel()
 ) {
     val colors by themeViewModel.colorScheme.collectAsState()
-    val defaultTextStyle = textStyle ?: AppTextStyles(themeViewModel)
-        .style14GCB(colors.text_color_white)
 
     Button(
         onClick =  onClick,
@@ -45,7 +43,7 @@ fun MyButton(
     ) {
         Text(
             text = text,
-            style = defaultTextStyle
+
         )
     }
 }
@@ -55,7 +53,5 @@ fun MyButton(
 fun dynamicButtonColors(themeViewModel: ThemeViewModel = viewModel()): ButtonColors {
     val colors by themeViewModel.colorScheme.collectAsState()
     return ButtonDefaults.buttonColors(
-        containerColor = colors.primary,       // dynamic background
-        contentColor = colors.text_color_white // dynamic text/icon
     )
 }

@@ -147,20 +147,14 @@ import kotlinx.coroutines.flow.stateIn
 //}
 
 data class MyColorScheme(
-    val login_bg_yellow: Color,
-    val login_bg_red: Color,
-    val primary: Color,
-    val white: Color,
-    val text_color_white: Color,
-    val text_color_black: Color,
-    val textfeild_placehoder_color_grey: Color,
-    val textfeild_title_color_grey: Color,
-    val textfeild_border_color_grey: Color,
-    val textfeild_validation_color: Color,
-    val bottomsheet_slide_up_color: Color,
-    val dashboard_bottomsheet_color: Color,
-    val dashboard_energy_container_color: Color,
-    val dashboard_priority_action_container_color: Color
+    val dashboardBackgroundColor: Color,
+    val dashboardContainerColor: Color,
+
+    val textDarkColor: Color,
+    val textGreyColor: Color,
+    val textWhiteColor: Color,
+
+
 )
 
 // -----------------------------
@@ -174,40 +168,23 @@ enum class AppTheme {
 // 3️⃣ Get Color Scheme
 // -----------------------------
 fun getColorScheme(theme: AppTheme): MyColorScheme = when (theme) {
+
     AppTheme.LIGHT -> MyColorScheme(
-        login_bg_yellow = Color(0xFFFFDD00),
-        login_bg_red = Color(0xFFBB86FC),
-        primary = Color(0xFF546788),
-        text_color_black = Color(0xFF202529),
-        text_color_white = Color(0xFFEDF1F6),
-        textfeild_placehoder_color_grey = Color(0xFFBABFC9),
-        textfeild_title_color_grey = Color(0xFF546788),
-        textfeild_border_color_grey = Color(0xFFEDF1F6),
-        textfeild_validation_color = Color(0xFFFF3737),
-        bottomsheet_slide_up_color = Color(0xFFD9D9D9),
-        dashboard_bottomsheet_color = Color(0xFFF9F9F9),
-        dashboard_energy_container_color = Color.White,
-        dashboard_priority_action_container_color = Color(0xFFEAF4FF),
-        white = Color.White
+        dashboardBackgroundColor = Color.White,
+        dashboardContainerColor = Color(0xFFF5F8FC),
+        textDarkColor = Color(0xFF202529),
+        textGreyColor = Color(0xFF546788),
+                textWhiteColor =  Color.White,
     )
+
     AppTheme.DARK -> MyColorScheme(
-        login_bg_yellow = Color(0xFFFFDD00),
-        login_bg_red = Color(0xFFBB86FC),
-        primary = Color(0xFF0079FF),
-        text_color_black = Color(0xFF202529),
-        text_color_white = Color(0xFF202529),
-        textfeild_placehoder_color_grey = Color(0xFFBABFC9),
-        textfeild_title_color_grey = Color(0xFF546788),
-        textfeild_border_color_grey = Color(0xFFEDF1F6),
-        textfeild_validation_color = Color(0xFFFF3737),
-        bottomsheet_slide_up_color = Color(0xFFD9D9D9),
-        dashboard_bottomsheet_color = Color(0xFFF9F9F9),
-        dashboard_energy_container_color = Color.White,
-        dashboard_priority_action_container_color = Color(0xFFEAF4FF),
-        white = Color.White
+        dashboardBackgroundColor = Color(0xFF0F1419),   // dark bg
+        dashboardContainerColor = Color(0xFF1C2228),    // dark card
+        textDarkColor = Color(0xFFFFFFFF),              // white text
+        textGreyColor = Color(0xFF9FB0C3)    ,
+        textWhiteColor = Color.White,         // light grey
     )
 }
-
 // -----------------------------
 // 4️⃣ Theme ViewModel
 // -----------------------------

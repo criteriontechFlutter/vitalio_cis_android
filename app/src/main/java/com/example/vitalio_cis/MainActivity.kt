@@ -1,5 +1,6 @@
 package com.example.vitalio_cis
 
+import android.R.attr.type
 import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Bundle
@@ -23,18 +24,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.critetiontech.ctvitalio.ui.screens.LoginScreen
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.ui.screens.AppointmentRow
 import com.example.vitalio_cis.ui.screens.DashboardScreen
+import com.example.vitalio_cis.ui.screens.DoctorDetailsScreen
 import com.example.vitalio_cis.ui.screens.FindDoctorsTopSection
 import com.example.vitalio_cis.ui.screens.ManageMedicationsScreen
  import com.example.vitalio_cis.ui.screens.MedicineCard
 import com.example.vitalio_cis.ui.screens.MedicineReminderScreen
 import com.example.vitalio_cis.ui.screens.OtpScreen
+import com.example.vitalio_cis.ui.screens.PreviewFindDoctors
 import com.example.vitalio_cis.ui.screens.SymptomTrackerScreen
 import com.example.vitalio_cis.ui.screens.SymptomsView
 import com.example.vitalio_cis.ui.screens.VitalsScreen
@@ -63,8 +68,7 @@ class MainActivity : ComponentActivity() {
 
                     Surface(
                         modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-                        color = colors.dashboard_bottomsheet_color
-                    ) {
+                     ) {
                         NavHost(
                             navController = navController,
                             startDestination = if (PrefsManager(context).getPatient()?.uhId?.isNotEmpty()
@@ -73,11 +77,25 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
                             composable(Routes.LOGIN) { LoginScreen() }
                             composable(Routes.OTP) { OtpScreen() }
+                            composable(Routes.VITALS) { VitalsScreen() }
                             composable(Routes.SYMPTOMSTRACKER) { SymptomTrackerScreen() }
                             composable(Routes.APPOINTMENTS) { FindDoctorsTopSection() }
                             composable(Routes.SYMPTOMS) { SymptomsView() }
                             composable(Routes.MANAGE_MEDICINE) { ManageMedicationsScreen() }
                             composable(Routes.MEDICINE) { MedicineReminderScreen() }
+                            composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
+                            composable(Routes.DOCTORDETAILS+"/{doctorId}/{days}", arguments = listOf(
+                                navArgument("doctorId") { type = NavType.StringType },
+                                navArgument("days") { type = NavType.StringType }
+                            )
+                                ) { backStackEntry ->
+
+                                val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
+                                val days = backStackEntry.arguments?.getString("days") ?: ""
+                                DoctorDetailsScreen(
+                                doctorId = doctorId,
+                                days = days
+                            )}
                         }
                     }
                 }

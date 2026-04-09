@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.NavigationManager
 
@@ -51,64 +52,77 @@ fun DashboardScreen() {
 
     Scaffold(
         modifier = Modifier
-            .background(colors.white),
+            .background(colors.dashboardBackgroundColor),
         bottomBar = {
             BottomNavigationBar(selectedIndex) { selectedIndex = it }
         }
     ) { padding ->
 
-        Column  {
-            Spacer(Modifier.height(20.dp))
-            Column(
-                modifier = Modifier
-                    .background(colors.white)
-                    .padding(horizontal = 16.dp)
-                    .background(colors.white)
+        Box {
+            Column {
+                Spacer(Modifier.height(20.dp))
+                Column(
+                    modifier = Modifier
+                        .background(colors.dashboardBackgroundColor)
+                        .padding(horizontal = 16.dp)
+                        .background(colors.dashboardBackgroundColor)
 
-            ) {
-                Header()
-                Button(onClick = { themeViewModel.toggleTheme() }) {
-                    Text("Toggle Theme")
+                ) {
+                    Header()
+                    Button(onClick = { themeViewModel.toggleTheme() }) {
+                        Text("Toggle Theme",
+                            style = AppTextStyles.style24BCB())
+                    }
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(colors.dashboardBackgroundColor)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                        .background(colors.dashboardBackgroundColor)
+                ) {
+
+
+                    ToTakeCard()
+
+                    Spacer(Modifier.height(20.dp))
+
+                    VitalsCard()
+
+                    Spacer(Modifier.height(20.dp))
+
+                    Text(
+                        text = "Primary Actions",
+                        style = AppTextStyles.style18BCB())
+
+                    Spacer(Modifier.height(12.dp))
+
+                    PrimaryActionsGrid()
+
+                    Spacer(Modifier.height(20.dp))
+
+                    HomeScreen()
+
+                    Spacer(Modifier.height(20.dp))
+
+                    OtherSection()
+                    Spacer(Modifier.height(70.dp))
                 }
             }
-            Column(
+
+
+            FloatingActionButton(
+                onClick = {},
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(colors.white)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-                    .background(colors.white)
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp),
+                containerColor = Color(0xFF2F6FE4)
             ) {
-
-
-
-                ToTakeCard()
-
-                Spacer(Modifier.height(20.dp))
-
-                VitalsCard()
-
-                Spacer(Modifier.height(20.dp))
-
-                Text(
-                    text = "Primary Actions",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                PrimaryActionsGrid()
-
-                Spacer(Modifier.height(20.dp))
-
-                HomeScreen()
-
-                Spacer(Modifier.height(20.dp))
-
-                OtherSection()
+                Icon(Icons.Default.Home, contentDescription = null)
             }
         }
+
     }
 }
 
@@ -176,12 +190,15 @@ fun Header() {
 // ------------------- To Take Card -------------------
 @Composable
 fun ToTakeCard() {
+
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     Column {
         Text("To Take", fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3)),
+            colors = CardDefaults.cardColors(containerColor =colors.dashboardContainerColor),
         ) {
             Row(
                 modifier = Modifier
@@ -204,11 +221,14 @@ fun ToTakeCard() {
 // ------------------- Vitals Card -------------------
 @Composable
 fun VitalsCard() {
+
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     Column {
         Text("Vitals", fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
 
-        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3))) {
+        Card(colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -233,6 +253,9 @@ fun VitalsCard() {
 @Composable
 fun PrimaryActionsGrid(   ) {
     val navController = LocalNavController.current
+
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     data class GridItem(
         val title: String,
         val icon: Int,
@@ -280,7 +303,7 @@ fun PrimaryActionsGrid(   ) {
     GridItem(
         title = stringResource(R.string.appointments),
         icon = R.drawable.appointments,
-        type = "appointments"
+        type = "findDoctor"
     ),
 
     GridItem(
@@ -306,18 +329,18 @@ fun PrimaryActionsGrid(   ) {
                     .fillMaxWidth()
                     .height(100.dp)
                     .clickable {
-                        when(item.type) {
+                        when (item.type) {
                             "vitals" -> navController.navigate(Routes.VITALS)
                             "fluid" -> navController.navigate(Routes.FLUID)
                             "symptomsTracker" -> navController.navigate(Routes.SYMPTOMSTRACKER)
                             "medicine" -> navController.navigate(Routes.MEDICINE)
                             "diet" -> navController.navigate(Routes.MANAGE_MEDICINE)
-                            "appointments" -> navController.navigate(Routes.APPOINTMENTS)
+                            "findDoctor" -> navController.navigate(Routes.FINDDOCTOR)
                             "articles" -> navController.navigate(Routes.ARTICLES)
                         }   // ✅ GLOBAL NAV
                     },
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3))
+                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
             ) {
 
                 Column(
@@ -336,9 +359,7 @@ fun PrimaryActionsGrid(   ) {
 
                     Text(
                         text = item.title,
-                        textAlign = TextAlign.Center,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
+                        style = AppTextStyles.style14BCB()
                     )
                 }
             }
@@ -465,16 +486,21 @@ fun PrimaryActionsGrid(   ) {
 // ------------------- Home Screen -------------------
 @Composable
 fun HomeScreen() {
+
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(Modifier.height(10.dp))
-        Text("Upcoming Appointments", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Text("Upcoming Appointments",
+                style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(10.dp))
         AppointmentCard()
         Spacer(Modifier.height(20.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Featured Articles", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Text("View All", color = Color(0xFF4A6CF7))
+            Text("Featured Articles",
+                style = AppTextStyles.style18BCB())
+            Text("View All",
+                style = AppTextStyles.style18BCN())
         }
 
         Spacer(Modifier.height(10.dp))
@@ -539,12 +565,17 @@ fun AppointmentRow(icon: ImageVector, text: String) {
 // ------------------- Article Card -------------------
 @Composable
 fun ArticleCard(title: String, author: String, date: String) {
-    Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3)), modifier = Modifier.fillMaxWidth()) {
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
+    Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(title,
+                style = AppTextStyles.style14BCN())
             Spacer(Modifier.height(6.dp))
-            Text(author, fontSize = 12.sp, color = Color.Gray)
-            Text(date, fontSize = 12.sp, color = Color.Gray)
+            Text(author,
+                style = AppTextStyles.style12GCN())
+            Text(date,
+                style = AppTextStyles.style12GCN())
         }
     }
 }
@@ -556,7 +587,8 @@ fun OtherSection() {
         Column(modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)) {
-            Text("Other", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text("Other",
+                style = AppTextStyles.style18GCN())
             Spacer(Modifier.height(12.dp))
             Row {
                 ChronicleCard(modifier = Modifier.weight(1f))
@@ -568,22 +600,15 @@ fun OtherSection() {
                 }
             }
         }
-
-        FloatingActionButton(
-            onClick = {},
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(20.dp),
-            containerColor = Color(0xFF2F6FE4)
-        ) {
-            Icon(Icons.Default.Home, contentDescription = null)
-        }
     }
 }
 
 @Composable
 fun ChronicleCard(modifier: Modifier) {
-    Card(modifier = modifier.height(200.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3))) {
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
+    Card(modifier = modifier.height(200.dp),
+        shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Column {
                 Text("Activities", fontSize = 12.sp, color = Color.Gray)
@@ -613,9 +638,12 @@ fun ChronicleCard(modifier: Modifier) {
 
 @Composable
 fun UploadReportCard() {
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     Card(modifier = Modifier
         .fillMaxWidth()
-        .height(95.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3))) {
+        .height(95.dp), shape = RoundedCornerShape(18.dp), colors =
+        CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(painter = painterResource(R.drawable.upload_report), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Unspecified)
             Spacer(Modifier.height(6.dp))
@@ -626,9 +654,12 @@ fun UploadReportCard() {
 
 @Composable
 fun LifestyleCard() {
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     Card(modifier = Modifier
         .fillMaxWidth()
-        .height(95.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDF3))) {
+        .height(95.dp), shape = RoundedCornerShape(18.dp), colors =
+        CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(painter = painterResource(R.drawable.intervention), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Unspecified)
             Spacer(Modifier.height(6.dp))
