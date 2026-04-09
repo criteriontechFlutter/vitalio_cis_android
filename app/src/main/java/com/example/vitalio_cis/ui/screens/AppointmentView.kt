@@ -63,14 +63,14 @@ fun FindDoctorsTopSection() {
     // 3️⃣ Collect colors as Compose State to trigger recomposition when theme changes
     val colors by themeViewModel.colorScheme.collectAsState()
     // Get the color scheme for the current theme
-    Column(modifier = Modifier.fillMaxWidth().background(colors.white)
+    Column(modifier = Modifier.fillMaxWidth().background(colors.dashboardContainerColor)
         .statusBarsPadding()      // Adds padding equal to status bar height
         .padding(16.dp)) {
 
         // Top Bar with Back button, Title, Date and Calendar Icon
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().background(color =colors.primary )
+            modifier = Modifier.fillMaxWidth().background(color =colors.dashboardBackgroundColor )
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,

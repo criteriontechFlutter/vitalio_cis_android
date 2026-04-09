@@ -18,4 +18,7 @@ class ApiEndPointCorporateModule {
     val insertSymtoms="api/PatientPrescription/AddSymtomsOrDiagnosis"
     val getProblemsWithIcon="Patient/getProblemsWithIcon"
     val getAllProblems="Patient/getAllProblems"
+    val fetchDoctorsAvalability="api/DoctorOPDSchedule/FetchDoctorsAvalability"
+    val getDoctorProfile="api/Users/GetDoctorProfile"
+    val fetchAvailableSlots="api/DoctorOPDSchedule/FetchAvailableSlots"
 }
