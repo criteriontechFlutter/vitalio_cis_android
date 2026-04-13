@@ -3,11 +3,13 @@ package com.example.vitalio_cis
 import android.R.attr.type
 import android.annotation.SuppressLint
 import android.app.Application
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -32,6 +34,7 @@ import androidx.navigation.navArgument
 import com.critetiontech.ctvitalio.ui.screens.LoginScreen
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.ui.screens.AppointmentRow
+import com.example.vitalio_cis.ui.screens.BookingConfirmationScreen
 import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.example.vitalio_cis.ui.screens.DoctorDetailsScreen
 import com.example.vitalio_cis.ui.screens.FindDoctorsTopSection
@@ -54,6 +57,7 @@ import com.google.firebase.FirebaseApp
 
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -77,6 +81,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
                             composable(Routes.LOGIN) { LoginScreen() }
                             composable(Routes.OTP) { OtpScreen() }
+                            composable(Routes.BOOKINGCONFERMATION) { BookingConfirmationScreen() }
                             composable(Routes.VITALS) { VitalsScreen() }
                             composable(Routes.SYMPTOMSTRACKER) { SymptomTrackerScreen() }
                             composable(Routes.APPOINTMENTS) { FindDoctorsTopSection() }

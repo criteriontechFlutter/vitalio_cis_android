@@ -84,6 +84,22 @@ object  AppTextStyles  {
     )
 
 
+    @Composable
+    fun style24PCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
+    @Composable
+    fun style24PCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
 
 
     /** Very Large Bold Primary */
@@ -140,6 +156,23 @@ object  AppTextStyles  {
 
 
 
+
+    @Composable
+    fun style16PCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
+    @Composable
+    fun style16PCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
     /** Very Large Bold Primary */
     @Composable
     fun style18BCB(color: Color? = null) = TextStyle(
@@ -193,6 +226,24 @@ object  AppTextStyles  {
     )
 
 
+
+    @Composable
+    fun style18PCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
+    @Composable
+    fun style18PCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
+
     /** Very Large Bold Primary */
     @Composable
     fun style14BCB(color: Color? = null) = TextStyle(
@@ -243,6 +294,22 @@ object  AppTextStyles  {
         fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
         color = color ?: currentColors().textWhiteColor
+    )
+
+    @Composable
+    fun style14PCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
+    @Composable
+    fun style14PCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textPrimaryBlueColor
     )
 
 
@@ -301,5 +368,21 @@ object  AppTextStyles  {
         color = color ?: currentColors().textWhiteColor
     )
 
+
+    @Composable
+    fun style12PCB(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
+
+    @Composable
+    fun style12PCN(color: Color? = null) = TextStyle(
+        fontFamily = latoFont,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+        color = color ?: currentColors().textPrimaryBlueColor
+    )
 
 }

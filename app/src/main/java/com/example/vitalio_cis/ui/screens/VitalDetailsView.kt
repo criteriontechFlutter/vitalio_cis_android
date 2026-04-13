@@ -2,6 +2,7 @@ package com.example.vitalio_cis.ui.screens
 
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.utils.AppTextStyles
+import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.viewmodel.OTPViewModel
 import com.example.vitalio_cis.viewmodel.VitalDetailViewModel
 import java.text.SimpleDateFormat
@@ -34,35 +39,21 @@ import java.util.concurrent.TimeUnit
 fun VitalsScreen( viewModel: VitalDetailViewModel = viewModel()) {
 
     val context = LocalContext.current
+
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     LaunchedEffect(Unit) {
         viewModel.getPatientDetailsByMobileNo(context)
     }
 
-    Scaffold(
-        topBar = {
-
-            TopAppBar(
-                title = { Text("Vitals") },
-
-                navigationIcon = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.ArrowBack, null)
-                    }
-                },
-
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Settings, null)
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    CommonAppBar(
+        title = "Vitals",
+    ) {
 
         Column(
             modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp).
+                    background(colors.dashboardBackgroundColor)
                 .verticalScroll(rememberScrollState())
         ) {
             val vitals by viewModel.vitalList.collectAsState()
@@ -139,12 +130,14 @@ fun VitalCard(
     time: String
 ) {
 
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 12.dp),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F6FA))
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
     ) {
 
         Row(
@@ -164,10 +157,8 @@ fun VitalCard(
 
                     Text(
                         text = title,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                        style = AppTextStyles.style16BCB())
+
 
 
                 }
@@ -190,26 +181,23 @@ fun VitalCard(
 
                     Text(
                         unit,
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                        style = AppTextStyles.style12GCN())
+
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     time.toString(),
-                    fontSize = 11.sp,
-                    color = color
-                )
+                    style = AppTextStyles.style12GCN().copy(fontSize = 11.sp))
+
             }
 
             Column   {
                 Text(
                     "Add Vital",
-                    color = Color(0xFF2962FF),
-                    fontSize = 12.sp
-                )
+                            style = AppTextStyles.style12PCN()  )
+
 //                MiniGraph(color)
             }
         }

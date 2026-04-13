@@ -45,9 +45,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.utils.CommonButton
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
 import com.example.vitalio_cis.viewmodel.VitalDetailViewModel
 data class SymptomQuestion(
@@ -62,6 +66,8 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
     val context = LocalContext.current
 
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     // 🔹 API Call
     LaunchedEffect(Unit) {
         viewModel.getSymptoms(context)
@@ -103,139 +109,124 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
     val navController = LocalNavController.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F6F8))
-            .padding(16.dp)
+    CommonAppBar(
+        title = "Symptom Tracker",
     ) {
-
-        // 🔹 Top Bar
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "")
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Symptom Tracker", fontSize = 18.sp)
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // 🔹 Image
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.dashboardBackgroundColor)
+                .padding(16.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.symptom_tacker),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 23.dp),
-                contentScale = ContentScale.FillWidth
-            )
-        }
 
-        // 🔹 Question Text
-        Text(
-            text = buildAnnotatedString {
-                append(currentQuestion.prefix)
-                withStyle(
-                    SpanStyle(
-                        color = Color(0xFF2F6BFF),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                ) {
-                    append(currentQuestion.highlight)
-                }
-                append(currentQuestion.suffix)
-            },
-            fontSize = 22.sp
-        )
+            // 🔹 Top Bar
 
-        Spacer(modifier = Modifier.height(20.dp))
 
-        // 🔥 Buttons
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-
-            // ✅ YES BUTTON FIXED
-            Button(
-                onClick = {
-                    viewModel.addSymptom(currentSymptom)
-
-                    if (currentIndex < questions.lastIndex) {
-                        currentIndex++
-                    } else {
-                        viewModel.insertSymptoms(context, navController)
-                    }
-                },
+            // 🔹 Image
+            Box(
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(6.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE2E7F0),
-                    contentColor = Color.Black
-                )
+                contentAlignment = Alignment.Center
             ) {
-                Text("Yes")
-            }
-
-            // ❌ NO BUTTON FIXED
-            Button(
-                onClick = {
-                    viewModel.removeSymptom(currentSymptom)
-
-                    if (currentIndex < questions.lastIndex) {
-                        currentIndex++
-                    } else {
-                        viewModel.insertSymptoms(context, navController)
-                    }
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                shape = RoundedCornerShape(6.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE4EEFF),
-                    contentColor = Color.White
-                )
-            ) {
-                Text("No")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 🔹 Indicator
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            repeat(questions.size) { index ->
-                Box(
+                Image(
+                    painter = painterResource(R.drawable.symptom_tacker),
+                    contentDescription = null,
                     modifier = Modifier
-                        .padding(4.dp)
-                        .width(if (index == safeIndex) 25.dp else 6.dp)
-                        .height(5.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (index == safeIndex) Color.Blue
-                            else Color.LightGray
-                        )
+                        .fillMaxWidth()
+                        .padding(horizontal = 23.dp),
+                    contentScale = ContentScale.FillWidth
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            // 🔹 Question Text
+            Text(
+                text = buildAnnotatedString {
+                    append(currentQuestion.prefix)
+                    withStyle(
+                        SpanStyle(
+                            color = Color(0xFF2F6BFF),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    ) {
+                        append(currentQuestion.highlight)
+                    }
+                    append(currentQuestion.suffix)
+                },
 
-        // 🔹 Back
-        if (safeIndex > 0) {
+                style = AppTextStyles.style18BCB()
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 🔥 Buttons
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                CommonButton(
+                    text = "Yes",
+                    textStyle = AppTextStyles.style14BCB(),
+
+                    modifier = Modifier.weight(1f) ,
+                    containerColor = colors.btnGreyColor,
+                    onClick = {
+                        viewModel.addSymptom(currentSymptom)
+
+                        if (currentIndex < questions.lastIndex) {
+                            currentIndex++
+                        } else {
+                            viewModel.insertSymptoms(context, navController)
+                        }
+                    }
+                )
+
+                CommonButton(
+                    text = "No",
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        viewModel.removeSymptom(currentSymptom)
+
+                        if (currentIndex < questions.lastIndex) {
+                            currentIndex++
+                        } else {
+                            viewModel.insertSymptoms(context, navController)
+                        }
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 🔹 Indicator
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { currentIndex-- },
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "")
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Back to previous question")
+                repeat(questions.size) { index ->
+                    Box(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .width(if (index == safeIndex) 25.dp else 6.dp)
+                            .height(5.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (index == safeIndex) Color.Blue
+                                else Color.LightGray
+                            )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 🔹 Back
+            if (safeIndex > 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { currentIndex-- },
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "")
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Back to previous question")
+                }
             }
         }
     }
