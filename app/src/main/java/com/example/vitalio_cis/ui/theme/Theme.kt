@@ -149,13 +149,13 @@ import kotlinx.coroutines.flow.stateIn
 data class MyColorScheme(
     val dashboardBackgroundColor: Color,
     val dashboardContainerColor: Color,
-
     val textDarkColor: Color,
     val textGreyColor: Color,
     val textWhiteColor: Color,
 
-
 )
+
+
 
 // -----------------------------
 // 2️⃣ Theme Enum
@@ -174,7 +174,7 @@ fun getColorScheme(theme: AppTheme): MyColorScheme = when (theme) {
         dashboardContainerColor = Color(0xFFF5F8FC),
         textDarkColor = Color(0xFF202529),
         textGreyColor = Color(0xFF546788),
-                textWhiteColor =  Color.White,
+        textWhiteColor =  Color.White,
     )
 
     AppTheme.DARK -> MyColorScheme(
