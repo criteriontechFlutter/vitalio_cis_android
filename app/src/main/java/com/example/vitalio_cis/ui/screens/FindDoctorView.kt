@@ -23,9 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.model.Doctor
+import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.viewmodel.FindDoctorViewModel
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
 
@@ -36,6 +39,10 @@ import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
 fun DoctorCard(doctor: Doctor) {
 
 
+
+
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     val navController = LocalNavController.current
     val shortDays = doctor.scheduleDays
         .split(",") // split multiple days
@@ -45,11 +52,13 @@ fun DoctorCard(doctor: Doctor) {
 
     Box(
         modifier = Modifier
-            .fillMaxWidth().clickable(){
-                navController.navigate(Routes.DOCTORDETAILS+"/"+doctor.assignedUserId.toString()+"/"+shortDays.toString(),)
+            .fillMaxWidth()
+            .clickable() {
+                navController.navigate(Routes.DOCTORDETAILS + "/" + doctor.assignedUserId.toString() + "/" + shortDays.toString(),)
             }
             .clip(RoundedCornerShape(12.dp)) // apply rounded corners
-            .background(Color.White)  .padding(3.dp)    // background color
+            .background(colors.dashboardContainerColor)
+            .padding(3.dp)    // background color
 
 
     ) {
@@ -113,8 +122,15 @@ fun FindDoctorsScreen(
     clinicAddress: String = "Main Bazaar Road, Aluva, Kochi - 683101",
     selectedDate: String = "16.01.2025",
     onBack: () -> Unit = {},
-    onClinicSwitch: () -> Unit = {}
+    onClinicSwitch: () -> Unit = {},
+            viewModel: FindDoctorViewModel = viewModel()
 ) {
+
+
+
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
+
     var searchQuery by remember { mutableStateOf("") }
 
     // Filter doctors by name or role
@@ -123,24 +139,12 @@ fun FindDoctorsScreen(
                 (it.departmentName?.contains(searchQuery, ignoreCase = true) ?: false)
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF7F8FA))) {
+    Column(modifier = Modifier
+        .fillMaxSize().padding(16.dp)
+        .background(colors.dashboardBackgroundColor)) {
 
         // -------------------- Top Bar --------------------
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null)
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Find Doctors", fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
-            Spacer(modifier = Modifier.weight(1f))
-            Text(text = selectedDate)
-            IconButton(onClick = { /* TODO: show date picker */ }) {
-                Icon(Icons.Default.DateRange, contentDescription = null)
-            }
-        }
+
 
         // -------------------- Clinic Info --------------------
         Card(
@@ -148,7 +152,6 @@ fun FindDoctorsScreen(
             elevation = CardDefaults.cardElevation(4.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
                 .clickable { onClinicSwitch() }
         ) {
             Row(
@@ -173,17 +176,12 @@ fun FindDoctorsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // -------------------- Search Bar --------------------
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Search doctor by name or role") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
 
+
+        MyTextField(
+            value = viewModel.searchText,
+            onValueChange = { viewModel.onSearchChange(it) },
+            placeholderText = "Search doctor by name or role"
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -191,7 +189,6 @@ fun FindDoctorsScreen(
         // -------------------- Doctor Grid --------------------
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize()
@@ -216,5 +213,9 @@ fun PreviewFindDoctors(viewModel: FindDoctorViewModel = viewModel()) {
     }
 
 
-    FindDoctorsScreen(doctors = doctors  )
+    CommonAppBar(
+        title = "Find Doctors",
+    ) {
+        FindDoctorsScreen(doctors = doctors)
+    }
 }

@@ -3,7 +3,9 @@ package com.example.vitalio_cis.viewmodel
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -24,6 +26,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class FindDoctorViewModel @Inject constructor() : ViewModel() {
+
+
+
+
+    var searchText by mutableStateOf("")
+        private set
+
+    fun onSearchChange(value: String) {
+        searchText = value
+    }
 
     private val _loading = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loading

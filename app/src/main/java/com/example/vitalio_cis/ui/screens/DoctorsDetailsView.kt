@@ -25,7 +25,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.model.SlotData
+import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.utils.CommonButton
 import com.example.vitalio_cis.viewmodel.DoctorDetailsViewModel
 import com.google.gson.Gson
 import java.time.LocalDate
@@ -40,101 +45,107 @@ fun DoctorDetailsScreen(
     viewModel: DoctorDetailsViewModel = viewModel()
 ) {
 
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
     val context = LocalContext.current
     val doctor by viewModel.doctor.collectAsState()
-
     LaunchedEffect(Unit) {
         viewModel.getDoctorProfile(context, doctorId)
-        viewModel.fetchAvailableSlots(context,doctorId)
+        viewModel.fetchAvailableSlots(context, doctorId)
     }
 
-    doctor?.let { doc ->
+    CommonAppBar(
+        title = "Doctor’s Details",
+    ) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(16.dp)
-        ) {
+        val navController = LocalNavController.current
 
-            DoctorHeader()
 
-            Spacer(modifier = Modifier.height(16.dp))
+        doctor?.let { doc ->
 
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(0.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                )
-            ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.dashboardBackgroundColor)
+                    .padding(16.dp)
+            )
+            {
 
-                Column(modifier = Modifier.padding(16.dp)) {
 
-                    DoctorTopSection(doc, days)
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-
-                        InfoCard(
-                            title = doc.experience.toString(),
-                            subtitle = "Experience",
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        InfoCard(
-                            title = doc.consultedPatientCount,
-                            subtitle = "Patients",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Doctor Biography",
-                        fontWeight = FontWeight.SemiBold
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(0.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = colors.dashboardBackgroundColor
                     )
+                ) {
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Column(modifier = Modifier.padding(16.dp)) {
 
-                    Text(
-                        text = doc.biography ?: "No biography available",
-                        fontSize = 13.sp,
-                        color = Color.Gray
-                    )
+                        DoctorTopSection(doc, days)
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    ToggleButtons()
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                            InfoCard(
+                                title = doc.experience.toString(),
+                                subtitle = "Experience",
+                                modifier = Modifier.weight(1f)
+                            )
 
-                    SelectDateUI()
-                    SlotScreen()
+                            InfoCard(
+                                title = doc.consultedPatientCount,
+                                subtitle = "Patients",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
 
+                        Spacer(modifier = Modifier.height(16.dp))
 
-
-                    Button(
-                        onClick = {   },
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(0.dp),
-
-                    ) {
                         Text(
-                            "Book Appointment",
-
+                            text = "Doctor Biography",
+                            fontWeight = FontWeight.SemiBold
                         )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = doc.biography ?: "No biography available",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        ToggleButtons()
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SelectDateUI()
+                        SlotScreen()
+
+
+
+                        CommonButton(text = "Book Appointment",
+                            onClick = {
+
+                                navController.navigate(Routes.BOOKINGCONFERMATION)
+                            })
+
                     }
-                }
 
                 }
             }
         }
+    }
+
+
     }
 @Composable
 fun SlotScreen(viewModel: DoctorDetailsViewModel = viewModel()) {
@@ -214,18 +225,6 @@ fun SlotItem(slot: SlotData) {
         )
     }
     }
-@Composable
-fun DoctorHeader() {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.ArrowBack, contentDescription = null)
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            "Doctor’s Details",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
 
 @Composable
 fun DoctorTopSection(

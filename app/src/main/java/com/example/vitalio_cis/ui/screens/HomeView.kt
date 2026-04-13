@@ -46,8 +46,6 @@ data class GridItem(val title: String, val icon: Int)
 fun DashboardScreen() {
     var selectedIndex by remember { mutableStateOf(0) }
     val themeViewModel: ThemeViewModel = viewModel()
-
-    // 3️⃣ Collect colors as Compose State to trigger recomposition when theme changes
     val colors by themeViewModel.colorScheme.collectAsState()
 
     Scaffold(
@@ -129,7 +127,11 @@ fun DashboardScreen() {
 // ------------------- Bottom Navigation -------------------
 @Composable
 fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
-    NavigationBar(containerColor = Color.White) {
+
+    val themeViewModel: ThemeViewModel = viewModel()
+    val colors by themeViewModel.colorScheme.collectAsState()
+
+    NavigationBar(containerColor = colors.dashboardBackgroundColor) {
 
         val items = listOf(
             Triple(R.drawable.home,stringResource(R.string.home), 0),
@@ -177,8 +179,10 @@ fun Header() {
         Spacer(Modifier.width(10.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text("Good Morning,", color = Color.Gray)
-            Text(patientData?.firstName.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("Good Morning,",
+                    style = AppTextStyles.style12GCN())
+            Text(patientData?.firstName.toString(),
+                    style = AppTextStyles.style18BCN())
         }
 
         Icon(Icons.Default.Search, contentDescription = null)
@@ -194,7 +198,8 @@ fun ToTakeCard() {
     val themeViewModel: ThemeViewModel = viewModel()
     val colors by themeViewModel.colorScheme.collectAsState()
     Column {
-        Text("To Take", fontWeight = FontWeight.Bold)
+        Text("To Take",
+            style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(8.dp))
 
         Card(
@@ -207,9 +212,12 @@ fun ToTakeCard() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("1 capsule", fontSize = 12.sp)
-                    Text("Pan D", fontWeight = FontWeight.Bold)
-                    Text("Take on an empty stomach", fontSize = 12.sp, color = Color.Gray)
+                    Text("1 capsule",
+                        style = AppTextStyles.style12BCN())
+                    Text("Pan D",
+                            style = AppTextStyles.style12BCN() )
+                    Text("Take on an empty stomach",
+                                    style = AppTextStyles.style12GCN())
                 }
 
                 Checkbox(checked = false, onCheckedChange = {})
@@ -225,7 +233,8 @@ fun VitalsCard() {
     val themeViewModel: ThemeViewModel = viewModel()
     val colors by themeViewModel.colorScheme.collectAsState()
     Column {
-        Text("Vitals", fontWeight = FontWeight.Bold)
+        Text("Vitals",
+            style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(8.dp))
 
         Card(colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
@@ -239,11 +248,14 @@ fun VitalsCard() {
                 Spacer(Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Heart Rate")
-                    Text("1hr ago", fontSize = 12.sp, color = Color.Gray)
+                    Text("Heart Rate",
+                            style = AppTextStyles.style12BCN() )
+                    Text("1hr ago",
+                            style = AppTextStyles.style12GCN())
                 }
 
-                Text("60 BPM", fontWeight = FontWeight.Bold)
+                Text("60 BPM",
+                        style = AppTextStyles.style12GCN())
             }
         }
     }
@@ -588,7 +600,7 @@ fun OtherSection() {
             .fillMaxWidth()
             .padding(16.dp)) {
             Text("Other",
-                style = AppTextStyles.style18GCN())
+                style = AppTextStyles.style18BCN())
             Spacer(Modifier.height(12.dp))
             Row {
                 ChronicleCard(modifier = Modifier.weight(1f))
@@ -611,8 +623,10 @@ fun ChronicleCard(modifier: Modifier) {
         shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Column {
-                Text("Activities", fontSize = 12.sp, color = Color.Gray)
-                Text("Chronicle", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Activities",
+                        style = AppTextStyles.style12GCN())
+                Text("Chronicle",
+                    style = AppTextStyles.style18BCB())
             }
 
             Image(
@@ -624,13 +638,16 @@ fun ChronicleCard(modifier: Modifier) {
             )
 
             Column {
-                Text("Share today's activities with us to understand your health pattern.", fontSize = 11.sp, color = Color.Gray)
+                Text("Share today's activities with us to understand your health pattern."
+                    ,
+                    style = AppTextStyles.style12GCN())
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = {},
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FE4))
-                ) { Text("Add Now") }
+                ) { Text("Add Now",
+                        style = AppTextStyles.style12GCN())  }
             }
         }
     }
@@ -647,7 +664,8 @@ fun UploadReportCard() {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(painter = painterResource(R.drawable.upload_report), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Unspecified)
             Spacer(Modifier.height(6.dp))
-            Text("Upload Report", fontSize = 13.sp)
+            Text("Upload Report",
+                style = AppTextStyles.style14BCN())
         }
     }
 }
@@ -663,7 +681,8 @@ fun LifestyleCard() {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(painter = painterResource(R.drawable.intervention), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Unspecified)
             Spacer(Modifier.height(6.dp))
-            Text("Lifestyle Intervention", fontSize = 12.sp, textAlign = TextAlign.Center)
+            Text("Lifestyle Intervention",
+                style = AppTextStyles.style14BCN())
         }
     }
 }

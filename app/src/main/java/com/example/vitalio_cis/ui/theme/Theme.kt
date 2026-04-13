@@ -149,11 +149,24 @@ import kotlinx.coroutines.flow.stateIn
 data class MyColorScheme(
     val dashboardBackgroundColor: Color,
     val dashboardContainerColor: Color,
+    val primaryBlueColor: Color,
+
 
     val textDarkColor: Color,
     val textGreyColor: Color,
     val textWhiteColor: Color,
 
+    val textPrimaryBlueColor: Color,
+
+
+
+    val btnDarkColor: Color,
+    val btnGreyColor: Color,
+    val btnWhiteColor: Color,
+    val btnPrimaryBlueColor: Color,
+
+
+    val borderGreyLightColor: Color,
 
 )
 
@@ -170,19 +183,40 @@ enum class AppTheme {
 fun getColorScheme(theme: AppTheme): MyColorScheme = when (theme) {
 
     AppTheme.LIGHT -> MyColorScheme(
-        dashboardBackgroundColor = Color.White,
-        dashboardContainerColor = Color(0xFFF5F8FC),
+        dashboardBackgroundColor = Color(0xFFF5F8FC),
+        dashboardContainerColor = Color.White,
         textDarkColor = Color(0xFF202529),
         textGreyColor = Color(0xFF546788),
                 textWhiteColor =  Color.White,
+        textPrimaryBlueColor = Color(0xFF1564ED),
+        primaryBlueColor = Color(0xFF1564ED),
+
+
+        btnDarkColor = Color(0xFF202529),
+        btnGreyColor = Color(0xFF546788),
+        btnWhiteColor =  Color(0xFFFFFFFF),
+        btnPrimaryBlueColor = Color(0xFF1564ED),
+
+
+
+        borderGreyLightColor =Color(0xFFBABFC9)
+
     )
 
     AppTheme.DARK -> MyColorScheme(
-        dashboardBackgroundColor = Color(0xFF0F1419),   // dark bg
-        dashboardContainerColor = Color(0xFF1C2228),    // dark card
+        dashboardBackgroundColor =Color(0xFF1C2228),     // dark bg
+        dashboardContainerColor =Color(0xFF0F1419),  // dark card
         textDarkColor = Color(0xFFFFFFFF),              // white text
-        textGreyColor = Color(0xFF9FB0C3)    ,
-        textWhiteColor = Color.White,         // light grey
+        textGreyColor = Color(0xFF9FB0C3) ,
+        textWhiteColor = Color.White,
+        textPrimaryBlueColor = Color(0xFF1564ED),
+                primaryBlueColor = Color(0xFF1564ED),
+
+        btnDarkColor = Color(0xFFFFFFFF),              // white text
+        btnGreyColor = Color(0xFF9FB0C3) ,
+        btnWhiteColor =Color(0xFF0F1419),
+        btnPrimaryBlueColor = Color(0xFF1564ED),// light grey
+        borderGreyLightColor = Color(0xFF2A3138)
     )
 }
 // -----------------------------

@@ -43,7 +43,6 @@ fun MyButton(
     ) {
         Text(
             text = text,
-
         )
     }
 }

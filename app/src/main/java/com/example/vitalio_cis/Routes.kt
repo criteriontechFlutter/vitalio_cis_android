@@ -17,5 +17,6 @@ object Routes {
     const val MANAGE_MEDICINE = "manageMedicine"
     const val FINDDOCTOR = "findDoctor"
     const val DOCTORDETAILS = "doctorDetails"
+    const val BOOKINGCONFERMATION = "bookingConfirmation"
 
 }
