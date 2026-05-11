@@ -1,6 +1,8 @@
 package com.example.vitalio_cis.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,8 +40,10 @@ fun MyAppBar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+
+    val navController = LocalNavController.current
+
+    val colors = LocalMyColorScheme.current
 
     TopAppBar(
         title = {
@@ -75,13 +81,22 @@ fun CommonAppBar(
     title: String,
     showBack: Boolean = true,
     onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {
+        Column() {
+            val themeViewModel = LocalThemeViewModel.current
+
+            Text(text = "theme",
+                modifier = Modifier.clickable(){
+                    themeViewModel.toggleTheme()
+                })
+        }
+    },
     content: @Composable ( ) -> Unit
 ) {
 
     val navController = LocalNavController.current
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+
+    val colors = LocalMyColorScheme.current
 
     Scaffold(
 

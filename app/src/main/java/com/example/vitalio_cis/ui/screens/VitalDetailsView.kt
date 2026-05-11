@@ -3,6 +3,7 @@ package com.example.vitalio_cis.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -25,7 +27,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
+import com.example.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.viewmodel.OTPViewModel
 import com.example.vitalio_cis.viewmodel.VitalDetailViewModel
@@ -37,11 +42,12 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VitalsScreen( viewModel: VitalDetailViewModel = viewModel()) {
+
     val context = LocalContext.current
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+
+    val colors = LocalMyColorScheme.current
     LaunchedEffect(Unit) {
-        viewModel.getPatientDetailsByMobileNo(context)
+        viewModel.fetchLastVital(context)
     }
 
     CommonAppBar(
@@ -128,12 +134,16 @@ fun VitalCard(
     time: String
 ) {
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp),
+            .padding(bottom = 12.dp).
+        clickable(){
+
+            navController.navigate(Routes.VITALHISTORY)
+        },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
     ) {
@@ -194,7 +204,10 @@ fun VitalCard(
             Column   {
                 Text(
                     "Add Vital",
-                            style = AppTextStyles.style12PCN()  )
+                            style = AppTextStyles.style12PCN(),
+                    modifier = Modifier.clickable(){
+                        navController.navigate(Routes.CONNECTION)
+                    })
 
 //                MiniGraph(color)
             }

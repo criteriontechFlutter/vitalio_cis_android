@@ -29,6 +29,7 @@ import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.utils.CommonButton
 import kotlinx.coroutines.delay
@@ -233,8 +234,7 @@ fun SymptomItem(
     onClick: () -> Unit
 ) {
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))

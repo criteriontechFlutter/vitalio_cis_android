@@ -1,5 +1,6 @@
 package com.example.vitalio_cis.ui.screens
 
+import android.R
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -32,6 +33,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.utils.AppTextStyles
+import com.example.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
@@ -263,7 +271,8 @@ fun MonthPickerSheet(
                                 fontWeight = if (isPicked) FontWeight.Bold else FontWeight.Normal,
                                 color      = when {
                                     isPicked                                              -> Color.White
-                                    idx == selectedMonthIndex && pickedYear == selectedYear -> Blue500
+                                    idx == selectedMonthIndex && pickedYear ==
+                                            selectedYear -> Blue500
                                     else                                                  -> TextPrimary
                                 },
                             )
@@ -378,8 +387,10 @@ private fun DayPill(
         modifier = Modifier
             .offset(y = yOffset)
             .size(PILL_SIZE)
-            .shadow(if (isSelected) 8.dp else 0.dp, CircleShape,
-                ambientColor = Blue500.copy(.4f), spotColor = Blue500.copy(.4f))
+            .shadow(
+                if (isSelected) 8.dp else 0.dp, CircleShape,
+                ambientColor = Blue500.copy(.4f), spotColor = Blue500.copy(.4f)
+            )
             .clip(CircleShape)
             .background(bg)
             .clickable(onClick = onClick),
@@ -408,169 +419,167 @@ fun ManageMedicationsScreen(onBackClick: () -> Unit = {}) {
 
     val selected = calendarDays[selectedIdx]
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BgGray)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 88.dp),
-        ) {
+    val navController = LocalNavController.current
 
-            // ── White top card ─────────────────────────────────────────────
-            Surface(
-                color           = CardWhite,
-                shape           = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-                shadowElevation = 2.dp,
-                modifier        = Modifier.fillMaxWidth(),
+    val colors = LocalMyColorScheme.current
+    CommonAppBar(
+        title = "Manage Medications",
+        actions = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.btnDarkColor)
+                    .clickable { }
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
             ) {
-                Column(
-                    modifier            = Modifier.padding(top = 16.dp, bottom = 20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-
-                    // Header
-                    Row(
-                        verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                    ) {
-                        IconButton(onClick = onBackClick, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back",
-                                tint = TextSecondary, modifier = Modifier.size(18.dp))
-                        }
-
-                        Text("Manage Medications",
-                            fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
-
-                        Row(
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(BlueLight)
-                                .clickable { }
-                                .padding(horizontal = 10.dp, vertical = 5.dp),
-                        ) {
-                            Text("Prescription", fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium, color = Blue500)
-                            Icon(Icons.Rounded.Add, null,
-                                tint = Blue500, modifier = Modifier.size(13.dp))
-                        }
-                    }
-
-                    Spacer(Modifier.height(10.dp))
-
-                    // Big date row
-                    Row(
-                        verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        Text(selected.shortName, fontSize = 14.sp, color = TextSecondary)
-                        Spacer(Modifier.width(8.dp))
-                        SmallDot()
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text       = selected.number.toString(),
-                            fontSize   = 46.sp,
-                            fontWeight = FontWeight.Light,
-                            color      = TextPrimary,
-                            lineHeight = 46.sp,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        SmallDot()
-                        Spacer(Modifier.width(8.dp))
-
-                        // ── Month + arrow (tap to open picker) ──────────────
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable { showMonthPicker = true }   // ← opens sheet
-                                .padding(horizontal = 6.dp, vertical = 4.dp),
-                        ) {
-                            Text(
-                                text       = MONTHS[selectedMonth].take(3),
-                                fontSize   = 14.sp,
-                                color      = TextSecondary,
-                                fontWeight = FontWeight.Medium,
-                            )
-                            Spacer(Modifier.width(2.dp))
-                            Icon(
-                                Icons.Rounded.KeyboardArrowDown, "Pick month",
-                                tint     = TextSecondary,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(4.dp))
-
-                    // U-curve calendar
-                    ScrollableUCurveCalendar(
-                        days          = calendarDays,
-                        selectedIdx   = selectedIdx,
-                        onDaySelected = { selectedIdx = it },
-                        arcDepth      = 20.dp,
-                        modifier      = Modifier.fillMaxWidth(),
-                    )
-
-                    Spacer(Modifier.height(4.dp))
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            SectionLabel("Logged")
-            Spacer(Modifier.height(8.dp))
-            SectionCard {
-                loggedMeds.forEachIndexed { i, med ->
-                    LoggedRow(med)
-                    if (i < loggedMeds.lastIndex)
-                        HorizontalDivider(color = DividerColor, thickness = 0.5.dp)
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            SectionLabel("Your Medications (0${medications.size})")
-            Spacer(Modifier.height(8.dp))
-            SectionCard {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .horizontalScroll(rememberScrollState())
-                        .padding(vertical = 10.dp),
-                ) {
-                    medications.forEach { MedChip(it) }
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            SectionLabel("Drug Interaction (0${interactions.size})")
-            Spacer(Modifier.height(8.dp))
-            SectionCard {
-                interactions.forEach { InteractionCard(it) }
+                Text(
+                    "Prescription"
+                    ,
+                    style = AppTextStyles.style12WCN()
+                )
+                Icon(
+                    Icons.Rounded.Add, null,
+                    tint = Blue500, modifier = Modifier.size(13.dp)
+                )
             }
         }
-
-        // FAB
-        FloatingActionButton(
-            onClick        = { },
-            containerColor = Blue500,
-            contentColor   = Color.White,
-            shape          = CircleShape,
-            modifier       = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(20.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.dashboardBackgroundColor)
+                .padding(horizontal = 16.dp, ),
         ) {
-            Icon(Icons.Rounded.Add, "Add")
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 88.dp),
+            ) {
+
+                // ── White top card ─────────────────────────────────────────────
+                Surface(
+                    color = colors.dashboardContainerColor,
+                    shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                    shadowElevation = 2.dp,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(top = 16.dp, bottom = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+
+                        // Header
+
+                        Spacer(Modifier.height(10.dp))
+
+                        // Big date row
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Text(selected.shortName,
+                                style = AppTextStyles.style14BCN())
+                            Spacer(Modifier.width(8.dp))
+                            SmallDot()
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = selected.number.toString(),
+                                style = AppTextStyles.style14BCN().copy( fontSize = 46.sp),
+                                lineHeight = 46.sp,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            SmallDot()
+                            Spacer(Modifier.width(8.dp))
+
+                            // ── Month + arrow (tap to open picker) ──────────────
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { showMonthPicker = true }   // ← opens sheet
+                                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                            ) {
+                                Text(
+                                    text = MONTHS[selectedMonth].take(3),
+                                    style = AppTextStyles.style14BCN())
+
+                                Spacer(Modifier.width(2.dp))
+                                Icon(
+                                    Icons.Rounded.KeyboardArrowDown, "Pick month",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        // U-curve calendar
+                        ScrollableUCurveCalendar(
+                            days = calendarDays,
+                            selectedIdx = selectedIdx,
+                            onDaySelected = { selectedIdx = it },
+                            arcDepth = 20.dp,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                SectionLabel("Logged")
+                Spacer(Modifier.height(8.dp))
+                SectionCard {
+                    loggedMeds.forEachIndexed { i, med ->
+                        LoggedRow(med)
+                        if (i < loggedMeds.lastIndex)
+                            HorizontalDivider(color = DividerColor, thickness = 0.5.dp)
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                SectionLabel("Your Medications (0${medications.size})")
+                Spacer(Modifier.height(8.dp))
+                SectionCard {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier
+                            .horizontalScroll(rememberScrollState())
+                            .padding(vertical = 10.dp),
+                    ) {
+                        medications.forEach { MedChip(it) }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                SectionLabel("Drug Interaction (0${interactions.size})")
+                Spacer(Modifier.height(8.dp))
+                SectionCard {
+                    interactions.forEach { InteractionCard(it) }
+                }
+            }
+
+            // FAB
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(Routes.ADDMEDICINEREMINDER)
+                },
+                containerColor = Blue500,
+                contentColor = Color.White,
+                shape = CircleShape,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp)
+            ) {
+                Icon(Icons.Rounded.Add, "Add")
+            }
         }
     }
 
@@ -594,22 +603,19 @@ fun ManageMedicationsScreen(onBackClick: () -> Unit = {}) {
 private fun SectionLabel(text: String) {
     Text(
         text       = text,
-        fontSize   = 15.sp,
-        fontWeight = FontWeight.SemiBold,
-        color      = TextPrimary,
-        modifier   = Modifier.padding(horizontal = 16.dp),
-    )
+        style = AppTextStyles.style14BCN())
 }
 
 @Composable
 private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
+
+    val colors = LocalMyColorScheme.current
     Surface(
-        color           = CardWhite,
+        color           = colors.dashboardContainerColor,
         shape           = RoundedCornerShape(16.dp),
         shadowElevation = 1.dp,
         modifier        = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
             content()
@@ -627,13 +633,15 @@ private fun LoggedRow(med: LoggedMed) {
             .padding(vertical = 12.dp),
     ) {
         Column {
-            Text(med.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+            Text(med.name,
+                style = AppTextStyles.style14BCN())
             Spacer(Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Add, null,
                     tint = TextSecondary, modifier = Modifier.size(12.dp))
                 Spacer(Modifier.width(4.dp))
-                Text(med.time, fontSize = 12.sp, color = TextSecondary)
+                Text(med.time,
+                    style = AppTextStyles.style14BCN())
             }
         }
         Icon(Icons.Rounded.Check, null, tint = Green500, modifier = Modifier.size(20.dp))
@@ -656,9 +664,10 @@ private fun MedChip(med: Medication) {
             Text(med.emoji, fontSize = 24.sp)
         }
         Spacer(Modifier.height(6.dp))
-        Text(med.name, fontSize = 12.sp, fontWeight = FontWeight.Medium,
-            color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(med.type, fontSize = 11.sp, color = TextSecondary)
+        Text(med.name,
+            style = AppTextStyles.style12BCN())
+        Text(med.type,
+            style = AppTextStyles.style12GCN())
     }
 }
 
@@ -670,18 +679,21 @@ private fun InteractionCard(it: DrugInteraction) {
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier              = Modifier.fillMaxWidth(),
         ) {
-            Text(it.pair, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+            Text(it.pair,
+                style = AppTextStyles.style14BCN())
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
                     .background(WarnBg)
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
-                Text(it.severity, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = WarnText)
+                Text(it.severity,
+                    style = AppTextStyles.style12GCN())
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text(it.note, fontSize = 12.sp, color = TextSecondary, lineHeight = 18.sp)
+        Text(it.note,
+            style = AppTextStyles.style12GCN())
     }
 }
 

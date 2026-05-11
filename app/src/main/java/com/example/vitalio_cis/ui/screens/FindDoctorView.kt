@@ -1,5 +1,6 @@
 package com.example.vitalio_cis.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,11 +24,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.composable
 import com.critetiontech.ctvitalio.ui.components.MyTextField
+import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.model.Doctor
 import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.components.ShowNoData
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.viewmodel.FindDoctorViewModel
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
@@ -37,12 +42,7 @@ import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
 // -------------------- Doctor Card --------------------
 @Composable
 fun DoctorCard(doctor: Doctor) {
-
-
-
-
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
     val shortDays = doctor.scheduleDays
         .split(",") // split multiple days
@@ -54,7 +54,11 @@ fun DoctorCard(doctor: Doctor) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable() {
-                navController.navigate(Routes.DOCTORDETAILS + "/" + doctor.assignedUserId.toString() + "/" + shortDays.toString(),)
+                navController.navigate(
+                    Routes.DOCTORDETAILS +
+                            "/${doctor.assignedUserId}/" +
+                            Uri.encode(shortDays)
+                )
             }
             .clip(RoundedCornerShape(12.dp)) // apply rounded corners
             .background(colors.dashboardContainerColor)
@@ -83,23 +87,19 @@ fun DoctorCard(doctor: Doctor) {
             // Name
             Text(
                 text = doctor.doctorName,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp
+                style = AppTextStyles.style14BCB()
             )
 
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = doctor.qualification ?: "Role",
-                    color = Color.LightGray,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold
+                    style = AppTextStyles.style12GCN()
                 )
 
             // Qualification
             Text(
                 text = doctor.qualification ?: "",
-                fontSize = 12.sp,
-                color = Color.Gray
+                style = AppTextStyles.style12GCN()
             )
 
             // Schedule badge
@@ -107,7 +107,7 @@ fun DoctorCard(doctor: Doctor) {
 
             Text(
                 text = shortDays,
-                fontSize = 10.sp
+                style = AppTextStyles.style12GCN().copy(fontSize = 10.sp)
             )
 
         }
@@ -128,19 +128,20 @@ fun FindDoctorsScreen(
 
 
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val navController = LocalNavController.current
+
+    val colors = LocalMyColorScheme.current
 
     var searchQuery by remember { mutableStateOf("") }
 
     // Filter doctors by name or role
     val filteredDoctors = doctors.filter {
-        it.doctorName.contains(searchQuery, ignoreCase = true) ||
-                (it.departmentName?.contains(searchQuery, ignoreCase = true) ?: false)
+        it.doctorName.contains(viewModel.searchText, ignoreCase = true) ||
+                (it.departmentName?.contains(viewModel.searchText, ignoreCase = true) ?: false)
     }
-
     Column(modifier = Modifier
-        .fillMaxSize().padding(16.dp)
+        .fillMaxSize()
+        .padding(16.dp)
         .background(colors.dashboardBackgroundColor)) {
 
         // -------------------- Top Bar --------------------
@@ -155,7 +156,12 @@ fun FindDoctorsScreen(
                 .clickable { onClinicSwitch() }
         ) {
             Row(
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier
+                    .padding(12.dp)
+                    .clickable() {
+
+                        navController.navigate(Routes.SELECTCLINIC)
+                    },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
@@ -187,16 +193,21 @@ fun FindDoctorsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // -------------------- Doctor Grid --------------------
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(filteredDoctors) { doctor ->
-                DoctorCard(doctor)
+        ShowNoData(
+            list = filteredDoctors,
+            isLoading = viewModel.loading.value,
+            content={
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(filteredDoctors) { doctor ->
+                    DoctorCard(doctor)
+                }
             }
-        }
+        })
     }
 }
 

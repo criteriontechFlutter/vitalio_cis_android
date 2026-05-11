@@ -12,4 +12,9 @@ class ApiEndPointCorporateModule {
     val fetchDoctorsAvalability="api/DoctorOPDSchedule/FetchDoctorsAvalability"
     val getDoctorProfile="api/Users/GetDoctorProfile"
     val fetchAvailableSlots="api/DoctorOPDSchedule/FetchAvailableSlots"
+    val bookAppointment="api/PatientRegistration/BookAppointment"
+    val addOutput="api/output/AddOutput"
+    val getManualFoodAssignList="api/ManualFoodAssign/GetManualFoodAssignList"
+    val addIntake="api/FoodIntake/AddIntake"
+    val fetchIntake="api/FoodIntake/FetchIntake"
 }

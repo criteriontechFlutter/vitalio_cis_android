@@ -12,7 +12,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.MyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 
@@ -28,8 +30,12 @@ object  AppTextStyles  {
 
     @Composable
     private fun currentColors(): MyColorScheme {
-        val vm: ThemeViewModel = viewModel()
-        return vm.colorScheme.collectAsState().value
+        val navController = LocalNavController.current
+        return LocalMyColorScheme.current
+
+
+
+
     }
 
     /** Very Large Bold Primary */
