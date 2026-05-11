@@ -10,23 +10,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
-import com.critetiontech.ctvitalio.networking.RetrofitInstance
-import com.critetiontech.ctvitalio.ui.components.MyDialog
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.ctvitalio.utils.ErrorUtils.parseErrorMessage
-import com.example.vitalio_cis.NavigationManager
 import com.example.vitalio_cis.Routes
-import com.example.vitalio_cis.ui.screens.OtpScreen
- import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
-import okhttp3.ResponseBody
 import javax.inject.Inject
 
 class LoginViewModel @Inject constructor() : ViewModel() {

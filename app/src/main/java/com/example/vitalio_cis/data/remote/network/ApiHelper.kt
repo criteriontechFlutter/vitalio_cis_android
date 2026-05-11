@@ -3,13 +3,12 @@ package com.critetiontech.ctvitalio.data.remote.network
 import android.app.AlertDialog
 import android.content.Context
 import android.util.Log
- import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import com.critetiontech.ctvitalio.networking.ApiService
-import com.critetiontech.ctvitalio.utils.LocalStorage
 import com.critetiontech.ctvitalio.utils.NetworkUtils
 import com.example.vitalio_cis.utils.PrefsManager
 
@@ -28,7 +27,7 @@ class ApiHelper {
         // ✅ OFFLINE CASE
         if (!NetworkUtils.isConnected(context)) {
 
-            val cached = LocalStorage.getString(context, localKey)
+            val cached = PrefsManager(context).getString(context, localKey)
 
             // 🔥 1. Agar cache hai → DIRECT return (NO dialog)
             if (cached != null) {
@@ -67,7 +66,7 @@ class ApiHelper {
 
             // ✅ SAVE CACHE
             if (response.isSuccessful && cacheResponse && !bodyString.isNullOrEmpty()) {
-                LocalStorage.saveString(context, localKey, bodyString)
+                PrefsManager(context).saveString(context, localKey, bodyString)
                 Log.d("ApiHelper", "Cached successfully")
             }
 
@@ -79,7 +78,7 @@ class ApiHelper {
 
             Log.e("ApiHelper", "API Failed: ${e.message}")
 
-            val cached = LocalStorage.getString(context, localKey)
+            val cached = PrefsManager(context).getString(context, localKey)
 
             // 🔥 Exception me bhi fallback
             return@withContext if (cached != null) {
@@ -96,6 +95,6 @@ class ApiHelper {
     }
 
     fun getCachedData(context: Context, localKey: String): String? {
-        return LocalStorage.getString(context, localKey)
+        return PrefsManager(context).getString(context, localKey)
     }
 }
