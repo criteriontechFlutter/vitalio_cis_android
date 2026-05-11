@@ -5,10 +5,8 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
-import com.critetiontech.ctvitalio.networking.ApiService
 import com.critetiontech.ctvitalio.utils.NetworkUtils
 import com.example.vitalio_cis.utils.PrefsManager
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -89,7 +87,4 @@ class ApiHelper {
         }
     }
 
-    fun getCachedData(context: Context, localKey: String): String? {
-        return PrefsManager(context).getString(context, localKey)
-    }
 }
