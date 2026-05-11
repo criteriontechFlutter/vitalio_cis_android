@@ -13,7 +13,6 @@ import androidx.navigation.NavController
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.example.vitalio_cis.NavigationManager
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.utils.PatientResponse
 import com.example.vitalio_cis.utils.PrefsManager
@@ -52,12 +51,6 @@ class OTPViewModel @Inject constructor() : ViewModel() {
     }
     var mobile by mutableStateOf("")
         private set
-
-    fun onMobileChange(newValue: String) {
-        mobile = newValue
-    }
-
-
 
 
     fun verifyLogInOTPForSHFCApp(context: Context,uhid:String  ,otp: String ,navController: NavController) {

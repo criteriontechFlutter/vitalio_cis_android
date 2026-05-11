@@ -13,8 +13,6 @@ object FCMHelper {
 
 
     fun initializeFCM(context: Context,onTokenReceived: (token: String) -> Unit, onError: (Exception) -> Unit = {}) {
-
-
         FirebaseMessaging.getInstance().token
             .addOnCompleteListener { task ->
                 if (!task.isSuccessful) {
@@ -22,12 +20,10 @@ object FCMHelper {
                     onError(task.exception ?: Exception("Unknown error"))
                     return@addOnCompleteListener
                 }
-
                 // Get new FCM registration token
                 val token = task.result
                 Log.d(TAG, "FCM Token: $token")
 //                PrefsManager(context).saveDeviceToken(token)
-
                 // Send token to your server or use it as needed
                 onTokenReceived(token)
             }
