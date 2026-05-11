@@ -1,7 +1,10 @@
 package com.example.vitalio_cis.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +24,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,41 +35,67 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
+import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
 
 @Composable
 fun MedicineReminderScreen() {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
 
-        // 🔹 Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Medicine Reminder", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text("View Log", color = Color(0xFF2962FF))
+    val navController = LocalNavController.current
+
+
+
+    val colors = LocalMyColorScheme.current
+    CommonAppBar(
+        title = "Medicine Reminder",
+        actions = {
+            Text(
+                "View Log", color = Color(0xFF2962FF),
+                modifier = Modifier.clickable() {
+
+                    navController.navigate(Routes.MANAGEMEDICAIONS)
+                },
+            )
         }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.dashboardBackgroundColor)
+                .padding(16.dp)
+        ) {
 
-        Spacer(modifier = Modifier.height(16.dp))
+            // 🔹 Header
 
-        // 🔹 Sections
-        MedicineSection("Morning", listOf(
-            Medicine("1 cup tea", "112 mg • Before meals", "08:00 AM", true)
-        ), id = R.drawable.morning_medicine)
 
-        MedicineSection("Afternoon", listOf(
-            Medicine("Vitamin D3", "1000 IU • After lunch", "02:00 PM"),
-            Medicine("Aspirin", "75 mg • After lunch", "02:00 PM")
-        ), id = R.drawable.afternoon_medicine)
+            Spacer(modifier = Modifier.height(16.dp))
 
-        MedicineSection("Night", listOf(
-            Medicine("Atorvastatin", "20 mg • After dinner", "09:00 PM")
-        ), id = R.drawable.night_medicine)
+            // 🔹 Sections
+            MedicineSection(
+                "Morning", listOf(
+                    Medicine("1 cup tea", "112 mg • Before meals", "08:00 AM", true)
+                ), id = R.drawable.morning_medicine
+            )
+
+            MedicineSection(
+                "Afternoon", listOf(
+                    Medicine("Vitamin D3", "1000 IU • After lunch", "02:00 PM"),
+                    Medicine("Aspirin", "75 mg • After lunch", "02:00 PM")
+                ), id = R.drawable.afternoon_medicine
+            )
+
+            MedicineSection(
+                "Night", listOf(
+                    Medicine("Atorvastatin", "20 mg • After dinner", "09:00 PM")
+                ), id = R.drawable.night_medicine
+            )
+        }
     }
 }
 
@@ -108,13 +139,15 @@ fun MedicineSection(title: String, medicines: List<Medicine>,id:Int) {
 @Composable
 fun MedicineCard(medicine: Medicine) {
 
+
+    val colors = LocalMyColorScheme.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (medicine.isTaken) Color(0xFFDCE8F9) else Color(0xFFF4F6FA)
+            containerColor = colors.dashboardContainerColor,
         )
     ) {
 

@@ -1,6 +1,7 @@
 package com.example.vitalio_cis.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 
 object AppColors {
@@ -13,4 +14,15 @@ object AppColors {
     val grey = Color(0xFF666666)
     val red = Color(0xFFF11717)
 
+}
+val PrimaryBlue = Color(0xFF3B82F6)
+val LightGray = Color(0xFFF3F4F6)
+val TextPrimary = Color(0xFF111827)
+
+
+object AppDimens {
+    val screenPadding = 24.dp
+    val itemSpacing = 16.dp
+    val cornerRadius = 16.dp
+    val buttonHeight = 56.dp
 }

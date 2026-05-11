@@ -90,6 +90,8 @@ class FindDoctorViewModel @Inject constructor() : ViewModel() {
                     }
                 }
 
+
+                _loading.value = false
                 // ✅ RESULT HANDLE
                 if (!result.isNullOrEmpty()) {
 

@@ -27,7 +27,7 @@ class VitalDetailViewModel   @Inject constructor() : ViewModel() {
     val loading: LiveData<Boolean> = _loading
     private val _vitalList = MutableStateFlow<List<Vital>>(emptyList())
     val vitalList: StateFlow<List<Vital>> = _vitalList
-    fun getPatientDetailsByMobileNo(context: Context,   ) {
+    fun fetchLastVital(context: Context,   ) {
 
         viewModelScope.launch {
 

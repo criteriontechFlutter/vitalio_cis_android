@@ -9,16 +9,16 @@ data class VitalApiResponse(
 data class VitalResponseValue(
     val lastVital: List<Vital>
 )
-
 data class Vital(
-    val uhid: String,
-    val id: Int,
-    val pmId: Int,
-    val vitalID: Int,
-    val vitalName: String,
-    val vitalValue: Double,
-    val unit: String,
-    val vitalDateTime: String,
-    val userId: Int,
-    val rowId: Int
+    val uhid: String = "",
+    val id: Int = 0,
+    val pmId: Int = 0,
+    val vitalID: Int = 0,
+    val vitalName: String = "",
+    val vitalValue: Double = 0.0,
+    val unit: String = "",
+    val vitalDateTime: String = "",
+    val userId: Int = 0,
+    val rowId: Int = 0,
+    val displayValue: String = ""   // 👈 add this
 )

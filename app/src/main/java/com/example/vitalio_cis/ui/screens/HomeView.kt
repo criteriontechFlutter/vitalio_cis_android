@@ -1,7 +1,10 @@
 package com.example.vitalio_cis.ui.screens
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,22 +36,35 @@ import com.example.vitalio_cis.NavigationManager
 
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.model.Vital
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.ui.theme.getColorScheme
 import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
+import com.example.vitalio_cis.viewmodel.FindDoctorViewModel
+import com.example.vitalio_cis.viewmodel.HomeViewModel
+import kotlinx.coroutines.delay
 
 
 data class GridItem(val title: String, val icon: Int)
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(viewModel: HomeViewModel = viewModel(), ) {
     var selectedIndex by remember { mutableStateOf(0) }
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val themeViewModel = LocalThemeViewModel.current
+    val colors = LocalMyColorScheme.current
+    val vitals by viewModel.vitalList.collectAsState()
 
-    Scaffold(
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchLastVital(context)
+    }
+
+
+    Scaffold( containerColor = colors.dashboardBackgroundColor,
         modifier = Modifier
             .background(colors.dashboardBackgroundColor),
         bottomBar = {
@@ -67,46 +83,19 @@ fun DashboardScreen() {
 
                 ) {
                     Header()
-                    Button(onClick = { themeViewModel.toggleTheme() }) {
-                        Text("Toggle Theme",
-                            style = AppTextStyles.style24BCB())
-                    }
+
+                    Spacer(Modifier.height(20.dp))
                 }
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(colors.dashboardBackgroundColor)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
-                        .background(colors.dashboardBackgroundColor)
-                ) {
-
-
-                    ToTakeCard()
-
-                    Spacer(Modifier.height(20.dp))
-
-                    VitalsCard()
-
-                    Spacer(Modifier.height(20.dp))
-
-                    Text(
-                        text = "Primary Actions",
-                        style = AppTextStyles.style18BCB())
-
-                    Spacer(Modifier.height(12.dp))
-
-                    PrimaryActionsGrid()
-
-                    Spacer(Modifier.height(20.dp))
-
-                    HomeScreen()
-
-                    Spacer(Modifier.height(20.dp))
-
-                    OtherSection()
-                    Spacer(Modifier.height(70.dp))
+                if(selectedIndex==0){
+                    HomeView()
                 }
+                else if(selectedIndex==1){
+                    AddActivityScreen()
+                }
+                else if(selectedIndex==2){
+                    RemindersScreen()
+                }
+
             }
 
 
@@ -126,10 +115,62 @@ fun DashboardScreen() {
 
 // ------------------- Bottom Navigation -------------------
 @Composable
+fun HomeView(viewModel: HomeViewModel = viewModel()){
+
+
+    var selectedIndex by remember { mutableStateOf(0) }
+    val themeViewModel = LocalThemeViewModel.current
+    val colors = LocalMyColorScheme.current
+    val vitals by viewModel.vitalList.collectAsState()
+
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchLastVital(context)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.dashboardBackgroundColor)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+            .background(colors.dashboardBackgroundColor)
+    )
+    {
+
+
+        ToTakeCard()
+
+        Spacer(Modifier.height(20.dp))
+
+        VitalsCard(vitals)
+
+        Spacer(Modifier.height(20.dp))
+
+        Text(
+            text = "Primary Actions",
+            style = AppTextStyles.style18BCB())
+
+        Spacer(Modifier.height(12.dp))
+
+        PrimaryActionsGrid()
+
+        Spacer(Modifier.height(20.dp))
+
+        HomeScreen()
+
+        Spacer(Modifier.height(20.dp))
+
+        OtherSection()
+        Spacer(Modifier.height(70.dp))
+    }
+}
+// ------------------- Bottom Navigation -------------------
+@Composable
 fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
 
     NavigationBar(containerColor = colors.dashboardBackgroundColor) {
 
@@ -161,9 +202,12 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
 // ------------------- Header -------------------
 @Composable
 fun Header() {
+    val navController = LocalNavController.current
 
     val context = LocalContext.current
     val patientData= PrefsManager(context).getPatient()
+
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -174,6 +218,10 @@ fun Header() {
             modifier = Modifier
                 .size(45.dp)
                 .clip(CircleShape)
+                .clickable(){
+
+                    navController.navigate(Routes.DRAWER)
+                }
         )
 
         Spacer(Modifier.width(10.dp))
@@ -195,9 +243,12 @@ fun Header() {
 @Composable
 fun ToTakeCard() {
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
-    Column {
+    val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
+    Column(modifier = Modifier.clickable(){
+
+        navController.navigate("welcome")
+    }) {
         Text("To Take",
             style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(8.dp))
@@ -226,36 +277,159 @@ fun ToTakeCard() {
     }
 }
 
-// ------------------- Vitals Card -------------------
-@Composable
-fun VitalsCard() {
+fun getTimeAgo(dateTime: String): String {
+    return try {
+        val format = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+        val past = format.parse(dateTime)
+        val now = java.util.Date()
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+        val diff = now.time - (past?.time ?: 0)
+
+        val seconds = diff / 1000
+        val minutes = seconds / 60
+        val hours = minutes / 60
+        val days = hours / 24
+
+        when {
+            days > 0 -> "${days}d ago"
+            hours > 0 -> "${hours}h ago"
+            minutes > 0 -> "${minutes}m ago"
+            else -> "Just now"
+        }
+
+    } catch (e: Exception) {
+        ""
+    }
+}
+fun mergeVitals(vitals: List<Vital>): List<Vital> {
+
+    val bpSys = vitals.find { it.vitalName == "BP_Sys" }
+    val bpDias = vitals.find { it.vitalName == "BP_Dias" }
+
+    val otherVitals = vitals.filter {
+        it.vitalName != "BP_Sys" && it.vitalName != "BP_Dias"
+    }.toMutableList()
+
+    if (bpSys != null && bpDias != null) {
+        otherVitals.add(
+            Vital(
+                vitalName = "BP",
+                unit = "mmHg",
+                vitalDateTime = bpSys.vitalDateTime,
+                displayValue = "${bpSys.vitalValue.toInt()}/${bpDias.vitalValue.toInt()}"
+            )
+        )
+    }
+
+    return otherVitals
+}
+// ------------------- Vitals Card -------------------
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun VitalsCard(vitals: List<Vital>) {
+
+    val colors = LocalMyColorScheme.current
+
+    val mergedVitals = remember(vitals) { mergeVitals(vitals) }
+
+    if (mergedVitals.isEmpty()) return
+
+    val pagerState = rememberPagerState(pageCount = { mergedVitals.size })
+
+    // auto slide
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(2000)
+            val nextPage = (pagerState.currentPage + 1) % mergedVitals.size
+            pagerState.animateScrollToPage(nextPage)
+        }
+    }
+
     Column {
-        Text("Vitals",
-            style = AppTextStyles.style18BCB())
+
+        Text(
+            "Vitals",
+            style = AppTextStyles.style18BCB()
+        )
+
         Spacer(Modifier.height(8.dp))
 
-        Card(colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+        HorizontalPager(
+            state = pagerState
+        ) { page ->
+
+            val vital = mergedVitals[page]
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = colors.dashboardContainerColor
+                ),
+                modifier = Modifier.fillMaxWidth().padding(5.dp)
             ) {
-                Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red)
-                Spacer(Modifier.width(12.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Heart Rate",
-                            style = AppTextStyles.style12BCN() )
-                    Text("1hr ago",
-                            style = AppTextStyles.style12GCN())
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Icon(
+                        Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = Color.Red
+                    )
+
+                    Spacer(Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+
+                        Text(
+                            vital.vitalName,
+                            style = AppTextStyles.style12BCN()
+                        )
+
+                        Text(
+                            getTimeAgo(vital.vitalDateTime),
+                            style = AppTextStyles.style12GCN()
+                        )
+                    }
+
+                    Text(
+                        if (vital.displayValue.isNotEmpty())
+                            "${vital.displayValue} ${vital.unit}"
+                        else
+                            "${vital.vitalValue.toInt()} ${vital.unit}",
+                        style = AppTextStyles.style12GCN()
+                    )
                 }
+            }
+        }
 
-                Text("60 BPM",
-                        style = AppTextStyles.style12GCN())
+        Spacer(Modifier.height(8.dp))
+
+        // dots
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+
+            repeat(mergedVitals.size) { index ->
+
+                val selected = pagerState.currentPage == index
+
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .size(if (selected) 8.dp else 6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (selected)
+                                colors.primaryBlueColor
+                            else
+                                Color.LightGray
+                        )
+                )
             }
         }
     }
@@ -266,8 +440,7 @@ fun VitalsCard() {
 fun PrimaryActionsGrid(   ) {
     val navController = LocalNavController.current
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
     data class GridItem(
         val title: String,
         val icon: Int,
@@ -343,12 +516,13 @@ fun PrimaryActionsGrid(   ) {
                     .clickable {
                         when (item.type) {
                             "vitals" -> navController.navigate(Routes.VITALS)
-                            "fluid" -> navController.navigate(Routes.FLUID)
+                            "fluid" -> navController.navigate(Routes.FLUIDDATAINPUT)
                             "symptomsTracker" -> navController.navigate(Routes.SYMPTOMSTRACKER)
                             "medicine" -> navController.navigate(Routes.MEDICINE)
-                            "diet" -> navController.navigate(Routes.MANAGE_MEDICINE)
+                            "diet" -> navController.navigate(Routes.DIETCHECKLIST)
+                            "interaction" -> navController.navigate(Routes.INTERACTIONCHECKER)
                             "findDoctor" -> navController.navigate(Routes.FINDDOCTOR)
-                            "articles" -> navController.navigate(Routes.ARTICLES)
+                            "articles" -> navController.navigate(Routes.RESEARCHARTICLES)
                         }   // ✅ GLOBAL NAV
                     },
                 shape = RoundedCornerShape(12.dp),
@@ -577,9 +751,16 @@ fun AppointmentRow(icon: ImageVector, text: String) {
 // ------------------- Article Card -------------------
 @Composable
 fun ArticleCard(title: String, author: String, date: String) {
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
-    Card(shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor), modifier = Modifier.fillMaxWidth()) {
+    val colors = LocalMyColorScheme.current
+
+    val navController = LocalNavController.current
+
+    Card(shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+        modifier = Modifier.fillMaxWidth().clickable(){
+
+            navController.navigate(Routes.ARTICALEDETAILS)
+        }) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(title,
                 style = AppTextStyles.style14BCN())
@@ -617,8 +798,7 @@ fun OtherSection() {
 
 @Composable
 fun ChronicleCard(modifier: Modifier) {
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
     Card(modifier = modifier.height(200.dp),
         shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
@@ -655,11 +835,19 @@ fun ChronicleCard(modifier: Modifier) {
 
 @Composable
 fun UploadReportCard() {
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
+
+
+    val context = LocalContext.current
+
+    val navController = LocalNavController.current
+
     Card(modifier = Modifier
         .fillMaxWidth()
-        .height(95.dp), shape = RoundedCornerShape(18.dp), colors =
+        .height(95.dp).clickable(){
+
+            navController.navigate(Routes.LABREPORTS)
+        }, shape = RoundedCornerShape(18.dp), colors =
         CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(painter = painterResource(R.drawable.upload_report), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Unspecified)
@@ -672,8 +860,7 @@ fun UploadReportCard() {
 
 @Composable
 fun LifestyleCard() {
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
     Card(modifier = Modifier
         .fillMaxWidth()
         .height(95.dp), shape = RoundedCornerShape(18.dp), colors =

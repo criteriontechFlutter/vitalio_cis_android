@@ -50,6 +50,7 @@ import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.utils.CommonButton
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
@@ -66,8 +67,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
     val context = LocalContext.current
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+    val colors = LocalMyColorScheme.current
     // 🔹 API Call
     LaunchedEffect(Unit) {
         viewModel.getSymptoms(context)

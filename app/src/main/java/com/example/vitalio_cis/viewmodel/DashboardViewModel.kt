@@ -9,7 +9,6 @@ import javax.inject.Inject
 class DashboardViewModel  @Inject constructor() : ViewModel() {
     private val _selectedItem = MutableStateFlow(0)
     val selectedItem: StateFlow<Int> = _selectedItem.asStateFlow()
-
     fun selectItem(index: Int) {
         _selectedItem.value = index
     }

@@ -1,17 +1,21 @@
 package com.example.vitalio_cis.ui.screens
 
+import android.annotation.SuppressLint
+import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,12 +27,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import coil.compose.AsyncImage
 import com.example.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.NavigationManager.navController
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.model.SlotData
 import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.utils.CommonButton
 import com.example.vitalio_cis.viewmodel.DoctorDetailsViewModel
@@ -37,21 +46,36 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
+@SuppressLint("UnrememberedGetBackStackEntry")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DoctorDetailsScreen(
     doctorId: String,
     days: String,
-    viewModel: DoctorDetailsViewModel = viewModel()
-) {
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val colors by themeViewModel.colorScheme.collectAsState()
+      viewModel: DoctorDetailsViewModel = viewModel()
+ ) {
+    val navController = LocalNavController.current
+
+
+    val colors = LocalMyColorScheme.current
     val context = LocalContext.current
     val doctor by viewModel.doctor.collectAsState()
     LaunchedEffect(Unit) {
-        viewModel.getDoctorProfile(context, doctorId)
-        viewModel.fetchAvailableSlots(context, doctorId)
+        viewModel.setDoctorId( doctorId)
+
+
+
+
+        viewModel.getDoctorProfile(context,)
+        val today = LocalDate.now()
+
+        viewModel.fetchAvailableSlots(
+            context,
+            "${today.year}/${today.monthValue}/${today.dayOfMonth}"
+        )
+        viewModel.setSlotDate("${today.year}/${today.monthValue}/${today.dayOfMonth}")
+
     }
 
     CommonAppBar(
@@ -59,105 +83,152 @@ fun DoctorDetailsScreen(
     ) {
 
         val navController = LocalNavController.current
+        val scrollState = rememberScrollState()
 
 
+        if (doctor == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.dashboardBackgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return@CommonAppBar
+        }
         doctor?.let { doc ->
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colors.dashboardBackgroundColor)
                     .padding(16.dp)
-            )
-            {
+                    .background(colors.dashboardBackgroundColor)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)   // important
+                        .background(colors.dashboardBackgroundColor)
+                        .verticalScroll(scrollState)
+                )
+                {
 
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(0.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = colors.dashboardBackgroundColor
-                    )
-                ) {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(0.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = colors.dashboardBackgroundColor
+                        )
+                    ) {
 
-                    Column(modifier = Modifier.padding(16.dp)) {
+                        Column( ) {
 
-                        DoctorTopSection(doc, days)
+                            DoctorTopSection(doc, days)
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
 
-                            InfoCard(
-                                title = doc.experience.toString(),
-                                subtitle = "Experience",
-                                modifier = Modifier.weight(1f)
+                                InfoCard(
+                                    title = doc.experience.toString(),
+                                    subtitle = "Experience",
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                InfoCard(
+                                    title = doc.consultedPatientCount,
+                                    subtitle = "Patients",
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Doctor Biography",
+                                fontWeight = FontWeight.SemiBold
                             )
 
-                            InfoCard(
-                                title = doc.consultedPatientCount,
-                                subtitle = "Patients",
-                                modifier = Modifier.weight(1f)
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = doc.biography ?: "No biography available",
+                                fontSize = 13.sp,
+                                color = Color.Gray
                             )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            ClinicToggle()
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            SelectDateUI()
+                            SlotScreen(viewModel)
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Doctor Biography",
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = doc.biography ?: "No biography available",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        ToggleButtons()
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        SelectDateUI()
-                        SlotScreen()
-
-
-
-                        CommonButton(text = "Book Appointment",
-                            onClick = {
-
-                                navController.navigate(Routes.BOOKINGCONFERMATION)
-                            })
-
                     }
-
                 }
+
+                CommonButton(
+                    text = "Book Appointment",
+                    onClick = {
+
+
+                        val data = BookingDetails(
+                            dID = doctorId.toString(),
+                            pName = doc.name.toString(),
+                            qly = "MBBS",
+                            atHospital = "City Hospital",
+                            onDate = viewModel.slotDate.value.toString(),
+                            onTime =  viewModel.slotTime.value.toString(),
+                            free = doc.name.toString(),
+                        )
+
+                        val json = Gson().toJson(data)
+                        navController.navigate(
+                            Routes.BOOKINGCONFERMATION + "/${Uri.encode(json)}"
+                        )
+                    })
             }
         }
     }
 
 
     }
-@Composable
-fun SlotScreen(viewModel: DoctorDetailsViewModel = viewModel()) {
 
+
+
+@SuppressLint("UnrememberedGetBackStackEntry")
+@Composable
+fun SlotScreen(viewModel: DoctorDetailsViewModel) {
+
+//    val parentEntry = remember {
+//        navController?.currentBackStackEntry!!
+//    }
+//
+//    val viewModel: DoctorDetailsViewModel = viewModel(parentEntry)
     val shiftList by viewModel.slotList.collectAsState()
 
-    LazyColumn {
+    Column {
 
-        items(shiftList) { shift ->
+        shiftList.forEach { shift ->
 
-            Column(modifier = Modifier.padding(10.dp)) {
+            Column(modifier = Modifier ) {
 
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = shift.shift_Name,
                     fontWeight = FontWeight.Bold,
@@ -171,16 +242,26 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel = viewModel()) {
                     ).toList()
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
 
-                SlotGrid(slotList)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    SlotGrid(slotList,shift.shiftId.toString(),viewModel)
+
+
             }
         }
     }
 }
 
+@SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
-fun SlotGrid(list: List<SlotData>) {
+fun SlotGrid(list: List<SlotData>, ShifId: String, viewModel: DoctorDetailsViewModel, ) {
+
+//    val parentEntry = remember {
+//        navController?.currentBackStackEntry!!
+//    }
+//
+//    val viewModel: DoctorDetailsViewModel = viewModel(parentEntry)
+    var selectedSlot by remember { mutableStateOf<SlotData?>(null) }
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -189,42 +270,82 @@ fun SlotGrid(list: List<SlotData>) {
     ) {
 
         list.forEach { slot ->
-            SlotItem(slot)
-        }
 
+            SlotItem(
+                slot = slot,
+                isSelected = selectedSlot == slot,
+                onClick = {
+                    if (slot.slotStatus == "empty") {
+                        selectedSlot = slot
+                        viewModel.setSlotTime(slot.slotTime.toString())
+
+                        viewModel.setShiftId(ShifId)
+                    }
+                }
+            )
+        }
     }
 }
 @Composable
-fun SlotItem(slot: SlotData) {
+fun SlotItem(
+    slot: SlotData,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
 
-    val bgColor =
-        if (slot.slotStatus == "empty") Color(0xFF4CAF50)
-        else Color.Red
+    val backgroundColor = when {
+        slot.slotStatus != "empty" -> Color.LightGray   // booked
+        isSelected -> Color(0xFF1E5BD8)                 // selected
+        else -> Color.White                             // available
+    }
+
+    val textColor = when {
+        slot.slotStatus != "empty" -> Color.DarkGray
+        isSelected -> Color.White
+        else -> Color.Black
+    }
+
+    val border =
+        if (slot.slotStatus == "empty" && !isSelected)
+            BorderStroke(1.dp, Color(0xFF1E5BD8))
+        else null
+
+
+    val formattedTime = remember(slot.slotTime) {
+        try {
+            val input = java.text.SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+            val output = java.text.SimpleDateFormat("h:mm a", Locale.getDefault())
+
+            val date = input.parse(slot.slotTime)
+            output.format(date!!)
+        } catch (e: Exception) {
+            slot.slotTime
+        }
+    }
 
     Box(
         modifier = Modifier
-            .background(bgColor, RoundedCornerShape(6.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-
-        val formattedTime = remember(slot.slotTime) {
-            try {
-                val input = java.text.SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-                val output = java.text.SimpleDateFormat("h:mm a", Locale.getDefault())
-
-                val date = input.parse(slot.slotTime)
-                output.format(date!!)
-            } catch (e: Exception) {
-                slot.slotTime
+            .clip(RoundedCornerShape(6.dp))
+            .background(backgroundColor)
+            .then(
+                if (border != null)
+                    Modifier.border(border, RoundedCornerShape(6.dp))
+                else Modifier
+            )
+            .clickable(
+                enabled = slot.slotStatus == "empty"
+            ) {
+                onClick()
             }
-        }
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    ) {
 
         Text(
             text = formattedTime,
-            color = Color.White
+            color = textColor
         )
     }
-    }
+}
 
 @Composable
 fun DoctorTopSection(
@@ -301,16 +422,34 @@ fun getDates(month: Int, year: Int): List<DateItem> {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun SelectDateUI() {
+fun SelectDateUI( ) {
 
+//    val parentEntry = remember(navController) {
+//        navController?.getBackStackEntry(Routes.DOCTORDETAILS)
+//    }
+//    val parentEntry = remember(navController) {
+//        navController?.getBackStackEntry("doctorDetails/{doctorId}/{days}")
+//    }
+    val viewModel: DoctorDetailsViewModel = viewModel()
     val today = LocalDate.now()
+    val context = LocalContext.current
 
     var month by remember { mutableStateOf(today.monthValue) }
     var year by remember { mutableStateOf(today.year) }
-    var selectedIndex by remember { mutableStateOf(today.dayOfMonth - 1) }
 
+    // always start from first visible item
+    var selectedIndex by remember { mutableStateOf(0) }
+
+    // show only future dates
     val dates = remember(month, year) {
-        getDates(month, year)
+
+        val allDates = getDates(month, year)
+
+        if (month == today.monthValue && year == today.year) {
+            allDates.drop(today.dayOfMonth - 1)
+        } else {
+            allDates
+        }
     }
 
     Column {
@@ -339,7 +478,18 @@ fun SelectDateUI() {
                     item = item,
                     selected = index == selectedIndex
                 ) {
+
                     selectedIndex = index
+
+                    Log.d(
+                        "DateClick",
+                        "Selected: $year-$month-${item.date}"
+                    )
+                    viewModel.setSlotDate("$year-$month-${item.date}")
+                    viewModel.fetchAvailableSlots(
+                        context,
+                        "$year-$month-${item.date}"
+                    )
                 }
             }
         }
@@ -481,57 +631,61 @@ fun InfoCard(
 }
 
 @Composable
-fun ToggleButtons() {
+fun ClinicToggle() {
 
     var selected by remember { mutableStateOf(0) }
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(
                 Color(0xFFE9EDF3),
                 RoundedCornerShape(12.dp)
             )
+            .padding(4.dp)
     ) {
 
-        Button(
-            onClick = { selected = 0 },
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(0.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor =
-                    if (selected == 0)
-                        Color(0xFF1E5BD8)
-                    else Color.Transparent
-            )
-        ) {
-            Text(
-                "In Clinic",
-                color =
-                    if (selected == 0)
-                        Color.White
-                    else Color.Gray
-            )
-        }
+        Row {
 
-        Button(
-            onClick = { selected = 1 },
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(0.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor =
-                    if (selected == 1)
-                        Color(0xFF1E5BD8)
-                    else Color.Transparent
-            )
-        ) {
-            Text(
-                "Virtual",
-                color =
-                    if (selected == 1)
-                        Color.White
-                    else Color.Gray
-            )
+            // In Clinic
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (selected == 0) Color(0xFF2E5BFF)
+                        else Color.Transparent
+                    )
+                    .clickable { selected = 0 }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "In Clinic",
+                    color = if (selected == 0) Color.White else Color.Gray,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            // Virtual
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (selected == 1) Color(0xFF2E5BFF)
+                        else Color.Transparent
+                    )
+                    .clickable { selected = 1 }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Virtual",
+                    color = if (selected == 1) Color.White else Color.Gray,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }

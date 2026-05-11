@@ -2,6 +2,7 @@ package com.example.vitalio_cis.utils
 
 import android.app.Application
 import android.content.Context
+import dagger.hilt.android.HiltAndroidApp
 
 class MyApplication : Application() {
     companion object {
