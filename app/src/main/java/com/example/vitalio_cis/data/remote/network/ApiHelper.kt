@@ -11,6 +11,7 @@ import retrofit2.Response
 import com.critetiontech.ctvitalio.networking.ApiService
 import com.critetiontech.ctvitalio.utils.NetworkUtils
 import com.example.vitalio_cis.utils.PrefsManager
+import okhttp3.ResponseBody.Companion.toResponseBody
 
 class ApiHelper {
 
@@ -32,7 +33,6 @@ class ApiHelper {
             // 🔥 1. Agar cache hai → DIRECT return (NO dialog)
             if (cached != null) {
                 Log.d("ApiHelper", "Offline → Returning cached data")
-
                 return@withContext Response.success(
                     ResponseBody.create(null, cached)
                 )
@@ -59,11 +59,8 @@ class ApiHelper {
         // ✅ ONLINE CASE
         try {
             val response = apiCall(endpoint)
-
             val bodyString = response.body()?.string()
-
             Log.d("ApiHelper", "API Response: $bodyString")
-
             // ✅ SAVE CACHE
             if (response.isSuccessful && cacheResponse && !bodyString.isNullOrEmpty()) {
                 PrefsManager(context).saveString(context, localKey, bodyString)
@@ -71,19 +68,17 @@ class ApiHelper {
             }
 
             return@withContext Response.success(
-                ResponseBody.create(null, bodyString ?: "")
+                (bodyString ?: "").toResponseBody(null)
             )
 
         } catch (e: Exception) {
 
             Log.e("ApiHelper", "API Failed: ${e.message}")
-
             val cached = PrefsManager(context).getString(context, localKey)
 
             // 🔥 Exception me bhi fallback
             return@withContext if (cached != null) {
                 Log.d("ApiHelper", "Exception → Returning cached data")
-
                 Response.success(ResponseBody.create(null, cached))
             } else {
                 Response.error(
