@@ -44,8 +44,6 @@ import com.example.vitalio_cis.utils.CommonButton
 fun BookingConfirmationScreen() {
 
     val navController = LocalNavController.current
-
-
     val themeViewModel: ThemeViewModel = viewModel()
     val colors by themeViewModel.colorScheme.collectAsState()
     CommonAppBar(

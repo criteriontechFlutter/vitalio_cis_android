@@ -67,11 +67,10 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {
-                    val themeViewModel = LocalThemeViewModel.current
-                    val colors by themeViewModel.colorScheme.collectAsState()
+                    LocalThemeViewModel.current
 
                     Surface(
-                        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize(),
                      ) {
                         NavHost(
                             navController = navController,

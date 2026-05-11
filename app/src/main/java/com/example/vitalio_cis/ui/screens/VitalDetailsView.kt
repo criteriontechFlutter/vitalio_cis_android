@@ -37,9 +37,7 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VitalsScreen( viewModel: VitalDetailViewModel = viewModel()) {
-
     val context = LocalContext.current
-
     val themeViewModel: ThemeViewModel = viewModel()
     val colors by themeViewModel.colorScheme.collectAsState()
     LaunchedEffect(Unit) {
