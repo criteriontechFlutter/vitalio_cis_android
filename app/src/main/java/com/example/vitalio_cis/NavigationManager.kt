@@ -6,7 +6,9 @@ import androidx.navigation.NavHostController
 
 object NavigationManager {
 
-    var navController: NavHostController? = null   // ✅ nullable
+    var navController: NavHostController?    // ✅ nullable
+        get() = null
+        set(value) = TODO()
 
     fun navigate(route: String) {
         if (navController == null) {

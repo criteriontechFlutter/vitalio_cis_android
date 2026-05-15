@@ -70,6 +70,15 @@ class PrefsManager(context: Context) {
         sharedPref.edit().putBoolean(KEY_IS_DARK_THEME, isDark).apply()
     }
 
+
+    fun saveString(context: Context, key: String, value: String) {
+        sharedPref.edit { putString(key, value) }
+    }
+
+    fun getString(context: Context, key: String): String? {
+        return sharedPref.getString(key, null)
+    }
+
     fun getTheme(): Boolean {
         return sharedPref.getBoolean(KEY_IS_DARK_THEME, false) // default LIGHT
     }

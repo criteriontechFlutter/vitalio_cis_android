@@ -1,6 +1,6 @@
 package com.critetiontech.ctvitalio.networking
 
- import okhttp3.MultipartBody
+import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -14,27 +14,6 @@ import retrofit2.http.Part
 import retrofit2.http.QueryMap
 import retrofit2.http.Url
 
-fun generateAuthHeaderMap(
-    token: Boolean,
-
-): Map<String, String>  {
-
-
-//    val accessToken = patient?.token
-//    val userId = patient?.id
-    val accessToken = " "
-    val userId = " "
-    return if (token && accessToken.isNotEmpty() && userId.isNotEmpty()) {
-        mapOf(
-            "x-access-token" to accessToken,
-            "userID" to userId,
-            "Content-Type" to "application/json"
-        )
-    } else {
-        emptyMap()
-    }
-}
-
 
 interface ApiService {
     @GET
@@ -43,6 +22,7 @@ interface ApiService {
         @HeaderMap headers: Map<String, String> = emptyMap(),
         @QueryMap(encoded = true) params: Map<String, @JvmSuppressWildcards Any>
     ): Response<ResponseBody>
+
     @POST
     suspend fun dynamicRawPost(
         @Url url: String,
@@ -57,8 +37,6 @@ interface ApiService {
         @QueryMap(encoded = true) params: Map<String, @JvmSuppressWildcards Any>
     ): Response<ResponseBody>
     // Add similar annotations for PUT, DELETE, etc.
-
-
 
 
     @Multipart

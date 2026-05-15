@@ -9,9 +9,7 @@ plugins {
 
 android {
     namespace = "com.example.vitalio_cis"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.vitalio_cis"

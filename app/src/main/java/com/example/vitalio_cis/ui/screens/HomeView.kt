@@ -56,6 +56,7 @@ import java.util.Locale
 
 data class GridItem(val title: String, val icon: Int)
 
+
 @Composable
 fun DashboardScreen(viewModel: HomeViewModel = viewModel(), ) {
     var selectedIndex by remember { mutableStateOf(0) }
@@ -1049,6 +1050,8 @@ fun ArticleCard(title: String, author: String, date: String) {
 @Composable
 fun OtherSection() {
     Box {
+//        modifier =
+//            Modifier.padding(bottom = 35.dp)
         Column(modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)) {

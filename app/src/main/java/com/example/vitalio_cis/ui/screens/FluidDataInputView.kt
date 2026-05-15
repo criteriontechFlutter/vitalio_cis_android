@@ -1,6 +1,6 @@
 package com.example.vitalio_cis.ui.screens
 
-import android.R.attr.value
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
@@ -17,14 +17,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
@@ -49,7 +44,6 @@ import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.ui.components.CommonAppBar
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.viewmodel.IntakeOutputViewModel
-import okhttp3.Route
 
 enum class FluidType(val foodId: Int, val label: String, val emoji: String) {
     WATER(1, "Water", "💧"),
@@ -59,6 +53,7 @@ enum class FluidType(val foodId: Int, val label: String, val emoji: String) {
     COFFEE(5, "Coffee", "☕"),
     BEVERAGE(6, "Beverage ", "🍲")
 }
+ @SuppressLint("NewApi")
  @Composable
 fun FluidDataInputScreen(
      viewModel: IntakeOutputViewModel = viewModel(),) {
@@ -72,7 +67,9 @@ fun FluidDataInputScreen(
      val context = LocalContext.current
 
      LaunchedEffect(Unit) {
-         viewModel.fetchIntake(context) // 🔥 page load pe call
+         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+             viewModel.fetchIntake(context)
+         } // 🔥 page load pe call
      }
 
     CommonAppBar(
