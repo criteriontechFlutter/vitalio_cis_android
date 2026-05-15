@@ -61,18 +61,29 @@ import com.example.vitalio_cis.ui.screens.SymptomsView
 import com.example.vitalio_cis.ui.screens.VitalHistoryScreen
 import com.example.vitalio_cis.ui.screens.VitalsScreen
 import com.example.vitalio_cis.ui.screens.onboarding.BloodScreen
+import com.example.vitalio_cis.ui.screens.onboarding.ChronicDiseaseScreen
+import com.example.vitalio_cis.ui.screens.onboarding.CreateAccountPreviewScreen
 import com.example.vitalio_cis.ui.screens.onboarding.DobScreen
+import com.example.vitalio_cis.ui.screens.onboarding.FamilyHistoryScreen
+import com.example.vitalio_cis.ui.screens.onboarding.FluidDetailsScreen
+import com.example.vitalio_cis.ui.screens.onboarding.FluidIntakeDetailsScreen
 import com.example.vitalio_cis.ui.screens.onboarding.GenderScreen
+import com.example.vitalio_cis.ui.screens.onboarding.HeightScreen
 import com.example.vitalio_cis.ui.screens.onboarding.HydrationScreen
 import com.example.vitalio_cis.ui.screens.onboarding.LocationScreen
+import com.example.vitalio_cis.ui.screens.onboarding.RegistrationCompletedView
+import com.example.vitalio_cis.ui.screens.onboarding.ReminderPreferenceScreen
 import com.example.vitalio_cis.ui.screens.onboarding.ReminderScreen
+import com.example.vitalio_cis.ui.screens.onboarding.ThankYouView
+import com.example.vitalio_cis.ui.screens.onboarding.WeightScreen
 import com.example.vitalio_cis.ui.screens.onboarding.WelcomeScreen
 import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
 import com.example.vitalio_cis.ui.theme.MyAppTheme
 import com.example.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
+import dagger.hilt.android.AndroidEntryPoint
 
-class MainActivity : ComponentActivity() {
+ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -188,6 +199,16 @@ class MainActivity : ComponentActivity() {
                             composable("location") { LocationScreen( ) }
                             composable("reminder") { ReminderScreen( ) }
                             composable("hydration") { HydrationScreen( ) }
+                            composable("weight") { WeightScreen( ) }
+                            composable("height") { HeightScreen( ) }
+                            composable("chronicDisease") { ChronicDiseaseScreen( ) }
+                            composable("familyHistory") { FamilyHistoryScreen( ) }
+                            composable("createAccount") { CreateAccountPreviewScreen( ) }
+                            composable("thankYou") { ThankYouView( ) }
+                            composable("reminderPreference") { ReminderPreferenceScreen( ) }
+                            composable("fluidIntakeDetails") { FluidIntakeDetailsScreen( ) }
+                            composable("fluidDetails") { FluidDetailsScreen( ) }
+                            composable("registrationCompleted") { RegistrationCompletedView( ) }
                         }
                     }
                 }

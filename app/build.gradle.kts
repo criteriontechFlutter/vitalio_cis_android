@@ -63,6 +63,8 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.material3)
+    implementation(libs.foundation)
+    implementation(libs.androidx.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -106,4 +108,5 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
  }

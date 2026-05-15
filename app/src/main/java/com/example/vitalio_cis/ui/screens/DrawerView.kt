@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
@@ -37,9 +38,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -54,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,8 +73,11 @@ import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.ui.components.CommonAppBar
+import com.example.vitalio_cis.ui.theme.AppTheme
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.utils.PrefsManager
 
 @Composable
 fun DrawerScreen() {
@@ -75,10 +85,50 @@ fun DrawerScreen() {
 
     val colors = LocalMyColorScheme.current
 
+    val navController = LocalNavController.current
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
-
+    var expanded by remember {
+        mutableStateOf(false)
+    }
     CommonAppBar(
         title = " ",
+        actions = {
+
+            Box {
+
+                IconButton(
+                    onClick = {
+                        expanded = true
+                    }
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = {
+                        expanded = false
+                    }
+                ) {
+
+                    DropdownMenuItem(
+                        text = {
+                            Text("Logout")
+                        },
+                        onClick = {
+                            PrefsManager(context).clearAll()
+                            navController.navigate(Routes.LOGIN)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     ) {
 
     Column(
@@ -129,7 +179,9 @@ fun DrawerScreen() {
                 )
             )
         Spacer(modifier = Modifier.height(12.dp))
+        ThemeSwitchItem()
 
+        Spacer(modifier = Modifier.height(12.dp))
         MenuCard(
             listOf(
                 "FAQ" to "4",
@@ -141,7 +193,74 @@ fun DrawerScreen() {
 }
 
 
+@Composable
+fun ThemeSwitchItem() {
 
+    val themeViewModel = LocalThemeViewModel.current
+    val colors = LocalMyColorScheme.current
+
+    val selectedTheme by themeViewModel.selectedTheme.collectAsState()
+
+    val isDarkMode = selectedTheme == AppTheme.DARK
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(colors.dashboardContainerColor),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            // 🌙 ICON + TEXT
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.DarkMode,
+                    contentDescription = null,
+                    tint = colors.textGreyColor,
+                    modifier = Modifier.size(18.dp)
+                )
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Text(
+                    text = "Dark Mode",
+                    color = colors.textDarkColor,
+                    fontSize = 16.sp
+                )
+            }
+
+            // 🔥 SWITCH
+            Switch(
+                colors = SwitchDefaults.colors(
+
+                    checkedThumbColor = Color.White,
+
+                    checkedTrackColor = colors.primaryBlueColor,
+
+                    uncheckedThumbColor = Color.White,
+
+                    uncheckedTrackColor = Color.LightGray
+                ),
+
+                checked = isDarkMode,
+
+                onCheckedChange = {
+
+                    themeViewModel.toggleTheme()
+                }
+            )
+        }
+    }
+}
 
 
 
@@ -236,7 +355,7 @@ fun MedicalProfileCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(){
+            .clickable() {
                 navController.navigate(Routes.MEDICALPROFILE)
 
             },

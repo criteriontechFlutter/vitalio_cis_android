@@ -41,18 +41,23 @@ import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.ui.screens.onboarding.components.OnboardingLayout
 import com.example.vitalio_cis.ui.screens.onboarding.components.ProgressCard
-
+import com.example.vitalio_cis.viewmodel.RegistrationViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun WelcomeScreen() {
+fun WelcomeScreen( ) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
 
     val navController = LocalNavController.current
+
+    val viewModel: RegistrationViewModel = viewModel()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF9FAFB))
+            .background(Color.White)
             .padding(16.dp)
     ) {
 
@@ -91,14 +96,16 @@ fun WelcomeScreen() {
             subtitle = "Great start! You’re just beginning—let’s keep going!"
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         // 🖼 Illustration (Replace with your asset)
 
         AsyncImage(
             model = R.drawable.wlcmhand,
             contentDescription = null,
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.CenterHorizontally)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -106,7 +113,7 @@ fun WelcomeScreen() {
         // 👋 Title
         Text(
             "Welcome to Vitalio.",
-            fontSize = 22.sp,
+            fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
         )
@@ -115,7 +122,7 @@ fun WelcomeScreen() {
 
         Text(
             "Let us know about you so we can manage to help you in better ways.",
-            fontSize = 13.sp,
+            fontSize = 16.sp,
             color = Color.Gray
         )
 
@@ -155,6 +162,7 @@ fun WelcomeScreen() {
         Button(
             onClick = {
                 navController.navigate("gender")
+                viewModel.updatePer(0.1f)
             },
             enabled = firstName.isNotEmpty() && lastName.isNotEmpty(),
             modifier = Modifier
