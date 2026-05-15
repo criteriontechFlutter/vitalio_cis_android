@@ -81,15 +81,16 @@ fun CommonAppBar(
     title: String,
     showBack: Boolean = true,
     onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {
-        Column() {
-            val themeViewModel = LocalThemeViewModel.current
-
-            Text(text = "theme",
-                modifier = Modifier.clickable(){
-                    themeViewModel.toggleTheme()
-                })
-        }
+    actions: @Composable RowScope.() -> Unit
+    = {
+//        Column() {
+//            val themeViewModel = LocalThemeViewModel.current
+//
+//            Text(text = "theme",
+//                modifier = Modifier.clickable(){
+//                    themeViewModel.toggleTheme()
+//                })
+//        }
     },
     content: @Composable ( ) -> Unit
 ) {

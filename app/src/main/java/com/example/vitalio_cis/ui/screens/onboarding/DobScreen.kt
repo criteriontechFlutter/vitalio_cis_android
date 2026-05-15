@@ -16,6 +16,11 @@ import coil.compose.AsyncImage
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.ui.unit.sp
+import com.example.vitalio_cis.ui.screens.onboarding.components.ProgressCard
+import com.example.vitalio_cis.viewmodel.RegistrationViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -30,6 +35,9 @@ fun DobScreen() {
         "July","August","September","October","November","December"
     )
 
+    val viewModel = remember {
+        RegistrationViewModel()
+    }
     val years = (1950..2025).toList()
 
     var selectedMonth by remember { mutableStateOf(8) }
@@ -41,22 +49,74 @@ fun DobScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(16.dp)
     ) {
 
-        Text(
-            "Your date of birth?",
-            style = MaterialTheme.typography.headlineSmall
-        )
+        // 🔙 Top Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = null
+            )
 
-        Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                "Create Account",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                "Skip",
+                color = Color(0xFF3B82F6),
+                fontSize = 14.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 📊 Progress Card
+        ProgressCard(
+            progress = viewModel.perc,
+            title = "One-Third Complete",
+            subtitle = "Nice work! You're a third of the way there!"
+        )
+        Spacer(modifier = Modifier.weight(1f))
+
+        // 👋 Title
+
+        Spacer(modifier = Modifier.weight(1f))
 
         AsyncImage(
-            model = R.drawable.wlcmhand,
+            model = R.drawable.dobgif,
             contentDescription = null,
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.CenterHorizontally)
         )
 
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            "Your date of birth?.",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2563EB)
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            "Your date of birth ensures personalized health insights.",
+            fontSize = 16.sp,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -85,7 +145,9 @@ fun DobScreen() {
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = { navController.navigate("blood") },
+            onClick = { navController.navigate("blood")
+
+                viewModel.updatePer(0.2f)},
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),

@@ -77,6 +77,7 @@ fun OtpScreen(  viewModel: OTPViewModel = viewModel()) {
                 contentScale = ContentScale.Fit
             )
 
+            Spacer(modifier = Modifier.weight(1f))
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

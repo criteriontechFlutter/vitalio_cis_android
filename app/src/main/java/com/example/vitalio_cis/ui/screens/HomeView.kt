@@ -1,4 +1,10 @@
 package com.example.vitalio_cis.ui.screens
+import android.content.Intent
+import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -18,22 +24,34 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.NavigationManager
 
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.model.Vital
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.ui.theme.getColorScheme
+import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
+import com.example.vitalio_cis.viewmodel.FindDoctorViewModel
 import com.example.vitalio_cis.viewmodel.HomeViewModel
 import kotlinx.coroutines.delay
+import java.util.Locale
 
 
 data class GridItem(val title: String, val icon: Int)
@@ -117,42 +135,304 @@ fun HomeView(viewModel: HomeViewModel = viewModel()){
     LaunchedEffect(Unit) {
         viewModel.fetchLastVital(context)
     }
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.dashboardBackgroundColor)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-            .background(colors.dashboardBackgroundColor)
+    Box {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.dashboardBackgroundColor)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+                .background(colors.dashboardBackgroundColor)
+        )
+        {
+
+
+//            ToTakeCard()
+//
+//            Spacer(Modifier.height(20.dp))
+
+            VitalsCard(vitals)
+
+            Spacer(Modifier.height(20.dp))
+
+            Text(
+                text = "Primary Actions",
+                style = AppTextStyles.style18BCB()
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            PrimaryActionsGrid()
+
+            Spacer(Modifier.height(20.dp))
+
+            HomeScreen()
+
+            Spacer(Modifier.height(20.dp))
+
+            OtherSection()
+            Spacer(Modifier.height(70.dp))
+        }
+
+        FloatingActionButton(
+            onClick = {
+//                6307748142
+                showDialog = true
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 132.dp, end = 32.dp),
+            containerColor = Color(0xFF2F6FE4)
+        ) {
+            Icon(
+                Icons.Default.Mic,
+                contentDescription = null,
+                tint = Color.White
+            )
+        }
+        if (showDialog) {
+
+            VoiceToTextDialog(
+
+                onDismiss = {
+
+                    showDialog = false
+                } )
+        }
+    }
+}
+
+
+
+@Composable
+fun VoiceToTextDialog(
+    onDismiss: () -> Unit
+) {
+
+    val navController = LocalNavController.current
+    val context = LocalContext.current
+
+    var text by remember { mutableStateOf("Listening...") }
+
+    val speechRecognizer = remember {
+        SpeechRecognizer.createSpeechRecognizer(context)
+    }
+
+    val intent = remember {
+        Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE,
+                Locale.getDefault()
+            )
+            putExtra(
+                RecognizerIntent.EXTRA_PARTIAL_RESULTS,
+                true
+            )
+        }
+    }
+
+    DisposableEffect(Unit) {
+
+        val listener = object : RecognitionListener {
+
+            override fun onReadyForSpeech(params: Bundle?) {
+                text = "Listening..."
+            }
+
+            override fun onBeginningOfSpeech() {
+                text = "Speak now..."
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {}
+
+            override fun onBufferReceived(buffer: ByteArray?) {}
+
+            override fun onEndOfSpeech() {
+                text = "Processing..."
+            }
+
+            override fun onError(error: Int) {
+                text = "Try again"
+            }
+
+            override fun onResults(results: Bundle?) {
+
+                val data = results?.getStringArrayList(
+                    SpeechRecognizer.RESULTS_RECOGNITION
+                )
+
+                val spokenText = data?.get(0)?.lowercase() ?: ""
+
+                text = spokenText
+
+                handleNavigation(spokenText, navController)
+
+                onDismiss() // 🔥 AUTO CLOSE
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {}
+
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+        }
+
+        speechRecognizer.setRecognitionListener(listener)
+
+        // 🔥 AUTO START LISTENING (NO BUTTON NEEDED)
+        speechRecognizer.startListening(intent)
+
+        onDispose {
+            speechRecognizer.stopListening()
+            speechRecognizer.destroy()
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Listening...") },
+        text = {
+            Text(text)
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
     )
-    {
+}
+data class VoiceCommand(
+    val keywords: List<String>,
+    val route: String
+)
+
+val voiceCommands = listOf(
+
+    VoiceCommand(
+        listOf("dashboard", "home", "main"),
+        Routes.DASHBOARD
+    ),
+
+    VoiceCommand(
+        listOf("vitals", "bp", "blood pressure", "heart rate", "spo2", "Temperature",  "RR", "Weight"),
+        Routes.VITALS
+    ),
+
+    VoiceCommand(
+        listOf("medicine", "tablet", "drug", "medication"),
+        Routes.MEDICINE
+    ),
+
+    VoiceCommand(
+        listOf("reminder", "alarm"),
+        Routes.REMINDERS
+    ),
+
+    VoiceCommand(
+        listOf("lab", "report", "test"),
+        Routes.LABREPORTS
+    ),
+
+    VoiceCommand(
+        listOf("diet", "food"),
+        Routes.DIETCHECKLIST
+    ),
+
+    VoiceCommand(
+        listOf("fluid", "water", "Milk", "Juice", "Tea", "Coffee", "Beverage"),
+        Routes.FLUIDDATAINPUT
+    ),
+
+    VoiceCommand(
+        listOf("symptom", "fever", "cough", "pain"),
+        Routes.SYMPTOMSTRACKER
+    ),
+
+    VoiceCommand(
+        listOf("doctor", "appointment"),
+        Routes.FINDDOCTOR
+    ),
+
+    VoiceCommand(
+        listOf("article", "research"),
+        Routes.RESEARCHARTICLES
+    ),
+
+    VoiceCommand(
+        listOf("profile"),
+        Routes.MEDICALPROFILE
+    ),
+
+    VoiceCommand(
+        listOf("emergency", "help"),
+        Routes.EMERGENCYCONTACTS
+    ),
+    VoiceCommand(
+        listOf("Watch", "Connect Smart Watch", "Connect watch"),
+        Routes.CONNECTWATCH
+    ),
+
+    VoiceCommand(
+        listOf("Family", "Family Health", "Family Health History"),
+        Routes.FAMILYHEALTH
+    ),
 
 
-        ToTakeCard()
+    VoiceCommand(
+        listOf("Family", "Family Health", "Family Health History"),
+        Routes.SHAREDACCOUNT
+    ),
 
-        Spacer(Modifier.height(20.dp))
+    VoiceCommand(
+        listOf("Shared", "Shared Accounts",  ),
+        Routes.SHAREDACCOUNT
+    ),
 
-        VitalsCard(vitals)
 
-        Spacer(Modifier.height(20.dp))
+    VoiceCommand(
+        listOf("My Observer",   ),
+        Routes.MYOBSERVERS
+    ),
+    VoiceCommand(
+        listOf("Prescriptions",  "Prescription" ),
+        Routes.PRESCRIPTION
+    ),
 
-        Text(
-            text = "Primary Actions",
-            style = AppTextStyles.style18BCB())
+    VoiceCommand(
+        listOf("Allergies",  "Allergie" ),
+        Routes.ALLERGIESSCREEN
+    ),
 
-        Spacer(Modifier.height(12.dp))
+    VoiceCommand(
+        listOf("FAQ",   ),
+        Routes.FAQ
+    ),
+    VoiceCommand(
+        listOf("Feedback",   ),
+        Routes.FEEDBACK
+    ),
+)
+fun handleNavigation(
+    spokenText: String,
+    navController: NavController
+) {
 
-        PrimaryActionsGrid()
+    val text = spokenText.lowercase()
 
-        Spacer(Modifier.height(20.dp))
+    val route = voiceCommands.firstOrNull { command ->
+        command.keywords.any { keyword ->
+            text.contains(keyword)
+        }
+    }?.route
 
-        HomeScreen()
-
-        Spacer(Modifier.height(20.dp))
-
-        OtherSection()
-        Spacer(Modifier.height(70.dp))
+    route?.let {
+        navController.navigate(it)
     }
 }
 // ------------------- Bottom Navigation -------------------
@@ -207,7 +487,7 @@ fun Header() {
             modifier = Modifier
                 .size(45.dp)
                 .clip(CircleShape)
-                .clickable(){
+                .clickable() {
 
                     navController.navigate(Routes.DRAWER)
                 }
@@ -353,7 +633,9 @@ fun VitalsCard(vitals: List<Vital>) {
                 colors = CardDefaults.cardColors(
                     containerColor = colors.dashboardContainerColor
                 ),
-                modifier = Modifier.fillMaxWidth().padding(5.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp)
             ) {
 
                 Row(
@@ -746,10 +1028,12 @@ fun ArticleCard(title: String, author: String, date: String) {
 
     Card(shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
-        modifier = Modifier.fillMaxWidth().clickable(){
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable() {
 
-            navController.navigate(Routes.ARTICALEDETAILS)
-        }) {
+                navController.navigate(Routes.ARTICALEDETAILS)
+            }) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(title,
                 style = AppTextStyles.style14BCN())
@@ -835,7 +1119,8 @@ fun UploadReportCard() {
 
     Card(modifier = Modifier
         .fillMaxWidth()
-        .height(95.dp).clickable(){
+        .height(95.dp)
+        .clickable() {
 
             navController.navigate(Routes.LABREPORTS)
         }, shape = RoundedCornerShape(18.dp), colors =

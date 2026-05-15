@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,42 +42,72 @@ import com.example.vitalio_cis.R
 import com.example.vitalio_cis.ui.screens.onboarding.components.OnboardingLayout
 import com.example.vitalio_cis.ui.screens.onboarding.components.ProgressCard
 import com.example.vitalio_cis.ui.screens.onboarding.components.SelectionCard
+import com.example.vitalio_cis.viewmodel.RegistrationViewModel
 
 @Composable
 fun GenderScreen( ) {
 
     val navController = LocalNavController.current
     var selected by remember { mutableStateOf("") }
-
+    val viewModel = remember {
+        RegistrationViewModel()
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF9FAFB))
+            .background(Color.White)
             .padding(16.dp)
     ) {
+
+        // 🔙 Top Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = null
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                "Create Account",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp,
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                "Skip",
+                color = Color(0xFF3B82F6),
+                fontSize = 14.sp
+            )
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // 📊 Progress Card
         ProgressCard(
-            progress = 0.1f,
+            progress = viewModel.perc,
             title = "Getting Started",
             subtitle = "Great start! You’re just beginning—let’s keep going!"
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
+        Spacer(modifier = Modifier.weight(1f))
 
         AsyncImage(
-            model = R.drawable.gnedergif,
+            model = R.drawable.gendergif,
             contentDescription = null,
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier
+                .size(200.dp)
+                .align(Alignment.CenterHorizontally)
         )
         Spacer(modifier = Modifier.height(24.dp))
 
         // 🧾 Title
         Text(
             "Gender",
-            fontSize = 22.sp,
+            fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
         )
@@ -84,7 +116,7 @@ fun GenderScreen( ) {
 
         Text(
             "Hi Abhinav, let us know if you are male or female.",
-            fontSize = 13.sp,
+            fontSize = 16.sp,
             color = Color.Gray
         )
 
@@ -122,7 +154,9 @@ fun GenderScreen( ) {
 
         // 🔘 Next Button
         Button(
-            onClick = { navController.navigate("dob") },
+            onClick = { navController.navigate("dob")
+
+                viewModel.updatePer(0.2f)},
             enabled = selected.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
