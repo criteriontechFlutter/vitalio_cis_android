@@ -1,5 +1,4 @@
 package com.example.vitalio_cis.ui.screens
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -19,31 +18,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.myapplication.utils.LocalNavController
-import com.example.vitalio_cis.NavigationManager
 
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.model.Vital
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
-import com.example.vitalio_cis.ui.theme.ThemeViewModel
-import com.example.vitalio_cis.ui.theme.getColorScheme
-import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
-import com.example.vitalio_cis.viewmodel.FindDoctorViewModel
 import com.example.vitalio_cis.viewmodel.HomeViewModel
 import kotlinx.coroutines.delay
 

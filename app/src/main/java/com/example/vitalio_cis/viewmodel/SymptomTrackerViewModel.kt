@@ -288,7 +288,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                         ApiEndPointCorporateModule().getProblemsWithIcon,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                        ApiClients.digidoctor_BaseURL.dynamicRawPost(
                             url = url,
                             body = queryParams,
                         )
@@ -307,7 +307,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                         throw Exception("API Error: ${response.code()}")
                     }
                 }
-                println("✅ Symptoms SymptomsSymptomsSymptoms: ${result}")
+                println("✅ Symptoms SymptomsSymptomsSymptoms: $result")
                 // ✅ RESULT HANDLE
                 if (!result.isNullOrEmpty()) {
                     val apiResponse = Gson().fromJson(result, ProblemResponse::class.java)
@@ -359,7 +359,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                         ApiEndPointCorporateModule().getAllProblems,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                        ApiClients.digidoctor_BaseURL.dynamicRawPost(
                             url = url,
                             body = queryParams,
                         )
