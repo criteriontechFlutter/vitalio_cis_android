@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
+import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.ui.components.CommonAppBar
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.viewmodel.VitalDetailViewModel
@@ -48,6 +49,7 @@ fun ConnectionScreen(
         mutableStateOf(false)
     }
 
+    val navController = LocalNavController.current
     var vitalValue by remember {
         mutableStateOf("")
     }
@@ -441,6 +443,7 @@ fun ConnectionScreen(
                                         }
                                     }
                                     showDialog = false
+
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
