@@ -288,7 +288,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                         ApiEndPointCorporateModule().getProblemsWithIcon,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                        ApiClients.digidoctor_BaseURL.dynamicRawPost(
                             url = url,
                             body = queryParams,
                         )
@@ -359,7 +359,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                         ApiEndPointCorporateModule().getAllProblems,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.Digidoctor_BaseURL.dynamicRawPost(
+                        ApiClients.digidoctor_BaseURL.dynamicRawPost(
                             url = url,
                             body = queryParams,
                         )
