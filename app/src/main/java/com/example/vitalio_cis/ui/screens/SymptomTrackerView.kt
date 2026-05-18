@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,48 +67,48 @@ data class SymptomQuestion(
 fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
     val context = LocalContext.current
-
+    val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
-    // 🔹 API Call
+
     LaunchedEffect(Unit) {
         viewModel.getSymptoms(context)
     }
 
-    // 🔹 StateFlow Bind
     val symptomList by viewModel.symptomTrackerList.collectAsState()
-    val selectedList by viewModel.selectedSymptoms.collectAsState()
+    val hasFetched by viewModel.hasFetched.collectAsState()
+    val addLoading by viewModel.addLoading.collectAsState()
 
-    // ✅ FIXED: SAFE MAPPING
-    val questions = symptomList.map { item ->
-
-        val id = item.detailId.toInt()
-        val name = item.details ?: ""
-
-        SymptomQuestion(
-            id = id,
-            prefix = "Do you still have ",
-            highlight = name,
-            suffix = "?"
-        )
-    }
-
-    // ✅ FIXED: SAFE EMPTY CHECK
-    if (questions.isEmpty() || symptomList.isEmpty()) {
+    // Show spinner while API is in flight
+    if (!hasFetched) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Loading...")
+            CircularProgressIndicator(color = Color(0xFF2F6BFF))
         }
         return
     }
 
+    // Fetch complete but no symptoms found — go to the add-symptoms screen
+    if (symptomList.isEmpty()) {
+        LaunchedEffect(Unit) {
+            navController.navigate(Routes.SYMPTOMS) {
+                popUpTo(Routes.SYMPTOMSTRACKER) { inclusive = true }
+            }
+        }
+        return
+    }
+
+    val questions = symptomList.map { item ->
+        SymptomQuestion(
+            id = item.detailId,
+            prefix = "Do you still have ",
+            highlight = item.details,
+            suffix = "?"
+        )
+    }
+
     var currentIndex by remember { mutableStateOf(0) }
-
-    // ✅ FIXED: SAFE INDEX
     val safeIndex = currentIndex.coerceIn(0, questions.lastIndex)
-
     val currentQuestion = questions[safeIndex]
     val currentSymptom = symptomList[safeIndex]
-
-    val navController = LocalNavController.current
 
     CommonAppBar(
         title = "Symptom Tracker",
@@ -163,12 +164,12 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                 CommonButton(
                     text = "Yes",
                     textStyle = AppTextStyles.style14BCB(),
-
-                    modifier = Modifier.weight(1f) ,
+                    modifier = Modifier.weight(1f),
                     containerColor = colors.btnGreyColor,
+                    isLoading = addLoading && currentIndex == questions.lastIndex,
+                    enabled = !addLoading,
                     onClick = {
                         viewModel.addSymptom(currentSymptom)
-
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {
@@ -180,9 +181,10 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                 CommonButton(
                     text = "No",
                     modifier = Modifier.weight(1f),
+                    isLoading = addLoading && currentIndex == questions.lastIndex,
+                    enabled = !addLoading,
                     onClick = {
                         viewModel.removeSymptom(currentSymptom)
-
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {

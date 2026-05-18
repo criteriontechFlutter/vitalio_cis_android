@@ -8,5 +8,6 @@ data class SymptomApiResponse(
 
 data class SymptomItem(
     val detailId: Int,
-    val details: String
+    val details: String,
+    val detailsDate: String = ""
 )

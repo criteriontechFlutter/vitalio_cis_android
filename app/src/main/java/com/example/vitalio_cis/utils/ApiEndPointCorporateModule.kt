@@ -15,7 +15,10 @@ class ApiEndPointCorporateModule {
     val fetchAvailableSlots="api/DoctorOPDSchedule/FetchAvailableSlots"
     val bookAppointment="api/PatientRegistration/BookAppointment"
     val addOutput="api/output/AddOutput"
+    val fetchOutput="api/output/FetchOutput"
+    val outputSummaryByDateRange="api/output/OutputSummaryByDateRange"
     val getManualFoodAssignList="api/ManualFoodAssign/GetManualFoodAssignList"
     val addIntake="api/FoodIntake/AddIntake"
     val fetchIntake="api/FoodIntake/FetchIntake"
+    val fluidSummaryByDateRange="api/ManualFoodAssign/FluidSummaryByDateRange"
 }

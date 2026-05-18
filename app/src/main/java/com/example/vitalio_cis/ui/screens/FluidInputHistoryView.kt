@@ -1,7 +1,5 @@
 package com.example.vitalio_cis.ui.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,31 +8,32 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,84 +42,188 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.vitalio_cis.ui.components.CommonAppBar
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.viewmodel.IntakeOutputViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-@Composable
-fun FluidInputHistoryScreen() {
+private val legendColors = listOf(
+    Color(0xFF4CAF50),
+    Color(0xFF2196F3),
+    Color(0xFF9C27B0),
+    Color(0xFFFF9800)
+)
 
+@Composable
+fun FluidInputHistoryScreen(
+    viewModel: IntakeOutputViewModel = viewModel()
+) {
+    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
 
+    val intakeList by viewModel.intakeList.collectAsState()
+    val fluidSummaryList by viewModel.fluidSummaryList.collectAsState()
+    val isLoading by viewModel.intakeLoading.collectAsState()
+
+    val colors = LocalMyColorScheme.current
     val mode = when (selectedTab) {
         0 -> DateMode.DAILY
         1 -> DateMode.WEEKLY
         else -> DateMode.MONTHLY
     }
 
-    val colors = LocalMyColorScheme.current
-    CommonAppBar(
-        title = "Fluid Input History",
-    ) {
+    LaunchedEffect(currentDate, selectedTab) {
+        when (selectedTab) {
+            0 -> viewModel.fetchIntakeItems(context, currentDate.toString())
+            1 -> {
+                val start = currentDate.with(DayOfWeek.MONDAY)
+                val end = start.plusDays(6)
+                viewModel.fetchFluidSummary(context, start.toString(), end.toString())
+            }
+            else -> {
+                val start = currentDate.withDayOfMonth(1)
+                val end = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
+                viewModel.fetchFluidSummary(context, start.toString(), end.toString())
+            }
+        }
+    }
 
-    Column(
+    val totalIntake = when (selectedTab) {
+        0 -> intakeList.sumOf { it.foodQuantity }
+        else -> fluidSummaryList.sumOf { it.foodQuantity }
+    }
+
+    val recommendedLimit = if (fluidSummaryList.isNotEmpty()) {
+        fluidSummaryList.maxOfOrNull { it.assignedLimit }?.takeIf { it > 0 } ?: 2000
+    } else 2000
+
+    val progressFraction = (totalIntake.toFloat() / recommendedLimit).coerceIn(0f, 1f)
+    val remaining = (recommendedLimit - totalIntake).coerceAtLeast(0)
+
+    val progressColor = when {
+        progressFraction < 0.5f -> Color(0xFF4CAF50)
+        progressFraction < 0.85f -> Color(0xFFFF9800)
+        else -> Color(0xFFF44336)
+    }
+
+    val foodLegendNames = remember(intakeList) {
+        intakeList.map { it.foodName }.distinct().take(4)
+    }
+
+    CommonAppBar(title = "Fluid Input History") {
+        Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .background(colors.dashboardBackgroundColor)
                 .padding(16.dp)
         ) {
+            fluidTabSection(selected = selectedTab, onTabChange = { selectedTab = it })
 
-            // Header
+            Spacer(Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            fluidDateRow(
+                currentDate = currentDate,
+                mode = mode,
+                onPrevious = { currentDate = changeDate(currentDate, mode, false) },
+                onNext = { currentDate = changeDate(currentDate, mode, true) }
+            )
 
+            Spacer(Modifier.height(16.dp))
 
-        fluidTabSection(
-            selected = selectedTab,
-            onTabChange = { selectedTab = it }
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        fluidDateRow(
-            currentDate = currentDate,
-            mode = mode,
-            onPrevious = {
-                currentDate = changeDate(currentDate, mode, false)
-            },
-            onNext = {
-                currentDate = changeDate(currentDate, mode, true)
-            }
-        )
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-            // Card
+            // Progress card
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
             ) {
-
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("Recommended", style = AppTextStyles.style12GCN())
+                            Text(
+                                "${"%,d".format(recommendedLimit)} ml",
+                                style = AppTextStyles.style14BCN()
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Intake", style = AppTextStyles.style12GCN())
+                            Text("$totalIntake ml", style = AppTextStyles.style14BCN())
+                        }
+                    }
 
-                    // title
+                    Spacer(Modifier.height(12.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(Color(0xFFE8EFFF))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(progressFraction)
+                                .fillMaxHeight()
+                                .background(progressColor, RoundedCornerShape(5.dp))
+                        )
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (foodLegendNames.isEmpty()) {
+                                listOf("Water", "Juice", "Milk", "Tea").forEachIndexed { idx, name ->
+                                    LegendDot(name, legendColors.getOrElse(idx) { Color.Gray })
+                                }
+                            } else {
+                                foodLegendNames.forEachIndexed { idx, name ->
+                                    LegendDot(name, legendColors.getOrElse(idx) { Color.Gray })
+                                }
+                            }
+                        }
+                        Text(
+                            "Remaining: $remaining ml",
+                            style = AppTextStyles.style12GCN()
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Log card
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            "Fluid Output Log",
-                            style = AppTextStyles.style16BCN()
-                        )
-
+                        Text("Fluid Intake Log", style = AppTextStyles.style16BCN())
                         Row {
                             Icon(Icons.Default.List, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
@@ -128,38 +231,102 @@ fun FluidInputHistoryScreen() {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(Modifier.height(8.dp))
 
-                    FluidInputItem("Yellow", "02:58 PM", "180 ml", Color(0xFFE9DB8A))
-                    FluidInputItem("Light Yellow", "01:08 AM", "160 ml", Color(0xFFF4F1C9))
-                    FluidInputItem("Yellow", "11:40 AM", "210 ml", Color(0xFFE9DB8A))
-                    FluidInputItem("Dark Yellow", "10:50 AM", "150 ml", Color(0xFFF4C400))
-                    FluidInputItem("Light Yellow", "10:00 AM", "135 ml", Color(0xFFF4F1C9))
-                    FluidInputItem("Yellow", "06:17 AM", "175 ml", Color(0xFFE9DB8A))
-                    FluidInputItem("Dark Yellow", "05:55 AM", "190 ml", Color(0xFFF4C400))
-                    FluidInputItem("Amber", "04:20 AM", "240 ml", Color(0xFFFFA000))
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color(0xFF2F6BFF))
+                        }
+                    } else if (selectedTab == 0) {
+                        if (intakeList.isEmpty()) {
+                            Text(
+                                "No records found",
+                                style = AppTextStyles.style14GCN(),
+                                modifier = Modifier.padding(vertical = 16.dp)
+                            )
+                        } else {
+                            intakeList.forEachIndexed { idx, item ->
+                                val displayTime = item.intakeTimeFormat.ifEmpty {
+                                    try {
+                                        LocalDateTime.parse(
+                                            item.foodDate,
+                                            DateTimeFormatter.ISO_DATE_TIME
+                                        ).format(DateTimeFormatter.ofPattern("hh:mm a"))
+                                    } catch (e: Exception) {
+                                        item.foodDate
+                                    }
+                                }
+                                FluidInputItem(
+                                    title = item.foodName.ifEmpty { "Unknown" },
+                                    time = displayTime,
+                                    value = "${item.foodQuantity} ml",
+                                    color = legendColors.getOrElse(idx % legendColors.size) { Color.Gray }
+                                )
+                            }
+                        }
+                    } else {
+                        if (fluidSummaryList.isEmpty()) {
+                            Text(
+                                "No records found",
+                                style = AppTextStyles.style14GCN(),
+                                modifier = Modifier.padding(vertical = 16.dp)
+                            )
+                        } else {
+                            fluidSummaryList.forEachIndexed { idx, item ->
+                                val formattedDate = try {
+                                    LocalDateTime.parse(
+                                        item.givenFoodDate,
+                                        DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                                    ).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                                } catch (e: Exception) {
+                                    item.givenFoodDate
+                                }
+                                FluidInputItem(
+                                    title = formattedDate,
+                                    time = "Limit: ${item.assignedLimit} ml",
+                                    value = "${item.foodQuantity} ml",
+                                    color = legendColors.getOrElse(idx % legendColors.size) { Color.Gray }
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
-            Row {
-                Text("Total Output ",
-                    style = AppTextStyles.style14BCN())
-                Text(
-                    "1450 ml",
-                    style = AppTextStyles.style16BCB())
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Total Intake  ", style = AppTextStyles.style14GCN())
+                Text("$totalIntake ml", style = AppTextStyles.style16BCN())
             }
         }
     }
 }
 
+@Composable
+private fun LegendDot(name: String, color: Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Text(name, style = AppTextStyles.style12GCN())
+    }
+}
 
 @Composable
 fun fluidTabSection(selected: Int, onTabChange: (Int) -> Unit) {
-
     val tabs = listOf("Daily", "Weekly", "Monthly")
-
     val colors = LocalMyColorScheme.current
     Row(
         modifier = Modifier
@@ -168,7 +335,6 @@ fun fluidTabSection(selected: Int, onTabChange: (Int) -> Unit) {
             .background(colors.dashboardContainerColor, RoundedCornerShape(20.dp))
             .padding(4.dp)
     ) {
-
         tabs.forEachIndexed { i, text ->
             Box(
                 modifier = Modifier
@@ -191,9 +357,6 @@ fun fluidTabSection(selected: Int, onTabChange: (Int) -> Unit) {
     }
 }
 
-/* ================= DATE ROW ================= */
-
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun fluidDateRow(
     currentDate: LocalDate,
@@ -201,24 +364,15 @@ fun fluidDateRow(
     onPrevious: () -> Unit,
     onNext: () -> Unit
 ) {
-
     val colors = LocalMyColorScheme.current
     val text = when (mode) {
-
-        DateMode.DAILY -> {
-            currentDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
-        }
-
+        DateMode.DAILY -> currentDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
         DateMode.WEEKLY -> {
             val start = currentDate.with(DayOfWeek.MONDAY)
             val end = start.plusDays(6)
-
             "${start.dayOfMonth} - ${end.dayOfMonth} ${end.month}"
         }
-
-        DateMode.MONTHLY -> {
-            currentDate.format(DateTimeFormatter.ofPattern("MMMM yyyy"))
-        }
+        DateMode.MONTHLY -> currentDate.format(DateTimeFormatter.ofPattern("MMMM yyyy"))
     }
 
     Row(
@@ -228,28 +382,22 @@ fun fluidDateRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         IconButton(
             onClick = { onPrevious() },
-            colors = IconButtonDefaults.iconButtonColors(
-                contentColor = colors.btnDarkColor
-            )
+            colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
         ) {
             Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null)
         }
-
         Text(text, style = AppTextStyles.style14GCN())
         IconButton(
             onClick = { onNext() },
-            colors = IconButtonDefaults.iconButtonColors(
-                contentColor = colors.btnDarkColor
-            )
+            colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
         ) {
             Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
         }
-
     }
 }
+
 @Composable
 fun FluidInputItem(
     title: String,
@@ -257,44 +405,32 @@ fun FluidInputItem(
     value: String,
     color: Color
 ) {
-
     Column {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Box(
                 modifier = Modifier
                     .size(18.dp)
                     .clip(CircleShape)
                     .background(color)
             )
-
             Spacer(modifier = Modifier.width(10.dp))
-
             Column(modifier = Modifier.weight(1f)) {
-                Text(title,
-                    style = AppTextStyles.style14BCN())
-                Text(time,
-                    style = AppTextStyles.style12GCN())
+                Text(title, style = AppTextStyles.style14BCN())
+                Text(time, style = AppTextStyles.style12GCN())
             }
-
-            Text(
-                value,
-                fontWeight = FontWeight.Medium
-            )
+            Text(value, style = AppTextStyles.style14BCN())
         }
-
         Divider(color = Color(0xFFE0E0E0), thickness = 0.7.dp)
     }
 }
+
 @Composable
 fun RowScope.ToggleInputItem(text: String, selected: Boolean) {
-
     Box(
         modifier = Modifier
             .weight(1f)
