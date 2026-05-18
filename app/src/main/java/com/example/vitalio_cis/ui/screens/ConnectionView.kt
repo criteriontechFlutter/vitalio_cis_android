@@ -4,6 +4,7 @@ package com.example.vitalio_cis.ui.screens
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -168,20 +169,26 @@ fun ConnectionScreen(
                         Column {
 
                             /* -------- TITLE -------- */
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
+                            Box {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text =  "",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
 
-                                Text(
-                                    text = "Enter $vitalName Value",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
+                                    Text(
+                                        text = "Enter $vitalName Value",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text("✕",modifier = Modifier.clickable(){
+                                        showDialog = false
+                                    })
 
-                                TextButton(onClick = { showDialog = false }) {
-                                    Text("✕")
+
                                 }
-
                             }
 
                             Spacer(modifier = Modifier.height(20.dp))
@@ -206,7 +213,7 @@ fun ConnectionScreen(
                                         onValueChange = { sysValue = it },
                                         singleLine = true,
                                         textStyle = LocalTextStyle.current.copy(
-                                            fontSize = 20.sp,
+                                            fontSize = 50.sp,
                                             color = Color.Black
                                         ),
                                         modifier = Modifier.width(120.dp),
@@ -223,7 +230,7 @@ fun ConnectionScreen(
                                                         Text(
                                                             text = "00",
                                                             color = Color.Gray,
-                                                            fontSize = 18.sp
+                                                            fontSize = 50.sp
                                                         )
                                                     }
 
@@ -252,7 +259,7 @@ fun ConnectionScreen(
                                         onValueChange = { diaValue = it },
                                         singleLine = true,
                                         textStyle = LocalTextStyle.current.copy(
-                                            fontSize = 20.sp,
+                                            fontSize = 50.sp,
                                             color = Color.Black
                                         ),
                                         modifier = Modifier.width(120.dp),
@@ -269,7 +276,7 @@ fun ConnectionScreen(
                                                         Text(
                                                             text = "00",
                                                             color = Color.Gray,
-                                                            fontSize = 18.sp
+                                                            fontSize = 50.sp
                                                         )
                                                     }
 
@@ -309,7 +316,7 @@ fun ConnectionScreen(
                                         singleLine = true,
 
                                         textStyle = LocalTextStyle.current.copy(
-                                            fontSize = 20.sp,
+                                            fontSize = 50.sp,
                                             color = Color.Black
                                         ),
 
@@ -330,7 +337,7 @@ fun ConnectionScreen(
                                                         Text(
                                                             text = "00",
                                                             color = Color.Gray,
-                                                            fontSize = 18.sp
+                                                            fontSize = 50.sp
                                                         )
                                                     }
 
