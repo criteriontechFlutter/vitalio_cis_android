@@ -117,7 +117,27 @@ import dagger.hilt.android.AndroidEntryPoint
                             composable(Routes.FLUIDOUTPUTHISTORY) { FluidOutputHistoryScreen() }
                             composable(Routes.FLUIDINPUTHISTORY) { FluidInputHistoryScreen() }
                             composable(Routes.VITALHISTORY) { VitalHistoryScreen() }
-                            composable(Routes.CONNECTION) { ConnectionScreen() }
+
+//                            composable(Routes.CONNECTION+"/{vitalName}") {
+//
+//                                ConnectionScreen() }
+
+                            composable(
+                                route = Routes.CONNECTION + "/{vitalName}/{unitName}"
+                            ) { backStackEntry ->
+
+                                val vitalName =
+                                    backStackEntry.arguments
+                                        ?.getString("vitalName") ?: ""
+                                val unitName =
+                                    backStackEntry.arguments
+                                        ?.getString("unitName") ?: ""
+
+                                ConnectionScreen(
+                                    vitalName = vitalName,
+                                    unitName = unitName
+                                )
+                            }
                             composable(Routes.ARTICALEDETAILS) { ArticleDetailScreen() }
                             composable(Routes.MYOBSERVERS) { MyObserversScreen() }
                             composable(Routes.FAMILYHEALTH) { FamilyHealthScreen() }
