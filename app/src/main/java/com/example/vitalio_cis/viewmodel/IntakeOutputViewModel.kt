@@ -100,7 +100,7 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
                         ApiEndPointCorporateModule().fetchIntake,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.module4082.dynamicGet(
+                        ApiClients.module4094.dynamicGet(
                             url = url,
                             params = queryParams,
                         )
@@ -361,7 +361,7 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
                     ApiEndPointCorporateModule().addIntake,
                     showNoConnectionDialog = false
                 ) { url ->
-                    ApiClients.module4082.dynamicRawPost(url = url, body = body)
+                    ApiClients.module4094.dynamicRawPost(url = url, body = body)
                 }
                 if (response.isSuccessful) {
                     Log.d("IntakeOutputViewModel", "addIntake success: ${response.body()?.string()}")
@@ -397,7 +397,7 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
                         ApiEndPointCorporateModule().fetchIntake,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.module4082.dynamicGet(url = url, params = queryParams)
+                        ApiClients.module4094.dynamicGet(url = url, params = queryParams)
                     }
                     if (response.isSuccessful) response.body()?.string()
                     else throw Exception("API Error: ${response.code()}")
@@ -436,7 +436,7 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
                         ApiEndPointCorporateModule().fluidSummaryByDateRange,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.module4082.dynamicGet(url = url, params = queryParams)
+                        ApiClients.module4094.dynamicGet(url = url, params = queryParams)
                     }
                     if (response.isSuccessful) response.body()?.string()
                     else throw Exception("API Error: ${response.code()}")
