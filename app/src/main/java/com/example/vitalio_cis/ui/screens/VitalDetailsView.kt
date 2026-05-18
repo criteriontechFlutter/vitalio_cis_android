@@ -127,6 +127,7 @@ fun getVitalColor(name: String): Color {
 
 @Composable
 fun VitalCard(
+
     title: String,
     value: String,
     unit: String,
@@ -206,7 +207,7 @@ fun VitalCard(
                     "Add Vital",
                             style = AppTextStyles.style12PCN(),
                     modifier = Modifier.clickable(){
-                        navController.navigate(Routes.CONNECTION)
+                        navController.navigate(Routes.CONNECTION+"/"+title.toString()+"/"+unit.toString())
                     })
 
 //                MiniGraph(color)

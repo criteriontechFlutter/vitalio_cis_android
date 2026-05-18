@@ -20,6 +20,8 @@ hilt = "2.48"
 material3 = "1.4.0"
 androidxFoundation = "1.11.0"
 ui = "1.11.0"
+androidxFoundationVersion = "1.11.1"
+uiVersion = "1.11.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -47,6 +49,8 @@ androidx-foundation = { group = "androidx.compose.foundation", name = "foundatio
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidxFoundation" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+androidx-compose-foundation-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidxFoundationVersion" }
+ui = { group = "androidx.compose.ui", name = "ui", version.ref = "uiVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

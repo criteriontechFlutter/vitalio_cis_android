@@ -5,6 +5,7 @@ class ApiEndPointCorporateModule {
     val verifyLogInOTPForSHFCApp = "api/LogInForSHFCApp/VerifyLogInOTPForSHFCApp"
     val getPatientDetailsByMobileNo = "api/PatientRegistration/GetPatientDetailsByMobileNo"
     val fetchLastVital = "api/PatientVital/FetchLastVital"
+    val addVital = "api/PatientVital/AddVital"
     val getSymptoms="api/PatientPrescription/FetchSymtomsOrDiagnosis"
     val insertSymtoms="api/PatientPrescription/AddSymtomsOrDiagnosis"
     val getProblemsWithIcon="Patient/getProblemsWithIcon"

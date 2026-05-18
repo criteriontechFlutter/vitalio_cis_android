@@ -19,6 +19,9 @@ import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 class VitalDetailViewModel   @Inject constructor() : ViewModel() {
@@ -98,4 +101,129 @@ class VitalDetailViewModel   @Inject constructor() : ViewModel() {
 
 
 
+    fun addVital(
+
+        context: Context,
+
+        vmValueBPSys: String = "",
+
+        vmValueBPDias: String = "",
+
+        vmValueSPO2: String = "",
+
+        vmValueRespiratoryRate: String = "",
+
+        vmValueHeartRate: String = "",
+
+        vmValuePulse: String = "",
+
+        vmValueRbs: String = "",
+
+        vmValueTemperature: String = "",
+
+    ) {
+
+        viewModelScope.launch {
+
+            _loading.value = true
+
+            val prefsCache = PrefsManager(context)
+            val currentDate = SimpleDateFormat(
+                "yyyy-MM-dd",
+                Locale.getDefault()
+            ).format(Date())
+
+            val currentTime = SimpleDateFormat(
+                "HH:mm",
+                Locale.getDefault()
+            ).format(Date())
+            try {
+
+                val queryParams = mapOf(
+
+                    "vmValueBPSys" to vmValueBPSys,
+
+                    "vmValueBPDias" to vmValueBPDias,
+
+                    "vmValueSPO2" to vmValueSPO2,
+
+                    "vmValueRespiratoryRate" to vmValueRespiratoryRate,
+
+                    "vmValueHeartRate" to vmValueHeartRate,
+
+                    "vmValuePulse" to vmValuePulse,
+
+                    "vmValueRbs" to vmValueRbs,
+
+                    "vmValueTemperature" to vmValueTemperature,
+
+                    "uhid" to prefsCache.getPatient()?.uhId.toString(),
+
+                    "userId" to prefsCache.getPatient()?.pid.toString(),
+
+                    "vitalDate" to currentDate,
+
+                    "vitalTime" to currentDate,
+
+                    "clientId" to prefsCache.getPatient()?.clientId.toString(),
+
+                    "isFromPatient" to "true",
+
+                    "isFromMachine" to "0",
+
+                    "positionId" to "0"
+                )
+
+                val result: String? = prefsCache.getData(
+                    key =  ApiEndPointCorporateModule().addVital,
+
+                    shouldSave = true
+                ) {
+
+                    val response = ApiHelper().callApi(
+                        context,
+                        ApiEndPointCorporateModule().addVital,
+                        showNoConnectionDialog = false
+                    ) { url ->
+                        ApiClients.module4082.dynamicRawPost(
+                            url = url,
+                            body = queryParams,
+                        )
+                    }
+                    fetchLastVital(context)
+                    if (response.isSuccessful) {
+
+                        val bodyString = response.body()?.string()
+
+                        Log.d("LoginViewModel", "API Response: $bodyString")
+
+                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                    } else {
+                        throw Exception("API Error: ${response.code()}")
+                    }
+                }
+
+                // ✅ RESULT HANDLE
+                if (!result.isNullOrEmpty()) {
+
+
+                    val apiResponse = Gson().fromJson(result, VitalApiResponse::class.java)
+
+                    _vitalList.value = apiResponse.responseValue.lastVital
+
+
+                } else {
+                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                }
+
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Error: ${e.message}", e)
+
+            } finally {
+
+                _loading.value = false
+                Log.d("LoginViewModel", "Loading finished")
+            }
+        }
+    }
 }
