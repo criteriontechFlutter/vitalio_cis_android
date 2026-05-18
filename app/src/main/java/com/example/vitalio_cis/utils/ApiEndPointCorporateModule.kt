@@ -21,4 +21,6 @@ class ApiEndPointCorporateModule {
     val addIntake="api/FoodIntake/AddIntake"
     val fetchIntake="api/FoodIntake/FetchIntake"
     val fluidSummaryByDateRange="api/ManualFoodAssign/FluidSummaryByDateRange"
+    val fetchVitalByDate="api/PatientVital/FetchVitalByDate"
+    val fetchVitalAnalytics="api/PatientVital/FetchVitalAnalytics"
 }

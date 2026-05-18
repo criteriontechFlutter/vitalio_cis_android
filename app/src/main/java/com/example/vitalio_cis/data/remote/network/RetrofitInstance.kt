@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit
 object RetrofitInstance {
 
     // Base URLs
-    const val BASE_5082 = "http://182.156.200.178:4082/"
-    const val BASE_5084 = "http://182.156.200.178:4084/"
-    const val BASE_4096 = "http://182.156.200.178:4096/"
+    const val BASE_5082 = "https://vitaliocis.vitalio.care:4082/"
+    const val BASE_5084 = "https://vitaliocis.vitalio.care:4084/"
+    const val BASE_4096 = "https://vitaliocis.vitalio.care:4096/"
     const val Digi_doctor_BaseURL = "http://52.172.134.222:205/api/v1.0/"
 //    const val BASE_5096 = "http://182.156.200.177:5096/"
 
