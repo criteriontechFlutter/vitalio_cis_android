@@ -16,25 +16,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,21 +44,51 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.vitalio_cis.ui.components.CommonAppBar
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.viewmodel.IntakeOutputViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-@Composable
-fun FluidOutputHistoryScreen() {
+private fun colourNameToColor(colour: String): Color {
+    if (colour.startsWith("#")) {
+        return try {
+            Color(android.graphics.Color.parseColor(colour))
+        } catch (e: Exception) {
+            Color.Gray
+        }
+    }
+    return when (colour.trim().lowercase()) {
+        "red" -> Color(0xFFE53935)
+        "yellow" -> Color(0xFFE9DB8A)
+        "light yellow" -> Color(0xFFF4F1C9)
+        "dark yellow" -> Color(0xFFF4C400)
+        "amber" -> Color(0xFFFFA000)
+        "orange" -> Color(0xFFFF6D00)
+        "brown" -> Color(0xFF6D4C41)
+        "dark" -> Color(0xFF8D4E2A)
+        else -> Color.Gray
+    }
+}
 
+@Composable
+fun FluidOutputHistoryScreen(
+    viewModel: IntakeOutputViewModel = viewModel()
+) {
+    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
+
+    val outputList by viewModel.outputList.collectAsState()
+    val outputSummaryList by viewModel.outputSummaryList.collectAsState()
+    val isLoading by viewModel.outputLoading.collectAsState()
 
     val colors = LocalMyColorScheme.current
     val mode = when (selectedTab) {
@@ -65,17 +96,42 @@ fun FluidOutputHistoryScreen() {
         1 -> DateMode.WEEKLY
         else -> DateMode.MONTHLY
     }
+
+    LaunchedEffect(currentDate, selectedTab) {
+        when (selectedTab) {
+            0 -> viewModel.fetchOutput(context, currentDate.toString())
+            1 -> {
+                val start = currentDate.with(DayOfWeek.MONDAY)
+                val end = start.plusDays(6)
+                viewModel.fetchOutputSummary(context, start.toString(), end.toString())
+            }
+            else -> {
+                val start = currentDate.withDayOfMonth(1)
+                val end = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
+                viewModel.fetchOutputSummary(context, start.toString(), end.toString())
+            }
+        }
+    }
+
+    val filteredDaily = remember(outputList, currentDate) {
+        outputList.filter { it.outputDateFormat == currentDate.toString() }
+    }
+
+    val totalQuantity = when (selectedTab) {
+        0 -> filteredDaily.sumOf { it.quantity }
+        else -> outputSummaryList.sumOf { it.quantity }
+    }
+
     CommonAppBar(
         title = "Fluid Output History",
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .background(colors.dashboardBackgroundColor)
                 .padding(16.dp)
         ) {
-
-
             outputTabSection(
                 selected = selectedTab,
                 onTabChange = { selectedTab = it }
@@ -96,15 +152,11 @@ fun FluidOutputHistoryScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Card
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
             ) {
-
                 Column(modifier = Modifier.padding(16.dp)) {
-
-                    // title
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -112,7 +164,6 @@ fun FluidOutputHistoryScreen() {
                         Text(
                             "Fluid Output Log", style = AppTextStyles.style16BCN()
                         )
-
                         Row {
                             Icon(Icons.Default.List, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
@@ -122,26 +173,64 @@ fun FluidOutputHistoryScreen() {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    FluidOutputItem("Yellow", "02:58 PM", "180 ml", Color(0xFFE9DB8A))
-                    FluidOutputItem("Light Yellow", "01:08 AM", "160 ml", Color(0xFFF4F1C9))
-                    FluidOutputItem("Yellow", "11:40 AM", "210 ml", Color(0xFFE9DB8A))
-                    FluidOutputItem("Dark Yellow", "10:50 AM", "150 ml", Color(0xFFF4C400))
-                    FluidOutputItem("Light Yellow", "10:00 AM", "135 ml", Color(0xFFF4F1C9))
-                    FluidOutputItem("Yellow", "06:17 AM", "175 ml", Color(0xFFE9DB8A))
-                    FluidOutputItem("Dark Yellow", "05:55 AM", "190 ml", Color(0xFFF4C400))
-                    FluidOutputItem("Amber", "04:20 AM", "240 ml", Color(0xFFFFA000))
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color(0xFF2F6BFF))
+                        }
+                    } else if (selectedTab == 0) {
+                        if (filteredDaily.isEmpty()) {
+                            Text(
+                                "No records found",
+                                style = AppTextStyles.style14GCN(),
+                                modifier = Modifier.padding(vertical = 16.dp)
+                            )
+                        } else {
+                            filteredDaily.forEach { item ->
+                                FluidOutputItem(
+                                    title = item.colour.ifEmpty { "Unknown" },
+                                    time = item.outputTimeFormat,
+                                    value = "${item.quantity} ml",
+                                    color = colourNameToColor(item.colour)
+                                )
+                            }
+                        }
+                    } else {
+                        if (outputSummaryList.isEmpty()) {
+                            Text(
+                                "No records found",
+                                style = AppTextStyles.style14GCN(),
+                                modifier = Modifier.padding(vertical = 16.dp)
+                            )
+                        } else {
+                            outputSummaryList.forEach { item ->
+                                val formattedDate = try {
+                                    LocalDateTime.parse(item.outputDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                        .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                                } catch (e: Exception) {
+                                    item.outputDate
+                                }
+                                FluidOutputItem(
+                                    title = formattedDate,
+                                    time = "${item.repetition} record${if (item.repetition != 1) "s" else ""}",
+                                    value = "${item.quantity} ml",
+                                    color = Color(0xFF2F6BFF)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Row {
-                Text("Total Output ",
-                    style = AppTextStyles.style14GCN())
-                Text(
-                    "1450 ml",
-                    style = AppTextStyles.style14GCN())
-
+                Text("Total Output ", style = AppTextStyles.style14GCN())
+                Text("$totalQuantity ml", style = AppTextStyles.style14GCN())
             }
         }
     }
@@ -285,6 +374,7 @@ fun FluidOutputItem(
         Divider(color = Color(0xFFE0E0E0), thickness = 0.7.dp)
     }
 }
+
 @Composable
 fun RowScope.ToggleOutputItem(text: String, selected: Boolean) {
 

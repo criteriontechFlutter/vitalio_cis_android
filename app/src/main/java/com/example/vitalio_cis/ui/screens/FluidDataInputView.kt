@@ -17,12 +17,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +38,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -576,245 +581,405 @@ fun IntakeSelector(
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
-fun UrinationScreen(  viewModel: IntakeOutputViewModel = viewModel()) {
+fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
     var sliderValue by remember { mutableStateOf(550f) }
+    var selectedColour by remember { mutableStateOf("") }
     val maxValue = 1000f
+    val ovalHeight = 300.dp
 
-    val colors = LocalMyColorScheme.current
+    val context = LocalContext.current
+    val isLoading by viewModel.outputLoading.collectAsState()
+    val outputList by viewModel.outputList.collectAsState()
+
+    val today = java.time.LocalDate.now().toString()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchOutput(context, today)
+    }
+
+    val todayItems = remember(outputList, today) {
+        outputList.filter { it.outputDateFormat == today }
+    }
+    val todayCount = todayItems.size
+    val todayVolume = todayItems.sumOf { it.quantity }
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .background(colors.dashboardBackgroundColor),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // 🔹 Top Info
+        // ── Stats row ──
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Urination count", fontSize = 14.sp, color = Color.Gray)
-                Text("8 times", fontWeight = FontWeight.Bold)
+                Text("Urination count", fontSize = 13.sp, color = Color(0xFF2F6BFF))
+                Text(
+                    "$todayCount times",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
             }
-
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(36.dp)
+                    .background(Color(0xFFDDDDDD))
+            )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Urination volume", fontSize = 14.sp, color = Color.Gray)
-                Text("1450 ml", fontWeight = FontWeight.Bold)
+                Text("Urination volume", fontSize = 13.sp, color = Color(0xFF2F6BFF))
+                Text(
+                    "$todayVolume ml",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 🔥 CUSTOM OVAL SLIDER
+        // ── Oval slider ──
+        val scaleWidth = 68.dp
+        val bubbleWidth = 52.dp
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(320.dp)
+                .height(ovalHeight)
                 .pointerInput(Unit) {
-                    detectVerticalDragGestures { change, dragAmount ->
-
+                    detectVerticalDragGestures { _, dragAmount ->
                         val height = size.height.toFloat()
                         val currentY = height - (sliderValue / maxValue * height)
                         val newY = (currentY + dragAmount).coerceIn(0f, height)
-
-                        sliderValue =
-                            ((height - newY) / height * maxValue)
-                                .coerceIn(0f, maxValue)
+                        sliderValue = ((height - newY) / height * maxValue).coerceIn(0f, maxValue)
                     }
                 }
         ) {
-
             val percentage = sliderValue / maxValue
 
             Row(modifier = Modifier.fillMaxSize()) {
-
-                // 🔹 LEFT SCALE
+                // ── Scale column with tick marks ──
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(50.dp),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.End
+                        .width(scaleWidth),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     for (i in 10 downTo 0) {
-                        Text("${i * 100} ml", fontSize = 10.sp, color = Color(0xFF4A6CF7))
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                // 🔥 OVAL
-                Box(
-                    modifier = Modifier
-                        .size(width = 220.dp, height = 300.dp)
-                        .clip(RoundedCornerShape(120.dp))
-                        .background(Color(0xFFECE0E0))
-                        .border(16.dp, Color.LightGray, RoundedCornerShape(120.dp))
-                ) {
-
-                    Column(
-                        modifier = Modifier.fillMaxHeight(),
-                        verticalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        repeat(8) {
-                            Divider(color = Color.Gray.copy(alpha = 0.3f))
+                        val active = (i * 100) <= sliderValue.toInt()
+                        val labelColor = if (active) Color(0xFF4A6CF7) else Color(0xFFBBCCEE)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Text(
+                                text = if (i == 0) "00 ml" else "${i * 100} ml",
+                                fontSize = 9.sp,
+                                color = labelColor,
+                                fontWeight = if (active) FontWeight.Medium else FontWeight.Normal
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Box(
+                                modifier = Modifier
+                                    .width(7.dp)
+                                    .height(1.5.dp)
+                                    .background(labelColor)
+                            )
                         }
                     }
+                }
 
-                    // 🔹 Fill
+                // ── Centre: grey background circle + oval pill ──
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Oval container (fixed width, full height)
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(percentage)
-                            .align(Alignment.BottomCenter)
-                            .background(Color(0xFFFFF3CD).copy(alpha = 0.6f))
-                    )
-                }
-            }
-
-            // 🔥 ✅ DRAW LINE ON TOP (IMPORTANT)
-            Canvas(
-                modifier = Modifier.matchParentSize()
-            ) {
-                val parentHeight = size.height
-                val ovalHeight = 300.dp.toPx()
-
-                val topOffset = (parentHeight - ovalHeight) / 2
-                val yInsideOval = ovalHeight * (1f - percentage)
-
-                // 🔥 👉 yahan adjust karo (increase value = aur upar)
-                val extraOffset = 8.dp.toPx()
-
-                val finalY = topOffset + yInsideOval - extraOffset
-
-                drawLine(
-                    color = Color(0xFFFF9800),
-                    start = Offset(0f, finalY),
-                    end = Offset(size.width, finalY),
-                    strokeWidth = 3.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
-                )
-            }
-
-            // 🔥 ✅ BUBBLE ALSO ON TOP
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset {
-                        IntOffset(
-                            x = 40,
-                            y = (300 * (1f - percentage)).dp.roundToPx() - 20
+                            .width(152.dp)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(Color(0xFFEEEEEE))
+                    ) {
+                        // White horizontal grid lines
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            repeat(10) {
+                                Divider(color = Color.White.copy(alpha = 0.85f), thickness = 1.dp)
+                            }
+                        }
+                        // Warm yellow fill rising from the bottom
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(percentage)
+                                .align(Alignment.BottomCenter)
+                                .background(Color(0xFFFFF8E1))
                         )
                     }
-                    .background(Color(0xFFFF9800), shape = CircleShape)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = String.format("%.1f", sliderValue / 100),
-                    color = Color.Black,
-                    fontSize = 12.sp
+                }
+
+                // ── Right gap for the bubble ──
+                Spacer(modifier = Modifier.width(bubbleWidth))
+            }
+
+            // Dashed orange level line across the oval only
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val y = size.height * (1f - percentage)
+                drawLine(
+                    color = Color(0xFFFF9800),
+                    start = Offset(scaleWidth.toPx(), y),
+                    end = Offset(size.width - bubbleWidth.toPx(), y),
+                    strokeWidth = 2.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
                 )
+            }
+
+            // Orange bubble + arrow, floating at the right at the current level
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .width(bubbleWidth)
+                    .offset {
+                        IntOffset(
+                            x = 0,
+                            y = (ovalHeight.toPx() * (1f - percentage)).toInt() - 20.dp.roundToPx()
+                        )
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xFFFF9800), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = String.format("%.1f", sliderValue / 100),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text("⇅", fontSize = 12.sp, color = Color(0xFFFF9800), fontWeight = FontWeight.Bold)
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Value Display
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = sliderValue.toInt().toString(),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF2F6BFF)
-            )
-            Text(" ml", fontSize = 16.sp)
+        // ── Last urination (dynamic) ──
+        // Pair<hours, minutes> elapsed since last entry, null if no records today
+        val lastTimeAgo: Pair<Long, Long>? = remember(todayItems) {
+            val lastItem = todayItems.maxByOrNull { it.id } ?: return@remember null
+            try {
+                val fmt = java.time.format.DateTimeFormatter.ofPattern(
+                    "dd/MM/yyyy hh:mm a", java.util.Locale.ENGLISH
+                )
+                val lastTime = java.time.LocalDateTime.parse(lastItem.outputDate.trim(), fmt)
+                val diff = java.time.Duration.between(lastTime, java.time.LocalDateTime.now())
+                Pair(diff.toHours().coerceAtLeast(0L), (diff.toMinutes() % 60).coerceAtLeast(0L))
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text("Last urination", fontSize = 13.sp, color = Color.Gray)
+            Text("  •  ", fontSize = 13.sp, color = Color.Gray)
+            when {
+                lastTimeAgo == null -> {
+                    Text("No records today", fontSize = 13.sp, color = Color.Gray)
+                }
+                lastTimeAgo.first > 0 -> {
+                    Text("${lastTimeAgo.first} h ", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
+                    Text("${lastTimeAgo.second}", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
+                    Text("m ago", fontSize = 13.sp, color = Color.Gray)
+                }
+                lastTimeAgo.second > 0 -> {
+                    Text("${lastTimeAgo.second}", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
+                    Text("m ago", fontSize = 13.sp, color = Color.Gray)
+                }
+                else -> {
+                    Text("Just now", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        BpRangeIndicator()
+        // ── Value card ──
+        Row(
+            modifier = Modifier
+                .background(Color.White, RoundedCornerShape(16.dp))
+                .padding(horizontal = 28.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = sliderValue.toInt().toString(),
+                fontSize = 52.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2F6BFF)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(
+                modifier = Modifier.padding(bottom = 10.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text("ml", fontSize = 14.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+                Text("∨", fontSize = 10.sp, color = Color.Gray)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        BpRangeIndicator(
+            selectedColour = selectedColour,
+            onColourSelect = { selectedColour = it },
+            isLoading = isLoading,
+            onUpdate = {
+                viewModel.addOutput(context, quantity = sliderValue.toInt(), colour = selectedColour)
+            }
+        )
     }
 }
+
 @Composable
-fun BpRangeIndicator() {
-
+fun BpRangeIndicator(
+    selectedColour: String,
+    onColourSelect: (String) -> Unit,
+    isLoading: Boolean,
+    onUpdate: () -> Unit
+) {
     val colorsList = listOf(
-        Color(0xFFFFF9C4), // Light Yellow
-        Color(0xFFFFF176), // Yellow
-        Color(0xFFFFEE58), // Dark Yellow
-        Color(0xFFFFA726), // Amber
-        Color(0xFF8D6E63), // Brown
-        Color(0xFFD84315)  // Red
+        Color(0xFFFFF9C4),
+        Color(0xFFFFF176),
+        Color(0xFFFFEE58),
+        Color(0xFFFFA726),
+        Color(0xFF8D6E63),
+        Color(0xFFD84315)
     )
-
-    val labels = listOf(
-        "Light Yellow",
-        "Yellow",
-        "Dark Yellow",
-        "Amber",
-        "Brown",
-        "Red"
+    val apiLabels = listOf("Light Yellow", "Yellow", "Dark Yellow", "Amber", "Brown", "Red")
+    val displayLabels = listOf("Light\nYellow", "Yellow", "Dark\nYellow", "Amber", "Brown", "Red")
+    val hydrationChips = listOf(
+        "Hydrated" to Color(0xFF22C55E),
+        "Hydrated" to Color(0xFF84CC16),
+        "Mildly\nDehydrated" to Color(0xFFF59E0B),
+        "Dehydrated" to Color(0xFFEF6C00),
+        "Very\nDehydrated" to Color(0xFF8D4E2A),
+        "Very\nDehydrated" to Color(0xFFD84315)
     )
+    val selectedIndex = apiLabels.indexOf(selectedColour)
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // ── Hydration chip floating above the selected segment ──
+        Row(modifier = Modifier.fillMaxWidth()) {
+            repeat(apiLabels.size) { i ->
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (i == selectedIndex) {
+                        Box(
+                            modifier = Modifier
+                                .background(hydrationChips[i].second, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 5.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = hydrationChips[i].first,
+                                color = Color.White,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
-        // 🔥 Color bar
+        Spacer(Modifier.height(4.dp))
+
+        // ── Colour bar ──
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
+                .height(14.dp)
                 .clip(RoundedCornerShape(50))
         ) {
-            colorsList.forEach { color ->
+            colorsList.forEachIndexed { i, color ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
                         .background(color)
+                        .clickable { onColourSelect(apiLabels[i]) }
                 )
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(6.dp))
 
-        // 🔥 Labels
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            labels.forEach {
+        // ── Colour labels ──
+        Row(modifier = Modifier.fillMaxWidth()) {
+            displayLabels.forEachIndexed { i, label ->
                 Text(
-                    text = it,
-                    fontSize = 10.sp,
-                    color = Color.Gray
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    fontSize = 8.sp,
+                    color = if (selectedColour == apiLabels[i]) hydrationChips[i].second else Color.Gray,
+                    fontWeight = if (selectedColour == apiLabels[i]) FontWeight.Bold else FontWeight.Normal,
+                    textAlign = TextAlign.Center
                 )
             }
         }
 
         Spacer(Modifier.height(16.dp))
 
-        // 🔥 Disabled Button (Update)
+        // ── Update button ──
         Button(
-            onClick = {},
-            enabled = false,
+            onClick = { if (!isLoading) onUpdate() },
+            enabled = selectedColour.isNotEmpty() && !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(12.dp),
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFE0E0E0),
-                disabledContainerColor = Color(0xFFE0E0E0),
+                containerColor = Color(0xFF2563EB),
+                disabledContainerColor = Color(0xFFCCCCCC),
+                contentColor = Color.White,
                 disabledContentColor = Color.White
             )
         ) {
-            Text("Update")
+            if (isLoading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    "Update",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
         }
     }
 }
