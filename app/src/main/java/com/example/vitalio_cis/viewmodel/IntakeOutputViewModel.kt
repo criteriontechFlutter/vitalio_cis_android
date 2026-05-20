@@ -20,6 +20,8 @@ import com.example.vitalio_cis.model.FluidSummaryItem
 import com.example.vitalio_cis.model.FluidSummaryResponse
 import com.example.vitalio_cis.model.IntakeItem
 import com.example.vitalio_cis.model.IntakeResponse
+import com.example.vitalio_cis.model.ManualFoodAssignItem
+import com.example.vitalio_cis.model.ManualFoodAssignResponse
 import com.example.vitalio_cis.model.OutputItem
 import com.example.vitalio_cis.model.OutputResponse
 import com.example.vitalio_cis.model.OutputSummaryItem
@@ -69,6 +71,9 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
 
     private val _intakeLoading = MutableStateFlow(false)
     val intakeLoading: StateFlow<Boolean> = _intakeLoading
+
+    private val _manualFoodList = MutableStateFlow<List<ManualFoodAssignItem>>(emptyList())
+    val manualFoodList: StateFlow<List<ManualFoodAssignItem>> = _manualFoodList
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -141,74 +146,45 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun getManualFoodAssignList(context: Context,   ) {
-
+    fun getManualFoodAssignList(context: Context) {
         viewModelScope.launch {
-
-            _loading.value = true
-
+            _intakeLoading.value = true
             val prefsCache = PrefsManager(context)
-
             try {
-
-
                 val queryParams = mapOf(
-                    "Uhid" to  prefsCache.getPatient()?.uhId.toString(),
+                    "Uhid" to prefsCache.getPatient()?.uhId.toString(),
                     "intervalTimeInHour" to 24
                 )
-
                 val result: String? = prefsCache.getData(
-                    key =  ApiEndPointCorporateModule().getManualFoodAssignList,
-
+                    key = ApiEndPointCorporateModule().getManualFoodAssignList,
                     shouldSave = true
                 ) {
-
                     val response = ApiHelper().callApi(
                         context,
                         ApiEndPointCorporateModule().getManualFoodAssignList,
                         showNoConnectionDialog = false
                     ) { url ->
-                        ApiClients.module4082.dynamicGet(
-                            url = url,
-                            params = queryParams,
-                        )
+                        ApiClients.module4094.dynamicGet(url = url, params = queryParams)
                     }
-
-                    if (response.isSuccessful) {
-
-                        val bodyString = response.body()?.string()
-
-                        Log.d("LoginViewModel", "API Response: $bodyString")
-
-                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
-                    } else {
-                        throw Exception("API Error: ${response.code()}")
-                    }
+                    if (response.isSuccessful) response.body()?.string()
+                    else throw Exception("API Error: ${response.code()}")
                 }
-
-
-                _loading.value = false
-                // ✅ RESULT HANDLE
                 if (!result.isNullOrEmpty()) {
-
-
-                    val apiResponse = Gson().fromJson(result, DoctorResponse::class.java)
-
-                    _doctorList.value = apiResponse.responseValue
-
-
-                    Log.d("LoginViewModel", "OTP SuccessSuccess (API/Cache): $result")
-                } else {
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                    val apiResponse = Gson().fromJson(result, ManualFoodAssignResponse::class.java)
+                    if (apiResponse.status == 1) {
+                        _manualFoodList.value = apiResponse.responseValue
+                            ?.filter { !it.foodName.isNullOrBlank() }
+                            ?: emptyList()
+                    }
+                    Log.d(
+                        "IntakeOutputViewModel",
+                        "manualFoodList: ${_manualFoodList.value.size} items"
+                    )
                 }
-
             } catch (e: Exception) {
-                Log.e("LoginViewModel", "Error: ${e.message}", e)
-
+                Log.e("IntakeOutputViewModel", "getManualFoodAssignList error: ${e.message}", e)
             } finally {
-
-                _loading.value = false
-                Log.d("LoginViewModel", "Loading finished")
+                _intakeLoading.value = false
             }
         }
     }
@@ -405,7 +381,7 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
                 if (!result.isNullOrEmpty()) {
                     val apiResponse = Gson().fromJson(result, IntakeResponse::class.java)
                     if (apiResponse.status == 1) {
-                        _intakeList.value = apiResponse.responseValue
+                        _intakeList.value = apiResponse.responseValue ?: emptyList()
                     }
                 }
             } catch (e: Exception) {
@@ -444,7 +420,7 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
                 if (!result.isNullOrEmpty()) {
                     val apiResponse = Gson().fromJson(result, FluidSummaryResponse::class.java)
                     if (apiResponse.status == 1) {
-                        _fluidSummaryList.value = apiResponse.responseValue
+                        _fluidSummaryList.value = apiResponse.responseValue ?: emptyList()
                     }
                 }
             } catch (e: Exception) {

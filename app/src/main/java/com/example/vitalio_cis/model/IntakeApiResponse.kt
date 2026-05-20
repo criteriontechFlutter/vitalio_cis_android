@@ -1,46 +1,50 @@
 package com.example.vitalio_cis.model
 
+import com.google.gson.annotations.SerializedName
+
 data class IntakeResponse(
-    val status: Int,
-    val message: String,
-    val responseValue: List<IntakeItem>
+    val status: Int = 0,
+    val message: String = "",
+    @SerializedName("foodIntakeList")
+    val responseValue: List<IntakeItem>? = null
 )
 
 data class IntakeItem(
-    val id: Int = 0,
+    val dietId: Int = 0,
     val foodId: Int = 0,
-    val foodName: String = "",
+    val foodName: String? = null,
+    @SerializedName("foodQty")
     val foodQuantity: Int = 0,
-    val foodDate: String = "",
+    @SerializedName("foodEntryDate")
+    val foodDate: String? = null,
+    @SerializedName("foodUnitID")
     val foodUnitId: Int = 0,
-    val userID: Int = 0,
-    val clientId: Int = 0,
-    val uhid: String = "",
-    val entryType: String = "",
-    val isFromPatient: Int = 0,
-    val isGiven: Int = 0,
+    val entryUserId: Int = 0,
     val unitName: String? = null,
-    val intakeDateFormat: String = "",
-    val intakeTimeFormat: String = ""
+    @SerializedName("foodEntryTime")
+    val intakeTimeFormat: String? = null,
+    val intakeDateFormat: String? = null,
+    val isGiven: Int = 0,
+    val translation: String? = null
 )
 
 data class ManualFoodAssignResponse(
-    val status: Int,
-    val message: String,
-    val responseValue: List<ManualFoodAssignItem>
+    val status: Int = 0,
+    val message: String = "",
+    val responseValue: List<ManualFoodAssignItem>? = null
 )
 
 data class ManualFoodAssignItem(
     val foodID: Int = 0,
-    val foodName: String = "",
-    val quantity: Int = 0,
-    val givenFoodDate: String = ""
+    val foodName: String? = null,
+    val quantity: String? = null,
+    val givenFoodDate: String? = null
 )
 
 data class FluidSummaryResponse(
-    val status: Int,
-    val message: String,
-    val responseValue: List<FluidSummaryItem>
+    val status: Int = 0,
+    val message: String = "",
+    val responseValue: List<FluidSummaryItem>? = null
 )
 
 data class FluidSummaryItem(
