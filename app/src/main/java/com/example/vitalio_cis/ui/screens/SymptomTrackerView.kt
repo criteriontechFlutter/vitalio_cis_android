@@ -55,7 +55,7 @@ import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.ui.theme.ThemeViewModel
 import com.example.vitalio_cis.utils.CommonButton
 import com.example.vitalio_cis.viewmodel.SymptomTrackerViewModel
-import com.example.vitalio_cis.viewmodel.VitalDetailViewModel
+
 data class SymptomQuestion(
     val id: Int,
     val prefix: String,

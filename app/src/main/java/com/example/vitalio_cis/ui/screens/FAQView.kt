@@ -80,9 +80,7 @@ fun FAQScreen() {
 // ✅ Single FAQ Item
 @Composable
 fun FAQItemView(item: FAQItem) {
-
     var expanded by remember { mutableStateOf(false) }
-
     val colors = LocalMyColorScheme.current
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -92,24 +90,19 @@ fun FAQItemView(item: FAQItem) {
             .padding(vertical = 6.dp)
             .clickable { expanded = !expanded }
     ) {
-
         Column(modifier = Modifier.padding(12.dp)) {
-
             Row(verticalAlignment = Alignment.CenterVertically) {
-
                 Text(
                     text = item.question,
                     modifier = Modifier.weight(1f),
                     style = AppTextStyles.style14BCN()
                 )
-
                 Icon(
                     imageVector = if (expanded) Icons.Default.Remove else Icons.Default.Add,
                     contentDescription = null,
                     tint = Color(0xFF2563EB)
                 )
             }
-
             if (expanded) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

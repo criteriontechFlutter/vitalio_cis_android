@@ -2,6 +2,7 @@ package com.critetiontech.ctvitalio.viewmodel
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -15,6 +16,7 @@ import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.example.vitalio_cis.Routes
 import com.example.vitalio_cis.utils.PrefsManager
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -133,7 +135,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
 
 
-    fun sendOTP(context: Context,navController: NavController) {
+    fun sendOTP(context: Context, navController: NavController) {
 
         viewModelScope.launch {
 
@@ -152,11 +154,9 @@ class LoginViewModel @Inject constructor() : ViewModel() {
                 )
 
                 val result: String? = prefsCache.getData(
-                    key =  ApiEndPointCorporateModule().corporateEmployeeLogin,
-
+                    key = ApiEndPointCorporateModule().corporateEmployeeLogin,
                     shouldSave = false
                 ) {
-
                     val response = ApiHelper().callApi(
                         context,
                         ApiEndPointCorporateModule().corporateEmployeeLogin,
@@ -169,26 +169,30 @@ class LoginViewModel @Inject constructor() : ViewModel() {
                     }
 
                     if (response.isSuccessful) {
-
                         val bodyString = response.body()?.string()
-
                         Log.d("LoginViewModel", "API Response: $bodyString")
-
-                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                        bodyString
                     } else {
                         throw Exception("API Error: ${response.code()}")
                     }
                 }
 
-                // ✅ RESULT HANDLE
                 if (!result.isNullOrEmpty()) {
-                    _loginSuccess.value = true
-                    navController.navigate(Routes.OTP)
-                    Log.d("LoginViewModel", "OTP Successsss (API/Cache): $result")
+                    val parsed = Gson().fromJson(result, SendOtpResponse::class.java)
+                    Log.d("LoginViewModel", "isRegisterd: ${parsed.isRegisterd}")
 
+                    if (parsed.isRegisterd == 1) {
+                        _loginSuccess.value = true
+                        navController.navigate(Routes.OTP)
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "You are not registered in any clinic yet",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 } else {
                     _errorMessage.value = "No data available"
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
                 }
 
             } catch (e: Exception) {
@@ -204,3 +208,11 @@ class LoginViewModel @Inject constructor() : ViewModel() {
         }
     }
 }
+
+data class SendOtpResponse(
+    val status: Int = 0,
+    val message: String = "",
+    val responseValue: String = "",
+    val isRegisterd: Int = 0,  // API typo preserved intentionally
+    val clientId: Int = 0
+)

@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -122,6 +124,25 @@ fun FluidOutputHistoryScreen(
         else -> outputSummaryList.sumOf { it.quantity }
     }
 
+    var screenVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { screenVisible = true }
+    val tabAlpha by animateFloatAsState(
+        targetValue = if (screenVisible) 1f else 0f,
+        animationSpec = tween(350, easing = FastOutSlowInEasing), label = "tabAlpha"
+    )
+    val tabY by animateFloatAsState(
+        targetValue = if (screenVisible) 0f else -20f,
+        animationSpec = tween(350, easing = FastOutSlowInEasing), label = "tabY"
+    )
+    val logCardAlpha by animateFloatAsState(
+        targetValue = if (screenVisible) 1f else 0f,
+        animationSpec = tween(400, delayMillis = 150, easing = FastOutSlowInEasing), label = "logAlpha"
+    )
+    val logCardY by animateFloatAsState(
+        targetValue = if (screenVisible) 0f else 24f,
+        animationSpec = tween(400, delayMillis = 150, easing = FastOutSlowInEasing), label = "logY"
+    )
+
     CommonAppBar(
         title = "Fluid Output History",
     ) {
@@ -132,13 +153,16 @@ fun FluidOutputHistoryScreen(
                 .background(colors.dashboardBackgroundColor)
                 .padding(16.dp)
         ) {
+            Box(modifier = Modifier.graphicsLayer { alpha = tabAlpha; translationY = tabY }) {
             outputTabSection(
                 selected = selectedTab,
                 onTabChange = { selectedTab = it }
             )
+            }
 
             Spacer(Modifier.height(16.dp))
 
+            Box(modifier = Modifier.graphicsLayer { alpha = tabAlpha; translationY = tabY }) {
             outputDateRow(
                 currentDate = currentDate,
                 mode = mode,
@@ -149,12 +173,14 @@ fun FluidOutputHistoryScreen(
                     currentDate = changeDate(currentDate, mode, true)
                 }
             )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+                modifier = Modifier.graphicsLayer { alpha = logCardAlpha; translationY = logCardY }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -190,13 +216,25 @@ fun FluidOutputHistoryScreen(
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
                         } else {
-                            filteredDaily.forEach { item ->
+                            filteredDaily.forEachIndexed { idx, item ->
+                                val itemAlpha by animateFloatAsState(
+                                    targetValue = if (screenVisible) 1f else 0f,
+                                    animationSpec = tween(300, delayMillis = 250 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "outItem_$idx"
+                                )
+                                val itemY by animateFloatAsState(
+                                    targetValue = if (screenVisible) 0f else 16f,
+                                    animationSpec = tween(300, delayMillis = 250 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "outItemY_$idx"
+                                )
+                                Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidOutputItem(
                                     title = item.colour.ifEmpty { "Unknown" },
                                     time = item.outputTimeFormat,
                                     value = "${item.quantity} ml",
                                     color = colourNameToColor(item.colour)
                                 )
+                                }
                             }
                         }
                     } else {
@@ -207,19 +245,31 @@ fun FluidOutputHistoryScreen(
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
                         } else {
-                            outputSummaryList.forEach { item ->
+                            outputSummaryList.forEachIndexed { idx, item ->
+                                val itemAlpha by animateFloatAsState(
+                                    targetValue = if (screenVisible) 1f else 0f,
+                                    animationSpec = tween(300, delayMillis = 250 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "summaryOut_$idx"
+                                )
+                                val itemY by animateFloatAsState(
+                                    targetValue = if (screenVisible) 0f else 16f,
+                                    animationSpec = tween(300, delayMillis = 250 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "summaryOutY_$idx"
+                                )
                                 val formattedDate = try {
                                     LocalDateTime.parse(item.outputDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                         .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
                                 } catch (e: Exception) {
                                     item.outputDate
                                 }
+                                Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidOutputItem(
                                     title = formattedDate,
                                     time = "${item.repetition} record${if (item.repetition != 1) "s" else ""}",
                                     value = "${item.quantity} ml",
                                     color = Color(0xFF2F6BFF)
                                 )
+                                }
                             }
                         }
                     }

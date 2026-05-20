@@ -28,4 +28,6 @@ class ApiEndPointCorporateModule {
       val uploadLabreportUrl = "http://182.156.200.178:8016/uploadLabreport/"
     val fetchMedia = "api/PatientMediaData/FetchMedia"
 
+    val fetchVitalByDate="api/PatientVital/FetchVitalByDate"
+    val fetchVitalAnalytics="api/PatientVital/FetchVitalAnalytics"
 }

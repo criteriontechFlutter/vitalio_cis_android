@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.animation.core.*
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -42,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -99,12 +101,12 @@ fun FluidInputHistoryScreen(
     }
 
     val totalIntake = when (selectedTab) {
-        0 -> intakeList.sumOf { it.foodQuantity }
-        else -> fluidSummaryList.sumOf { it.foodQuantity }
+        0 -> intakeList.orEmpty().sumOf { it.foodQuantity }
+        else -> fluidSummaryList.orEmpty().sumOf { it.foodQuantity }
     }
 
-    val recommendedLimit = if (fluidSummaryList.isNotEmpty()) {
-        fluidSummaryList.maxOfOrNull { it.assignedLimit }?.takeIf { it > 0 } ?: 2000
+    val recommendedLimit = if (fluidSummaryList.orEmpty().isNotEmpty()) {
+        fluidSummaryList.orEmpty().maxOfOrNull { it.assignedLimit }?.takeIf { it > 0 } ?: 2000
     } else 2000
 
     val progressFraction = (totalIntake.toFloat() / recommendedLimit).coerceIn(0f, 1f)
@@ -117,8 +119,42 @@ fun FluidInputHistoryScreen(
     }
 
     val foodLegendNames = remember(intakeList) {
-        intakeList.map { it.foodName }.distinct().take(4)
+        intakeList.orEmpty().mapNotNull { it.foodName?.takeIf { n -> n.isNotEmpty() } }.distinct().take(4)
     }
+
+    // Screen-level entrance
+    var screenVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { screenVisible = true }
+    val tabAlpha by animateFloatAsState(
+        targetValue = if (screenVisible) 1f else 0f,
+        animationSpec = tween(350, easing = FastOutSlowInEasing), label = "tabAlpha"
+    )
+    val tabY by animateFloatAsState(
+        targetValue = if (screenVisible) 0f else -20f,
+        animationSpec = tween(350, easing = FastOutSlowInEasing), label = "tabY"
+    )
+    val progressCardAlpha by animateFloatAsState(
+        targetValue = if (screenVisible) 1f else 0f,
+        animationSpec = tween(400, delayMillis = 100, easing = FastOutSlowInEasing), label = "progAlpha"
+    )
+    val progressCardY by animateFloatAsState(
+        targetValue = if (screenVisible) 0f else 24f,
+        animationSpec = tween(400, delayMillis = 100, easing = FastOutSlowInEasing), label = "progY"
+    )
+    val logCardAlpha by animateFloatAsState(
+        targetValue = if (screenVisible) 1f else 0f,
+        animationSpec = tween(400, delayMillis = 200, easing = FastOutSlowInEasing), label = "logAlpha"
+    )
+    val logCardY by animateFloatAsState(
+        targetValue = if (screenVisible) 0f else 24f,
+        animationSpec = tween(400, delayMillis = 200, easing = FastOutSlowInEasing), label = "logY"
+    )
+    // Animated progress bar — fills from 0 to actual value
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (screenVisible) progressFraction else 0f,
+        animationSpec = tween(900, delayMillis = 300, easing = FastOutSlowInEasing),
+        label = "progressBar"
+    )
 
     CommonAppBar(title = "Fluid Input History") {
         Column(
@@ -128,23 +164,28 @@ fun FluidInputHistoryScreen(
                 .background(colors.dashboardBackgroundColor)
                 .padding(16.dp)
         ) {
-            fluidTabSection(selected = selectedTab, onTabChange = { selectedTab = it })
+            Box(modifier = Modifier.graphicsLayer { alpha = tabAlpha; translationY = tabY }) {
+                fluidTabSection(selected = selectedTab, onTabChange = { selectedTab = it })
+            }
 
             Spacer(Modifier.height(16.dp))
 
-            fluidDateRow(
-                currentDate = currentDate,
-                mode = mode,
-                onPrevious = { currentDate = changeDate(currentDate, mode, false) },
-                onNext = { currentDate = changeDate(currentDate, mode, true) }
-            )
+            Box(modifier = Modifier.graphicsLayer { alpha = tabAlpha; translationY = tabY }) {
+                fluidDateRow(
+                    currentDate = currentDate,
+                    mode = mode,
+                    onPrevious = { currentDate = changeDate(currentDate, mode, false) },
+                    onNext = { currentDate = changeDate(currentDate, mode, true) }
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
             // Progress card
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+                modifier = Modifier.graphicsLayer { alpha = progressCardAlpha; translationY = progressCardY }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -176,7 +217,7 @@ fun FluidInputHistoryScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth(progressFraction)
+                                .fillMaxWidth(animatedProgress)   // animated width
                                 .fillMaxHeight()
                                 .background(progressColor, RoundedCornerShape(5.dp))
                         )
@@ -216,7 +257,8 @@ fun FluidInputHistoryScreen(
             // Log card
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+                modifier = Modifier.graphicsLayer { alpha = logCardAlpha; translationY = logCardY }
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -251,22 +293,36 @@ fun FluidInputHistoryScreen(
                             )
                         } else {
                             intakeList.forEachIndexed { idx, item ->
-                                val displayTime = item.intakeTimeFormat.ifEmpty {
+                                val itemAlpha by animateFloatAsState(
+                                    targetValue = if (screenVisible) 1f else 0f,
+                                    animationSpec = tween(300, delayMillis = 300 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "intakeItem_$idx"
+                                )
+                                val itemY by animateFloatAsState(
+                                    targetValue = if (screenVisible) 0f else 16f,
+                                    animationSpec = tween(300, delayMillis = 300 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "intakeItemY_$idx"
+                                )
+                                val displayTime = if (!item.intakeTimeFormat.isNullOrEmpty()) {
+                                    item.intakeTimeFormat
+                                } else {
                                     try {
                                         LocalDateTime.parse(
-                                            item.foodDate,
+                                            item.foodDate.orEmpty(),
                                             DateTimeFormatter.ISO_DATE_TIME
                                         ).format(DateTimeFormatter.ofPattern("hh:mm a"))
                                     } catch (e: Exception) {
-                                        item.foodDate
+                                        item.foodDate.orEmpty()
                                     }
                                 }
+                                Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidInputItem(
-                                    title = item.foodName.ifEmpty { "Unknown" },
+                                    title = item.foodName?.takeIf { it.isNotEmpty() } ?: "Unknown",
                                     time = displayTime,
                                     value = "${item.foodQuantity} ml",
                                     color = legendColors.getOrElse(idx % legendColors.size) { Color.Gray }
                                 )
+                                }
                             }
                         }
                     } else {
@@ -278,6 +334,16 @@ fun FluidInputHistoryScreen(
                             )
                         } else {
                             fluidSummaryList.forEachIndexed { idx, item ->
+                                val itemAlpha by animateFloatAsState(
+                                    targetValue = if (screenVisible) 1f else 0f,
+                                    animationSpec = tween(300, delayMillis = 300 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "summaryItem_$idx"
+                                )
+                                val itemY by animateFloatAsState(
+                                    targetValue = if (screenVisible) 0f else 16f,
+                                    animationSpec = tween(300, delayMillis = 300 + idx * 55, easing = FastOutSlowInEasing),
+                                    label = "summaryItemY_$idx"
+                                )
                                 val formattedDate = try {
                                     LocalDateTime.parse(
                                         item.givenFoodDate,
@@ -286,12 +352,14 @@ fun FluidInputHistoryScreen(
                                 } catch (e: Exception) {
                                     item.givenFoodDate
                                 }
+                                Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidInputItem(
                                     title = formattedDate,
                                     time = "Limit: ${item.assignedLimit} ml",
                                     value = "${item.foodQuantity} ml",
                                     color = legendColors.getOrElse(idx % legendColors.size) { Color.Gray }
                                 )
+                                }
                             }
                         }
                     }

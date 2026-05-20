@@ -5,6 +5,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.Button
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -55,6 +57,25 @@ import java.util.Locale
 
 
 data class GridItem(val title: String, val icon: Int)
+
+@Composable
+private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Unit) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(450, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "sectionAlpha"
+    )
+    val offsetY by animateFloatAsState(
+        targetValue = if (visible) 0f else 24f,
+        animationSpec = tween(450, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "sectionY"
+    )
+    Box(modifier = Modifier.graphicsLayer { this.alpha = alpha; translationY = offsetY }) {
+        content()
+    }
+}
 
 
 @Composable
@@ -159,10 +180,9 @@ fun HomeView(viewModel: HomeViewModel = viewModel()){
 
             Spacer(Modifier.height(20.dp))
 
-            Text(
-                text = "Primary Actions",
-                style = AppTextStyles.style18BCB()
-            )
+            AnimatedSection(delayMillis = 200) {
+                Text(text = "Primary Actions", style = AppTextStyles.style18BCB())
+            }
 
             Spacer(Modifier.height(12.dp))
 
@@ -170,11 +190,12 @@ fun HomeView(viewModel: HomeViewModel = viewModel()){
 
             Spacer(Modifier.height(20.dp))
 
-            HomeScreen()
+            AnimatedSection(delayMillis = 600) { HomeScreen() }
 
             Spacer(Modifier.height(20.dp))
 
-            OtherSection()
+            AnimatedSection(delayMillis = 750) { OtherSection() }
+
             Spacer(Modifier.height(70.dp))
         }
 
@@ -472,13 +493,27 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
 @Composable
 fun Header() {
     val navController = LocalNavController.current
-
     val context = LocalContext.current
-    val patientData= PrefsManager(context).getPatient()
+    val patientData = PrefsManager(context).getPatient()
 
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        label = "headerAlpha"
+    )
+    val offsetY by animateFloatAsState(
+        targetValue = if (visible) 0f else -30f,
+        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        label = "headerY"
+    )
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { this.alpha = alpha; translationY = offsetY },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
@@ -598,10 +633,22 @@ fun mergeVitals(vitals: List<Vital>): List<Vital> {
 fun VitalsCard(vitals: List<Vital>) {
 
     val colors = LocalMyColorScheme.current
-
     val mergedVitals = remember(vitals) { mergeVitals(vitals) }
 
     if (mergedVitals.isEmpty()) return
+
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val cardAlpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(500, delayMillis = 100, easing = FastOutSlowInEasing),
+        label = "vitalsAlpha"
+    )
+    val cardScale by animateFloatAsState(
+        targetValue = if (visible) 1f else 0.94f,
+        animationSpec = tween(500, delayMillis = 100, easing = FastOutSlowInEasing),
+        label = "vitalsScale"
+    )
 
     val pagerState = rememberPagerState(pageCount = { mergedVitals.size })
 
@@ -614,7 +661,7 @@ fun VitalsCard(vitals: List<Vital>) {
         }
     }
 
-    Column {
+    Column(modifier = Modifier.graphicsLayer { alpha = cardAlpha; scaleX = cardScale; scaleY = cardScale }) {
 
         Text(
             "Vitals",
@@ -769,21 +816,35 @@ fun PrimaryActionsGrid(   ) {
     )
     )
 
+    var gridVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { gridVisible = true }
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier
             .fillMaxWidth()
-            .height(320.dp),   // ✅ FIXED HEIGHT (VERY IMPORTANT)
+            .height(320.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
 
-        items(items) { item ->
+        itemsIndexed(items) { index, item ->
+            val itemAlpha by animateFloatAsState(
+                targetValue = if (gridVisible) 1f else 0f,
+                animationSpec = tween(350, delayMillis = 80 + index * 55, easing = FastOutSlowInEasing),
+                label = "gridAlpha_$index"
+            )
+            val itemY by animateFloatAsState(
+                targetValue = if (gridVisible) 0f else 28f,
+                animationSpec = tween(350, delayMillis = 80 + index * 55, easing = FastOutSlowInEasing),
+                label = "gridY_$index"
+            )
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
+                    .graphicsLayer { alpha = itemAlpha; translationY = itemY }
                     .clickable {
                         when (item.type) {
                             "vitals" -> navController.navigate(Routes.VITALS)

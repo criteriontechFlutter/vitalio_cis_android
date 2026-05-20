@@ -3,6 +3,13 @@ package com.example.vitalio_cis.ui.screens
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,6 +19,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.GenericShape
@@ -35,6 +43,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,36 +55,83 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.R
 import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.model.ManualFoodAssignItem
 import com.example.vitalio_cis.ui.components.CommonAppBar
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.example.vitalio_cis.viewmodel.IntakeOutputViewModel
 
-enum class FluidType(val foodId: Int, val label: String, val emoji: String) {
-    WATER(1, "Water", "💧"),
-    MILK(2, "Milk", "🥛"),
-    JUICE(3, "Juice", "🧃"),
-    TEA(4, "Tea", "☕"),
-    COFFEE(5, "Coffee", "☕"),
-    BEVERAGE(6, "Beverage ", "🍲")
+@Composable
+private fun FluidSection(delayMillis: Int = 0, content: @Composable () -> Unit) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(380, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "fluidAlpha"
+    )
+    val offsetY by animateFloatAsState(
+        targetValue = if (visible) 0f else 30f,
+        animationSpec = tween(380, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "fluidY"
+    )
+    Box(modifier = Modifier.graphicsLayer { this.alpha = alpha; translationY = offsetY }) {
+        content()
+    }
 }
- @SuppressLint("NewApi")
- @Composable
-fun FluidDataInputScreen(
-     viewModel: IntakeOutputViewModel = viewModel(),) {
 
-     var selectedFluid by remember { mutableStateOf(FluidType.WATER) }
+// Maps food name to the right icon drawable
+private fun iconResForFood(foodName: String): Int = when {
+    foodName.contains("water", ignoreCase = true) -> R.drawable.fluid_water
+    foodName.contains("milk", ignoreCase = true) -> R.drawable.fluid_milk
+    foodName.contains("juice", ignoreCase = true) -> R.drawable.fluid_juice
+    foodName.contains("tea", ignoreCase = true) -> R.drawable.fluid_tea
+    foodName.contains("coffee", ignoreCase = true) -> R.drawable.fluid_coffee
+    else -> R.drawable.fluid_beverage
+}
+
+// Maps food name to glass fill gradient
+private fun gradientForFood(foodName: String): List<Color> = when {
+    foodName.contains("water", ignoreCase = true) -> listOf(Color(0xFFBFD3F2), Color(0xFF8FB3E8))
+    foodName.contains("juice", ignoreCase = true) -> listOf(Color(0xFFFFD89B), Color(0xFFF59E0B))
+    foodName.contains("milk", ignoreCase = true) -> listOf(Color.White, Color(0xFFE5E7EB))
+    foodName.contains("tea", ignoreCase = true) -> listOf(Color(0xFFFCD34D), Color(0xFFFB923C))
+    foodName.contains("coffee", ignoreCase = true) -> listOf(Color(0xFFB45309), Color(0xFF78350F))
+    else -> listOf(Color(0xFFA7F3D0), Color(0xFF10B981))
+}
+
+@SuppressLint("NewApi")
+@Composable
+fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
+
+    var selectedItem by remember { mutableStateOf<ManualFoodAssignItem?>(null) }
     var toggle by remember { mutableStateOf(0) }
 
-     val colors = LocalMyColorScheme.current
+    // Shared quantity state — glass drag and preset selector both read/write this
+    var glassQuantity by remember { mutableStateOf(105) }   // default 70% of 150 ml
+    var selectedPreset by remember { mutableStateOf<Int?>(null) }  // null = glass/manual mode
+    var glassMaxMl by remember { mutableStateOf(150) }      // scale persists across mode switches
+    val effectiveQuantity = selectedPreset ?: glassQuantity
+
+    val manualFoodList by viewModel.manualFoodList.collectAsState()
+    val isLoading by viewModel.intakeLoading.collectAsState()
+
+    val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
+    val context = LocalContext.current
 
-     val context = LocalContext.current
+    // Auto-select first drink when list arrives
+    LaunchedEffect(manualFoodList) {
+        if (selectedItem == null && manualFoodList.isNotEmpty()) {
+            selectedItem = manualFoodList.first()
+        }
+    }
 
-     LaunchedEffect(Unit) {
-         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-             viewModel.fetchIntake(context)
-         } // 🔥 page load pe call
-     }
+    LaunchedEffect(Unit) {
+        viewModel.getManualFoodAssignList(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            viewModel.fetchIntake(context)
+        }
+    }
 
     CommonAppBar(
         title = "Fluid Data Input",
@@ -84,11 +140,11 @@ fun FluidDataInputScreen(
                 "History",
                 color = Color(0xFF2563EB),
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable(){
-                    if(toggle==0)
+                modifier = Modifier.clickable {
+                    if (toggle == 0)
                         navController.navigate(Routes.FLUIDINPUTHISTORY)
-                        else
-                    navController.navigate(Routes.FLUIDOUTPUTHISTORY)
+                    else
+                        navController.navigate(Routes.FLUIDOUTPUTHISTORY)
                 }
             )
         }
@@ -100,56 +156,103 @@ fun FluidDataInputScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-
-
-            ToggleSection(
-                selected = toggle,
-                onChange = { toggle = it }
+            // Tab toggle slides in from top
+            var headerVisible by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { headerVisible = true }
+            val headerAlpha by animateFloatAsState(
+                targetValue = if (headerVisible) 1f else 0f,
+                animationSpec = tween(400, easing = FastOutSlowInEasing), label = "tabAlpha"
             )
+            val headerY by animateFloatAsState(
+                targetValue = if (headerVisible) 0f else -20f,
+                animationSpec = tween(400, easing = FastOutSlowInEasing), label = "tabY"
+            )
+            Box(modifier = Modifier.graphicsLayer { alpha = headerAlpha; translationY = headerY }) {
+                ToggleSection(selected = toggle, onChange = { toggle = it })
+            }
 
-            if(toggle==0){
+            // Slide horizontally between Intake and Output tabs
+            AnimatedContent(
+                targetState = toggle,
+                transitionSpec = {
+                    val dir = if (targetState > initialState) 1 else -1
+                    (fadeIn(tween(220)) + slideInHorizontally(tween(280)) { it * dir }) togetherWith
+                    (fadeOut(tween(180)) + slideOutHorizontally(tween(220)) { -it * dir })
+                },
+                label = "tabContent"
+            ) { tab ->
+            if (tab == 0) {
+                Column {
                 Spacer(Modifier.height(16.dp))
 
-                ProgressSection()
-
-                Spacer(Modifier.height(8.dp))
-
-                LegendSection()
+                // Progress + legend fade in
+                FluidSection(delayMillis = 80) {
+                    ProgressSection()
+                    Spacer(Modifier.height(8.dp))
+                    LegendSection()
+                }
 
                 Spacer(Modifier.height(16.dp))
 
-                SlideableWaterGlass(selectedFluid)
+                // Glass slides up
+                FluidSection(delayMillis = 160) {
+                    SlideableWaterGlass(
+                        foodName = selectedItem?.foodName.orEmpty(),
+                        quantity = effectiveQuantity,
+                        maxMl = glassMaxMl,
+                        onQuantityChange = {
+                            glassQuantity = it
+                            selectedPreset = null
+                        }
+                    )
+                }
 
                 Spacer(Modifier.height(20.dp))
 
-                FluidTypeGrid(
-                    selectedFluid = selectedFluid,
-                    onSelect = { selectedFluid = it }
-                )
+                // Grid slides up
+                FluidSection(delayMillis = 240) {
+                    FluidTypeGrid(
+                        items = manualFoodList,
+                        selectedFoodId = selectedItem?.foodID,
+                        isLoading = isLoading && manualFoodList.isEmpty(),
+                        onSelect = { selectedItem = it }
+                    )
+                }
 
                 Spacer(Modifier.height(20.dp))
 
-
-                IntakeSelector(
-                    selectedFluid = selectedFluid
-                )
+                // Selector springs up last
+                FluidSection(delayMillis = 320) {
+                    IntakeSelector(
+                        selectedItem = selectedItem,
+                        effectiveQuantity = effectiveQuantity,
+                        selectedPreset = selectedPreset,
+                        onPresetSelect = {
+                            selectedPreset = it
+                            glassMaxMl = it
+                            glassQuantity = it
+                        },
+                        onUseGlass = {
+                            selectedPreset = null
+                            glassMaxMl = 150
+                            glassQuantity = glassQuantity.coerceAtMost(150)
+                        }
+                    )
+                }
 
                 Spacer(Modifier.height(20.dp))
-            }else{
+                }
+            } else {
                 UrinationScreen()
             }
+            } // AnimatedContent
         }
     }
 }
 
-
 @Composable
-fun ToggleSection(
-    selected: Int,
-    onChange: (Int) -> Unit
-) {
+fun ToggleSection(selected: Int, onChange: (Int) -> Unit) {
     val colors = LocalMyColorScheme.current
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -157,54 +260,34 @@ fun ToggleSection(
             .background(colors.dashboardContainerColor)
             .padding(4.dp)
     ) {
-
-        // Intake
         Box(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(10.dp))
-                .background(
-                    if (selected == 0)
-                        Color(0xFF2563EB)
-                    else Color.Transparent
-                )
+                .background(if (selected == 0) Color(0xFF2563EB) else Color.Transparent)
                 .clickable { onChange(0) }
                 .padding(vertical = 10.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                "Fluid Intake",
-                color = if (selected == 0) Color.White else Color.Gray
-            )
+            Text("Fluid Intake", color = if (selected == 0) Color.White else Color.Gray)
         }
-
-        // Output
         Box(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(10.dp))
-                .background(
-                    if (selected == 1)
-                        Color(0xFF2563EB)
-                    else Color.Transparent
-                )
+                .background(if (selected == 1) Color(0xFF2563EB) else Color.Transparent)
                 .clickable { onChange(1) }
                 .padding(vertical = 10.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                "Fluid Output",
-                color = if (selected == 1) Color.White else Color.Gray
-            )
+            Text("Fluid Output", color = if (selected == 1) Color.White else Color.Gray)
         }
     }
 }
 
 @Composable
 fun ProgressSection() {
-
     Column {
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -212,9 +295,7 @@ fun ProgressSection() {
             Text("Recommended:  2,000 ml", color = Color.Gray)
             Text("Intake:  1700 ml", color = Color.Gray)
         }
-
         Spacer(Modifier.height(8.dp))
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -223,37 +304,13 @@ fun ProgressSection() {
                 .background(Color(0xFFE5E7EB))
         ) {
             Row(Modifier.fillMaxSize()) {
-
-                Box(
-                    Modifier
-                        .weight(0.4f)
-                        .fillMaxHeight()
-                        .background(Color(0xFF22C55E))
-                )
-
-                Box(
-                    Modifier
-                        .weight(0.35f)
-                        .fillMaxHeight()
-                        .background(Color(0xFFF59E0B))
-                )
-
-                Box(
-                    Modifier
-                        .weight(0.25f)
-                        .fillMaxHeight()
-                        .background(Color(0xFFEF4444))
-                )
+                Box(Modifier.weight(0.4f).fillMaxHeight().background(Color(0xFF22C55E)))
+                Box(Modifier.weight(0.35f).fillMaxHeight().background(Color(0xFFF59E0B)))
+                Box(Modifier.weight(0.25f).fillMaxHeight().background(Color(0xFFEF4444)))
             }
         }
-
         Spacer(Modifier.height(6.dp))
-
-        Text(
-            "Remaining: 300 ml",
-            modifier = Modifier.align(Alignment.End),
-            color = Color.Gray
-        )
+        Text("Remaining: 300 ml", modifier = Modifier.align(Alignment.End), color = Color.Gray)
     }
 }
 
@@ -273,73 +330,56 @@ fun LegendDot(color: Color, text: String) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(end = 12.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(color)
-        )
+        Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(color))
         Spacer(modifier = Modifier.width(4.dp))
         Text(text, fontSize = 12.sp, color = Color.Gray)
     }
 }
+
 @Composable
-fun ScaleItem(
-    text: String,
-    active: Boolean
-) {
-
-
-        Text(
-            text,
-            fontSize = 12.sp,
-            color = if (active) Color(0xFF2563EB) else Color.Gray
-        )
-
+fun ScaleItem(text: String, active: Boolean) {
+    Text(text, fontSize = 12.sp, color = if (active) Color(0xFF2563EB) else Color.Gray)
 }
+
 @Composable
-fun Scaleline(
-    active: Boolean
-) {
+fun Scaleline(active: Boolean) {
     Box(
         modifier = Modifier
             .width(18.dp)
             .height(1.5.dp)
-            .background(
-                if (active) Color(0xFF2563EB)
-                else Color.LightGray
-            )
+            .background(if (active) Color(0xFF2563EB) else Color.LightGray)
     )
 }
+
 @Composable
 fun SlideableWaterGlass(
-    fluidType: FluidType
+    foodName: String,
+    quantity: Int,
+    maxMl: Int = 150,
+    onQuantityChange: (Int) -> Unit
 ) {
+    // Local float level — drives rendering directly so drag is never blocked by parent recomposition
+    var level by remember { mutableStateOf((quantity.toFloat() / maxMl).coerceIn(0f, 1f)) }
 
-    var level by remember { mutableStateOf(0.7f) }
-
-    val maxMl = 150
-
-    val gradient = when (fluidType) {
-        FluidType.WATER -> listOf(Color(0xFFBFD3F2), Color(0xFF8FB3E8))
-        FluidType.JUICE -> listOf(Color(0xFFFFD89B), Color(0xFFF59E0B))
-        FluidType.MILK -> listOf(Color.White, Color(0xFFE5E7EB))
-        FluidType.TEA -> listOf(Color(0xFFFCD34D), Color(0xFFFB923C))
-        FluidType.COFFEE -> listOf(Color(0xFFB45309), Color(0xFF78350F))
-        FluidType.BEVERAGE -> listOf(Color(0xFFA7F3D0), Color(0xFF10B981))
+    // Sync level when an external change arrives (preset selected, maxMl changed)
+    LaunchedEffect(quantity, maxMl) {
+        level = (quantity.toFloat() / maxMl).coerceIn(0f, 1f)
     }
 
+    // rememberUpdatedState so the pointerInput lambda always reads the latest maxMl/callback
+    // without needing to re-create the gesture detector (which would interrupt ongoing drags)
+    val currentMaxMl by rememberUpdatedState(maxMl)
+    val currentOnQuantityChange by rememberUpdatedState(onQuantityChange)
+
+    val gradient = gradientForFood(foodName)
+
     val glassShape = GenericShape { size, _ ->
-
-        val topInset = size.width * 0.05f     // top margin
-        val bottomInset = size.width * 0.18f  // bottom smaller
-
+        val topInset = size.width * 0.05f
+        val bottomInset = size.width * 0.18f
         moveTo(topInset, 0f)
         lineTo(size.width - topInset, 0f)
-
         lineTo(size.width - bottomInset, size.height)
         lineTo(bottomInset, size.height)
-
         close()
     }
 
@@ -348,28 +388,22 @@ fun SlideableWaterGlass(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-
-        // SCALE
         Column(
             modifier = Modifier.height(260.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.End
         ) {
-            ScaleItem("150 ml", level >= 1f)
+            ScaleItem("$maxMl ml", level >= 1f)
             Scaleline(level >= .85f)
-
-            ScaleItem("100 ml", level >= .66f)
+            ScaleItem("${maxMl * 2 / 3} ml", level >= .66f)
             Scaleline(level >= .50f)
-
-            ScaleItem("50 ml", level >= .33f)
+            ScaleItem("${maxMl / 3} ml", level >= .33f)
             Scaleline(level >= .15f)
-
             ScaleItem("0 ml", true)
         }
 
         Spacer(Modifier.width(8.dp))
 
-        // GLASS
         Box(
             modifier = Modifier
                 .height(260.dp)
@@ -377,36 +411,35 @@ fun SlideableWaterGlass(
                 .clip(glassShape)
                 .background(Color(0xFFEAF1FB))
                 .pointerInput(Unit) {
-                    detectVerticalDragGestures { _, dragAmount ->
-                        level = (level - dragAmount / size.height)
-                            .coerceIn(0f, 1f)
+                    detectVerticalDragGestures(
+                        onDragEnd = {
+                            // currentMaxMl always reflects the latest value via rememberUpdatedState
+                            currentOnQuantityChange(
+                                (level * currentMaxMl).toInt().coerceIn(0, currentMaxMl)
+                            )
+                        }
+                    ) { _, dragAmount ->
+                        level = (level - dragAmount / size.height).coerceIn(0f, 1f)
                     }
                 }
         ) {
-
-            // liquid
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(level)
                     .align(Alignment.BottomCenter)
-                    .background(
-                        Brush.verticalGradient(gradient)
-                    )
+                    .background(Brush.verticalGradient(gradient))
             )
-
             Column(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Text(
                     "${(level * 100).toInt()}%",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF4A5B75)
                 )
-
                 Text(
                     "${(level * maxMl).toInt()} ml of $maxMl ml",
                     fontSize = 12.sp,
@@ -419,39 +452,78 @@ fun SlideableWaterGlass(
 
 @Composable
 fun FluidTypeGrid(
-    selectedFluid: FluidType,
-    onSelect: (FluidType) -> Unit
+    items: List<ManualFoodAssignItem>,
+    selectedFoodId: Int?,
+    isLoading: Boolean,
+    onSelect: (ManualFoodAssignItem) -> Unit
 ) {
+    if (isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color(0xFF2563EB), strokeWidth = 2.dp)
+        }
+        return
+    }
 
-    val items = FluidType.values()
+    if (items.isEmpty()) return
+
+    // Calculate grid height: 3 columns, each row ~90dp + 10dp gap
+    val rows = (items.size + 2) / 3
+    val gridHeight = (rows * 90 + (rows - 1) * 10).dp
+
+    var gridVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { gridVisible = true }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp),   // IMPORTANT FIX
+            .height(gridHeight),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         userScrollEnabled = false
     ) {
-        items(items) { item ->
-            FluidItem(
-                title = item,
-                selected = selectedFluid == item,
-                onClick = { onSelect(item) }
+        itemsIndexed(items) { index, item ->
+            val itemAlpha by animateFloatAsState(
+                targetValue = if (gridVisible) 1f else 0f,
+                animationSpec = tween(300, delayMillis = index * 60, easing = FastOutSlowInEasing),
+                label = "drinkAlpha_$index"
             )
+            val itemScale by animateFloatAsState(
+                targetValue = if (gridVisible) 1f else 0.7f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                ),
+                label = "drinkScale_$index"
+            )
+            Box(modifier = Modifier.graphicsLayer {
+                alpha = itemAlpha
+                scaleX = itemScale
+                scaleY = itemScale
+            }) {
+                FluidItem(
+                    item = item,
+                    selected = item.foodID == selectedFoodId,
+                    onClick = { onSelect(item) }
+                )
+            }
         }
     }
 }
 
 @Composable
 fun FluidItem(
-    title: FluidType,
+    item: ManualFoodAssignItem,
     selected: Boolean,
     onClick: () -> Unit
 ) {
-
     val colors = LocalMyColorScheme.current
+    val name = item.foodName.orEmpty()
 
     Column(
         modifier = Modifier
@@ -465,89 +537,72 @@ fun FluidItem(
             .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Icon(
-            painter = painterResource(
-                id = when (title) {
-                    FluidType.WATER -> R.drawable.fluid_water
-                    FluidType.JUICE -> R.drawable.fluid_juice
-                    FluidType.MILK -> R.drawable.fluid_milk
-                    FluidType.TEA -> R.drawable.fluid_tea
-                    FluidType.COFFEE -> R.drawable.fluid_coffee
-                    FluidType.BEVERAGE -> R.drawable.fluid_beverage
-                }
-            ),
+            painter = painterResource(id = iconResForFood(name)),
             contentDescription = null,
             modifier = Modifier.size(26.dp),
             tint = if (selected) colors.primaryBlueColor else Color.Gray
         )
-
         Spacer(modifier = Modifier.height(6.dp))
-
         Text(
-            text = title.name,
-            fontSize = 12.sp,
-            color = if (selected) colors.primaryBlueColor else Color.Gray
+            text = name.uppercase(),
+            fontSize = 11.sp,
+            color = if (selected) colors.primaryBlueColor else Color.Gray,
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
     }
 }
-
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun IntakeSelector(
     viewModel: IntakeOutputViewModel = viewModel(),
-
-    selectedFluid: FluidType  ) {
-
-    var selected by remember { mutableStateOf<Int?>(null) }
-
+    selectedItem: ManualFoodAssignItem?,
+    effectiveQuantity: Int,
+    selectedPreset: Int?,
+    onPresetSelect: (Int) -> Unit,
+    onUseGlass: () -> Unit
+) {
     val options = listOf(150, 250, 300, 400)
-
     val context = LocalContext.current
     val colors = LocalMyColorScheme.current
+    val isGlassMode = selectedPreset == null
+    val canAdd = selectedItem != null && effectiveQuantity > 0
+
     Column {
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Pencil icon — blue when glass/manual mode is active
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(colors.dashboardContainerColor),
+                    .background(if (isGlassMode) Color(0xFF2563EB) else colors.dashboardContainerColor)
+                    .clickable { onUseGlass() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.fluid_edit),
                     contentDescription = null,
-                    tint = Color.Gray,
+                    tint = if (isGlassMode) Color.White else Color.Gray,
                     modifier = Modifier.size(18.dp)
                 )
             }
 
             options.forEach { value ->
-
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(14.dp))
                         .background(
-                            if (selected == value)
-                                Color(0xFF2563EB).copy(.1f)
-                            else
-                                colors.dashboardContainerColor
+                            if (selectedPreset == value) Color(0xFF2563EB).copy(.1f)
+                            else colors.dashboardContainerColor
                         )
-                        .clickable { selected = value }
+                        .clickable { onPresetSelect(value) }
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
                         "$value ml",
-                        color = if (selected == value)
-                            Color(0xFF2563EB)
-                        else
-                            Color.Gray
+                        color = if (selectedPreset == value) Color(0xFF2563EB) else Color.Gray
                     )
                 }
             }
@@ -560,20 +615,26 @@ fun IntakeSelector(
                 .fillMaxWidth()
                 .height(56.dp)
                 .clip(RoundedCornerShape(18.dp))
-                .background(
-                    if (selected == null)
-                        colors.dashboardContainerColor
-                    else
-                        Color(0xFF2563EB)
-                )
-                .clickable(){
-                    viewModel.addIntake(context, value = selected.toString(), fId = selectedFluid.foodId.toString())
+                .background(if (canAdd) Color(0xFF2563EB) else colors.dashboardContainerColor)
+                .clickable {
+                    if (canAdd) {
+                        viewModel.addIntake(
+                            context,
+                            value = effectiveQuantity.toString(),
+                            fId = selectedItem!!.foodID.toString()
+                        )
+                    }
                 },
             contentAlignment = Alignment.Center
         ) {
+            val label = if (canAdd) {
+                "Add : ${selectedItem!!.foodName.orEmpty()}, $effectiveQuantity ml"
+            } else {
+                "Add Intake"
+            }
             Text(
-                "Add Intake",
-                color = if (selected == null) Color.Gray else Color.White,
+                label,
+                color = if (canAdd) Color.White else Color.Gray,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -611,7 +672,6 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        // ── Stats row ──
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -619,31 +679,17 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Urination count", fontSize = 13.sp, color = Color(0xFF2F6BFF))
-                Text(
-                    "$todayCount times",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
+                Text("$todayCount times", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(36.dp)
-                    .background(Color(0xFFDDDDDD))
-            )
+            Box(modifier = Modifier.width(1.dp).height(36.dp).background(Color(0xFFDDDDDD)))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Urination volume", fontSize = 13.sp, color = Color(0xFF2F6BFF))
-                Text(
-                    "$todayVolume ml",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
+                Text("$todayVolume ml", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // ── Oval slider ──
         val scaleWidth = 68.dp
         val bubbleWidth = 52.dp
 
@@ -663,11 +709,8 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
             val percentage = sliderValue / maxValue
 
             Row(modifier = Modifier.fillMaxSize()) {
-                // ── Scale column with tick marks ──
                 Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(scaleWidth),
+                    modifier = Modifier.fillMaxHeight().width(scaleWidth),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     for (i in 10 downTo 0) {
@@ -685,24 +728,15 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                                 fontWeight = if (active) FontWeight.Medium else FontWeight.Normal
                             )
                             Spacer(modifier = Modifier.width(3.dp))
-                            Box(
-                                modifier = Modifier
-                                    .width(7.dp)
-                                    .height(1.5.dp)
-                                    .background(labelColor)
-                            )
+                            Box(modifier = Modifier.width(7.dp).height(1.5.dp).background(labelColor))
                         }
                     }
                 }
 
-                // ── Centre: grey background circle + oval pill ──
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Oval container (fixed width, full height)
                     Box(
                         modifier = Modifier
                             .width(152.dp)
@@ -710,7 +744,6 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                             .clip(RoundedCornerShape(percent = 50))
                             .background(Color(0xFFEEEEEE))
                     ) {
-                        // White horizontal grid lines
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.SpaceEvenly
@@ -719,7 +752,6 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                                 Divider(color = Color.White.copy(alpha = 0.85f), thickness = 1.dp)
                             }
                         }
-                        // Warm yellow fill rising from the bottom
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -730,11 +762,9 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                     }
                 }
 
-                // ── Right gap for the bubble ──
                 Spacer(modifier = Modifier.width(bubbleWidth))
             }
 
-            // Dashed orange level line across the oval only
             Canvas(modifier = Modifier.matchParentSize()) {
                 val y = size.height * (1f - percentage)
                 drawLine(
@@ -746,7 +776,6 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                 )
             }
 
-            // Orange bubble + arrow, floating at the right at the current level
             Column(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -779,8 +808,6 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ── Last urination (dynamic) ──
-        // Pair<hours, minutes> elapsed since last entry, null if no records today
         val lastTimeAgo: Pair<Long, Long>? = remember(todayItems) {
             val lastItem = todayItems.maxByOrNull { it.id } ?: return@remember null
             try {
@@ -802,9 +829,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
             Text("Last urination", fontSize = 13.sp, color = Color.Gray)
             Text("  •  ", fontSize = 13.sp, color = Color.Gray)
             when {
-                lastTimeAgo == null -> {
-                    Text("No records today", fontSize = 13.sp, color = Color.Gray)
-                }
+                lastTimeAgo == null -> Text("No records today", fontSize = 13.sp, color = Color.Gray)
                 lastTimeAgo.first > 0 -> {
                     Text("${lastTimeAgo.first} h ", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
                     Text("${lastTimeAgo.second}", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
@@ -814,15 +839,12 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                     Text("${lastTimeAgo.second}", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
                     Text("m ago", fontSize = 13.sp, color = Color.Gray)
                 }
-                else -> {
-                    Text("Just now", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
-                }
+                else -> Text("Just now", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ── Value card ──
         Row(
             modifier = Modifier
                 .background(Color.White, RoundedCornerShape(16.dp))
@@ -830,12 +852,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = sliderValue.toInt().toString(),
-                fontSize = 52.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF2F6BFF)
-            )
+            Text(sliderValue.toInt().toString(), fontSize = 52.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2F6BFF))
             Spacer(modifier = Modifier.width(8.dp))
             Column(
                 modifier = Modifier.padding(bottom = 10.dp),
@@ -867,12 +884,8 @@ fun BpRangeIndicator(
     onUpdate: () -> Unit
 ) {
     val colorsList = listOf(
-        Color(0xFFFFF9C4),
-        Color(0xFFFFF176),
-        Color(0xFFFFEE58),
-        Color(0xFFFFA726),
-        Color(0xFF8D6E63),
-        Color(0xFFD84315)
+        Color(0xFFFFF9C4), Color(0xFFFFF176), Color(0xFFFFEE58),
+        Color(0xFFFFA726), Color(0xFF8D6E63), Color(0xFFD84315)
     )
     val apiLabels = listOf("Light Yellow", "Yellow", "Dark Yellow", "Amber", "Brown", "Red")
     val displayLabels = listOf("Light\nYellow", "Yellow", "Dark\nYellow", "Amber", "Brown", "Red")
@@ -887,13 +900,9 @@ fun BpRangeIndicator(
     val selectedIndex = apiLabels.indexOf(selectedColour)
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // ── Hydration chip floating above the selected segment ──
         Row(modifier = Modifier.fillMaxWidth()) {
             repeat(apiLabels.size) { i ->
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                     if (i == selectedIndex) {
                         Box(
                             modifier = Modifier
@@ -915,13 +924,7 @@ fun BpRangeIndicator(
 
         Spacer(Modifier.height(4.dp))
 
-        // ── Colour bar ──
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(14.dp)
-                .clip(RoundedCornerShape(50))
-        ) {
+        Row(modifier = Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(50))) {
             colorsList.forEachIndexed { i, color ->
                 Box(
                     modifier = Modifier
@@ -935,7 +938,6 @@ fun BpRangeIndicator(
 
         Spacer(Modifier.height(6.dp))
 
-        // ── Colour labels ──
         Row(modifier = Modifier.fillMaxWidth()) {
             displayLabels.forEachIndexed { i, label ->
                 Text(
@@ -951,13 +953,10 @@ fun BpRangeIndicator(
 
         Spacer(Modifier.height(16.dp))
 
-        // ── Update button ──
         Button(
             onClick = { if (!isLoading) onUpdate() },
             enabled = selectedColour.isNotEmpty() && !isLoading,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
+            modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF2563EB),
@@ -967,18 +966,9 @@ fun BpRangeIndicator(
             )
         ) {
             if (isLoading) {
-                CircularProgressIndicator(
-                    color = Color.White,
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
-                )
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
-                Text(
-                    "Update",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
+                Text("Update", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
         }
     }
