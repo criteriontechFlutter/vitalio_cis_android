@@ -21,4 +21,11 @@ class ApiEndPointCorporateModule {
     val addIntake="api/FoodIntake/AddIntake"
     val fetchIntake="api/FoodIntake/FetchIntake"
     val fluidSummaryByDateRange="api/ManualFoodAssign/FluidSummaryByDateRange"
+
+
+
+
+      val uploadLabreportUrl = "http://182.156.200.178:8016/uploadLabreport/"
+    val fetchMedia = "api/PatientMediaData/FetchMedia"
+
 }

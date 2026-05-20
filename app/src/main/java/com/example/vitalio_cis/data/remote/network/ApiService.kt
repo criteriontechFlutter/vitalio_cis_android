@@ -1,6 +1,7 @@
 package com.critetiontech.ctvitalio.networking
 
-import okhttp3.MultipartBody
+ import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -13,6 +14,10 @@ import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.QueryMap
 import retrofit2.http.Url
+
+import retrofit2.http.Query
+
+
 
 
 interface ApiService {
@@ -38,6 +43,14 @@ interface ApiService {
     ): Response<ResponseBody>
     // Add similar annotations for PUT, DELETE, etc.
 
+    @POST
+    suspend fun queryDynamicPost(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @QueryMap(encoded = false) params: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+    // Add similar annotations for PUT, DELETE, etc.
+
 
     @Multipart
     @POST
@@ -54,6 +67,33 @@ interface ApiService {
         @Url url: String,
         @HeaderMap headers: Map<String, String> = emptyMap(),
         @Part parts: List<MultipartBody.Part>
+    ): Response<ResponseBody>
+    @Multipart
+    @POST
+    suspend fun uploadMedia(
+
+        @Url url: String,
+
+        @retrofit2.http.Query("uhId")
+        uhid: String,
+
+        @retrofit2.http.Query("category")
+        category: String,
+
+        @retrofit2.http.Query("dateTime")
+        dateTime: String,
+
+        @retrofit2.http.Query("clientId")
+        clientId: String,
+
+        @retrofit2.http.Query("subCategory")
+        subCategory: String,
+
+        @retrofit2.http.Query("remark")
+        remark: String,
+
+        @Part file: MultipartBody.Part
+
     ): Response<ResponseBody>
 
 

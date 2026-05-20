@@ -42,6 +42,7 @@ import com.example.vitalio_cis.ui.screens.FluidDataInputScreen
 import com.example.vitalio_cis.ui.screens.FluidInputHistoryScreen
 import com.example.vitalio_cis.ui.screens.FluidOutputHistoryScreen
 import com.example.vitalio_cis.ui.screens.InteractionCheckerScreen
+import com.example.vitalio_cis.ui.screens.LabReportsScreen
 import com.example.vitalio_cis.ui.screens.ManageMedicationsPreview
 import com.example.vitalio_cis.ui.screens.ManageMedicationsScreen
 import com.example.vitalio_cis.ui.screens.MedicalProfileScreen
@@ -51,8 +52,7 @@ import com.example.vitalio_cis.ui.screens.OtpScreen
 import com.example.vitalio_cis.ui.screens.PersonalInfoScreen
 import com.example.vitalio_cis.ui.screens.PrescriptionScreen
 import com.example.vitalio_cis.ui.screens.PreviewFindDoctors
-import com.example.vitalio_cis.ui.screens.PreviewLabReports
-import com.example.vitalio_cis.ui.screens.RemindersScreen
+ import com.example.vitalio_cis.ui.screens.RemindersScreen
 import com.example.vitalio_cis.ui.screens.ResearchArticlesScreen
 import com.example.vitalio_cis.ui.screens.SelectClinicScreen
 import com.example.vitalio_cis.ui.screens.SharedAccountScreen
@@ -205,7 +205,7 @@ import dagger.hilt.android.AndroidEntryPoint
                             composable(Routes.MEDICINE) { MedicineReminderScreen() }
                             composable(Routes.DRAWER) { DrawerScreen() }
                             composable(Routes.PERSONALIFSCREEN) { PersonalInfoScreen() }
-                            composable(Routes.LABREPORTS) { PreviewLabReports() }
+                            composable(Routes.LABREPORTS) { LabReportsScreen() }
                             composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
                             composable(Routes.RESEARCHARTICLES) { ResearchArticlesScreen() }
 

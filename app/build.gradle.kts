@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.foundation.foundation)
     implementation(libs.ui)
+    implementation(libs.androidx.contentpager)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -109,4 +110,7 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
  }
