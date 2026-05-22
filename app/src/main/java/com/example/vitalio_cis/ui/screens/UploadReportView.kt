@@ -1,206 +1,306 @@
 package com.example.vitalio_cis.ui.screens
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.example.myapplication.utils.LocalNavController
 import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.model.MediaItem
+import com.example.vitalio_cis.model.ReportCategory
 import com.example.vitalio_cis.ui.components.CommonAppBar
 import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.viewmodel.UploadReportViewModel
 
-// ---------------- SAMPLE STATIC DATA ----------------
+// ------------------------------------------------------------
+// SCREEN
+// ------------------------------------------------------------
 
-data class ReportCategory(
-    val label: String,
-    val recordCount: Int,
-    val isSelected: Boolean = false
-)
-
-data class LabReport(
-    val title: String,
-    val type: String,
-    val description: String,
-    val date: String
-)
-
-val sampleCategories = listOf(
-    ReportCategory("Radiology", 1, true),
-    ReportCategory("Imaging", 2),
-    ReportCategory("Lab", 4)
-)
-
-val sampleReports = listOf(
-    LabReport(
-        "Abdomen X Ray",
-        "Findings",
-        "Dummy text ever since the 1500s when printer took a galley and scrambled it.",
-        "02 Aug 2024"
-    ),
-    LabReport(
-        "Blood Test",
-        "Lab",
-        "CBC report with all parameters normal.",
-        "05 Aug 2024"
-    )
-)
-
-
-// ---------------- SCREEN ----------------
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LabReportsScreen(
-    categories: List<ReportCategory> = sampleCategories,
-    reports: List<LabReport> = sampleReports,
-    onBackClick: () -> Unit = {}
+    viewModel: UploadReportViewModel = viewModel()
 ) {
 
-
     val colors = LocalMyColorScheme.current
-    var selectedCategory by remember {
-        mutableStateOf(categories.firstOrNull())
+
+    // --------------------------------------------------------
+    // API DATA
+    // --------------------------------------------------------
+    val context = LocalContext.current
+
+    // -----------------------------------------
+    // API CALL ON SCREEN OPEN
+    // -----------------------------------------
+
+    LaunchedEffect(Unit) {
+
+        viewModel.fetchMedia(context)
+    }
+    val mediaList by viewModel.mediaList.collectAsState()
+
+    val isLoading by viewModel.loading.collectAsState()
+
+    // --------------------------------------------------------
+    // CATEGORY LIST
+    // --------------------------------------------------------
+
+    val categories = remember(mediaList) {
+
+        mediaList
+            .groupBy { it.category }
+            .map {
+
+                ReportCategory(
+                    label = it.key,
+                    count = it.value.size
+                )
+            }
     }
 
+    // --------------------------------------------------------
+    // SELECTED CATEGORY
+    // --------------------------------------------------------
 
+    var selectedCategory by remember {
 
-    val navController = LocalNavController.current
+        mutableStateOf("")
+    }
 
-        CommonAppBar(
-            title = "Lab Reports",
-            actions = {
-                Row( modifier = Modifier
-                    .clickable(){
-                        navController.navigate(Routes.ADDLABRESULTS)
+    // --------------------------------------------------------
+    // DEFAULT FIRST CATEGORY
+    // --------------------------------------------------------
 
-                    }) {
-                    Text("Add Report")
-                }
-            }
+    LaunchedEffect(categories) {
+
+        if (
+            categories.isNotEmpty()
+            &&
+            selectedCategory.isEmpty()
         ) {
-            Column(
+
+            selectedCategory = categories.first().label
+        }
+    }
+
+    // --------------------------------------------------------
+    // FILTER LIST
+    // --------------------------------------------------------
+
+    val filteredList = remember(
+        mediaList,
+        selectedCategory
+    ) {
+
+        mediaList.filter {
+
+            it.category == selectedCategory
+        }
+    }
+
+    // --------------------------------------------------------
+    // UI
+    // --------------------------------------------------------
+
+    CommonAppBar(
+        title = "Lab Reports",
+        actions = {
+
+            val navController = LocalNavController.current
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(colors.dashboardBackgroundColor)
-                    .verticalScroll(rememberScrollState())
-            )
-            {
+                    .clip(RoundedCornerShape(20.dp))
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFF2F80ED),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .clickable {
+                        navController.navigate(Routes.ADDLABRESULTS)
+                    }
+                    .padding(
+                        horizontal = 12.dp,
+                        vertical = 6.dp
+                    ),
 
-                CategoryTabRow(categories, selectedCategory) {
-                    selectedCategory = it
-                }
-
-                Spacer(Modifier.height(20.dp))
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
                 Text(
-                    "Results",
-                    style = AppTextStyles.style18BCB(),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    text = "⊕",
+                    color = Color(0xFF2F80ED),
+                    fontSize = 14.sp
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(modifier = Modifier.width(4.dp))
 
-                reports.forEach {
-                    ReportCard(it)
-                    Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "Add Report",
+                    color = Color(0xFF2F80ED),
+                    fontSize = 12.sp
+                )
+            }
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.dashboardBackgroundColor)
+        ) {
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ----------------------------------------------------
+            // CATEGORY TABS
+            // ----------------------------------------------------
+
+            if (categories.isNotEmpty()) {
+
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    items(categories) { category ->
+
+                        CategoryTab(
+
+                            title = category.label,
+
+                            count = category.count,
+
+                            selected = selectedCategory == category.label
+
+                        ) {
+
+                            selectedCategory = category.label
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ----------------------------------------------------
+            // TITLE
+            // ----------------------------------------------------
+
+            Text(
+                text = "Results",
+                style = AppTextStyles.style18BCB(),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ----------------------------------------------------
+            // LOADING
+            // ----------------------------------------------------
+
+            if (isLoading) {
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    CircularProgressIndicator()
+                }
+            }
+
+            // ----------------------------------------------------
+            // EMPTY VIEW
+            // ----------------------------------------------------
+
+            else if (filteredList.isEmpty()) {
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        text = "No Reports Found",
+                        style = AppTextStyles.style14BCB()
+                    )
+                }
+            }
+
+            // ----------------------------------------------------
+            // LIST
+            // ----------------------------------------------------
+
+            else {
+
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 20.dp)
+                ) {
+
+                    items(filteredList) { report ->
+
+                        ReportCard(report)
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
             }
         }
-}
-
-
-// ---------------- ADD BUTTON ----------------
-
-@Composable
-fun AddReportButton() {
-
-    val colors = LocalMyColorScheme.current
-
-    Row(
-        modifier = Modifier
-            .padding(end = 8.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, colors.primaryBlueColor, RoundedCornerShape(20.dp))
-            .clickable {}
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Icon(
-            Icons.Default.Add,
-            contentDescription = null,
-            tint = colors.primaryBlueColor
-        )
-
-        Spacer(Modifier.width(4.dp))
-
-        Text(
-            "Add Report",
-            style = AppTextStyles.style12BCN()
-        )
     }
 }
 
-
-// ---------------- CATEGORY ROW ----------------
-
-@Composable
-fun CategoryTabRow(
-    categories: List<ReportCategory>,
-    selected: ReportCategory?,
-    onSelect: (ReportCategory) -> Unit
-) {
-
-    LazyRow(
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-
-        items(categories) { item ->
-
-            CategoryTab(
-                category = item,
-                selected = item == selected,
-                onClick = { onSelect(item) }
-            )
-        }
-    }
-}
+// ------------------------------------------------------------
+// CATEGORY TAB
+// ------------------------------------------------------------
 
 @Composable
 fun CategoryTab(
-    category: ReportCategory,
+    title: String,
+    count: Int,
     selected: Boolean,
     onClick: () -> Unit
 ) {
 
     val colors = LocalMyColorScheme.current
 
-    Row(
+    Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(
                 if (selected)
                     colors.dashboardContainerColor
@@ -208,34 +308,44 @@ fun CategoryTab(
                     Color.Transparent
             )
             .border(
-                1.dp,
-                if (selected) colors.primaryBlueColor else Color.LightGray,
-                RoundedCornerShape(12.dp)
+                width = 1.dp,
+                color =
+                    if (selected)
+                        colors.primaryBlueColor
+                    else
+                        Color.LightGray,
+                shape = RoundedCornerShape(14.dp)
             )
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .clickable {
+
+                onClick()
+            }
+            .padding(
+                horizontal = 16.dp,
+                vertical = 12.dp
+            )
     ) {
 
-        Column {
+        Text(
+            text = title,
+            style = AppTextStyles.style14BCB()
+        )
 
-            Text(
-                category.label,
-                style = AppTextStyles.style12BCN()
-            )
+        Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                "${category.recordCount} Records",
-                style = AppTextStyles.style12GCN()
-            )
-        }
+        Text(
+            text = "$count Records",
+            style = AppTextStyles.style12GCN()
+        )
     }
 }
 
-
-// ---------------- REPORT CARD ----------------
+// ------------------------------------------------------------
+// REPORT CARD
+// ------------------------------------------------------------
 
 @Composable
-fun ReportCard(report: LabReport) {
+fun ReportCard(report: MediaItem) {
 
     val colors = LocalMyColorScheme.current
 
@@ -243,67 +353,75 @@ fun ReportCard(report: LabReport) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
+
+        shape = RoundedCornerShape(16.dp),
+
         colors = CardDefaults.cardColors(
             containerColor = colors.dashboardContainerColor
-        ),
-        shape = RoundedCornerShape(16.dp)
+        )
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp)
+                .padding(14.dp),
+
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Column(modifier = Modifier.weight(1f)) {
+            // ------------------------------------------------
+            // LEFT SIDE
+            // ------------------------------------------------
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
 
                 Text(
-                    report.title,
+                    text = report.subcategory,
                     style = AppTextStyles.style14BCB()
                 )
 
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
-                    report.type,
+                    text = report.category,
                     style = AppTextStyles.style12GCN()
                 )
 
-                Spacer(Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    report.description,
+                    text = report.remark,
                     style = AppTextStyles.style12GCN(),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    report.date,
+                    text = report.dateTime,
                     style = AppTextStyles.style12GCN()
                 )
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            Box(
+            // ------------------------------------------------
+            // IMAGE
+            // ------------------------------------------------
+
+            AsyncImage(
+                model = report.url.replace("\\", "/"),
+                contentDescription = null,
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(colors.primaryBlueColor.copy(.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🩻", fontSize = 30.sp)
-            }
+                    .background(
+                        colors.primaryBlueColor.copy(.10f)
+                    )
+            )
         }
     }
-}
-
-
-// ---------------- PREVIEW ----------------
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewLabReports() {
-    LabReportsScreen()
 }
