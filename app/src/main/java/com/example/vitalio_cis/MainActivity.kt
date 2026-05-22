@@ -1,5 +1,6 @@
 package com.example.vitalio_cis
 
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,6 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -22,6 +24,7 @@ import com.example.vitalio_cis.ui.screens.AddActivityScreen
 import com.example.vitalio_cis.ui.screens.AddLabResultsScreen
 import com.example.vitalio_cis.ui.screens.AddMedicineReminderScreen
 import com.example.vitalio_cis.ui.screens.AddMemberScreen
+import com.example.vitalio_cis.ui.screens.AiReportScreen
 import com.example.vitalio_cis.ui.screens.AllergiesScreen
 import com.example.vitalio_cis.ui.screens.ArticleDetailScreen
 import com.example.vitalio_cis.ui.screens.BookingConfirmationScreen
@@ -80,6 +83,7 @@ import com.example.vitalio_cis.ui.screens.onboarding.WelcomeScreen
 import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
 import com.example.vitalio_cis.ui.theme.MyAppTheme
 import com.example.vitalio_cis.utils.PrefsManager
+import com.example.vitalio_cis.viewmodel.UploadReportViewModel
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -90,7 +94,8 @@ import dagger.hilt.android.AndroidEntryPoint
         super.onCreate(savedInstanceState)
         setContent {
             val navController = rememberNavController()
-
+            val uploadReportViewModel:
+                    UploadReportViewModel = viewModel()
             val context = LocalContext.current
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {
@@ -107,7 +112,6 @@ import dagger.hilt.android.AndroidEntryPoint
                         ) {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
                             composable(Routes.LOGIN) { LoginScreen() }
-                            composable(Routes.ADDLABRESULTS) { AddLabResultsScreen() }
                             composable(Routes.MANAGEMEDICAIONS) { ManageMedicationsPreview() }
                             composable(Routes.ADDMEDICINEREMINDER) { AddMedicineReminderScreen() }
                             composable(Routes.INTERACTIONCHECKER) { InteractionCheckerScreen() }
@@ -117,6 +121,27 @@ import dagger.hilt.android.AndroidEntryPoint
                             composable(Routes.FLUIDOUTPUTHISTORY) { FluidOutputHistoryScreen() }
                             composable(Routes.FLUIDINPUTHISTORY) { FluidInputHistoryScreen() }
                             composable(Routes.VITALHISTORY) { VitalHistoryScreen() }
+                            composable(
+                                Routes.ADDLABRESULTS
+                            ) {
+
+                                AddLabResultsScreen(
+
+                                    viewModel =
+                                        uploadReportViewModel
+                                )
+                            }
+
+                            composable(
+                                Routes.AIREPORT
+                            ) {
+
+                                AiReportScreen(
+
+                                    viewModel =
+                                        uploadReportViewModel
+                                )
+                            }
 
 //                            composable(Routes.CONNECTION+"/{vitalName}") {
 //

@@ -92,7 +92,7 @@ interface ApiService {
         @retrofit2.http.Query("remark")
         remark: String,
 
-        @Part file: MultipartBody.Part
+        @Part formFile : MultipartBody.Part
 
     ): Response<ResponseBody>
 

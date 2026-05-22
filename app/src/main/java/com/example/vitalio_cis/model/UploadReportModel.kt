@@ -1,6 +1,5 @@
 package com.example.vitalio_cis.model
 
-
 import com.google.gson.annotations.SerializedName
 
 // ----------------------------------------------------
@@ -10,13 +9,13 @@ import com.google.gson.annotations.SerializedName
 data class MediaResponse(
 
     @SerializedName("status")
-    val status: Int,
+    val status: Int? = null,
 
     @SerializedName("message")
-    val message: String,
+    val message: String? = null,
 
     @SerializedName("responseValue")
-    val responseValue: List<MediaItem>
+    val responseValue: List<MediaItem>? = emptyList()
 )
 
 // ----------------------------------------------------
@@ -26,46 +25,46 @@ data class MediaResponse(
 data class MediaItem(
 
     @SerializedName("id")
-    val id: Int,
+    val id: Int? = null,
 
     @SerializedName("pmId")
-    val pmId: Int,
+    val pmId: Int? = null,
 
     @SerializedName("url")
-    val url: String,
+    val url: String? = null,
 
     @SerializedName("category")
-    val category: String,
+    val category: String? = null,
 
     @SerializedName("fileType")
-    val fileType: String,
+    val fileType: String? = null,
 
     @SerializedName("fileName")
-    val fileName: String,
+    val fileName: String? = null,
 
     @SerializedName("dateTime")
-    val dateTime: String,
+    val dateTime: String? = null,
 
     @SerializedName("createdDate")
-    val createdDate: String,
+    val createdDate: String? = null,
 
     @SerializedName("status")
-    val status: Boolean,
+    val status: Boolean? = null,
 
     @SerializedName("userId")
-    val userId: Int,
+    val userId: Int? = null,
 
     @SerializedName("clientID")
-    val clientID: String?,
+    val clientID: String? = null,
 
     @SerializedName("subcategory")
-    val subcategory: String,
+    val subcategory: String? = null,
 
     @SerializedName("remark")
-    val remark: String,
+    val remark: String? = null,
 
     @SerializedName("uhid")
-    val uhid: String
+    val uhid: String? = null
 )
 
 // ----------------------------------------------------
