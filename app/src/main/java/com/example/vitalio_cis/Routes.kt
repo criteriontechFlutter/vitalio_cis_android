@@ -4,7 +4,7 @@ object Routes {
 
     const val LOGIN = "login"
     const val DASHBOARD = "dashboard"
-    const val OTP = "otp"
+    const val OTP = "otp/{mobile}"
     const val VITALS = "vitals"
     const val FLUID = "fluid"
     const val SYMPTOMSTRACKER = "symptomsTracker"

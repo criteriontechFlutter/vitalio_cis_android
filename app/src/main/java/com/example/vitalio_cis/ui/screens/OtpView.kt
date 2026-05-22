@@ -59,7 +59,7 @@ import com.example.vitalio_cis.viewmodel.OTPViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-fun OtpScreen(viewModel: OTPViewModel = viewModel()) {
+fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
     val navController = LocalNavController.current
     val context = LocalContext.current
 
@@ -135,7 +135,7 @@ fun OtpScreen(viewModel: OTPViewModel = viewModel()) {
             viewModel.verifyLogInOTPForSHFCApp(
                 context = context,
                 otp = otpValue,
-                uhid = "6307748142",
+                uhid = mobile,
                 navController = navController
             )
         }
@@ -233,7 +233,7 @@ fun OtpScreen(viewModel: OTPViewModel = viewModel()) {
                                     viewModel.verifyLogInOTPForSHFCApp(
                                         context = context,
                                         otp = otpValue,
-                                        uhid = "6307748142",
+                                        uhid = mobile,
                                         navController = navController
                                     )
                                 }
@@ -277,7 +277,7 @@ fun OtpScreen(viewModel: OTPViewModel = viewModel()) {
                             viewModel.verifyLogInOTPForSHFCApp(
                                 context = context,
                                 otp = otpValue,
-                                uhid = "6307748142",
+                                uhid = mobile,
                                 navController = navController
                             )
                         },

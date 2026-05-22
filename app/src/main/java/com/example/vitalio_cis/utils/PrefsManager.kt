@@ -17,6 +17,37 @@ data class PatientResponse(
     val responseValue: List<Patient>
 )
 
+data class VerifyOtpPatient(
+    val pid: Int = 0,
+    val pmId: Int = 0,
+    val uhId: String = "",
+    val firstName: String = "",
+    val lastName: String? = null,
+    val mobileNo: String = "",
+    val emailId: String = "",
+    val address: String = "",
+    val loginDateTime: String = "",
+    val age: String = "",
+    val ageType: String = "",
+    val dob: String = "",
+    val genderId: Int = 0,
+    val cityId: Int = 0,
+    val stateId: Int = 0,
+    val clientId: Int = 0,
+    val height: String = "",
+    val weight: String = "",
+    val bloodGroupId: Int = 0,
+    val joinedOn: String = "",
+    val lastVisitDate: String? = null,
+    val patientStatus: String? = null
+)
+
+data class VerifyOtpResponse(
+    val status: Int = 0,
+    val message: String = "",
+    val responseValue: VerifyOtpPatient? = null
+)
+
 data class Patient(
     val pid: Int,
     val uhId: String,

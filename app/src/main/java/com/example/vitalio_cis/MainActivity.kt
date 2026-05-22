@@ -149,7 +149,13 @@ import dagger.hilt.android.AndroidEntryPoint
                             composable(Routes.ADDMEMBER) { AddMemberScreen() }
                             composable(Routes.FAQ) { FAQScreen() }
                             composable(Routes.FEEDBACK) { FeedbackScreen() }
-                            composable(Routes.OTP) { OtpScreen() }
+                            composable(
+                                Routes.OTP,
+                                arguments = listOf(navArgument("mobile") { type = NavType.StringType })
+                            ) { backStackEntry ->
+                                val mobile = backStackEntry.arguments?.getString("mobile") ?: ""
+                                OtpScreen(mobile = mobile)
+                            }
                             composable(Routes.SELECTCLINIC) { SelectClinicScreen() }
                             composable(Routes.MEDICALPROFILE) { MedicalProfileScreen() }
                             composable(Routes.BOOKINGDETAILS+"/{bookingDetails}",

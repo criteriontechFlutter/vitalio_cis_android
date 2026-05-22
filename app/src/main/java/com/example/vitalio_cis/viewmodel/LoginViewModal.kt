@@ -183,7 +183,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
                     if (parsed.isRegisterd == 1) {
                         _loginSuccess.value = true
-                        navController.navigate(Routes.OTP)
+                        navController.navigate("otp/$mobile")
                     } else {
                         Toast.makeText(
                             context,

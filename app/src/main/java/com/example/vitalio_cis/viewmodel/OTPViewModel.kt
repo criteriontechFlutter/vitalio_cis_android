@@ -2,9 +2,6 @@ package com.example.vitalio_cis.viewmodel
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,16 +11,15 @@ import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.example.vitalio_cis.Routes
-import com.example.vitalio_cis.utils.PatientResponse
+import com.example.vitalio_cis.utils.Patient
 import com.example.vitalio_cis.utils.PrefsManager
+import com.example.vitalio_cis.utils.VerifyOtpResponse
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
 class OTPViewModel @Inject constructor() : ViewModel() {
-
-
 
     private val _loading = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loading
@@ -34,191 +30,97 @@ class OTPViewModel @Inject constructor() : ViewModel() {
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
-
-    var employeeId by mutableStateOf("")
-        private set
-
-    var password by mutableStateOf("")
-        private set
-
-
-    fun onEmployeeIdChange(newId: String) {
-        employeeId = newId
-    }
-
-    fun onPasswordChange(newPassword: String) {
-        password = newPassword
-    }
-    var mobile by mutableStateOf("")
-        private set
-
-
-    fun verifyLogInOTPForSHFCApp(context: Context,uhid:String  ,otp: String ,navController: NavController) {
+    fun verifyLogInOTPForSHFCApp(context: Context, uhid: String, otp: String, navController: NavController) {
 
         viewModelScope.launch {
-            getPatientDetailsByMobileNo(context,navController)
             _loading.value = true
             _loginSuccess.value = false
 
-            val prefsCache = PrefsManager(context)
+            val prefs = PrefsManager(context)
 
             try {
-
-                Log.d("LoginViewModel", "Sending OTP for mobile: $mobile")
+                val deviceToken = prefs.getDeviceToken() ?: "defaultToken"
 
                 val queryParams = mapOf(
+                    "key" to uhid,
                     "otp" to otp,
-                    "UHID" to uhid,
-                    "deviceToken" to  "APA91bHxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-                    "ifLoggedOutFromAllDevices" to  "0"
+                    "deviceToken" to deviceToken,
+                    "ifLoggedOutFromAllDevices" to true
                 )
 
-                val result: String? = prefsCache.getData(
-                    key =  ApiEndPointCorporateModule().verifyLogInOTPForSHFCApp,
-
+                val result: String? = prefs.getData(
+                    key = ApiEndPointCorporateModule().verifyLogInOTPForSHFCApp,
                     shouldSave = false
                 ) {
-
                     val response = ApiHelper().callApi(
                         context,
                         ApiEndPointCorporateModule().verifyLogInOTPForSHFCApp,
                         showNoConnectionDialog = true
                     ) { url ->
-                        ApiClients.module4082.queryDynamicRawPost(
-                            url = url,
-                            params = queryParams,
-                        )
+                        ApiClients.module4082.dynamicGet(url = url, params = queryParams)
                     }
-
                     if (response.isSuccessful) {
-
-                        val bodyString = response.body()?.string()
-
-                        Log.d("LoginViewModel", "API Response: $bodyString")
-
-                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                        val body = response.body()?.string()
+                        Log.d("OTPViewModel", "VerifyOTP response: $body")
+                        body
                     } else {
                         throw Exception("API Error: ${response.code()}")
                     }
                 }
 
-                // ✅ RESULT HANDLE
                 if (!result.isNullOrEmpty()) {
+                    val parsed = Gson().fromJson(result, VerifyOtpResponse::class.java)
 
-                    _loginSuccess.value = true
-                    navController.navigate(Routes.DASHBOARD)
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
-
-                } else {
-                    _errorMessage.value = "No data available"
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
-                }
-
-            } catch (e: Exception) {
-
-                _errorMessage.value = e.message ?: "Unknown error"
-                Log.e("LoginViewModel", "Error: ${e.message}", e)
-
-            } finally {
-
-                _loading.value = false
-                Log.d("LoginViewModel", "Loading finished")
-            }
-        }
-    }
-
-
-
-
-    fun getPatientDetailsByMobileNo(context: Context,navController: NavController   ) {
-
-        viewModelScope.launch {
-
-            _loading.value = true
-            _loginSuccess.value = false
-
-            val prefsCache = PrefsManager(context)
-
-            try {
-
-                Log.d("LoginViewModel", "Sending OTP for mobile: $mobile")
-
-                val queryParams = mapOf(
-
-                    "mobileNo" to "6307748142",
-                    "uhid" to "",
-                    "ClientId" to 45
-                )
-
-                val result: String? = prefsCache.getData(
-                    key =  ApiEndPointCorporateModule().getPatientDetailsByMobileNo,
-
-                    shouldSave = false
-                ) {
-
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().getPatientDetailsByMobileNo,
-                        showNoConnectionDialog = true
-                    ) { url ->
-                        ApiClients.module4082.dynamicGet(
-                            url = url,
-                            params = queryParams,
+                    if (parsed.status == 1 && parsed.responseValue != null) {
+                        val p = parsed.responseValue
+                        val patient = Patient(
+                            pid = p.pid,
+                            uhId = p.uhId,
+                            firstName = p.firstName,
+                            lastName = p.lastName,
+                            dob = p.dob,
+                            genderId = p.genderId,
+                            mobileNo = p.mobileNo,
+                            emailAddress = p.emailId,
+                            age = p.age,
+                            address = p.address,
+                            cityId = p.cityId,
+                            stateId = p.stateId,
+                            bloodGroupId = p.bloodGroupId,
+                            clientId = p.clientId,
+                            countryCallingCode = "",
+                            guardianRelationId = 0,
+                            guardianName = "",
+                            countryId = 0,
+                            imageUrl = "",
+                            zip = "",
+                            isActive = true,
+                            departmentName = null,
+                            cityName = "",
+                            stateName = "",
+                            countryName = "",
+                            genderName = "",
+                            guardianRelationName = null,
+                            bloodGroupName = null
                         )
-                    }
-
-                    if (response.isSuccessful) {
-
-                        val bodyString = response.body()?.string()
-
-                        Log.d("LoginViewModel", "API Response: $bodyString")
-
-                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
-                    } else {
-                        throw Exception("API Error: ${response.code()}")
-                    }
-                }
-
-                // ✅ RESULT HANDLE
-                if (!result.isNullOrEmpty()) {
-
-                    _loginSuccess.value = true
-
-                    // ✅ JSON → Model convert
-                    val apiResponse = Gson().fromJson(result, PatientResponse::class.java)
-
-                    // ✅ responseValue se data nikaalo
-                    val patient = apiResponse.responseValue.firstOrNull()
-
-                    if (patient != null) {
-
-                        PrefsManager(context).savePatient(patient)
-
-
-
+                        prefs.savePatient(patient)
+                        Log.d("OTPViewModel", "Patient saved: ${patient.firstName} ${patient.lastName}")
+                        _loginSuccess.value = true
                         navController.navigate(Routes.DASHBOARD)
-
-                        Log.d("LoginViewModel", "Patient Name: ${patient.firstName}")
+                    } else {
+                        _errorMessage.value = parsed.message.ifEmpty { "OTP verification failed" }
+                        Log.d("OTPViewModel", "OTP failed: ${parsed.message}")
                     }
-
-
                 } else {
-                    _errorMessage.value = "No data available"
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                    _errorMessage.value = "No response from server"
                 }
 
             } catch (e: Exception) {
-
                 _errorMessage.value = e.message ?: "Unknown error"
-                Log.e("LoginViewModel", "Error: ${e.message}", e)
-
+                Log.e("OTPViewModel", "Error: ${e.message}", e)
             } finally {
-
                 _loading.value = false
-                Log.d("LoginViewModel", "Loading finished")
             }
         }
     }
-
-
 }

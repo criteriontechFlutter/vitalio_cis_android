@@ -2,7 +2,7 @@ package com.critetiontech.ctvitalio.utils
 
 class ApiEndPointCorporateModule {
     val corporateEmployeeLogin = "api/LogInForVitalioApp/SendLoginOtp"
-    val verifyLogInOTPForSHFCApp = "api/LogInForSHFCApp/VerifyLogInOTPForSHFCApp"
+    val verifyLogInOTPForSHFCApp = "api/LogInForVitalioApp/VerifyOTP"
     val getPatientDetailsByMobileNo = "api/PatientRegistration/GetPatientDetailsByMobileNo"
     val fetchLastVital = "api/PatientVital/FetchLastVital"
     val addVital = "api/PatientVital/AddVital"
