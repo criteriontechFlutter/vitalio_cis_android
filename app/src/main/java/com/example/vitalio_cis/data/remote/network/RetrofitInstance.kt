@@ -14,6 +14,7 @@ object RetrofitInstance {
     const val BASE_5082 = "https://vitaliocis.vitalio.care:4082/"
     const val BASE_5084 = "https://vitaliocis.vitalio.care:4084/"
     const val BASE_4096 = "https://vitaliocis.vitalio.care:4096/"
+    const val BASE_44374 = "https://vitaliocis.vitalio.care:44374/"
     const val Digi_doctor_BaseURL = "http://52.172.134.222:205/api/v1.0/"
 //    const val BASE_5096 = "http://182.156.200.177:5096/"
 
@@ -32,10 +33,15 @@ object RetrofitInstance {
     }
 
     // Logging
-    private fun loggingInterceptor() = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
-    }
+//    private fun loggingInterceptor() = HttpLoggingInterceptor().apply {
+//        level = HttpLoggingInterceptor.Level.BODY
+//    }
+    private fun loggingInterceptor() =
+        HttpLoggingInterceptor().apply {
 
+            level =
+                HttpLoggingInterceptor.Level.HEADERS
+        }
     // Authorization / Header Interceptor
     private fun authInterceptor(headers: Map<String, String>) = Interceptor { chain ->
         val builder = chain.request().newBuilder()

@@ -48,5 +48,6 @@ object Routes {
     const val FEEDBACK  = "FeedbackScreen"
     const val MEDICALPROFILE  = "MedicalProfileScreen"
     const val RESEARCHARTICLES  = "ResearchArticlesScreen"
+    const val AIREPORT  = "AiReportScreen"
 
 }

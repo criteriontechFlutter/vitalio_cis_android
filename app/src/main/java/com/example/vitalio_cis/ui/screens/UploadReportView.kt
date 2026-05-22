@@ -88,7 +88,7 @@ fun LabReportsScreen(
             .map {
 
                 ReportCategory(
-                    label = it.key,
+                    label = it.key.toString(),
                     count = it.value.size
                 )
             }
@@ -153,6 +153,7 @@ fun LabReportsScreen(
                     )
                     .clickable {
                         navController.navigate(Routes.ADDLABRESULTS)
+//                        navController.navigate(Routes.AIREPORT)
                     }
                     .padding(
                         horizontal = 12.dp,
@@ -378,21 +379,21 @@ fun ReportCard(report: MediaItem) {
             ) {
 
                 Text(
-                    text = report.subcategory,
+                    text = report.subcategory.toString(),
                     style = AppTextStyles.style14BCB()
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = report.category,
+                    text = report.category.toString(),
                     style = AppTextStyles.style12GCN()
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = report.remark,
+                    text = report.remark.toString(),
                     style = AppTextStyles.style12GCN(),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
@@ -401,7 +402,7 @@ fun ReportCard(report: MediaItem) {
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = report.dateTime,
+                    text = report.dateTime.toString(),
                     style = AppTextStyles.style12GCN()
                 )
             }
@@ -413,7 +414,7 @@ fun ReportCard(report: MediaItem) {
             // ------------------------------------------------
 
             AsyncImage(
-                model = report.url.replace("\\", "/"),
+                model = report.url.toString().replace("\\", "/"),
                 contentDescription = null,
                 modifier = Modifier
                     .size(80.dp)

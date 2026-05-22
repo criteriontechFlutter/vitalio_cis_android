@@ -179,9 +179,9 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 
                 if (!result.isNullOrEmpty()) {
                     val parsed = Gson().fromJson(result, SendOtpResponse::class.java)
-                    Log.d("LoginViewModel", "isRegisterd: ${parsed.isRegisterd}")
+                    Log.d("LoginViewModel", "isRegisterd: ${parsed.responseValue.isRegisterd}")
 
-                    if (parsed.isRegisterd == 1) {
+                    if (parsed.responseValue.isRegisterd == 1) {
                         _loginSuccess.value = true
                         navController.navigate("otp/$mobile")
                     } else {
@@ -212,7 +212,19 @@ class LoginViewModel @Inject constructor() : ViewModel() {
 data class SendOtpResponse(
     val status: Int = 0,
     val message: String = "",
-    val responseValue: String = "",
+    val responseValue: ResponseValue,
     val isRegisterd: Int = 0,  // API typo preserved intentionally
     val clientId: Int = 0
+)
+
+
+data class ResponseValue(
+    val uhid: String?,
+    val mobileNo: String?,
+    val otp: Int?,
+    val countryCallingCode: String?,
+    val email: String?,
+    val patientName: String?,
+    val clientId: Int?,
+    val isRegisterd: Int?
 )
