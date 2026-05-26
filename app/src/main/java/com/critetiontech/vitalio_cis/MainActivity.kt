@@ -32,8 +32,7 @@ import com.critetiontech.vitalio_cis.ui.screens.BookingDetails
 import com.critetiontech.vitalio_cis.ui.screens.BookingDetailsScreen
 import com.critetiontech.vitalio_cis.ui.screens.ConnectWatchScreen
 import com.critetiontech.vitalio_cis.ui.screens.ConnectionScreen
-import com.critetiontech.vitalio_cis.ui.screens.DashboardScreen
-import com.critetiontech.vitalio_cis.ui.screens.DietChecklistScreen
+ import com.critetiontech.vitalio_cis.ui.screens.DietChecklistScreen
 import com.critetiontech.vitalio_cis.ui.screens.DoctorDetailsScreen
 import com.critetiontech.vitalio_cis.ui.screens.DrawerScreen
 import com.critetiontech.vitalio_cis.ui.screens.EmergencyContactsScreen
@@ -84,6 +83,7 @@ import com.critetiontech.vitalio_cis.ui.theme.LocalThemeViewModel
 import com.critetiontech.vitalio_cis.ui.theme.MyAppTheme
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.critetiontech.vitalio_cis.viewmodel.UploadReportViewModel
+import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.google.gson.Gson
 
 class MainActivity : ComponentActivity() {

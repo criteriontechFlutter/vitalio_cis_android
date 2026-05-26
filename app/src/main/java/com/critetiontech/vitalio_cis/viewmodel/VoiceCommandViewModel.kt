@@ -1,7 +1,7 @@
 package com.example.vitalio_cis.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.vitalio_cis.Routes
+import com.critetiontech.vitalio_cis.Routes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
