@@ -1,8 +1,10 @@
 package com.example.vitalio_cis.ui.screens
 
 import android.Manifest
+import android.content.ClipData
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -266,7 +268,7 @@ fun AddLabResultsScreen(
     val cameraLauncher =
         rememberLauncherForActivityResult(
             contract =
-                ActivityResultContracts.TakePicture()
+                TakePictureWithPermission()
         ) { success ->
 
             if (
@@ -771,4 +773,16 @@ fun createImageUri(
         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
         contentValues
     )!!
+}
+
+/**
+ * Custom contract to handle Android 18+ explicit URI grant requirement.
+ */
+class TakePictureWithPermission : ActivityResultContracts.TakePicture() {
+    override fun createIntent(context: Context, input: Uri): Intent {
+        return super.createIntent(context, input).apply {
+            addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            clipData = ClipData.newRawUri(null, input)
+        }
+    }
 }

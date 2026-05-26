@@ -266,7 +266,7 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                                 modifier = Modifier
                                     .weight(1f)
                                     .graphicsLayer { scaleX = boxScale; scaleY = boxScale; alpha = boxScale }
-                            )
+                               )
                         }
                     }
 
