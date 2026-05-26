@@ -1,9 +1,13 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.example.vitalio_cis.ui.screens
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.Brush
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -25,24 +29,37 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.myapplication.utils.LocalNavController
+import com.example.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.NavigationManager
 
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.model.Vital
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.ui.theme.LocalThemeViewModel
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.critetiontech.vitalio_cis.viewmodel.HomeViewModel
+import com.example.vitalio_cis.R
+import com.example.vitalio_cis.Routes
+import com.example.vitalio_cis.model.Vital
+import com.example.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.example.vitalio_cis.ui.theme.LocalThemeViewModel
+import com.example.vitalio_cis.ui.theme.ThemeViewModel
+import com.example.vitalio_cis.ui.theme.getColorScheme
+import com.example.vitalio_cis.utils.Patient
+import com.example.vitalio_cis.utils.PrefsManager
+import com.example.vitalio_cis.viewmodel.FindDoctorViewModel
+import com.example.vitalio_cis.viewmodel.HomeViewModel
+import com.example.vitalio_cis.viewmodel.ListeningState
+import com.example.vitalio_cis.viewmodel.VoiceCommandViewModel
 import kotlinx.coroutines.delay
 import java.util.Locale
-import com.critetiontech.vitalio_cis.R
+
 
 data class GridItem(val title: String, val icon: Int)
 
@@ -66,236 +83,357 @@ private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Uni
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  DashboardScreen
+//  Root composable that owns the Scaffold, bottom nav, and voice-assistant state.
+//  Placing the FAB and VoiceAssistantSheet here (rather than inside HomeView)
+//  makes the mic button persistent across all three bottom-nav tabs.
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-fun DashboardScreen(viewModel: HomeViewModel = viewModel(), ) {
+fun DashboardScreen(
+    homeViewModel: HomeViewModel = viewModel(),
+    voiceViewModel: VoiceCommandViewModel = viewModel()
+) {
     var selectedIndex by remember { mutableStateOf(0) }
-    val themeViewModel = LocalThemeViewModel.current
-    val colors = LocalMyColorScheme.current
-    val vitals by viewModel.vitalList.collectAsState()
 
+    // Controls whether the voice bottom sheet is visible
+    var showVoiceSheet by remember { mutableStateOf(false) }
+
+    val colors = LocalMyColorScheme.current
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.fetchLastVital(context)
+        homeViewModel.fetchLastVital(context)
     }
 
-
-    Scaffold( containerColor = colors.dashboardBackgroundColor,
-        modifier = Modifier
-            .background(colors.dashboardBackgroundColor),
+    Scaffold(
+        containerColor = colors.dashboardBackgroundColor,
+        modifier = Modifier.background(colors.dashboardBackgroundColor),
         bottomBar = {
             BottomNavigationBar(selectedIndex) { selectedIndex = it }
         }
     ) { padding ->
 
-        Box {
+        Box(modifier = Modifier.padding(padding)) {
+
             Column {
                 Spacer(Modifier.height(20.dp))
                 Column(
                     modifier = Modifier
                         .background(colors.dashboardBackgroundColor)
                         .padding(horizontal = 16.dp)
-                        .background(colors.dashboardBackgroundColor)
-
                 ) {
                     Header()
-
                     Spacer(Modifier.height(20.dp))
                 }
-                if(selectedIndex==0){
-                    HomeView()
-                }
-                else if(selectedIndex==1){
-                    AddActivityScreen()
-                }
-                else if(selectedIndex==2){
-                    RemindersScreen()
-                }
 
+                // Content switches based on the selected bottom-nav tab
+                when (selectedIndex) {
+                    0 -> HomeView()
+                    1 -> AddActivityScreen()
+                    2 -> RemindersScreen()
+                }
             }
 
-
+            // Mic FAB – always visible regardless of the active tab
             FloatingActionButton(
-                onClick = {},
+                onClick = { showVoiceSheet = true },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(20.dp),
+                    .padding(bottom = 20.dp, end = 20.dp),
                 containerColor = Color(0xFF2F6FE4)
             ) {
-                Icon(Icons.Default.Home, contentDescription = null)
+                Icon(
+                    Icons.Default.Mic,
+                    contentDescription = "Open voice assistant",
+                    tint = Color.White
+                )
             }
         }
 
+        // Voice assistant sheet – rendered outside the padded Box so it
+        // draws over everything including the bottom nav bar
+        if (showVoiceSheet) {
+            VoiceAssistantSheet(
+                voiceViewModel = voiceViewModel,
+                onDismiss = {
+                    showVoiceSheet = false
+                    voiceViewModel.reset()
+                }
+            )
+        }
     }
 }
 
-// ------------------- Bottom Navigation -------------------
+// ─────────────────────────────────────────────────────────────────────────────
+//  HomeView  (tab 0 content)
+//  Pure content composable – no FAB, no dialogs.
+//  The voice FAB lives in DashboardScreen so it stays visible on every tab.
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-fun HomeView(viewModel: HomeViewModel = viewModel()){
-
-
-    var selectedIndex by remember { mutableStateOf(0) }
-    val themeViewModel = LocalThemeViewModel.current
+fun HomeView(viewModel: HomeViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
     val vitals by viewModel.vitalList.collectAsState()
-
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.fetchLastVital(context)
     }
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
 
-    Box {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.dashboardBackgroundColor)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-                .background(colors.dashboardBackgroundColor)
-        )
-        {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.dashboardBackgroundColor)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        VitalsCard(vitals)
 
+        Spacer(Modifier.height(20.dp))
 
-//            ToTakeCard()
-//
-//            Spacer(Modifier.height(20.dp))
-
-            VitalsCard(vitals)
-
-            Spacer(Modifier.height(20.dp))
-
-            AnimatedSection(delayMillis = 200) {
-                Text(text = "Primary Actions", style = AppTextStyles.style18BCB())
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            PrimaryActionsGrid()
-
-            Spacer(Modifier.height(20.dp))
-
-            AnimatedSection(delayMillis = 600) { HomeScreen() }
-
-            Spacer(Modifier.height(20.dp))
-
-            AnimatedSection(delayMillis = 750) { OtherSection() }
-
-            Spacer(Modifier.height(70.dp))
+        AnimatedSection(delayMillis = 200) {
+            Text(text = "Primary Actions", style = AppTextStyles.style18BCB())
         }
 
-        FloatingActionButton(
-            onClick = {
-//                6307748142
-                showDialog = true
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 132.dp, end = 32.dp),
-            containerColor = Color(0xFF2F6FE4)
-        ) {
-            Icon(
-                Icons.Default.Mic,
-                contentDescription = null,
-                tint = Color.White
-            )
-        }
-        if (showDialog) {
+        Spacer(Modifier.height(12.dp))
 
-            VoiceToTextDialog(
+        PrimaryActionsGrid()
 
-                onDismiss = {
+        Spacer(Modifier.height(20.dp))
 
-                    showDialog = false
-                } )
-        }
+        AnimatedSection(delayMillis = 600) { HomeScreen() }
+
+        Spacer(Modifier.height(20.dp))
+
+        AnimatedSection(delayMillis = 750) { OtherSection() }
+
+        // Extra bottom padding so the last card clears the persistent mic FAB
+        Spacer(Modifier.height(80.dp))
     }
 }
 
 
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  Voice Assistant UI  –  Modern AI-style components
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Compact waveform rendered inside the orb while the mic is active.
+ * Five bars animate at different speeds to mimic real speech energy.
+ */
 @Composable
-fun VoiceToTextDialog(
+private fun MiniWaveform() {
+    val tr = rememberInfiniteTransition(label = "miniWave")
+
+    val b0 by tr.animateFloat(0.25f, 1f, infiniteRepeatable(tween(360, easing = FastOutSlowInEasing), RepeatMode.Reverse, StartOffset(0)),   "mw0")
+    val b1 by tr.animateFloat(0.25f, 1f, infiniteRepeatable(tween(440, easing = FastOutSlowInEasing), RepeatMode.Reverse, StartOffset(100)), "mw1")
+    val b2 by tr.animateFloat(0.25f, 1f, infiniteRepeatable(tween(380, easing = FastOutSlowInEasing), RepeatMode.Reverse, StartOffset(200)), "mw2")
+    val b3 by tr.animateFloat(0.25f, 1f, infiniteRepeatable(tween(460, easing = FastOutSlowInEasing), RepeatMode.Reverse, StartOffset(80)),  "mw3")
+    val b4 by tr.animateFloat(0.25f, 1f, infiniteRepeatable(tween(400, easing = FastOutSlowInEasing), RepeatMode.Reverse, StartOffset(160)), "mw4")
+
+    Row(
+        modifier = Modifier.height(28.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        listOf(b0, b1, b2, b3, b4).forEach { fraction ->
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight(fraction)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.White)
+            )
+        }
+    }
+}
+
+/**
+ * Central glowing orb with three staggered ripple rings.
+ *
+ * Visual encoding:
+ *  - Blue  → idle / listening / processing
+ *  - Green → command matched
+ *  - Red   → no match or mic error
+ *
+ * The rings only expand when the mic is actively open (LISTENING / PROCESSING).
+ * The core orb breathes continuously via a gentle scale animation.
+ */
+@Composable
+private fun VoiceOrb(state: ListeningState) {
+
+    val isActive = state == ListeningState.LISTENING || state == ListeningState.PROCESSING
+
+    // Smooth color transition between states
+    val orbColor by animateColorAsState(
+        targetValue = when (state) {
+            ListeningState.MATCHED              -> Color(0xFF22C55E) // success green
+            ListeningState.NO_MATCH,
+            ListeningState.ERROR                -> Color(0xFFEF4444) // error red
+            else                                -> Color(0xFF3B82F6) // primary blue
+        },
+        animationSpec = tween(400),
+        label = "orbColor"
+    )
+
+    val tr = rememberInfiniteTransition(label = "orbAnim")
+
+    // Three ripple rings with staggered 500 ms offsets
+    val r1s by tr.animateFloat(0.85f, if (isActive) 1.75f else 0.85f, infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart, StartOffset(0)),    "r1s")
+    val r1a by tr.animateFloat(0.5f,  0f,                              infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart, StartOffset(0)),    "r1a")
+    val r2s by tr.animateFloat(0.85f, if (isActive) 1.75f else 0.85f, infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart, StartOffset(500)),  "r2s")
+    val r2a by tr.animateFloat(0.5f,  0f,                              infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart, StartOffset(500)),  "r2a")
+    val r3s by tr.animateFloat(0.85f, if (isActive) 1.75f else 0.85f, infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart, StartOffset(1000)), "r3s")
+    val r3a by tr.animateFloat(0.5f,  0f,                              infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart, StartOffset(1000)), "r3a")
+
+    // Subtle scale-breathe on the core orb
+    val breath by tr.animateFloat(0.88f, 1f, infiniteRepeatable(tween(1000, easing = FastOutSlowInEasing), RepeatMode.Reverse), "breath")
+
+    Box(
+        modifier = Modifier.size(160.dp),
+        contentAlignment = Alignment.Center
+    ) {
+
+        // Ripple rings (graphicsLayer avoids allocation of new composable per frame)
+        listOf(r1s to r1a, r2s to r2a, r3s to r3a).forEach { (scale, alpha) ->
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha }
+                    .clip(CircleShape)
+                    .background(orbColor.copy(alpha = 0.22f))
+            )
+        }
+
+        // Ambient radial glow
+        Box(
+            modifier = Modifier
+                .size(104.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            orbColor.copy(alpha = 0.28f),
+                            orbColor.copy(alpha = 0.07f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // Solid core with breathing scale
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .graphicsLayer { scaleX = breath; scaleY = breath }
+                .clip(CircleShape)
+                .background(Brush.radialGradient(listOf(orbColor, orbColor.copy(alpha = 0.7f)))),
+            contentAlignment = Alignment.Center
+        ) {
+            when (state) {
+                ListeningState.LISTENING,
+                ListeningState.PROCESSING -> MiniWaveform()
+
+                ListeningState.MATCHED    -> Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(30.dp))
+                ListeningState.NO_MATCH,
+                ListeningState.ERROR      -> Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(30.dp))
+                else                      -> Icon(Icons.Default.Mic,   null, tint = Color.White, modifier = Modifier.size(30.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Hint chip styled for the dark sheet.
+ * Uses a dark-tinted background and a subtle border so it reads well at small sizes.
+ */
+@Composable
+private fun VoiceHintChip(label: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFF2D3748), RoundedCornerShape(20.dp))
+            .background(Color(0xFF161B2E), RoundedCornerShape(20.dp))
+            .padding(horizontal = 8.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = Color(0xFF9CA3AF),
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/**
+ * Full-featured voice assistant bottom sheet.
+ *
+ * Session lifecycle:
+ *  1. Sheet appears → SpeechRecognizer starts automatically (DisposableEffect)
+ *  2. User speaks → partial transcript shown in real time
+ *  3. Speech ends → ViewModel classifies as MATCHED / NO_MATCH
+ *  4. MATCHED: shows "Navigating to X" for 800 ms, navigates, then closes sheet
+ *  5. NO_MATCH / ERROR: shows error message, auto-restarts the recognizer after 1.5 s
+ *
+ * All mutable state lives in [VoiceCommandViewModel]; this composable is stateless.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VoiceAssistantSheet(
+    voiceViewModel: VoiceCommandViewModel,
     onDismiss: () -> Unit
 ) {
-
     val navController = LocalNavController.current
     val context = LocalContext.current
+    val colors = LocalMyColorScheme.current
 
-    var text by remember { mutableStateOf("Listening...") }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val speechRecognizer = remember {
-        SpeechRecognizer.createSpeechRecognizer(context)
-    }
+    // Observe ViewModel state
+    val listeningState by voiceViewModel.listeningState.collectAsState()
+    val spokenText by voiceViewModel.spokenText.collectAsState()
+    val matchedLabel by voiceViewModel.matchedLabel.collectAsState()
+    val matchedRoute by voiceViewModel.matchedRoute.collectAsState()
 
-    val intent = remember {
+    // ── SpeechRecognizer setup ─────────────────────────────────────────────────
+    // remember keeps the same instance across recompositions
+    val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
+    val recognizerIntent = remember {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE,
-                Locale.getDefault()
-            )
-            putExtra(
-                RecognizerIntent.EXTRA_PARTIAL_RESULTS,
-                true
-            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         }
     }
 
+    // Wire RecognitionListener callbacks → ViewModel state transitions
     DisposableEffect(Unit) {
-
         val listener = object : RecognitionListener {
-
-            override fun onReadyForSpeech(params: Bundle?) {
-                text = "Listening..."
-            }
-
-            override fun onBeginningOfSpeech() {
-                text = "Speak now..."
-            }
-
+            override fun onReadyForSpeech(params: Bundle?) = voiceViewModel.onReadyForSpeech()
+            override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
-
             override fun onBufferReceived(buffer: ByteArray?) {}
-
-            override fun onEndOfSpeech() {
-                text = "Processing..."
+            override fun onEndOfSpeech() = voiceViewModel.onSpeechEnded()
+            override fun onError(error: Int) = voiceViewModel.onRecognitionError()
+            override fun onPartialResults(partialResults: Bundle?) {
+                val partial = partialResults
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull() ?: ""
+                voiceViewModel.onPartialResult(partial)
             }
-
-            override fun onError(error: Int) {
-                text = "Try again"
-            }
-
             override fun onResults(results: Bundle?) {
-
-                val data = results?.getStringArrayList(
-                    SpeechRecognizer.RESULTS_RECOGNITION
-                )
-
-                val spokenText = data?.get(0)?.lowercase() ?: ""
-
-                text = spokenText
-
-                handleNavigation(spokenText, navController)
-
-                onDismiss() // 🔥 AUTO CLOSE
+                val spoken = results
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull() ?: ""
+                voiceViewModel.onResult(spoken)
             }
-
-            override fun onPartialResults(partialResults: Bundle?) {}
-
             override fun onEvent(eventType: Int, params: Bundle?) {}
         }
-
         speechRecognizer.setRecognitionListener(listener)
-
-        // 🔥 AUTO START LISTENING (NO BUTTON NEEDED)
-        speechRecognizer.startListening(intent)
+        speechRecognizer.startListening(recognizerIntent)
 
         onDispose {
             speechRecognizer.stopListening()
@@ -303,147 +441,219 @@ fun VoiceToTextDialog(
         }
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Listening...") },
-        text = {
-            Text(text)
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+    // ── TTS setup ─────────────────────────────────────────────────────────────────
+    // Provides audio confirmation so the user gets feedback without watching the screen.
+    // Stored as MutableState so the async init callback (fires on main thread) can update it.
+    val ttsEngine = remember { mutableStateOf<TextToSpeech?>(null) }
+
+    DisposableEffect(Unit) {
+        // lateinit var so the lambda can capture it before TextToSpeech() returns
+        // (TTS init callback is always async, so engine is assigned before it fires)
+        lateinit var engine: TextToSpeech
+        engine = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                ttsEngine.value = engine
             }
         }
-    )
-}
-data class VoiceCommand(
-    val keywords: List<String>,
-    val route: String
-)
-
-val voiceCommands = listOf(
-
-    VoiceCommand(
-        listOf("dashboard", "home", "main"),
-        Routes.DASHBOARD
-    ),
-
-    VoiceCommand(
-        listOf("vitals", "bp", "blood pressure", "heart rate", "spo2", "Temperature",  "RR", "Weight"),
-        Routes.VITALS
-    ),
-
-    VoiceCommand(
-        listOf("medicine", "tablet", "drug", "medication"),
-        Routes.MEDICINE
-    ),
-
-    VoiceCommand(
-        listOf("reminder", "alarm"),
-        Routes.REMINDERS
-    ),
-
-    VoiceCommand(
-        listOf("lab", "report", "test"),
-        Routes.LABREPORTS
-    ),
-
-    VoiceCommand(
-        listOf("diet", "food"),
-        Routes.DIETCHECKLIST
-    ),
-
-    VoiceCommand(
-        listOf("fluid", "water", "Milk", "Juice", "Tea", "Coffee", "Beverage"),
-        Routes.FLUIDDATAINPUT
-    ),
-
-    VoiceCommand(
-        listOf("symptom", "fever", "cough", "pain"),
-        Routes.SYMPTOMSTRACKER
-    ),
-
-    VoiceCommand(
-        listOf("doctor", "appointment"),
-        Routes.FINDDOCTOR
-    ),
-
-    VoiceCommand(
-        listOf("article", "research"),
-        Routes.RESEARCHARTICLES
-    ),
-
-    VoiceCommand(
-        listOf("profile"),
-        Routes.MEDICALPROFILE
-    ),
-
-    VoiceCommand(
-        listOf("emergency", "help"),
-        Routes.EMERGENCYCONTACTS
-    ),
-    VoiceCommand(
-        listOf("Watch", "Connect Smart Watch", "Connect watch"),
-        Routes.CONNECTWATCH
-    ),
-
-    VoiceCommand(
-        listOf("Family", "Family Health", "Family Health History"),
-        Routes.FAMILYHEALTH
-    ),
-
-
-    VoiceCommand(
-        listOf("Family", "Family Health", "Family Health History"),
-        Routes.SHAREDACCOUNT
-    ),
-
-    VoiceCommand(
-        listOf("Shared", "Shared Accounts",  ),
-        Routes.SHAREDACCOUNT
-    ),
-
-
-    VoiceCommand(
-        listOf("My Observer",   ),
-        Routes.MYOBSERVERS
-    ),
-    VoiceCommand(
-        listOf("Prescriptions",  "Prescription" ),
-        Routes.PRESCRIPTION
-    ),
-
-    VoiceCommand(
-        listOf("Allergies",  "Allergie" ),
-        Routes.ALLERGIESSCREEN
-    ),
-
-    VoiceCommand(
-        listOf("FAQ",   ),
-        Routes.FAQ
-    ),
-    VoiceCommand(
-        listOf("Feedback",   ),
-        Routes.FEEDBACK
-    ),
-)
-fun handleNavigation(
-    spokenText: String,
-    navController: NavController
-) {
-
-    val text = spokenText.lowercase()
-
-    val route = voiceCommands.firstOrNull { command ->
-        command.keywords.any { keyword ->
-            text.contains(keyword)
+        onDispose {
+            ttsEngine.value = null
+            engine.shutdown()
         }
-    }?.route
+    }
 
-    route?.let {
-        navController.navigate(it)
+    // React to terminal states with audio + visual feedback:
+    //  MATCHED  → speak "Opening <X>" → 1.2 s pause → navigate → dismiss
+    //  NO_MATCH → speak retry prompt  → 2 s pause   → restart mic
+    //  ERROR    → speak error message → 2 s pause   → restart mic
+    LaunchedEffect(listeningState) {
+        when (listeningState) {
+
+            ListeningState.MATCHED -> {
+                // Speak the destination name before navigating so the user hears confirmation
+                ttsEngine.value?.speak(
+                    "Opening $matchedLabel",
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    "voice_nav_confirm"
+                )
+                // 1.2 s gives TTS time to finish before the screen transition
+                delay(1200)
+                matchedRoute?.let { navController.navigate(it) }
+                onDismiss()
+            }
+
+            ListeningState.NO_MATCH -> {
+                ttsEngine.value?.speak(
+                    "Sorry, I didn't catch that. Try saying vitals, medicine, or diet.",
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    "voice_no_match"
+                )
+                delay(2000)
+                voiceViewModel.onReadyForSpeech()
+                speechRecognizer.startListening(recognizerIntent)
+            }
+
+            ListeningState.ERROR -> {
+                ttsEngine.value?.speak(
+                    "Microphone error. Retrying.",
+                    TextToSpeech.QUEUE_FLUSH,
+                    null,
+                    "voice_mic_error"
+                )
+                delay(2000)
+                voiceViewModel.onReadyForSpeech()
+                speechRecognizer.startListening(recognizerIntent)
+            }
+
+            else -> {}
+        }
+    }
+
+    // ── Sheet UI ─────────────────────────────────────────────────────────────────
+    // Dark background regardless of app theme – standard for AI voice interfaces
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color(0xFF0B0F1A),
+        dragHandle = {
+            // Subtle custom drag handle
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color(0xFF2D3748))
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 28.dp)
+                .padding(bottom = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            // ── Brand label ───────────────────────────────────────────────────
+            Text(
+                text = "VITALIO VOICE",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4B6EFF),
+                letterSpacing = 2.sp
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            // ── Animated orb – the main visual focal point ────────────────────
+            VoiceOrb(state = listeningState)
+
+            Spacer(Modifier.height(20.dp))
+
+            // ── Primary state text ────────────────────────────────────────────
+            Text(
+                text = when (listeningState) {
+                    ListeningState.IDLE       -> "Tap to speak"
+                    ListeningState.LISTENING  -> "Listening..."
+                    ListeningState.PROCESSING -> "Understanding..."
+                    ListeningState.MATCHED    -> "Opening $matchedLabel"
+                    ListeningState.NO_MATCH   -> "Didn't catch that"
+                    ListeningState.ERROR      -> "Mic unavailable"
+                },
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = when (listeningState) {
+                    ListeningState.MATCHED              -> Color(0xFF22C55E)
+                    ListeningState.NO_MATCH,
+                    ListeningState.ERROR                -> Color(0xFFEF4444)
+                    else                                -> Color.White
+                },
+                textAlign = TextAlign.Center
+            )
+
+            // ── Live partial transcript ───────────────────────────────────────
+            if (spokenText.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "\"$spokenText\"",
+                    fontSize = 14.sp,
+                    color = Color(0xFF9CA3AF),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(Modifier.height(28.dp))
+
+            // Thin separator between action area and hint chips
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color(0xFF1E2433))
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── Hint section header ───────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF4B6EFF))
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Try saying",
+                    fontSize = 12.sp,
+                    color = Color(0xFF6B7280),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // ── Hint chips in rows of 4 ───────────────────────────────────────
+            voiceViewModel.hintCommands.chunked(4).forEach { rowItems ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowItems.forEach { cmd ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            VoiceHintChip(label = cmd.label)
+                        }
+                    }
+                    // Pad short rows so chip widths stay consistent
+                    repeat(4 - rowItems.size) { Spacer(modifier = Modifier.weight(1f)) }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── Cancel button ─────────────────────────────────────────────────
+            OutlinedButton(
+                onClick = onDismiss,
+                border = BorderStroke(1.dp, Color(0xFF2D3748)),
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .height(44.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF6B7280)
+                )
+            ) {
+                Text("Cancel", fontSize = 14.sp)
+            }
+        }
     }
 }
+
 // ------------------- Bottom Navigation -------------------
 @Composable
 fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
