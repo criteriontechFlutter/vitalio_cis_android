@@ -140,6 +140,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                     "type" to "Symptoms",
                     "isFromPatient" to true
                 )
+                Log.d("SymptomTrackerViewModel", "insertSymptoms success: ${body.toString()}")
                 val response = ApiHelper().callApi(
                     context,
                     ApiEndPointCorporateModule().insertSymtoms,
