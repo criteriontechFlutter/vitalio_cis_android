@@ -5,14 +5,16 @@ plugins {
     id("com.google.dagger.hilt.android") version "2.48" apply false
 
     kotlin("kapt")
+
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.vitalio_cis"
+    namespace = "com.critetiontech.vitalio_cis"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.vitalio_cis"
+        applicationId = "com.critetiontech.vitalio_cis"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -115,4 +117,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.vanniktech:android-image-cropper:4.6.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
+
+    implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
+    implementation("com.google.firebase:firebase-analytics")
  }
