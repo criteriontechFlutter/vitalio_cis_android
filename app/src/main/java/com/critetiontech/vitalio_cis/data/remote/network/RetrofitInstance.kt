@@ -38,9 +38,8 @@ object RetrofitInstance {
 //    }
     private fun loggingInterceptor() =
         HttpLoggingInterceptor().apply {
-
-            level =
-                HttpLoggingInterceptor.Level.HEADERS
+            // TODO: Switch back to HEADERS for release builds
+            level = HttpLoggingInterceptor.Level.BODY
         }
     // Authorization / Header Interceptor
     private fun authInterceptor(headers: Map<String, String>) = Interceptor { chain ->

@@ -58,9 +58,18 @@ class ApiHelper {
         try {
             val response = apiCall(endpoint)
             val bodyString = response.body()?.string()
-            Log.d("ApiHelper", "API Response: $bodyString")
+            Log.d("ApiHelper", "API Response [${response.code()}]: $bodyString")
+
+            if (!response.isSuccessful) {
+                Log.e("ApiHelper", "Server error ${response.code()}: $bodyString")
+                return@withContext Response.error(
+                    response.code(),
+                    (bodyString ?: "Server error ${response.code()}").toResponseBody(null)
+                )
+            }
+
             // ✅ SAVE CACHE
-            if (response.isSuccessful && cacheResponse && !bodyString.isNullOrEmpty()) {
+            if (cacheResponse && !bodyString.isNullOrEmpty()) {
                 PrefsManager(context).saveString(context, localKey, bodyString)
                 Log.d("ApiHelper", "Cached successfully")
             }

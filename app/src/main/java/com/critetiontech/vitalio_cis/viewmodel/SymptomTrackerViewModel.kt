@@ -115,15 +115,20 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
     }
 
     fun insertSymptoms(context: Context, navController: NavController) {
+        // If user said "No" to every symptom, nothing to save — just go back
+        if (_selectedSymptoms.value.isEmpty()) {
+            navController.popBackStack()
+            return
+        }
         viewModelScope.launch {
             _addLoading.value = true
             val prefsCache = PrefsManager(context)
             try {
                 val now = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     java.time.LocalDateTime.now()
-                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
                 } else {
-                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date())
                 }
                 val dtDataTable = _selectedSymptoms.value.map { symptom ->
                     mapOf(
@@ -140,7 +145,7 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                     "type" to "Symptoms",
                     "isFromPatient" to true
                 )
-                Log.d("SymptomTrackerViewModel", "insertSymptoms success: ${body.toString()}")
+                Log.d("SymptomTrackerViewModel", "insertSymptoms request body: $body")
                 val response = ApiHelper().callApi(
                     context,
                     ApiEndPointCorporateModule().insertSymtoms,
@@ -149,10 +154,12 @@ class SymptomTrackerViewModel @Inject constructor() : ViewModel() {
                     ApiClients.module4082.dynamicRawPost(url = url, body = body)
                 }
                 if (response.isSuccessful) {
-                    Log.d("SymptomTrackerViewModel", "insertSymptoms success: ${response.body()?.string()}")
+                    val responseBody = response.body()?.string()
+                    Log.d("SymptomTrackerViewModel", "insertSymptoms response: $responseBody")
                     navController.popBackStack()
                 } else {
-                    throw Exception("API Error: ${response.code()}")
+                    val errorBody = response.body()?.string() ?: response.errorBody()?.string()
+                    throw Exception("API Error ${response.code()}: $errorBody")
                 }
             } catch (e: Exception) {
                 Log.e("SymptomTrackerViewModel", "insertSymptoms error: ${e.message}", e)
