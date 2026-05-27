@@ -1,7 +1,6 @@
 package com.critetiontech.vitalio_cis.viewmodel
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,7 +33,7 @@ import javax.inject.Inject
 class UploadReportViewModel @Inject constructor() : ViewModel() {
 
     // -------------------------------------------------
-    // LOADING
+    // LOADING (AddMedia / FetchMedia)
     // -------------------------------------------------
 
     private val _loading =
@@ -42,6 +41,30 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
 
     val loading: StateFlow<Boolean> =
         _loading
+
+    // -------------------------------------------------
+    // IS ANALYZING (aiReport in progress)
+    // -------------------------------------------------
+
+    private val _isAnalyzing =
+        MutableStateFlow(false)
+
+    val isAnalyzing: StateFlow<Boolean> =
+        _isAnalyzing
+
+    // -------------------------------------------------
+    // UPLOAD SUCCESS
+    // -------------------------------------------------
+
+    private val _uploadSuccess =
+        MutableStateFlow(false)
+
+    val uploadSuccess: StateFlow<Boolean> =
+        _uploadSuccess
+
+    fun resetUploadSuccess() {
+        _uploadSuccess.value = false
+    }
 
     // -------------------------------------------------
     // MEDIA LIST
@@ -174,19 +197,41 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
         _responseString
 
     // -------------------------------------------------
+    // PENDING UPLOAD DATA (set before navigating to
+    // AiReportScreen; used by AddMedia on confirm)
+    // -------------------------------------------------
+
+    private var pendingFile: File? = null
+    private var pendingCategory: String = ""
+    private var pendingDateTime: String = ""
+    private var pendingSubCategory: String = ""
+    private var pendingRemark: String = ""
+
+    // -------------------------------------------------
     // AI REPORT API
     // -------------------------------------------------
 
     fun aiReport(
         file: File,
-        navController: NavController
+        navController: NavController,
+        category: String,
+        dateTime: String,
+        subCategory: String,
+        remark: String
     ) {
+        // Store form data for use after AI preview
+        pendingFile = file
+        pendingCategory = category
+        pendingDateTime = dateTime
+        pendingSubCategory = subCategory
+        pendingRemark = remark
+
 
         viewModelScope.launch {
 
             try {
 
-                _loading.value = true
+                _isAnalyzing.value = true
 
                 Log.d(
                     "AI_REPORT",
@@ -254,29 +299,29 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
                         .build()
 
                 // -----------------------------------------
-                // API CALL
+                // API CALL + READ BODY (both on IO thread)
+                // response.body?.string() reads from the
+                // socket — must NOT be called on Main.
                 // -----------------------------------------
 
-                val response: Response =
+                data class RawResult(
+                    val isSuccessful: Boolean,
+                    val body: String?
+                )
 
-                    withContext(
-                        Dispatchers.IO
-                    ) {
-
-                        client.newCall(request)
-                            .execute()
+                val raw: RawResult =
+                    withContext(Dispatchers.IO) {
+                        val response: Response =
+                            client.newCall(request).execute()
+                        RawResult(
+                            isSuccessful = response.isSuccessful,
+                            body = response.body?.string()
+                        )
                     }
-
-                // -----------------------------------------
-                // RESPONSE STRING
-                // -----------------------------------------
-
-                val responseString =
-                    response.body?.string()
 
                 Log.d(
                     "AI_REPORT",
-                    "Response = $responseString"
+                    "Response = ${raw.body}"
                 )
 
                 // -----------------------------------------
@@ -284,9 +329,11 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
                 // -----------------------------------------
 
                 if (
-                    response.isSuccessful &&
-                    !responseString.isNullOrEmpty()
+                    raw.isSuccessful &&
+                    !raw.body.isNullOrEmpty()
                 ) {
+
+                    val responseString = raw.body
 
                     try {
 
@@ -361,7 +408,7 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
 
             } finally {
 
-                _loading.value = false
+                _isAnalyzing.value = false
             }
         }
     }
@@ -370,9 +417,13 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
     // -------------------------------------------------
 
     fun AddMedia(
-        context: Context,
-        file: File
+        context: Context
     ) {
+
+        val file = pendingFile ?: run {
+            Log.e("UPLOAD_API", "No pending file to upload")
+            return
+        }
 
         viewModelScope.launch {
 
@@ -411,20 +462,20 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
                                     ?.uhId ?: "",
 
                             category =
-                                "Investigation",
+                                pendingCategory,
 
                             dateTime =
-                                "2026-02-20",
+                                pendingDateTime,
 
                             clientId =
                                 prefsCache.getPatient()
                                     ?.clientId.toString(),
 
                             subCategory =
-                                "LFT",
+                                pendingSubCategory,
 
                             remark =
-                                "test",
+                                pendingRemark,
 
                             formFile =
                                 filePart
@@ -439,6 +490,8 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
                         "UPLOAD_API",
                         "SUCCESS = $bodyString"
                     )
+
+                    _uploadSuccess.value = true
 
                 } else {
 
@@ -665,36 +718,4 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
 //            }
 //        }
 //    }
-}
-
-// -------------------------------------------------
-// FILE UTILS
-// -------------------------------------------------
-
-object FileUtils {
-
-    fun getFile(
-        context: Context,
-        uri: Uri
-    ): File {
-
-        val inputStream =
-            context.contentResolver
-                .openInputStream(uri)
-
-        val file = File(
-            context.cacheDir,
-            "upload.jpg"
-        )
-
-        inputStream?.use { input ->
-
-            file.outputStream().use { output ->
-
-                input.copyTo(output)
-            }
-        }
-
-        return file
-    }
 }

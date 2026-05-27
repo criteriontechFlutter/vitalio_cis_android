@@ -6,15 +6,17 @@ import androidx.navigation.NavHostController
 
 object NavigationManager {
 
-    var navController: NavHostController?    // ✅ nullable
-        get() = null
-        set(value) = TODO()
+    private var _navController: NavHostController? = null
+
+    var navController: NavHostController?
+        get() = _navController
+        set(value) { _navController = value }
 
     fun navigate(route: String) {
-        if (navController == null) {
+        if (_navController == null) {
             Log.e("NAVIGATION", "NavController NOT INITIALIZED")
             return
         }
-        navController?.navigate(route)
+        _navController?.navigate(route)
     }
 }
