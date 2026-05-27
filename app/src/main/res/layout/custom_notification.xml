@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+
+    android:background="#FFF4F4"
+
+    android:padding="18dp">
+
+    <!-- TITLE -->
+
+    <TextView
+        android:id="@+id/txtTitle"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:text="Medicine Reminder 💊"
+
+        android:textColor="#5F4040"
+
+        android:textStyle="bold"
+
+        android:textSize="20sp"/>
+
+    <!-- MESSAGE -->
+
+    <TextView
+        android:id="@+id/txtMessage"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_below="@id/txtTitle"
+
+        android:layout_marginTop="8dp"
+
+        android:text="Please take your medicine on time"
+
+        android:textColor="#4E3F3F"
+
+        android:textSize="15sp"/>
+
+    <!-- INTAKE KIT -->
+
+    <LinearLayout
+        android:id="@+id/intakeLayout"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_below="@id/txtMessage"
+
+        android:layout_marginTop="14dp"
+
+        android:orientation="horizontal"
+
+        android:background="#FFE5E5"
+
+        android:paddingHorizontal="12dp"
+
+        android:paddingVertical="8dp">
+
+        <!-- KIT LABEL -->
+
+
+
+
+    </LinearLayout>
+
+    <!-- TIME -->
+
+    <TextView
+        android:id="@+id/txtTime"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_below="@id/intakeLayout"
+
+        android:layout_marginTop="14dp"
+
+        android:text="08:00 AM"
+
+        android:textColor="#00BCD4"
+
+        android:textStyle="bold"
+
+        android:textSize="14sp"/>
+
+    <!-- INTAKE BUTTON -->
+
+    <Button
+        android:id="@+id/btnIntake"
+
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+
+        android:layout_below="@id/txtTime"
+
+        android:layout_marginTop="18dp"
+
+        android:text="Take Medicine"
+
+        android:textAllCaps="false"
+
+        android:textColor="#FFFFFF"
+
+        android:textStyle="bold"
+
+        android:backgroundTint="#00BCD4"/>
+
+</RelativeLayout>

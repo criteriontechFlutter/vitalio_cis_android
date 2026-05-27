@@ -1,0 +1,107 @@
+package com.critetiontech.ctvitalio.networking
+
+ import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.ResponseBody
+import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.HeaderMap
+import retrofit2.http.Multipart
+import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Part
+import retrofit2.http.QueryMap
+import retrofit2.http.Url
+
+import retrofit2.http.Query
+
+
+
+
+interface ApiService {
+    @GET
+    suspend fun dynamicGet(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @QueryMap(encoded = true) params: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+
+    @POST
+    suspend fun dynamicRawPost(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+
+    @POST
+    suspend fun queryDynamicRawPost(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @QueryMap(encoded = true) params: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+    // Add similar annotations for PUT, DELETE, etc.
+
+    @POST
+    suspend fun queryDynamicPost(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @QueryMap(encoded = false) params: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+    // Add similar annotations for PUT, DELETE, etc.
+
+
+    @Multipart
+    @POST
+    suspend fun dynamicMultipartPost(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @Part parts: List<MultipartBody.Part>
+    ): Response<ResponseBody>
+
+
+    @Multipart
+    @PUT
+    suspend fun dynamicMultipartPut(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @Part parts: List<MultipartBody.Part>
+    ): Response<ResponseBody>
+    @Multipart
+    @POST
+    suspend fun uploadMedia(
+
+        @Url url: String,
+
+        @retrofit2.http.Query("uhId")
+        uhid: String,
+
+        @retrofit2.http.Query("category")
+        category: String,
+
+        @retrofit2.http.Query("dateTime")
+        dateTime: String,
+
+        @retrofit2.http.Query("clientId")
+        clientId: String,
+
+        @retrofit2.http.Query("subCategory")
+        subCategory: String,
+
+        @retrofit2.http.Query("remark")
+        remark: String,
+
+        @Part formFile : MultipartBody.Part
+
+    ): Response<ResponseBody>
+
+
+    @DELETE
+    suspend fun dynamicDelete(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @QueryMap(encoded = true) params: Map<String, @JvmSuppressWildcards Any> = emptyMap()
+    ): Response<ResponseBody>
+
+}
