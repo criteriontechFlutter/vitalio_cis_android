@@ -2,6 +2,7 @@ package com.critetiontech.ctvitalio.utils
 
 
 import android.content.Context
+import androidx.core.content.edit
 
 object LocalStorage {
     private const val PREF_NAME = "local_data_store"
@@ -9,7 +10,7 @@ object LocalStorage {
     private fun prefs(context: Context) = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     fun saveString(context: Context, key: String, value: String) {
-        prefs(context).edit().putString(key, value).apply()
+        prefs(context).edit { putString(key, value) }
     }
 
     fun getString(context: Context, key: String): String? {
