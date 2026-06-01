@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 class EditProfileViewModel : ViewModel() {
@@ -53,12 +52,7 @@ class EditProfileViewModel : ViewModel() {
                 val parts = mutableListOf<MultipartBody.Part>()
 
                 fun addPart(name: String, value: String) {
-                    parts.add(
-                        MultipartBody.Part.createFormData(
-                            name, value,
-                            value.toRequestBody("text/plain".toMediaTypeOrNull())
-                        )
-                    )
+                    parts.add(MultipartBody.Part.createFormData(name, value))
                 }
 
                 addPart("FirstName", firstName)
@@ -76,7 +70,8 @@ class EditProfileViewModel : ViewModel() {
                 addPart("CityId", patient.cityId.toString())
                 addPart("StateId", patient.stateId.toString())
                 addPart("CountryId", patient.countryId.toString())
-                addPart("Age", patient.age)
+                val ageYears = Regex("^(\\d+)").find(patient.age.trim())?.value ?: "0"
+                addPart("Age", ageYears)
                 addPart("AgeUnitId", "1")
 
                 if (imageFile != null && imageFile.exists()) {
