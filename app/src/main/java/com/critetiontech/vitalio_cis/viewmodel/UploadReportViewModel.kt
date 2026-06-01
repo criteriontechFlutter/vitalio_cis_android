@@ -442,11 +442,8 @@ class UploadReportViewModel @Inject constructor() : ViewModel() {
                 val filePart =
                     MultipartBody.Part
                         .createFormData(
-
                             "formFile",
-
                             file.name,
-
                             requestFile
                         )
 
