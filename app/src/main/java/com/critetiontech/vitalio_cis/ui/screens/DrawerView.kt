@@ -315,13 +315,10 @@ fun ProfileCard() {
     if (showSheet) {
         ImagePickerBottomSheet(
             onCameraClick = {
-                showSheet = false
             },
             onUploadClick = {
-                showSheet = false
             },
             onRemoveClick = {
-                showSheet = false
             },
         )
     }
@@ -343,7 +340,7 @@ fun MedicalProfileCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable() {
+            .clickable {
                 navController.navigate(Routes.MEDICALPROFILE)
 
             },

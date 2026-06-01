@@ -132,7 +132,17 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.FLUIDDATAINPUT) { FluidDataInputScreen() }
                             composable(Routes.FLUIDOUTPUTHISTORY) { FluidOutputHistoryScreen() }
                             composable(Routes.FLUIDINPUTHISTORY) { FluidInputHistoryScreen() }
-                            composable(Routes.VITALHISTORY) { VitalHistoryScreen() }
+                            composable(
+                                route = "${Routes.VITALHISTORY}?vitalIds={vitalIds}&vitalName={vitalName}",
+                                arguments = listOf(
+                                    navArgument("vitalIds") { type = NavType.StringType; defaultValue = "" },
+                                    navArgument("vitalName") { type = NavType.StringType; defaultValue = "Vital" }
+                                )
+                            ) { backStackEntry ->
+                                val vitalIds = backStackEntry.arguments?.getString("vitalIds") ?: ""
+                                val vitalName = backStackEntry.arguments?.getString("vitalName") ?: "Vital"
+                                VitalHistoryScreen(vitalIds = vitalIds, vitalName = vitalName)
+                            }
                             composable(
                                 Routes.ADDLABRESULTS
                             ) {

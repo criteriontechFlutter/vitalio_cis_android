@@ -61,10 +61,13 @@ class ApiHelper {
             Log.d("ApiHelper", "API Response [${response.code()}]: $bodyString")
 
             if (!response.isSuccessful) {
-                Log.e("ApiHelper", "Server error ${response.code()}: $bodyString")
+                val errorBodyString = response.errorBody()?.string()
+                    ?: bodyString
+                    ?: "Server error ${response.code()}"
+                Log.e("ApiHelper", "Server error ${response.code()}: $errorBodyString")
                 return@withContext Response.error(
                     response.code(),
-                    (bodyString ?: "Server error ${response.code()}").toResponseBody(null)
+                    errorBodyString.toResponseBody(null)
                 )
             }
 

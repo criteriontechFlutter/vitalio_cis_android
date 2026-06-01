@@ -8,7 +8,10 @@ import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.vitalio_cis.model.Vital
+import com.critetiontech.vitalio_cis.model.VitalAnalyticsResponse
 import com.critetiontech.vitalio_cis.model.VitalApiResponse
+import com.critetiontech.vitalio_cis.model.VitalGraphDetail
+import com.critetiontech.vitalio_cis.model.VitalGraphEntry
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +32,12 @@ class VitalDetailViewModel @Inject constructor() : ViewModel() {
 
     private val _vitalList = MutableStateFlow<List<Vital>>(emptyList())
     val vitalList: StateFlow<List<Vital>> = _vitalList
+
+    private val _analyticsData = MutableStateFlow<List<VitalGraphEntry>>(emptyList())
+    val analyticsData: StateFlow<List<VitalGraphEntry>> = _analyticsData
+
+    private val _analyticsLoading = MutableStateFlow(false)
+    val analyticsLoading: StateFlow<Boolean> = _analyticsLoading
 
     fun fetchLastVital(context: Context) {
         viewModelScope.launch {
@@ -67,6 +76,53 @@ class VitalDetailViewModel @Inject constructor() : ViewModel() {
                 Log.e("VitalDetailViewModel", "fetchLastVital error: ${e.message}", e)
             } finally {
                 _loading.value = false
+            }
+        }
+    }
+
+    fun fetchVitalAnalytics(
+        context: Context,
+        fromDate: String,
+        toDate: String,
+        searchIds: String
+    ) {
+        viewModelScope.launch {
+            _analyticsLoading.value = true
+            _analyticsData.value = emptyList()
+            try {
+                val prefs = PrefsManager(context)
+                val patient = prefs.getPatient()
+                val queryParams = mapOf(
+                    "fromDate" to fromDate,
+                    "toDate" to toDate,
+                    "uhid" to patient?.uhId.orEmpty(),
+                    "clientId" to patient?.clientId.toString(),
+                    "userId" to patient?.pid.toString(),
+                    "searchId" to searchIds
+                )
+                val response = ApiHelper().callApi(
+                    context,
+                    ApiEndPointCorporateModule().fetchVitalAnalytics,
+                    showNoConnectionDialog = false
+                ) { url ->
+                    ApiClients.module4082.dynamicGet(url = url, params = queryParams)
+                }
+                if (response.isSuccessful) {
+                    val body = response.body()?.string() ?: return@launch
+                    val parsed = Gson().fromJson(body, VitalAnalyticsResponse::class.java)
+                    if (parsed.status == 1) {
+                        _analyticsData.value = parsed.responseValue.patientGraph.map { item ->
+                            val details = try {
+                                Gson().fromJson(item.vitalDetails, Array<VitalGraphDetail>::class.java).toList()
+                            } catch (e: Exception) { emptyList() }
+                            VitalGraphEntry(item.vitalDateTime, details)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("VitalDetailViewModel", "fetchVitalAnalytics error: ${e.message}")
+            } finally {
+                _analyticsLoading.value = false
             }
         }
     }

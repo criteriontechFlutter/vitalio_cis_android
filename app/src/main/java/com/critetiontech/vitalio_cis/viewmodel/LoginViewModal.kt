@@ -141,8 +141,6 @@ class LoginViewModel @Inject constructor() : ViewModel() {
             _loading.value = true
             _loginSuccess.value = false
 
-            val prefsCache = PrefsManager(context)
-
             try {
 
                 Log.d("LoginViewModel", "Sending OTP for mobile: $mobile")
@@ -152,52 +150,53 @@ class LoginViewModel @Inject constructor() : ViewModel() {
                     "ifLoggedOutFromAllDevices" to true
                 )
 
-                val result: String? = prefsCache.getData(
-                    key = ApiEndPointCorporateModule().corporateEmployeeLogin,
-                    shouldSave = false
-                ) {
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().corporateEmployeeLogin,
-                        showNoConnectionDialog = true
-                    ) { url ->
-                        ApiClients.module4082.queryDynamicRawPost(
-                            url = url,
-                            params = queryParams,
-                        )
-                    }
-
-                    if (response.isSuccessful) {
-                        val bodyString = response.body()?.string()
-                        Log.d("LoginViewModel", "API Response: $bodyString")
-                        bodyString
-                    } else {
-                        throw Exception("API Error: ${response.code()}")
-                    }
+                val response = ApiHelper().callApi(
+                    context,
+                    ApiEndPointCorporateModule().corporateEmployeeLogin,
+                    showNoConnectionDialog = true
+                ) { url ->
+                    ApiClients.module4082.queryDynamicRawPost(
+                        url = url,
+                        params = queryParams,
+                    )
                 }
 
-                if (!result.isNullOrEmpty()) {
-                    val parsed = Gson().fromJson(result, SendOtpResponse::class.java)
-                    Log.d("LoginViewModel", "isRegisterd: ${parsed.responseValue.isRegisterd}")
+                if (response.isSuccessful) {
+                    val result = response.body()?.string()
+                    Log.d("LoginViewModel", "API Response: $result")
 
-                    if (parsed.responseValue.isRegisterd == 1) {
-                        _loginSuccess.value = true
-                        navController.navigate("otp/$mobile")
+                    if (!result.isNullOrEmpty()) {
+                        val parsed = Gson().fromJson(result, SendOtpResponse::class.java)
+                        Log.d("LoginViewModel", "isRegisterd: ${parsed.responseValue.isRegisterd}")
+
+                        if (parsed.responseValue.isRegisterd == 1) {
+                            _loginSuccess.value = true
+                            navController.navigate("otp/$mobile")
+                        } else {
+                            Toast.makeText(context, "You are not registered in any clinic yet", Toast.LENGTH_LONG).show()
+                        }
                     } else {
-                        Toast.makeText(
-                            context,
-                            "You are not registered in any clinic yet",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(context, "No data available", Toast.LENGTH_LONG).show()
                     }
                 } else {
-                    _errorMessage.value = "No data available"
+                    val errorBodyString = response.errorBody()?.string()
+                    Log.e("LoginViewModel", "Error body: $errorBodyString")
+                    val errorMsg = try {
+                        val parsed = Gson().fromJson(errorBodyString, SendOtpResponse::class.java)
+                        parsed.message.takeIf { it.isNotEmpty() } ?: "Error: ${response.code()}"
+                    } catch (e: Exception) {
+                        errorBodyString?.takeIf { it.isNotEmpty() } ?: "Error: ${response.code()}"
+                    }
+                    _errorMessage.value = errorMsg
+                    Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
                 }
 
             } catch (e: Exception) {
 
-                _errorMessage.value = e.message ?: "Unknown error"
-                Log.e("LoginViewModel", "Error: ${e.message}", e)
+                val errorMsg = e.message ?: "Unknown error"
+                _errorMessage.value = errorMsg
+                Log.e("LoginViewModel", "Error: $errorMsg", e)
+                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
 
             } finally {
 

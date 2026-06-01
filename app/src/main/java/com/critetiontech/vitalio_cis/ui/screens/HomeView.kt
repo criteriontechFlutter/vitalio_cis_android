@@ -1204,19 +1204,22 @@ fun HomeScreen() {
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Spacer(Modifier.height(10.dp))
+
+        /* Upcoming Appointments
         Text("Upcoming Appointments",
                 style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(10.dp))
         AppointmentCard()
         Spacer(Modifier.height(20.dp))
+        */
 
+        /* Featured Articles
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Featured Articles",
                 style = AppTextStyles.style18BCB())
             Text("View All",
                 style = AppTextStyles.style18BCN())
         }
-
         Spacer(Modifier.height(10.dp))
         ArticleCard(
             title = "Carbohydrate antigen 125 (CA125) following acute myocardial infarction: effects of empagliflozin and association with heart failure readouts in the EMMY trial",
@@ -1229,6 +1232,7 @@ fun HomeScreen() {
             author = "D.B. Meya, and Others",
             date = "17 December 2025"
         )
+        */
     }
 }
 
@@ -1316,12 +1320,16 @@ fun OtherSection() {
                 style = AppTextStyles.style18BCN())
             Spacer(Modifier.height(12.dp))
             Row {
+                /* Activities Chronicle
                 ChronicleCard(modifier = Modifier.weight(1f))
                 Spacer(Modifier.width(12.dp))
+                */
                 Column(modifier = Modifier.weight(1f)) {
                     UploadReportCard()
+                    /* Lifestyle Intervention
                     Spacer(Modifier.height(12.dp))
                     LifestyleCard()
+                    */
                 }
             }
         }
