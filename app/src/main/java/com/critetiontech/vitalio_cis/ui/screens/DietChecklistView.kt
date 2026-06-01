@@ -60,20 +60,20 @@ fun DietChecklistScreen() {
             // 🔹 Sections
             DietSection(
                 "Morning", listOf(
-                    Medicine("1 cup tea", "112 mg • Before meals", "08:00 AM", true)
+                    Diet("1 cup tea", "112 mg • Before meals", "08:00 AM", true)
                 ), id = R.drawable.morning_medicine
             )
 
             DietSection(
                 "Afternoon", listOf(
-                    Medicine("Vitamin D3", "1000 IU • After lunch", "02:00 PM"),
-                    Medicine("Aspirin", "75 mg • After lunch", "02:00 PM")
+                    Diet("Vitamin D3", "1000 IU • After lunch", "02:00 PM"),
+                    Diet("Aspirin", "75 mg • After lunch", "02:00 PM")
                 ), id = R.drawable.afternoon_medicine
             )
 
             DietSection(
                 "Night", listOf(
-                    Medicine("Atorvastatin", "20 mg • After dinner", "09:00 PM")
+                    Diet("Atorvastatin", "20 mg • After dinner", "09:00 PM")
                 ), id = R.drawable.night_medicine
             )
         }
@@ -88,7 +88,7 @@ data class Diet(
 )
 
 @Composable
-fun DietSection(title: String, medicines: List<Medicine>,id:Int) {
+fun DietSection(title: String, medicines: List<Diet>,id:Int) {
 
     Row {
         Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +118,7 @@ fun DietSection(title: String, medicines: List<Medicine>,id:Int) {
 
 
 @Composable
-fun DietCard(medicine: Medicine) {
+fun DietCard(medicine: Diet) {
 
 
     val colors = LocalMyColorScheme.current

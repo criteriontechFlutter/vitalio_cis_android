@@ -1316,13 +1316,7 @@ fun OtherSection() {
                 style = AppTextStyles.style18BCN())
             Spacer(Modifier.height(12.dp))
             Row {
-                ChronicleCard(modifier = Modifier.weight(1f))
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    UploadReportCard()
-                    Spacer(Modifier.height(12.dp))
-                    LifestyleCard()
-                }
+                UploadReportCard(modifier = Modifier.weight(1f))
             }
         }
     }
@@ -1366,7 +1360,7 @@ fun ChronicleCard(modifier: Modifier) {
 }
 
 @Composable
-fun UploadReportCard() {
+fun UploadReportCard(modifier: Modifier = Modifier) {
     val colors = LocalMyColorScheme.current
 
 
@@ -1374,7 +1368,7 @@ fun UploadReportCard() {
 
     val navController = LocalNavController.current
 
-    Card(modifier = Modifier
+    Card(modifier = modifier
         .fillMaxWidth()
         .height(95.dp)
         .clickable() {

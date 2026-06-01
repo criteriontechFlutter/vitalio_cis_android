@@ -190,7 +190,7 @@ fun VitalCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    time.toString(),
+                    time,
                     style = AppTextStyles.style12GCN().copy(fontSize = 11.sp))
 
             }
