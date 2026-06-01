@@ -31,4 +31,5 @@ class ApiEndPointCorporateModule {
     val fetchVitalByDate="api/PatientVital/FetchVitalByDate"
     val fetchVitalAnalytics="api/PatientVital/FetchVitalAnalytics"
     val fetchPatientMedicineIntake = "api/PatientMedicineIntake/FetchPatientMedicineIntake"
+    val updatePatientProfile = "api/PatientRegistration/UpdatePatientProfile"
 }
