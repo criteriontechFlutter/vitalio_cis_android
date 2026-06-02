@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+  package com.critetiontech.vitalio_cis.ui.screens
 
 import android.Manifest
 import android.content.ClipData
