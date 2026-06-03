@@ -1,6 +1,7 @@
 package com.critetiontech.vitalio_cis.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,8 +58,8 @@ fun AddMedicineReminderScreen(
         var showSheet by remember { mutableStateOf(false) }
         if (showSheet) {
             AddAllergyBottomSheet(
-                onDismiss = { showSheet = false },   // ✅ important
-                onSubmit = { showSheet = false }
+                onDismiss = { showSheet = false },
+                onSubmit = { _, _, _, _, _ -> showSheet = false }
             )
         }
         Column(
@@ -172,9 +173,19 @@ fun AddMedicineReminderScreen(
 @Composable
 fun AddAllergyBottomSheet(
     onDismiss: () -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: (substanceName: String, severity: String, reaction: String, details: String, typeAllergy: String) -> Unit,
+    isLoading: Boolean = false
 ) {
     val colors = LocalMyColorScheme.current
+
+    val allergyTypes = listOf("MedicineAllergy", "FoodAllergy")
+    var typeExpanded by remember { mutableStateOf(false) }
+    var selectedType by remember { mutableStateOf("MedicineAllergy") }
+
+    var substanceName by remember { mutableStateOf("") }
+    var reaction by remember { mutableStateOf("") }
+    var details by remember { mutableStateOf("") }
+    var selectedSeverity by remember { mutableStateOf("Mild") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -186,8 +197,6 @@ fun AddAllergyBottomSheet(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-
-            // Title
             Text(
                 text = "Add Allergy",
                 style = AppTextStyles.style16BCN(),
@@ -196,75 +205,103 @@ fun AddAllergyBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Substance Type
+            // Substance Type dropdown
             Text("Substance Type", style = AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(6.dp))
-
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = { Text("Select Substance") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                trailingIcon = {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+            ExposedDropdownMenuBox(
+                expanded = typeExpanded,
+                onExpandedChange = { typeExpanded = !typeExpanded }
+            ) {
+                OutlinedTextField(
+                    value = if (selectedType == "MedicineAllergy") "Medicine Allergy" else "Food Allergy",
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    shape = RoundedCornerShape(12.dp),
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(typeExpanded) }
+                )
+                ExposedDropdownMenu(
+                    expanded = typeExpanded,
+                    onDismissRequest = { typeExpanded = false }
+                ) {
+                    allergyTypes.forEach { type ->
+                        DropdownMenuItem(
+                            text = { Text(if (type == "MedicineAllergy") "Medicine Allergy" else "Food Allergy") },
+                            onClick = {
+                                selectedType = type
+                                typeExpanded = false
+                            }
+                        )
+                    }
                 }
-            )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Substance Name
             Text("Substance Name", style = AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(6.dp))
-
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = { Text("Search substance name...") },
+                value = substanceName,
+                onValueChange = { substanceName = it },
+                placeholder = { Text("Enter substance name") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                trailingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null)
-                }
+                trailingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Reaction
-            Text("Reaction/ Allergy", style = AppTextStyles.style12GCN())
+            Text("Reaction / Allergy", style = AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(6.dp))
-
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = { Text("Enter Reaction/ Allergy") },
+                value = reaction,
+                onValueChange = { reaction = it },
+                placeholder = { Text("Enter reaction / allergy") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Details / Notes (optional)
+            Text("Notes (optional)", style = AppTextStyles.style12GCN())
+            Spacer(modifier = Modifier.height(6.dp))
+            OutlinedTextField(
+                value = details,
+                onValueChange = { details = it },
+                placeholder = { Text("Additional details...") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                "How severe was the reaction?",
-                style = AppTextStyles.style12GCN()
-            )
-
+            Text("How severe was the reaction?", style = AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                SeverityButton("Mild")
-                SeverityButton("Moderate")
-                SeverityButton("Severe")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Mild", "Moderate", "Severe").forEach { level ->
+                    SeverityButton(
+                        text = level,
+                        isSelected = selectedSeverity == level,
+                        onClick = { selectedSeverity = level }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
             CommonButton(
-                text = "Submit",
+                text = if (isLoading) "Saving..." else "Submit",
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onSubmit
+                onClick = {
+                    if (!isLoading) {
+                        onSubmit(substanceName.trim(), selectedSeverity, reaction.trim(), details.trim(), selectedType)
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -273,16 +310,21 @@ fun AddAllergyBottomSheet(
 }
 
 @Composable
-fun SeverityButton(text: String) {
+fun SeverityButton(text: String, isSelected: Boolean = false, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .background(
-                Color(0xFFF3F4F6),
+                if (isSelected) Color(0xFF4A90D9) else Color(0xFFF3F4F6),
                 RoundedCornerShape(12.dp)
             )
             .padding(horizontal = 16.dp, vertical = 10.dp)
+            .then(Modifier.clickable(onClick = onClick))
     ) {
-        Text(text, style = AppTextStyles.style12GCN())
+        Text(
+            text,
+            style = AppTextStyles.style12GCN(),
+            color = if (isSelected) Color.White else Color.Unspecified
+        )
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
