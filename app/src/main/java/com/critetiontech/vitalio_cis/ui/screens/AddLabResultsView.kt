@@ -62,10 +62,14 @@ import java.io.File
 fun AddLabResultsScreen(
     viewModel: UploadReportViewModel = viewModel()
 ) {
-    val context      = LocalContext.current
+    val context       = LocalContext.current
     val navController = LocalNavController.current
     val colors       = LocalMyColorScheme.current
     val isAnalyzing  by viewModel.isAnalyzing.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { route -> navController.navigate(route) }
+    }
 
     // ── Form state ───────────────────────────────────────
     val testTypeList = listOf("Investigation", "Radiology", "Imaging", "Lab")
@@ -316,7 +320,6 @@ fun AddLabResultsScreen(
                         selectedFile?.let { file ->
                             viewModel.aiReport(
                                 file = file,
-                                navController = navController,
                                 category = testType,
                                 dateTime = date.ifEmpty { "2026-01-01 00:00" },
                                 subCategory = testName.ifEmpty { "General" },

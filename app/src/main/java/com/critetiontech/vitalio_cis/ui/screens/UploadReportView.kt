@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,18 +59,8 @@ fun LabReportsScreen(
 
     val colors = LocalMyColorScheme.current
 
-    // --------------------------------------------------------
-    // API DATA
-    // --------------------------------------------------------
-    val context = LocalContext.current
-
-    // -----------------------------------------
-    // API CALL ON SCREEN OPEN
-    // -----------------------------------------
-
     LaunchedEffect(Unit) {
-
-        viewModel.fetchMedia(context)
+        viewModel.fetchMedia()
     }
     val mediaList by viewModel.mediaList.collectAsState()
 

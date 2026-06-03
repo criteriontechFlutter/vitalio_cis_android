@@ -44,7 +44,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -60,7 +59,6 @@ import com.critetiontech.vitalio_cis.R
 @Composable
 fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
     val navController = LocalNavController.current
-    val context = LocalContext.current
 
     var otpValue by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
@@ -128,15 +126,13 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
         }
     }
 
-    // Auto-verify when all 6 digits are entered
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { route -> navController.navigate(route) }
+    }
+
     LaunchedEffect(otpValue) {
         if (otpValue.length == 6) {
-            viewModel.verifyLogInOTPForSHFCApp(
-                context = context,
-                otp = otpValue,
-                uhid = mobile,
-                navController = navController
-            )
+            viewModel.verifyOtp(uhid = mobile, otp = otpValue)
         }
     }
 
@@ -229,12 +225,7 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 if (otpValue.length == 6) {
-                                    viewModel.verifyLogInOTPForSHFCApp(
-                                        context = context,
-                                        otp = otpValue,
-                                        uhid = mobile,
-                                        navController = navController
-                                    )
+                                    viewModel.verifyOtp(uhid = mobile, otp = otpValue)
                                 }
                             }
                         )
@@ -273,12 +264,7 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
 
                     Button(
                         onClick = {
-                            viewModel.verifyLogInOTPForSHFCApp(
-                                context = context,
-                                otp = otpValue,
-                                uhid = mobile,
-                                navController = navController
-                            )
+                            viewModel.verifyOtp(uhid = mobile, otp = otpValue)
                         },
                         enabled = otpValue.length == 6,
                         modifier = Modifier

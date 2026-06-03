@@ -173,44 +173,36 @@ fun ConnectionScreen(
                                 onClick = {
                                     when (vitalName) {
                                         "Blood Pressure" -> viewModel.addVital(
-                                            context = context,
                                             vmValueBPSys = sysValue,
                                             vmValueBPDias = diaValue,
                                             vmValuePulse = pulseValue,
                                             onSuccess = { showDialog = false }
                                         )
                                         "Pulse" -> viewModel.addVital(
-                                            context = context,
                                             vmValuePulse = singleValue,
                                             onSuccess = { showDialog = false }
                                         )
                                         "SpO2" -> viewModel.addVital(
-                                            context = context,
                                             vmValueSPO2 = singleValue,
                                             onSuccess = { showDialog = false }
                                         )
                                         "Heart Rate","HeartRate" -> viewModel.addVital(
-                                            context = context,
                                             vmValueHeartRate = singleValue,
                                             onSuccess = { showDialog = false }
                                         )
                                         "Respiratory Rate", "RespRate" -> viewModel.addVital(
-                                            context = context,
                                             vmValueRespiratoryRate = singleValue,
                                             onSuccess = { showDialog = false }
                                         )
                                         "RBS" -> viewModel.addVital(
-                                            context = context,
                                             vmValueRbs = singleValue,
                                             onSuccess = { showDialog = false }
                                         )
                                         "Temperature" -> viewModel.addVital(
-                                            context = context,
                                             vmValueTemperature = singleValue,
                                             onSuccess = { showDialog = false }
                                         )
                                         else -> viewModel.addVital(
-                                            context = context,
                                             onSuccess = { showDialog = false }
                                         )
                                     }

@@ -28,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,14 +49,13 @@ import java.time.format.DateTimeFormatter
 fun MedicineReminderScreen(viewModel: MedicineReminderViewModel = viewModel()) {
 
     val navController = LocalNavController.current
-    val context = LocalContext.current
     val colors = LocalMyColorScheme.current
 
     val periods by viewModel.periods.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchMedicineIntake(context)
+        viewModel.fetchMedicineIntake()
     }
 
     CommonAppBar(
@@ -94,7 +92,7 @@ fun MedicineReminderScreen(viewModel: MedicineReminderViewModel = viewModel()) {
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
                     periods.forEach { period ->
-                        MedicinePeriodSection(period, viewModel, context)
+                        MedicinePeriodSection(period, viewModel)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -104,7 +102,7 @@ fun MedicineReminderScreen(viewModel: MedicineReminderViewModel = viewModel()) {
 }
 
 @Composable
-fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderViewModel, context: android.content.Context) {
+fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderViewModel) {
     val iconRes = when (period.dayPeriod.lowercase()) {
         "morning" -> R.drawable.morning_medicine
         "afternoon" -> R.drawable.afternoon_medicine
@@ -132,7 +130,7 @@ fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderVie
 
         Column(modifier = Modifier.weight(1f)) {
             period.medicineData.forEach { item ->
-                ApiMedicineCard(item, viewModel, context)
+                ApiMedicineCard(item, viewModel)
                 Spacer(modifier = Modifier.height(6.dp))
             }
         }
@@ -140,7 +138,7 @@ fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderVie
 }
 
 @Composable
-fun ApiMedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel, context: android.content.Context) {
+fun ApiMedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel) {
     val colors = LocalMyColorScheme.current
 
     val timeFormatted = try {
@@ -200,7 +198,7 @@ fun ApiMedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel, co
                     fontSize = 13.sp
                 )
                 else -> Button(
-                    onClick = { viewModel.markIntake(context, item.id, item.scheduledDateTime) },
+                    onClick = { viewModel.markIntake(item.id, item.scheduledDateTime) },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA000)),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(

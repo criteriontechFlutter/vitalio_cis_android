@@ -1,57 +1,37 @@
 package com.critetiontech.vitalio_cis.viewmodel
 
-import android.content.Context
 import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.ctvitalio.data.remote.network.ApiClients
-import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
-import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.model.Doctor
+import com.critetiontech.vitalio_cis.di.AppDependencies
+import com.critetiontech.vitalio_cis.domain.model.DomainResult
 import com.critetiontech.vitalio_cis.model.FluidSummaryItem
-import com.critetiontech.vitalio_cis.model.FluidSummaryResponse
 import com.critetiontech.vitalio_cis.model.IntakeItem
-import com.critetiontech.vitalio_cis.model.IntakeResponse
 import com.critetiontech.vitalio_cis.model.ManualFoodAssignItem
-import com.critetiontech.vitalio_cis.model.ManualFoodAssignResponse
 import com.critetiontech.vitalio_cis.model.OutputItem
-import com.critetiontech.vitalio_cis.model.OutputResponse
 import com.critetiontech.vitalio_cis.model.OutputSummaryItem
-import com.critetiontech.vitalio_cis.model.OutputSummaryResponse
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-class IntakeOutputViewModel @Inject constructor() : ViewModel() {
+class IntakeOutputViewModel : ViewModel() {
 
+    private val deps = AppDependencies
+    private val prefs = deps.prefs
 
-//http://172.16.61.31:4096/api/ManualFoodAssign/GetManualFoodAssignList?Uhid=UHID2604500011&intervalTimeInHour=24
-//
-//http://172.16.61.31:4096/api/FoodIntake/FetchIntake?entryType=N&Uhid=UHID2604500011&clientId=45&fromDate=2026-05-01
-//
-//http://172.16.61.31:4096/api/ManualFoodAssign/FluidSummaryByDateRange?toDate=2026-05-01&intervalTimeInHour=24&fromDate=2026-04-25&Uhid=UHID2604500011
-//
-    var searchText by mutableStateOf("")
-        private set
+    var searchText by mutableStateOf(""); private set
+    fun onSearchChange(value: String) { searchText = value }
 
-    fun onSearchChange(value: String) {
-        searchText = value
-    }
-
-    private val _loading = MutableLiveData(false)
-    val loading: LiveData<Boolean> = _loading
-    private val _doctorList = MutableStateFlow<List<Doctor>>(emptyList())
-    val doctorList: StateFlow<List<Doctor>> = _doctorList
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
 
     private val _outputList = MutableStateFlow<List<OutputItem>>(emptyList())
     val outputList: StateFlow<List<OutputItem>> = _outputList
@@ -74,360 +54,96 @@ class IntakeOutputViewModel @Inject constructor() : ViewModel() {
     private val _manualFoodList = MutableStateFlow<List<ManualFoodAssignItem>>(emptyList())
     val manualFoodList: StateFlow<List<ManualFoodAssignItem>> = _manualFoodList
 
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun fetchIntake(context: Context,   ) {
-
-        viewModelScope.launch {
-
-            _loading.value = true
-
-            val prefsCache = PrefsManager(context)
-
-            try {
-
-                val fromDate = java.time.LocalDate.now().toString()
-                val queryParams = mapOf(
-                   "entryType" to "N",
-                    "Uhid" to prefsCache.getPatient()?.uhId.toString(),
-                   "clientId" to prefsCache.getPatient()?.clientId.toString(),
-                   "fromDate" to fromDate
-                )
-
-                val result: String? = prefsCache.getData(
-                    key =  ApiEndPointCorporateModule().fetchIntake,
-                    shouldSave = true
-                ) {
-
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().fetchIntake,
-                        showNoConnectionDialog = false
-                    ) { url ->
-                        ApiClients.module4094.dynamicGet(
-                            url = url,
-                            params = queryParams,
-                        )
-                    }
-
-                    if (response.isSuccessful) {
-
-                        val bodyString = response.body()?.string()
-
-                        Log.d("LoginViewModel", "API Response: $bodyString")
-
-                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
-                    } else {
-                        throw Exception("API Error: ${response.code()}")
-                    }
-                }
-
-
-                _loading.value = false
-                // ✅ RESULT HANDLE
-                if (!result.isNullOrEmpty()) {
-
-
-
-                    Log.d("LoginViewModel", "OTP SuccessSuccess (API/Cache): $result")
-                } else {
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
-                }
-
-            } catch (e: Exception) {
-                Log.e("LoginViewModel", "Error: ${e.message}", e)
-
-            } finally {
-
-                _loading.value = false
-                Log.d("LoginViewModel", "Loading finished")
-            }
-        }
-    }
-
-    fun getManualFoodAssignList(context: Context) {
+    fun getManualFoodAssignList() {
         viewModelScope.launch {
             _intakeLoading.value = true
-            val prefsCache = PrefsManager(context)
-            try {
-                val queryParams = mapOf(
-                    "Uhid" to prefsCache.getPatient()?.uhId.toString(),
-                    "intervalTimeInHour" to 24
-                )
-                val result: String? = prefsCache.getData(
-                    key = ApiEndPointCorporateModule().getManualFoodAssignList,
-                    shouldSave = true
-                ) {
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().getManualFoodAssignList,
-                        showNoConnectionDialog = false
-                    ) { url ->
-                        ApiClients.module4094.dynamicGet(url = url, params = queryParams)
-                    }
-                    if (response.isSuccessful) response.body()?.string()
-                    else throw Exception("API Error: ${response.code()}")
-                }
-                if (!result.isNullOrEmpty()) {
-                    val apiResponse = Gson().fromJson(result, ManualFoodAssignResponse::class.java)
-                    if (apiResponse.status == 1) {
-                        _manualFoodList.value = apiResponse.responseValue
-                            ?.filter { !it.foodName.isNullOrBlank() }
-                            ?: emptyList()
-                    }
-                    Log.d(
-                        "IntakeOutputViewModel",
-                        "manualFoodList: ${_manualFoodList.value.size} items"
-                    )
-                }
-            } catch (e: Exception) {
-                Log.e("IntakeOutputViewModel", "getManualFoodAssignList error: ${e.message}", e)
-            } finally {
-                _intakeLoading.value = false
+            val patient = prefs.getPatient() ?: run { _intakeLoading.value = false; return@launch }
+            when (val r = deps.getManualFoodList()(patient.uhId)) {
+                is DomainResult.Success -> _manualFoodList.value = r.data
+                is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
+            _intakeLoading.value = false
         }
     }
 
+    fun fetchIntakeItems(fromDate: String) {
+        viewModelScope.launch {
+            _intakeLoading.value = true; _intakeList.value = emptyList()
+            val patient = prefs.getPatient() ?: run { _intakeLoading.value = false; return@launch }
+            when (val r = deps.fetchIntake()(patient.uhId, patient.clientId.toString(), fromDate)) {
+                is DomainResult.Success -> _intakeList.value = r.data
+                is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
+            }
+            _intakeLoading.value = false
+        }
+    }
 
+    fun addIntake(value: String, fId: String) {
+        viewModelScope.launch {
+            _intakeLoading.value = true
+            val patient = prefs.getPatient() ?: run { _intakeLoading.value = false; return@launch }
+            val foodDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Instant.now().toString() else System.currentTimeMillis().toString()
+            val body = mapOf<String, Any>("FoodDate" to foodDate, "FoodQuantity" to value, "UserID" to patient.pid, "foodId" to fId, "clientId" to patient.clientId, "FoodUnitId" to 27, "uhid" to patient.uhId, "isGiven" to 1, "entryType" to "N", "isFromPatient" to 1)
+            when (val r = deps.addIntake()(body)) {
+                is DomainResult.Success -> Log.d("IntakeOutputVM", "addIntake success")
+                is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
+            }
+            _intakeLoading.value = false
+        }
+    }
 
+    fun fetchOutput(date: String) {
+        viewModelScope.launch {
+            _outputLoading.value = true; _outputList.value = emptyList()
+            val patient = prefs.getPatient() ?: run { _outputLoading.value = false; return@launch }
+            when (val r = deps.fetchOutput()(patient.uhId, patient.clientId.toString(), patient.pid.toString(), date)) {
+                is DomainResult.Success -> _outputList.value = r.data
+                is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
+            }
+            _outputLoading.value = false
+        }
+    }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun addOutput(context: Context, quantity: Int, colour: String) {
+    fun addOutput(quantity: Int, colour: String) {
         viewModelScope.launch {
             _outputLoading.value = true
-            val prefsCache = PrefsManager(context)
-            try {
-                val outputDate = java.time.LocalDateTime.now()
-                    .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-                val body = mapOf<String, Any>(
-                    "outputTypeID" to 51,
-                    "quantity" to quantity,
-                    "unitID" to 1,
-                    "outputDate" to outputDate,
-                    "colour" to colour,
-                    "userID" to (prefsCache.getPatient()?.pid ?: 0),
-                    "clientId" to (prefsCache.getPatient()?.clientId ?: 0),
-                    "uhid" to prefsCache.getPatient()?.uhId.orEmpty()
-                )
-                val response = ApiHelper().callApi(
-                    context,
-                    ApiEndPointCorporateModule().addOutput,
-                    showNoConnectionDialog = false
-                ) { url ->
-                    ApiClients.module4082.dynamicRawPost(url = url, body = body)
-                }
-                if (response.isSuccessful) {
-                    Log.d("IntakeOutputViewModel", "addOutput success: ${response.body()?.string()}")
-                } else {
-                    throw Exception("API Error: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e("IntakeOutputViewModel", "addOutput error: ${e.message}", e)
-            } finally {
-                _outputLoading.value = false
+            val patient = prefs.getPatient() ?: run { _outputLoading.value = false; return@launch }
+            val outputDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) else java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+            val body = mapOf<String, Any>("outputTypeID" to 51, "quantity" to quantity, "unitID" to 1, "outputDate" to outputDate, "colour" to colour, "userID" to patient.pid, "clientId" to patient.clientId, "uhid" to patient.uhId)
+            when (val r = deps.addOutput()(body)) {
+                is DomainResult.Success -> Log.d("IntakeOutputVM", "addOutput success")
+                is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
+            _outputLoading.value = false
         }
     }
 
-
-
-
-    fun fetchOutput(context: Context, date: String) {
+    fun fetchOutputSummary(fromDate: String, toDate: String) {
         viewModelScope.launch {
-            _outputLoading.value = true
-            _outputList.value = emptyList()
-            val prefsCache = PrefsManager(context)
-            try {
-                val queryParams = mapOf(
-                    "uhid" to prefsCache.getPatient()?.uhId.toString(),
-                    "clientId" to prefsCache.getPatient()?.clientId.toString(),
-                    "userId" to prefsCache.getPatient()?.pid.toString(),
-                    "fromdate" to date
-                )
-                val result: String? = prefsCache.getData(
-                    key = "${ApiEndPointCorporateModule().fetchOutput}_$date",
-                    shouldSave = true
-                ) {
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().fetchOutput,
-                        showNoConnectionDialog = false
-                    ) { url ->
-                        ApiClients.module4082.dynamicGet(url = url, params = queryParams)
-                    }
-                    if (response.isSuccessful) response.body()?.string()
-                    else throw Exception("API Error: ${response.code()}")
-                }
-                if (!result.isNullOrEmpty()) {
-                    val apiResponse = Gson().fromJson(result, OutputResponse::class.java)
-                    if (apiResponse.status == 1) {
-                        _outputList.value = apiResponse.responseValue
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("IntakeOutputViewModel", "fetchOutput error: ${e.message}", e)
-            } finally {
-                _outputLoading.value = false
+            _outputLoading.value = true; _outputSummaryList.value = emptyList()
+            val patient = prefs.getPatient() ?: run { _outputLoading.value = false; return@launch }
+            when (val r = deps.fetchOutputSummary()(patient.uhId, patient.clientId.toString(), fromDate, toDate)) {
+                is DomainResult.Success -> _outputSummaryList.value = r.data
+                is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
+            _outputLoading.value = false
         }
     }
 
-    fun fetchOutputSummary(context: Context, fromDate: String, toDate: String) {
+    fun fetchFluidSummary(fromDate: String, toDate: String) {
         viewModelScope.launch {
-            _outputLoading.value = true
-            _outputSummaryList.value = emptyList()
-            val prefsCache = PrefsManager(context)
-            try {
-                val queryParams = mapOf(
-                    "Uhid" to prefsCache.getPatient()?.uhId.toString(),
-                    "clientId" to prefsCache.getPatient()?.clientId.toString(),
-                    "fromDate" to fromDate,
-                    "toDate" to toDate
-                )
-                val result: String? = prefsCache.getData(
-                    key = "${ApiEndPointCorporateModule().outputSummaryByDateRange}_${fromDate}_$toDate",
-                    shouldSave = true
-                ) {
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().outputSummaryByDateRange,
-                        showNoConnectionDialog = false
-                    ) { url ->
-                        ApiClients.module4082.dynamicGet(url = url, params = queryParams)
-                    }
-                    if (response.isSuccessful) response.body()?.string()
-                    else throw Exception("API Error: ${response.code()}")
-                }
-                if (!result.isNullOrEmpty()) {
-                    val apiResponse = Gson().fromJson(result, OutputSummaryResponse::class.java)
-                    if (apiResponse.status == 1) {
-                        _outputSummaryList.value = apiResponse.responseValue
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("IntakeOutputViewModel", "fetchOutputSummary error: ${e.message}", e)
-            } finally {
-                _outputLoading.value = false
+            _intakeLoading.value = true; _fluidSummaryList.value = emptyList()
+            val patient = prefs.getPatient() ?: run { _intakeLoading.value = false; return@launch }
+            when (val r = deps.fetchFluidSummary()(patient.uhId, fromDate, toDate)) {
+                is DomainResult.Success -> _fluidSummaryList.value = r.data
+                is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
+            _intakeLoading.value = false
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun addIntake(context: Context, value: String, fId: String) {
-        viewModelScope.launch {
-            _intakeLoading.value = true
-            val prefsCache = PrefsManager(context)
-            try {
-                val foodDate = java.time.Instant.now().toString()
-                val body = mapOf<String, Any>(
-                    "FoodDate" to foodDate,
-                    "FoodQuantity" to value,
-                    "UserID" to (prefsCache.getPatient()?.pid ?: 0),
-                    "foodId" to fId,
-                    "clientId" to (prefsCache.getPatient()?.clientId ?: 0),
-                    "FoodUnitId" to 27,
-                    "uhid" to prefsCache.getPatient()?.uhId.orEmpty(),
-                    "isGiven" to 1,
-                    "entryType" to "N",
-                    "isFromPatient" to 1
-                )
-                val response = ApiHelper().callApi(
-                    context,
-                    ApiEndPointCorporateModule().addIntake,
-                    showNoConnectionDialog = false
-                ) { url ->
-                    ApiClients.module4094.dynamicRawPost(url = url, body = body)
-                }
-                if (response.isSuccessful) {
-                    Log.d("IntakeOutputViewModel", "addIntake success: ${response.body()?.string()}")
-                } else {
-                    throw Exception("API Error: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e("IntakeOutputViewModel", "addIntake error: ${e.message}", e)
-            } finally {
-                _intakeLoading.value = false
-            }
-        }
+    fun fetchIntake() {
+        val today = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) LocalDate.now().toString() else java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        fetchIntakeItems(today)
     }
-
-    fun fetchIntakeItems(context: Context, fromDate: String) {
-        viewModelScope.launch {
-            _intakeLoading.value = true
-            _intakeList.value = emptyList()
-            val prefsCache = PrefsManager(context)
-            try {
-                val queryParams = mapOf(
-                    "Uhid" to prefsCache.getPatient()?.uhId.toString(),
-                    "entryType" to "N",
-                    "clientId" to prefsCache.getPatient()?.clientId.toString(),
-                    "fromDate" to fromDate
-                )
-                val result: String? = prefsCache.getData(
-                    key = "${ApiEndPointCorporateModule().fetchIntake}_$fromDate",
-                    shouldSave = true
-                ) {
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().fetchIntake,
-                        showNoConnectionDialog = false
-                    ) { url ->
-                        ApiClients.module4094.dynamicGet(url = url, params = queryParams)
-                    }
-                    if (response.isSuccessful) response.body()?.string()
-                    else throw Exception("API Error: ${response.code()}")
-                }
-                if (!result.isNullOrEmpty()) {
-                    val apiResponse = Gson().fromJson(result, IntakeResponse::class.java)
-                    if (apiResponse.status == 1) {
-                        _intakeList.value = apiResponse.responseValue ?: emptyList()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("IntakeOutputViewModel", "fetchIntakeItems error: ${e.message}", e)
-            } finally {
-                _intakeLoading.value = false
-            }
-        }
-    }
-
-    fun fetchFluidSummary(context: Context, fromDate: String, toDate: String) {
-        viewModelScope.launch {
-            _intakeLoading.value = true
-            _fluidSummaryList.value = emptyList()
-            val prefsCache = PrefsManager(context)
-            try {
-                val queryParams = mapOf(
-                    "Uhid" to prefsCache.getPatient()?.uhId.toString(),
-                    "fromDate" to fromDate,
-                    "toDate" to toDate
-                )
-                val result: String? = prefsCache.getData(
-                    key = "${ApiEndPointCorporateModule().fluidSummaryByDateRange}_${fromDate}_$toDate",
-                    shouldSave = true
-                ) {
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().fluidSummaryByDateRange,
-                        showNoConnectionDialog = false
-                    ) { url ->
-                        ApiClients.module4094.dynamicGet(url = url, params = queryParams)
-                    }
-                    if (response.isSuccessful) response.body()?.string()
-                    else throw Exception("API Error: ${response.code()}")
-                }
-                if (!result.isNullOrEmpty()) {
-                    val apiResponse = Gson().fromJson(result, FluidSummaryResponse::class.java)
-                    if (apiResponse.status == 1) {
-                        _fluidSummaryList.value = apiResponse.responseValue ?: emptyList()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("IntakeOutputViewModel", "fetchFluidSummary error: ${e.message}", e)
-            } finally {
-                _intakeLoading.value = false
-            }
-        }
-    }
-
 }

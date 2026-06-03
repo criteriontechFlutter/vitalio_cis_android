@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.animation.core.*
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -83,7 +82,6 @@ private fun colourNameToColor(colour: String): Color {
 fun FluidOutputHistoryScreen(
     viewModel: IntakeOutputViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
 
@@ -100,16 +98,16 @@ fun FluidOutputHistoryScreen(
 
     LaunchedEffect(currentDate, selectedTab) {
         when (selectedTab) {
-            0 -> viewModel.fetchOutput(context, currentDate.toString())
+            0 -> viewModel.fetchOutput(currentDate.toString())
             1 -> {
                 val start = currentDate.with(DayOfWeek.MONDAY)
                 val end = start.plusDays(6)
-                viewModel.fetchOutputSummary(context, start.toString(), end.toString())
+                viewModel.fetchOutputSummary(start.toString(), end.toString())
             }
             else -> {
                 val start = currentDate.withDayOfMonth(1)
                 val end = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
-                viewModel.fetchOutputSummary(context, start.toString(), end.toString())
+                viewModel.fetchOutputSummary(start.toString(), end.toString())
             }
         }
     }
@@ -190,7 +188,7 @@ fun FluidOutputHistoryScreen(
                             "Fluid Output Log", style = AppTextStyles.style16BCN()
                         )
                         Row {
-                            Icon(Icons.Default.List, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(Icons.Default.Check, contentDescription = null)
                         }

@@ -26,7 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.critetiontech.ctvitalio.viewmodel.LoginViewModel
+import com.critetiontech.vitalio_cis.viewmodel.LoginViewModel
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.ui.theme.AppColors
 import com.critetiontech.vitalio_cis.utils.CommonButton
@@ -132,10 +132,13 @@ fun TopHeader() {
 @Composable
 fun LoginCard(viewModel: LoginViewModel = viewModel()) {
     val navController = LocalNavController.current
-    val context = LocalContext.current
 
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { route -> navController.navigate(route) }
+    }
 
     val titleAlpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
@@ -232,7 +235,7 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                         ),
                         keyboardActions = KeyboardActions(
                             onDone = {
-                                viewModel.sendOTP(context = context, navController = navController)
+                                viewModel.sendOTP()
                             }
                         )
                     )
@@ -249,7 +252,7 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                 CommonButton(
                     text = "Send OTP",
                     onClick = {
-                        viewModel.sendOTP(context = context, navController = navController)
+                        viewModel.sendOTP()
                     }
                 )
             }

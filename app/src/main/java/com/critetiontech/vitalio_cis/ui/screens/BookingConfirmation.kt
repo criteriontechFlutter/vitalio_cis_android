@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,11 +49,10 @@ fun BookingConfirmationScreen(
     viewModel: DoctorDetailsViewModel = viewModel()
 ) {
     val navController = LocalNavController.current
-    val context = LocalContext.current
     val colors = LocalMyColorScheme.current
 
     LaunchedEffect(Unit) {
-        viewModel.getDoctorProfile(context)
+        viewModel.getDoctorProfile()
     }
 
     val doctor by viewModel.doctor.collectAsState()
@@ -189,10 +187,9 @@ fun BookingConfirmationScreen(
                     enabled   = checked && !bookingLoading,
                     onClick   = {
                         viewModel.bookAppointment(
-                            context          = context,
-                            did              = bookingDetails?.dID.orEmpty(),
-                            sTime            = bookingDetails?.onTime.orEmpty(),
-                            appointmentDate  = bookingDetails?.onDate.orEmpty()
+                            did             = bookingDetails?.dID.orEmpty(),
+                            sTime           = bookingDetails?.onTime.orEmpty(),
+                            appointmentDate = bookingDetails?.onDate.orEmpty()
                         )
                     }
                 )

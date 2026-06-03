@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -199,13 +198,11 @@ fun FindDoctorsScreen(
 @Composable
 fun PreviewFindDoctors(viewModel: FindDoctorViewModel = viewModel()) {
 
-    val context = LocalContext.current
-
     val doctors by viewModel.doctorList.collectAsState()
     val doctorProfiles by viewModel.doctorProfiles.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchDoctorsAvalability(context)
+        viewModel.fetchDoctorsAvalability()
     }
 
     CommonAppBar(title = "Find Doctors") {

@@ -6,6 +6,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -104,7 +104,6 @@ fun VitalHistoryScreen(
     vitalName: String = "Vital",
     viewModel: VitalDetailViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
     var viewMode by remember { mutableStateOf(ViewMode.LIST) }
@@ -134,7 +133,7 @@ fun VitalHistoryScreen(
 
     LaunchedEffect(fromDate, toDate, vitalIds) {
         if (vitalIds.isNotEmpty()) {
-            viewModel.fetchVitalAnalytics(context, fromDate, toDate, vitalIds)
+            viewModel.fetchVitalAnalytics(fromDate, toDate, vitalIds)
         }
     }
 
@@ -197,7 +196,7 @@ fun VitalHistoryScreen(
                 Row {
                     IconButton(onClick = { viewMode = ViewMode.LIST }) {
                         Icon(
-                            Icons.Default.List,
+                            Icons.AutoMirrored.Filled.List,
                             contentDescription = null,
                             tint = if (viewMode == ViewMode.LIST) Color(0xFF2F6BFF) else Color.Gray
                         )
