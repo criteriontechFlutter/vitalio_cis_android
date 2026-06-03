@@ -14,6 +14,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.http.QueryMap
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -25,12 +26,42 @@ class MedicineReminderViewModel @Inject constructor() : ViewModel() {
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
+    private val _intakeSuccess = MutableStateFlow<Int?>(null)
+    val intakeSuccess: StateFlow<Int?> = _intakeSuccess
+
+    fun markIntake(context: Context, id: Int, scheduledDateTime: String) {
+        viewModelScope.launch {
+            try {
+                val body = mapOf(
+                    "id" to id,
+                    "ScheduledDateTime" to scheduledDateTime
+                )
+                val response = ApiHelper().callApi(
+                    context,
+                    ApiEndPointCorporateModule().insertMedicineIntake,
+                    showNoConnectionDialog = false
+                ) { url ->
+                    ApiClients.module4082.queryRawPostApi(url = url, params = body, body =body )
+                }
+                if (response.isSuccessful) {
+                    _intakeSuccess.value = id
+                    fetchMedicineIntake(context)
+                } else {
+                    Log.e("MedicineReminderVM", "markIntake error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("MedicineReminderVM", "markIntake error: ${e.message}", e)
+            }
+        }
+    }
+
     fun fetchMedicineIntake(context: Context) {
         viewModelScope.launch {
             _loading.value = true
             try {
-                val pid = 77
-                val clientId = 45
+                val patient = PrefsManager(context).getPatient()
+                val pid = patient?.pid ?: return@launch
+                val clientId = patient.clientId
                 val givenDate = LocalDate.now().toString()
 
                 val endpoint = ApiEndPointCorporateModule().fetchPatientMedicineIntake

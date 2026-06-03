@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -92,7 +94,7 @@ fun MedicineReminderScreen(viewModel: MedicineReminderViewModel = viewModel()) {
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
                     periods.forEach { period ->
-                        MedicinePeriodSection(period)
+                        MedicinePeriodSection(period, viewModel, context)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -102,7 +104,7 @@ fun MedicineReminderScreen(viewModel: MedicineReminderViewModel = viewModel()) {
 }
 
 @Composable
-fun MedicinePeriodSection(period: MedicinePeriod) {
+fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderViewModel, context: android.content.Context) {
     val iconRes = when (period.dayPeriod.lowercase()) {
         "morning" -> R.drawable.morning_medicine
         "afternoon" -> R.drawable.afternoon_medicine
@@ -130,7 +132,7 @@ fun MedicinePeriodSection(period: MedicinePeriod) {
 
         Column(modifier = Modifier.weight(1f)) {
             period.medicineData.forEach { item ->
-                ApiMedicineCard(item)
+                ApiMedicineCard(item, viewModel, context)
                 Spacer(modifier = Modifier.height(6.dp))
             }
         }
@@ -138,7 +140,7 @@ fun MedicinePeriodSection(period: MedicinePeriod) {
 }
 
 @Composable
-fun ApiMedicineCard(item: MedicineItem) {
+fun ApiMedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel, context: android.content.Context) {
     val colors = LocalMyColorScheme.current
 
     val timeFormatted = try {
@@ -197,11 +199,16 @@ fun ApiMedicineCard(item: MedicineItem) {
                     color = Color.Gray,
                     fontSize = 13.sp
                 )
-                else -> Text(
-                    "Pending",
-                    color = Color(0xFFFFA000),
-                    fontSize = 13.sp
-                )
+                else -> Button(
+                    onClick = { viewModel.markIntake(context, item.id, item.scheduledDateTime) },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA000)),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        horizontal = 12.dp, vertical = 4.dp
+                    )
+                ) {
+                    Text("Intake", fontSize = 13.sp, color = Color.White)
+                }
             }
         }
     }

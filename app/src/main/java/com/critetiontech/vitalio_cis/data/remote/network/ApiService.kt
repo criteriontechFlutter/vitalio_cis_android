@@ -52,6 +52,13 @@ interface ApiService {
     // Add similar annotations for PUT, DELETE, etc.
 
 
+    @POST
+    suspend fun queryRawPostApi(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @QueryMap(encoded = false) params: Map<String, @JvmSuppressWildcards Any>,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
     @Multipart
     @POST
     suspend fun dynamicMultipartPost(

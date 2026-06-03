@@ -9,11 +9,11 @@ data class DoctorResponse(
 data class Doctor(
     val assignedUserId: Int,
     val totalDays: Int,
-    val scheduleDays: String,
-    val doctorName: String,
-    val qualification: String?,
-    val departmentName: String?,
-    val profileUrl: String
+    val scheduleDays: String = "",
+    val doctorName: String? = null,
+    val qualification: String? = null,
+    val departmentName: String? = null,
+    val profileUrl: String = ""
 )
 
 data class DoctorResponsedata(

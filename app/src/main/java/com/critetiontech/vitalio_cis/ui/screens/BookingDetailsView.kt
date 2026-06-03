@@ -1,8 +1,9 @@
 package com.critetiontech.vitalio_cis.ui.screens
 
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,94 +19,67 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
+import com.critetiontech.vitalio_cis.Routes
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.utils.CommonButton
 import com.critetiontech.vitalio_cis.viewmodel.DoctorDetailsViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
 fun BookingDetailsScreen(
-
     bookingDetails: BookingDetails?,
-    viewModel: DoctorDetailsViewModel = viewModel( )) {
-
-    val doctor by viewModel.doctor.collectAsState()
-
+    viewModel: DoctorDetailsViewModel = viewModel()
+) {
     val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
-    CommonAppBar(
-        title = "Booking Details",
-    ) {
 
+    CommonAppBar(title = "Booking Details") {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.dashboardBackgroundColor)
+                .padding(16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(colors.dashboardBackgroundColor)
-                    .padding(16.dp)
+            DateTimeSection(
+                date = bookingDetails?.onDate.orEmpty(),
+                time = bookingDetails?.onTime.orEmpty()
             )
-            {
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                DateTimeSection()
+            InfoRow(
+                title    = bookingDetails?.pName.orEmpty(),
+                subtitle = bookingDetails?.qly.orEmpty()
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Divider(modifier = Modifier.padding(vertical = 12.dp))
 
-                InfoRow(
-                    title = bookingDetails?.pName.toString(),
-                    subtitle = bookingDetails?.qly.toString()
-                )
+            InfoRow(
+                title    = bookingDetails?.atHospital.orEmpty(),
+                subtitle = ""
+            )
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
-                InfoRow(
-                    title = "Victoria General Hospital",
-                    subtitle = "11620, State Route 41, West Union"
-                )
-
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
-
-                InfoRow(
-                    title = "Payment",
-                    subtitle = "••••4826"
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-
-                CommonButton(
-                    text = "Add to calendar",
-                    onClick =  {
-
+            CommonButton(
+                text    = "Done",
+                onClick = {
+                    navController.navigate(Routes.APPOINTMENTS) {
+                        popUpTo(Routes.DASHBOARD) { inclusive = false }
                     }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                CommonButton(
-                    text = "Reschedule Appointment",
-                    onClick =  {
-
-                    },
-                    modifier = Modifier.border(
-                        width = 1.dp,
-                        color = colors.primaryBlueColor,
-                        shape = RoundedCornerShape(14.dp)
-                    ).background(colors.btnWhiteColor)
-                )
-
-            }
-
+                }
+            )
+        }
     }
 }
 
@@ -151,62 +125,38 @@ fun InfoRow(
 }
 
 @Composable
-fun DateTimeSection() {
-
-
+fun DateTimeSection(date: String = "", time: String = "") {
     val colors = LocalMyColorScheme.current
+
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier              = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
         Box(
             modifier = Modifier
                 .weight(1f)
-                .background(colors.dashboardContainerColor,
-                    RoundedCornerShape(14.dp)
-                )
+                .background(colors.dashboardContainerColor, RoundedCornerShape(14.dp))
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Text(
-                    text = "📅",
-                    style = AppTextStyles.style18BCB()
-                )
-
+                Text(text = "📅", style = AppTextStyles.style18BCB())
                 Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "16/12/2024",
-                    style = AppTextStyles.style14BCN()
-                )
+                Text(text = date.ifEmpty { "—" }, style = AppTextStyles.style14BCN())
             }
         }
 
         Box(
             modifier = Modifier
                 .weight(1f)
-                .background(colors.dashboardContainerColor,
-                    RoundedCornerShape(14.dp)
-                )
+                .background(colors.dashboardContainerColor, RoundedCornerShape(14.dp))
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Text(
-                    text = "🕒",
-                    style = AppTextStyles.style18BCB()
-                )
-
+                Text(text = "🕒", style = AppTextStyles.style18BCB())
                 Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "09:00AM - 10:00AM",
-                    style = AppTextStyles.style14BCN()
-                )
+                Text(text = time.ifEmpty { "—" }, style = AppTextStyles.style14BCN())
             }
         }
     }

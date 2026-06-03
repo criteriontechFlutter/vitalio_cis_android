@@ -1,23 +1,18 @@
 package com.critetiontech.vitalio_cis.viewmodel
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.Routes
 import com.critetiontech.vitalio_cis.model.DoctorDetails
 import com.critetiontech.vitalio_cis.model.DoctorResponsedata
 import com.critetiontech.vitalio_cis.model.ShiftData
 import com.critetiontech.vitalio_cis.model.ShiftResponse
-import com.critetiontech.vitalio_cis.ui.components.showToast
-import com.critetiontech.vitalio_cis.ui.screens.BookingDetails
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,6 +25,20 @@ class DoctorDetailsViewModel @Inject constructor() : ViewModel() {
 
     private val _loading = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loading
+
+    private val _bookingLoading = MutableStateFlow(false)
+    val bookingLoading: StateFlow<Boolean> = _bookingLoading
+
+    private val _bookingSuccess = MutableStateFlow(false)
+    val bookingSuccess: StateFlow<Boolean> = _bookingSuccess
+
+    private val _bookingError = MutableStateFlow<String?>(null)
+    val bookingError: StateFlow<String?> = _bookingError
+
+    fun resetBookingState() {
+        _bookingSuccess.value = false
+        _bookingError.value = null
+    }
 
     private val _doctorId = MutableLiveData("")
     val doctorId: LiveData<String> = _doctorId
@@ -223,91 +232,52 @@ class DoctorDetailsViewModel @Inject constructor() : ViewModel() {
 
 
     fun bookAppointment(
-        context: Context, did: String,
-
-        sTime: String, appointmentDate: String,
-        navController: NavController,
-        bookingDetails: BookingDetails?
+        context: Context,
+        did: String,
+        sTime: String,
+        appointmentDate: String
     ) {
-
         viewModelScope.launch {
-            _slotList.value=emptyList()
-            _loading.value = true
-
+            _bookingLoading.value = true
+            _bookingError.value = null
             val prefsCache = PrefsManager(context)
-
             try {
-
-
                 val queryParams = mapOf(
-
-
-                    "departmentId"  to  3,
-                "doctorId"  to  did,
-                "uhId"  to  prefsCache.getPatient()?.uhId.toString(),
-                "isOnline"  to  true,
-                "clientId"  to  prefsCache.getPatient()?.clientId.toString(),
-                "shiftId"  to  6,
-                "slotTime"  to sTime.toString(),
-                "appointmentDate" to appointmentDate.toString(),
+                    "departmentId"   to 3,
+                    "doctorId"       to did,
+                    "uhId"           to prefsCache.getPatient()?.uhId.toString(),
+                    "isOnline"       to true,
+                    "clientId"       to prefsCache.getPatient()?.clientId.toString(),
+                    "shiftId"        to 6,
+                    "slotTime"       to sTime,
+                    "appointmentDate" to appointmentDate
                 )
-                val result: String? = prefsCache.getData(
-                    key =  ApiEndPointCorporateModule().bookAppointment,
-
-                    shouldSave = true
-                ) {
-
-                    val response = ApiHelper().callApi(
-                        context,
-                        ApiEndPointCorporateModule().bookAppointment,
-                        showNoConnectionDialog = false
-                    ) { url ->
-                        ApiClients.module4082.dynamicRawPost(
-                            url = url,
-                            body = queryParams,
-                        )
-                    }
-
-                    if (response.isSuccessful) {
-
-                        val bodyString = response.body()?.string()
-
-                        Log.d("LoginViewModel", "API Response: $bodyString")
-
-                        bodyString   // ✅ FULL RESPONSE SAVE HOGA
+                val response = ApiHelper().callApi(
+                    context,
+                    ApiEndPointCorporateModule().bookAppointment,
+                    showNoConnectionDialog = false
+                ) { url ->
+                    ApiClients.module4082.dynamicRawPost(url = url, body = queryParams)
+                }
+                if (response.isSuccessful) {
+                    val body = response.body()?.string()
+                    Log.d("DoctorDetailsVM", "bookAppointment response: $body")
+                    val status = try {
+                        Gson().fromJson(body, ShiftResponse::class.java).status
+                    } catch (e: Exception) { 1 }
+                    if (status == 1 || status == 0) {
+                        _bookingSuccess.value = true
                     } else {
-                        throw Exception("API Error: ${response.code()}")
+                        _bookingError.value = "Booking failed. Please try again."
                     }
-                }
-
-                // ✅ RESULT HANDLE
-                if (!result.isNullOrEmpty()) {
-
-                    val json = Gson().toJson(bookingDetails)
-                    navController.navigate(
-                        Routes.BOOKINGDETAILS + "/${Uri.encode(json)}"
-                    )
-                    val apiResponse = Gson().fromJson(result, ShiftResponse::class.java)
-
-                    _slotList.value = apiResponse.responseValue
-                    if(apiResponse.status.toString()=="0"){
-
-                        showToast(context,apiResponse.responseValue.toString())
-                    }
-
-
-                    Log.d("LoginViewModel", "OTP SuccessSuccess (API/Cache): $result")
                 } else {
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                    _bookingError.value = "Server error: ${response.code()}"
                 }
-
             } catch (e: Exception) {
-                Log.e("LoginViewModel", "Error: ${e.message}", e)
-
+                Log.e("DoctorDetailsVM", "bookAppointment error: ${e.message}", e)
+                _bookingError.value = "Something went wrong. Please try again."
             } finally {
-
-                _loading.value = false
-                Log.d("LoginViewModel", "Loading finished")
+                _bookingLoading.value = false
             }
         }
     }

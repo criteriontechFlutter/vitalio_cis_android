@@ -13,9 +13,13 @@ import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.vitalio_cis.model.Doctor
+import com.critetiontech.vitalio_cis.model.DoctorDetails
 import com.critetiontech.vitalio_cis.model.DoctorResponse
+import com.critetiontech.vitalio_cis.model.DoctorResponsedata
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -36,7 +40,11 @@ class FindDoctorViewModel @Inject constructor() : ViewModel() {
     private val _loading = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loading
     private val _doctorList = MutableStateFlow<List<Doctor>>(emptyList())
-    val  doctorList: StateFlow<List<Doctor>> = _doctorList
+    val doctorList: StateFlow<List<Doctor>> = _doctorList
+
+    // keyed by assignedUserId → fetched profile
+    private val _doctorProfiles = MutableStateFlow<Map<Int, DoctorDetails>>(emptyMap())
+    val doctorProfiles: StateFlow<Map<Int, DoctorDetails>> = _doctorProfiles
 
 
 
@@ -88,28 +96,51 @@ class FindDoctorViewModel @Inject constructor() : ViewModel() {
 
 
                 _loading.value = false
-                // ✅ RESULT HANDLE
                 if (!result.isNullOrEmpty()) {
-
-
                     val apiResponse = Gson().fromJson(result, DoctorResponse::class.java)
-
                     _doctorList.value = apiResponse.responseValue
-
-
-                    Log.d("LoginViewModel", "OTP SuccessSuccess (API/Cache): $result")
-                } else {
-                    Log.d("LoginViewModel", "OTP Success (API/Cache): $result")
+                    fetchDoctorProfiles(context, apiResponse.responseValue, prefsCache)
                 }
 
             } catch (e: Exception) {
-                Log.e("LoginViewModel", "Error: ${e.message}", e)
-
+                Log.e("FindDoctorVM", "fetchDoctorsAvalability error: ${e.message}", e)
             } finally {
-
                 _loading.value = false
-                Log.d("LoginViewModel", "Loading finished")
             }
+        }
+    }
+
+    private fun fetchDoctorProfiles(context: Context, doctors: List<Doctor>, prefsCache: PrefsManager) {
+        viewModelScope.launch {
+            val results = doctors.map { doctor ->
+                async {
+                    try {
+                        val queryParams = mapOf(
+                            "clientID" to prefsCache.getPatient()?.clientId.toString(),
+                            "doctorId" to doctor.assignedUserId.toString()
+                        )
+                        val response = ApiHelper().callApi(
+                            context,
+                            ApiEndPointCorporateModule().getDoctorProfile,
+                            showNoConnectionDialog = false
+                        ) { url ->
+                            ApiClients.module4084.dynamicGet(url = url, params = queryParams)
+                        }
+                        if (response.isSuccessful) {
+                            val body = response.body()?.string()
+                            if (!body.isNullOrEmpty()) {
+                                val parsed = Gson().fromJson(body, DoctorResponsedata::class.java)
+                                parsed.responseValue.firstOrNull()?.let { doctor.assignedUserId to it }
+                            } else null
+                        } else null
+                    } catch (e: Exception) {
+                        Log.e("FindDoctorVM", "profile fetch error for ${doctor.assignedUserId}: ${e.message}")
+                        null
+                    }
+                }
+            }.awaitAll()
+
+            _doctorProfiles.value = results.filterNotNull().toMap()
         }
     }
 }

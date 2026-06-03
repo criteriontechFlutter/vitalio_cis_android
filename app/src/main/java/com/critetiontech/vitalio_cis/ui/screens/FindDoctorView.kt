@@ -25,6 +25,7 @@ import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.Routes
 import com.critetiontech.vitalio_cis.model.Doctor
+import com.critetiontech.vitalio_cis.model.DoctorDetails
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.components.ShowNoData
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
@@ -34,75 +35,61 @@ import com.critetiontech.vitalio_cis.viewmodel.FindDoctorViewModel
 
 // -------------------- Doctor Card --------------------
 @Composable
-fun DoctorCard(doctor: Doctor) {
+fun DoctorCard(doctor: Doctor, profile: DoctorDetails? = null) {
     val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
     val shortDays = doctor.scheduleDays
-        .split(",") // split multiple days
-        .joinToString(", ") { day ->
-            day.take(3) // safe, takes first 3 letters even if shorter
-        }
+        .split(",")
+        .joinToString(", ") { it.trim().take(3) }
+
+    val displayName = profile?.name?.ifEmpty { null }
+        ?: doctor.doctorName
+        ?: "Doctor ${doctor.assignedUserId}"
+    val displayQualification = profile?.highestQualificationName?.ifEmpty { null }
+        ?: doctor.qualification
+        ?: ""
+    val displayDepartment = profile?.departmentName?.ifEmpty { null }
+        ?: doctor.departmentName
+        ?: ""
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable() {
+            .clickable {
                 navController.navigate(
-                    Routes.DOCTORDETAILS +
-                            "/${doctor.assignedUserId}/" +
-                            Uri.encode(shortDays)
+                    Routes.DOCTORDETAILS + "/${doctor.assignedUserId}/${Uri.encode(shortDays)}"
                 )
             }
-            .clip(RoundedCornerShape(12.dp)) // apply rounded corners
+            .clip(RoundedCornerShape(12.dp))
             .background(colors.dashboardContainerColor)
-            .padding(3.dp)    // background color
-
-
+            .padding(3.dp)
     ) {
-        Column(
-        ) {
-            // Doctor Image
+        Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(182.dp)
-                    .clip(RoundedCornerShape(12.dp)) // apply rounded corners
-                    .background(Color.LightGray)      // background color
-            ) {
-                // If you have a URL, replace with AsyncImage from Coil
-                // AsyncImage(model = doctor.imageUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
-            }
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.LightGray)
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Role Tag (like "Neuro")
+            Text(text = displayName, style = AppTextStyles.style14BCB())
 
-            // Name
-            Text(
-                text = doctor.doctorName,
-                style = AppTextStyles.style14BCB()
-            )
+            if (displayDepartment.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = displayDepartment, style = AppTextStyles.style12GCN())
+            }
 
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = doctor.qualification ?: "Role",
-                    style = AppTextStyles.style12GCN()
-                )
-
-            // Qualification
-            Text(
-                text = doctor.qualification ?: "",
-                style = AppTextStyles.style12GCN()
-            )
-
-            // Schedule badge
-
+            if (displayQualification.isNotEmpty()) {
+                Text(text = displayQualification, style = AppTextStyles.style12GCN())
+            }
 
             Text(
                 text = shortDays,
                 style = AppTextStyles.style12GCN().copy(fontSize = 10.sp)
             )
-
         }
     }
 }
@@ -111,12 +98,13 @@ fun DoctorCard(doctor: Doctor) {
 @Composable
 fun FindDoctorsScreen(
     doctors: List<Doctor>,
+    doctorProfiles: Map<Int, DoctorDetails> = emptyMap(),
     clinicName: String = "LifeSpring Medical",
     clinicAddress: String = "Main Bazaar Road, Aluva, Kochi - 683101",
     selectedDate: String = "16.01.2025",
     onBack: () -> Unit = {},
     onClinicSwitch: () -> Unit = {},
-            viewModel: FindDoctorViewModel = viewModel()
+    viewModel: FindDoctorViewModel = viewModel()
 ) {
 
 
@@ -129,8 +117,11 @@ fun FindDoctorsScreen(
 
     // Filter doctors by name or role
     val filteredDoctors = doctors.filter {
-        it.doctorName.contains(viewModel.searchText, ignoreCase = true) ||
-                (it.departmentName?.contains(viewModel.searchText, ignoreCase = true) ?: false)
+        val profile = doctorProfiles[it.assignedUserId]
+        val name = profile?.name?.ifEmpty { null } ?: it.doctorName ?: ""
+        val dept = profile?.departmentName?.ifEmpty { null } ?: it.departmentName ?: ""
+        name.contains(viewModel.searchText, ignoreCase = true) ||
+                dept.contains(viewModel.searchText, ignoreCase = true)
     }
     Column(modifier = Modifier
         .fillMaxSize()
@@ -197,7 +188,7 @@ fun FindDoctorsScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(filteredDoctors) { doctor ->
-                    DoctorCard(doctor)
+                    DoctorCard(doctor, doctorProfiles[doctor.assignedUserId])
                 }
             }
         })
@@ -211,15 +202,13 @@ fun PreviewFindDoctors(viewModel: FindDoctorViewModel = viewModel()) {
     val context = LocalContext.current
 
     val doctors by viewModel.doctorList.collectAsState()
-    // 🔹 API Call
+    val doctorProfiles by viewModel.doctorProfiles.collectAsState()
+
     LaunchedEffect(Unit) {
         viewModel.fetchDoctorsAvalability(context)
     }
 
-
-    CommonAppBar(
-        title = "Find Doctors",
-    ) {
-        FindDoctorsScreen(doctors = doctors)
+    CommonAppBar(title = "Find Doctors") {
+        FindDoctorsScreen(doctors = doctors, doctorProfiles = doctorProfiles)
     }
 }
