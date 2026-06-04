@@ -1,6 +1,7 @@
   package com.critetiontech.vitalio_cis.ui.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ContentValues
 import android.content.Context
@@ -33,7 +34,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,14 +53,15 @@ import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.ui.theme.MyColorScheme
 import com.critetiontech.vitalio_cis.viewmodel.UploadReportViewModel
 import java.io.File
+import androidx.core.graphics.toColorInt
 
-// ─────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────
 // SCREEN
 // ─────────────────────────────────────────────────────────
 
 @Composable
 fun AddLabResultsScreen(
-    viewModel: UploadReportViewModel = viewModel()
+    viewModel: UploadReportViewModel = viewModel(),
 ) {
     val context      = LocalContext.current
     val navController = LocalNavController.current
@@ -86,6 +87,7 @@ fun AddLabResultsScreen(
         }
     }
 
+    @SuppressLint("UseKtx")
     fun startCrop(uri: Uri) = cropLauncher.launch(
         CropImageContractOptions(
             uri = uri,
@@ -93,7 +95,7 @@ fun AddLabResultsScreen(
                 fixAspectRatio = false,
                 guidelines = CropImageView.Guidelines.ON,
                 activityTitle = "Crop Report Image",
-                toolbarColor = android.graphics.Color.parseColor("#1564ED"),
+                toolbarColor = "#1564ED".toColorInt(),
                 toolbarBackButtonColor = android.graphics.Color.WHITE,
                 toolbarTintColor = android.graphics.Color.WHITE,
                 activityMenuIconColor = android.graphics.Color.WHITE,
@@ -600,7 +602,7 @@ fun UploadOptionCard(
     isSelected: Boolean,
     colors: MyColorScheme,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val borderColor = if (isSelected) colors.primaryBlueColor else colors.borderGreyLightColor
     val bgColor     = if (isSelected) colors.primaryBlueColor.copy(alpha = 0.07f) else colors.dashboardContainerColor

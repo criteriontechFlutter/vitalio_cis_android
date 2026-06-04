@@ -6,6 +6,10 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -105,7 +109,7 @@ fun VitalHistoryScreen(
     viewModel: VitalDetailViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
     var viewMode by remember { mutableStateOf(ViewMode.LIST) }
 
@@ -163,7 +167,7 @@ fun VitalHistoryScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            vitalDateRow(
+            VitalDateRow(
                 currentDate = currentDate,
                 mode = mode,
                 onPrevious = { currentDate = changeDate(currentDate, mode, false) },
@@ -197,14 +201,14 @@ fun VitalHistoryScreen(
                 Row {
                     IconButton(onClick = { viewMode = ViewMode.LIST }) {
                         Icon(
-                            Icons.Default.List,
+                            Icons.AutoMirrored.Filled.List,
                             contentDescription = null,
                             tint = if (viewMode == ViewMode.LIST) Color(0xFF2F6BFF) else Color.Gray
                         )
                     }
                     IconButton(onClick = { viewMode = ViewMode.GRAPH }) {
                         Icon(
-                            Icons.Default.ShowChart,
+                            Icons.AutoMirrored.Filled.ShowChart,
                             contentDescription = null,
                             tint = if (viewMode == ViewMode.GRAPH) Color(0xFF2F6BFF) else Color.Gray
                         )
@@ -406,7 +410,7 @@ fun VitalTabSection(selected: Int, onTabChange: (Int) -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun vitalDateRow(
+fun VitalDateRow(
     currentDate: LocalDate,
     mode: DateMode,
     onPrevious: () -> Unit,
@@ -430,13 +434,13 @@ fun vitalDateRow(
         IconButton(
             onClick = { onPrevious() },
             colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
-        ) { Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null) }
+        ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null) }
 
         Text(text, style = AppTextStyles.style14GCN())
 
         IconButton(
             onClick = { onNext() },
             colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
-        ) { Icon(Icons.Default.KeyboardArrowRight, contentDescription = null) }
+        ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) }
     }
 }

@@ -1,6 +1,7 @@
 package com.critetiontech.vitalio_cis.viewmodel
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -62,7 +63,11 @@ class MedicineReminderViewModel @Inject constructor() : ViewModel() {
                 val patient = PrefsManager(context).getPatient()
                 val pid = patient?.pid ?: return@launch
                 val clientId = patient.clientId
-                val givenDate = LocalDate.now().toString()
+                val givenDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    LocalDate.now().toString()
+                } else {
+                    TODO("VERSION.SDK_INT < O")
+                }
 
                 val endpoint = ApiEndPointCorporateModule().fetchPatientMedicineIntake
                 val queryParams = mapOf(
