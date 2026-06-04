@@ -61,6 +61,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.critetiontech.myapplication.utils.LocalNavController
@@ -282,7 +283,6 @@ fun PersonalInfoScreen(
                 onClick = {
                     if (isEditing) {
                         viewModel.updateProfile(
-                            context = context,
                             firstName = firstName,
                             lastName = lastName,
                             dob = dob,

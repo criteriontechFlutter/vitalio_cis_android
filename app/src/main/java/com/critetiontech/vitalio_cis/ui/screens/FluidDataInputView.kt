@@ -40,7 +40,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -101,10 +100,9 @@ fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
     var selectedItem by remember { mutableStateOf<ManualFoodAssignItem?>(null) }
     var toggle by remember { mutableStateOf(0) }
 
-    // Shared quantity state — glass drag and preset selector both read/write this
-    var glassQuantity by remember { mutableStateOf(105) }   // default 70% of 150 ml
-    var selectedPreset by remember { mutableStateOf<Int?>(null) }  // null = glass/manual mode
-    var glassMaxMl by remember { mutableStateOf(150) }      // scale persists across mode switches
+    var glassQuantity by remember { mutableStateOf(105) }
+    var selectedPreset by remember { mutableStateOf<Int?>(null) }
+    var glassMaxMl by remember { mutableStateOf(150) }
     val effectiveQuantity = selectedPreset ?: glassQuantity
 
     val manualFoodList by viewModel.manualFoodList.collectAsState()
@@ -112,9 +110,7 @@ fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
 
     val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
-    val context = LocalContext.current
 
-    // Auto-select first drink when list arrives
     LaunchedEffect(manualFoodList) {
         if (selectedItem == null && manualFoodList.isNotEmpty()) {
             selectedItem = manualFoodList.first()
@@ -122,10 +118,8 @@ fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
     }
 
     LaunchedEffect(Unit) {
-        viewModel.getManualFoodAssignList(context)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            viewModel.fetchIntake(context)
-        }
+        viewModel.getManualFoodAssignList()
+        viewModel.fetchIntake()
     }
 
     CommonAppBar(
@@ -560,7 +554,6 @@ fun IntakeSelector(
     onUseGlass: () -> Unit
 ) {
     val options = listOf(150, 250, 300, 400)
-    val context = LocalContext.current
     val colors = LocalMyColorScheme.current
     val isGlassMode = selectedPreset == null
     val canAdd = selectedItem != null && effectiveQuantity > 0
@@ -614,7 +607,6 @@ fun IntakeSelector(
                 .clickable {
                     if (canAdd) {
                         viewModel.addIntake(
-                            context,
                             value = effectiveQuantity.toString(),
                             fId = selectedItem!!.foodID.toString()
                         )
@@ -645,14 +637,13 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
     val maxValue = 1000f
     val ovalHeight = 300.dp
 
-    val context = LocalContext.current
     val isLoading by viewModel.outputLoading.collectAsState()
     val outputList by viewModel.outputList.collectAsState()
 
     val today = java.time.LocalDate.now().toString()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchOutput(context, today)
+        viewModel.fetchOutput(today)
     }
 
     val todayItems = remember(outputList, today) {
@@ -865,7 +856,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
             onColourSelect = { selectedColour = it },
             isLoading = isLoading,
             onUpdate = {
-                viewModel.addOutput(context, quantity = sliderValue.toInt(), colour = selectedColour)
+                viewModel.addOutput(quantity = sliderValue.toInt(), colour = selectedColour)
             }
         )
     }

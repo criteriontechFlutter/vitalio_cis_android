@@ -23,7 +23,6 @@ import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import android.net.Uri
@@ -43,12 +42,11 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
 
-    val context = LocalContext.current
     val colors = LocalMyColorScheme.current
     var showInfoDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.fetchLastVital(context)
+        viewModel.fetchLastVital()
     }
 
     if (showInfoDialog) {

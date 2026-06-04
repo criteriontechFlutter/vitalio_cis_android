@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -58,12 +57,15 @@ data class SymptomQuestion(
 @Composable
 fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
-    val context = LocalContext.current
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
 
     LaunchedEffect(Unit) {
-        viewModel.getSymptoms(context)
+        viewModel.getSymptoms()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.popBackEvent.collect { navController.popBackStack() }
     }
 
     val symptomList by viewModel.symptomTrackerList.collectAsState()
@@ -165,7 +167,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {
-                            viewModel.insertSymptoms(context, navController)
+                            viewModel.insertSymptoms()
                         }
                     }
                 )
@@ -180,7 +182,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {
-                            viewModel.insertSymptoms(context, navController)
+                            viewModel.insertSymptoms()
                         }
                     }
                 )

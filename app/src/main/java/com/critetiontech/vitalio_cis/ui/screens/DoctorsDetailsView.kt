@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,24 +50,13 @@ fun DoctorDetailsScreen(
       viewModel: DoctorDetailsViewModel = viewModel()
  ) {
     val navController = LocalNavController.current
-
-
     val colors = LocalMyColorScheme.current
-    val context = LocalContext.current
     val doctor by viewModel.doctor.collectAsState()
     LaunchedEffect(Unit) {
-        viewModel.setDoctorId( doctorId)
-
-
-
-
-        viewModel.getDoctorProfile(context,)
+        viewModel.setDoctorId(doctorId)
+        viewModel.getDoctorProfile()
         val today = LocalDate.now()
-
-        viewModel.fetchAvailableSlots(
-            context,
-            "${today.year}/${today.monthValue}/${today.dayOfMonth}"
-        )
+        viewModel.fetchAvailableSlots("${today.year}/${today.monthValue}/${today.dayOfMonth}")
         viewModel.setSlotDate("${today.year}/${today.monthValue}/${today.dayOfMonth}")
 
     }
@@ -427,7 +415,6 @@ fun SelectDateUI( ) {
 //    }
     val viewModel: DoctorDetailsViewModel = viewModel()
     val today = LocalDate.now()
-    val context = LocalContext.current
 
     var month by remember { mutableStateOf(today.monthValue) }
     var year by remember { mutableStateOf(today.year) }
@@ -481,10 +468,7 @@ fun SelectDateUI( ) {
                         "Selected: $year-$month-${item.date}"
                     )
                     viewModel.setSlotDate("$year-$month-${item.date}")
-                    viewModel.fetchAvailableSlots(
-                        context,
-                        "$year-$month-${item.date}"
-                    )
+                    viewModel.fetchAvailableSlots("$year-$month-${item.date}")
                 }
             }
         }

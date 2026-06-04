@@ -37,7 +37,6 @@ import com.google.gson.Gson
 fun AiReportScreen(viewModel: UploadReportViewModel) {
 
     val colors         = LocalMyColorScheme.current
-    val context        = LocalContext.current
     val navController  = LocalNavController.current
     val isLoading      by viewModel.loading.collectAsStateWithLifecycle()
     val responseStr    by viewModel.responseString.collectAsStateWithLifecycle()
@@ -82,7 +81,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
             // Save button
             val btnBg = if (isLoading) colors.borderGreyLightColor else colors.primaryBlueColor
             Button(
-                onClick = { viewModel.AddMedia(context) },
+                onClick = { viewModel.AddMedia() },
                 enabled = !isLoading,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(

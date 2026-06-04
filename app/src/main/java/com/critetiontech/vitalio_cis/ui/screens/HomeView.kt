@@ -89,14 +89,12 @@ fun DashboardScreen(
 ) {
     var selectedIndex by remember { mutableStateOf(0) }
 
-    // Controls whether the voice bottom sheet is visible
     var showVoiceSheet by remember { mutableStateOf(false) }
 
     val colors = LocalMyColorScheme.current
-    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        homeViewModel.fetchLastVital(context)
+        homeViewModel.fetchLastVital()
     }
 
     Scaffold(
@@ -172,10 +170,9 @@ fun AddActivityScreen() {
 fun HomeView(viewModel: HomeViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
     val vitals by viewModel.vitalList.collectAsState()
-    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.fetchLastVital(context)
+        viewModel.fetchLastVital()
     }
 
     Column(

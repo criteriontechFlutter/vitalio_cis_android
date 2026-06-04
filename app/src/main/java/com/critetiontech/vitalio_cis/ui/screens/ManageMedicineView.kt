@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -352,7 +351,6 @@ fun ManageMedicationsScreen(
     viewModel: ManageMedicationViewModel = viewModel(),
     onBackClick: () -> Unit = {}
 ) {
-    val context = LocalContext.current
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
 
@@ -385,7 +383,7 @@ fun ManageMedicationsScreen(
 
     LaunchedEffect(selectedIdx, selectedMonth, selectedYear) {
         val date = formatDate(selectedYear, selectedMonth, selected.number)
-        viewModel.fetchByDate(context, date)
+        viewModel.fetchByDate(date)
     }
 
     CommonAppBar(

@@ -2,10 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.dagger.hilt.android") version "2.48" apply false
-
-    kotlin("kapt")
-
     id("com.google.gms.google-services")
 }
 
@@ -43,6 +39,7 @@ android {
         compose = true
     }
 }
+
 
 dependencies {
     implementation(libs.androidx.compose.foundation.layout)
@@ -107,7 +104,10 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-gif:2.6.0")
 
-    implementation("com.google.dagger:hilt-android:2.50")
+    // Hilt kept as runtime-only; annotation processing requires a compatible AGP/Kotlin combination.
+    // Currently blocked by Kotlin 2.1.0 + AGP 8.11.0 javapoet incompatibility in Hilt 2.55.
+    // Uncomment annotation processor when a compatible version is available.
+    implementation("com.google.dagger:hilt-android:2.55")
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
 

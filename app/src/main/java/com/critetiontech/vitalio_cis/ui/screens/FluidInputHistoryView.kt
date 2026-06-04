@@ -18,8 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.animation.core.*
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -44,7 +44,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,7 +67,6 @@ private val legendColors = listOf(
 fun FluidInputHistoryScreen(
     viewModel: IntakeOutputViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
 
@@ -85,16 +83,16 @@ fun FluidInputHistoryScreen(
 
     LaunchedEffect(currentDate, selectedTab) {
         when (selectedTab) {
-            0 -> viewModel.fetchIntakeItems(context, currentDate.toString())
+            0 -> viewModel.fetchIntakeItems(currentDate.toString())
             1 -> {
                 val start = currentDate.with(DayOfWeek.MONDAY)
                 val end = start.plusDays(6)
-                viewModel.fetchFluidSummary(context, start.toString(), end.toString())
+                viewModel.fetchFluidSummary(start.toString(), end.toString())
             }
             else -> {
                 val start = currentDate.withDayOfMonth(1)
                 val end = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
-                viewModel.fetchFluidSummary(context, start.toString(), end.toString())
+                viewModel.fetchFluidSummary(start.toString(), end.toString())
             }
         }
     }

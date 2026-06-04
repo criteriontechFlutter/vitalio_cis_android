@@ -106,8 +106,7 @@ class MainActivity : ComponentActivity() {
 
             RequestNotificationPermission()
             val navController = rememberNavController()
-            val uploadReportViewModel:
-                    UploadReportViewModel = viewModel()
+            val uploadReportViewModel: UploadReportViewModel = viewModel()
             val context = LocalContext.current
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {

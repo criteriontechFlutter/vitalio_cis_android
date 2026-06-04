@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
@@ -59,8 +58,6 @@ data class AllergyGroup(
 fun AllergiesScreen(
     viewModel: AllergyViewModel = viewModel()
 ) {
-    val context = LocalContext.current
-
     val loading by viewModel.loading.collectAsState()
     val addLoading by viewModel.addLoading.collectAsState()
     val medicineAllergies by viewModel.medicineAllergies.collectAsState()
@@ -71,10 +68,9 @@ fun AllergiesScreen(
     var showSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.fetchAllergies(context)
+        viewModel.fetchAllergies()
     }
 
-    // Dismiss sheet and refresh on successful add
     LaunchedEffect(addSuccess) {
         if (addSuccess) {
             showSheet = false
@@ -87,7 +83,7 @@ fun AllergiesScreen(
             onDismiss = { showSheet = false },
             isLoading = addLoading,
             onSubmit = { substanceName, severity, reaction, details, typeAllergy ->
-                viewModel.addAllergy(context, substanceName, severity, reaction, details, typeAllergy)
+                viewModel.addAllergy(substanceName, severity, reaction, details, typeAllergy)
             }
         )
     }

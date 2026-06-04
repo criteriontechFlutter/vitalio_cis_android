@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -50,11 +49,11 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun SymptomsView(viewModel: SymptomTrackerViewModel = viewModel()) {
-    val context = LocalContext.current
     val navController = LocalNavController.current
 
     LaunchedEffect(Unit) {
-        viewModel.getProblemsWithIcon(context)
+        viewModel.getProblemsWithIcon()
+        viewModel.popBackEvent.collect { navController.popBackStack() }
     }
 
     var searchText by remember { mutableStateOf("") }
@@ -70,7 +69,7 @@ fun SymptomsView(viewModel: SymptomTrackerViewModel = viewModel()) {
             viewModel.clearSearchResults()
         } else {
             delay(300)
-            viewModel.getAllProblems(context, searchText)
+            viewModel.getAllProblems(searchText)
         }
     }
 
@@ -188,10 +187,8 @@ fun SymptomsView(viewModel: SymptomTrackerViewModel = viewModel()) {
                 enabled = selectedSymptoms.isNotEmpty(),
                 onClick = {
                     viewModel.saveProblems(
-                        context,
                         selectedSymptoms,
-                        defaultList + searchList,
-                        navController
+                        defaultList + searchList
                     )
                 }
             )
