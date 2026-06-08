@@ -17,6 +17,7 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -176,9 +177,11 @@ fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
 
                 // Progress + legend fade in
                 FluidSection(delayMillis = 80) {
-                    ProgressSection()
-                    Spacer(Modifier.height(8.dp))
-                    LegendSection()
+                    Column {
+                        ProgressSection()
+                        Spacer(Modifier.height(8.dp))
+                        LegendSection()
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -440,6 +443,47 @@ fun SlideableWaterGlass(
 }
 
 @Composable
+private fun fluidShimmerBrush(): Brush {
+    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val transition = rememberInfiniteTransition(label = "fluidShimmer")
+    val translateX by transition.animateFloat(
+        initialValue = -600f, targetValue = 600f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Restart),
+        label = "fluidShimmerX"
+    )
+    return Brush.linearGradient(shimmerColors, start = Offset(translateX, 0f), end = Offset(translateX + 600f, 0f))
+}
+
+@Composable
+private fun FluidTypeGridShimmer() {
+    val brush = fluidShimmerBrush()
+    val colors = LocalMyColorScheme.current
+    val placeholders = remember { List(6) { it } }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.fillMaxWidth().height(190.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        userScrollEnabled = false
+    ) {
+        items(placeholders) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.dashboardContainerColor)
+                    .padding(vertical = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(modifier = Modifier.size(26.dp).clip(CircleShape).background(brush))
+                Spacer(Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth(0.65f).height(10.dp).clip(RoundedCornerShape(3.dp)).background(brush))
+            }
+        }
+    }
+}
+
+@Composable
 fun FluidTypeGrid(
     items: List<ManualFoodAssignItem>,
     selectedFoodId: Int?,
@@ -447,14 +491,7 @@ fun FluidTypeGrid(
     onSelect: (ManualFoodAssignItem) -> Unit
 ) {
     if (isLoading) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = Color(0xFF2563EB), strokeWidth = 2.dp)
-        }
+        FluidTypeGridShimmer()
         return
     }
 
@@ -886,9 +923,16 @@ fun BpRangeIndicator(
     val selectedIndex = apiLabels.indexOf(selectedColour)
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth()) {
+        // Fixed height prevents multi-line chip labels from pushing the colour bar down
+        Row(
+            modifier = Modifier.fillMaxWidth().height(44.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
             repeat(apiLabels.size) { i ->
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
                     if (i == selectedIndex) {
                         Box(
                             modifier = Modifier

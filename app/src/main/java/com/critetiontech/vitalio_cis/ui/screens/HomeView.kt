@@ -1,6 +1,9 @@
 package com.example.vitalio_cis.ui.screens
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -52,7 +55,10 @@ import kotlinx.coroutines.delay
 import java.util.Locale
 import com.critetiontech.vitalio_cis.R
 import com.critetiontech.vitalio_cis.Routes
+import androidx.compose.ui.geometry.Offset
+import com.critetiontech.vitalio_cis.model.UpcomingAppointment
 import com.critetiontech.vitalio_cis.model.Vital
+import java.text.SimpleDateFormat
 
 data class GridItem(val title: String, val icon: Int)
 
@@ -88,13 +94,29 @@ fun DashboardScreen(
     voiceViewModel: VoiceCommandViewModel = viewModel()
 ) {
     var selectedIndex by remember { mutableStateOf(0) }
-
     var showVoiceSheet by remember { mutableStateOf(false) }
-
     val colors = LocalMyColorScheme.current
+    val context = LocalContext.current
+
+    // Double-tap back to exit
+    var backPressedOnce by remember { mutableStateOf(false) }
+    BackHandler {
+        if (backPressedOnce) {
+            (context as? Activity)?.finish()
+        } else {
+            backPressedOnce = true
+            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+        }
+    }
+    LaunchedEffect(backPressedOnce) {
+        if (backPressedOnce) {
+            delay(2000)
+            backPressedOnce = false
+        }
+    }
 
     LaunchedEffect(Unit) {
-        homeViewModel.fetchLastVital()
+        homeViewModel.fetchDashboard()
     }
 
     Scaffold(
@@ -170,10 +192,8 @@ fun AddActivityScreen() {
 fun HomeView(viewModel: HomeViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
     val vitals by viewModel.vitalList.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.fetchLastVital()
-    }
+    val appointments by viewModel.appointments.collectAsState()
+    val loading by viewModel.loading.collectAsState()
 
     Column(
         modifier = Modifier
@@ -182,7 +202,11 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        VitalsCard(vitals)
+        if (loading && vitals.isEmpty()) {
+            VitalsCardShimmer()
+        } else {
+            VitalsCard(vitals)
+        }
 
         Spacer(Modifier.height(20.dp))
 
@@ -196,7 +220,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
 
         Spacer(Modifier.height(20.dp))
 
-        AnimatedSection(delayMillis = 600) { HomeScreen() }
+        AnimatedSection(delayMillis = 600) { HomeScreen(appointments = appointments, loading = loading) }
 
         Spacer(Modifier.height(20.dp))
 
@@ -820,6 +844,107 @@ fun mergeVitals(vitals: List<Vital>): List<Vital> {
 
     return otherVitals
 }
+// ------------------- Shimmer -------------------
+@Composable
+fun shimmerBrush(): Brush {
+    val shimmerColors = listOf(
+        Color(0xFFE0E0E0),
+        Color(0xFFF5F5F5),
+        Color(0xFFE0E0E0),
+    )
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateX by transition.animateFloat(
+        initialValue = -600f,
+        targetValue = 600f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerX"
+    )
+    return Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset(translateX, 0f),
+        end = Offset(translateX + 600f, 0f)
+    )
+}
+
+@Composable
+fun VitalsCardShimmer() {
+    val brush = shimmerBrush()
+    Column {
+        Box(
+            modifier = Modifier
+                .width(60.dp).height(18.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(brush)
+        )
+        Spacer(Modifier.height(8.dp))
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0)),
+            modifier = Modifier.fillMaxWidth().padding(5.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.size(24.dp).clip(CircleShape).background(brush))
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Box(modifier = Modifier.fillMaxWidth(0.55f).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                    Spacer(Modifier.height(6.dp))
+                    Box(modifier = Modifier.fillMaxWidth(0.35f).height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                }
+                Box(modifier = Modifier.width(60.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            repeat(4) {
+                Box(modifier = Modifier.padding(2.dp).size(6.dp).clip(CircleShape).background(brush))
+            }
+        }
+    }
+}
+
+@Composable
+fun AppointmentCardShimmer() {
+    val brush = shimmerBrush()
+    val whiteOverlay = Color.White.copy(alpha = 0.25f)
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2458C6).copy(alpha = 0.85f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(whiteOverlay))
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Box(modifier = Modifier.width(130.dp).height(16.dp).clip(RoundedCornerShape(4.dp)).background(whiteOverlay))
+                    Spacer(Modifier.height(6.dp))
+                    Box(modifier = Modifier.width(95.dp).height(13.dp).clip(RoundedCornerShape(4.dp)).background(whiteOverlay))
+                    Spacer(Modifier.height(4.dp))
+                    Box(modifier = Modifier.width(75.dp).height(12.dp).clip(RoundedCornerShape(4.dp)).background(whiteOverlay))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Divider(color = Color.White.copy(alpha = 0.3f))
+            Spacer(Modifier.height(12.dp))
+            repeat(3) {
+                Row(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.size(16.dp).clip(CircleShape).background(whiteOverlay))
+                    Spacer(Modifier.width(8.dp))
+                    Box(modifier = Modifier.width(150.dp).height(13.dp).clip(RoundedCornerShape(4.dp)).background(whiteOverlay))
+                }
+            }
+        }
+    }
+}
+
 // ------------------- Vitals Card -------------------
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -1196,84 +1321,145 @@ fun PrimaryActionsGrid(   ) {
 
 // ------------------- Home Screen -------------------
 @Composable
-fun HomeScreen() {
-
-
+fun HomeScreen(
+    appointments: List<UpcomingAppointment> = emptyList(),
+    loading: Boolean = false
+) {
+    val navController = LocalNavController.current
     Column(modifier = Modifier.fillMaxWidth()) {
-        Spacer(Modifier.height(10.dp))
-
-        /* Upcoming Appointments
-        Text("Upcoming Appointments",
-                style = AppTextStyles.style18BCB())
-        Spacer(Modifier.height(10.dp))
-        AppointmentCard()
-        Spacer(Modifier.height(20.dp))
-        */
-
-        /* Featured Articles
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Featured Articles",
-                style = AppTextStyles.style18BCB())
-            Text("View All",
-                style = AppTextStyles.style18BCN())
+        when {
+            loading && appointments.isEmpty() -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Upcoming Appointments", style = AppTextStyles.style18BCB())
+                }
+                Spacer(Modifier.height(12.dp))
+                AppointmentCardShimmer()
+                Spacer(Modifier.height(16.dp))
+            }
+            appointments.isNotEmpty() -> {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Upcoming Appointments", style = AppTextStyles.style18BCB())
+                    Text(
+                        "View All",
+                        style = AppTextStyles.style12GCN(),
+                        color = Color(0xFF2F6FE4),
+                        modifier = Modifier.clickable { navController.navigate(Routes.APPOINTMENTS) }
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                appointments.forEach { appointment ->
+                    AppointmentCard(appointment)
+                    Spacer(Modifier.height(12.dp))
+                }
+            }
         }
-        Spacer(Modifier.height(10.dp))
-        ArticleCard(
-            title = "Carbohydrate antigen 125 (CA125) following acute myocardial infarction: effects of empagliflozin and association with heart failure readouts in the EMMY trial",
-            author = "Ahmed M. Hassan, and Others",
-            date = "23 December 2025"
-        )
-        Spacer(Modifier.height(10.dp))
-        ArticleCard(
-            title = "Trial of High-Dose Oral Rifampin in Adults with Tuberculous Meningitis.",
-            author = "D.B. Meya, and Others",
-            date = "17 December 2025"
-        )
-        */
     }
 }
 
 // ------------------- Appointment Card -------------------
+fun formatAppointmentDate(date: String): String = try {
+    val input = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val output = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+    output.format(input.parse(date)!!)
+} catch (e: Exception) { date }
+
+fun formatSlotTime(time: String): String = try {
+    val input = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    val output = SimpleDateFormat("h:mm a", Locale.getDefault())
+    output.format(input.parse(time)!!)
+} catch (e: Exception) { time }
+
 @Composable
-fun AppointmentCard() {
+fun AppointmentCard(appointment: UpcomingAppointment) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2458C6)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(R.drawable.vital_details),
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(52.dp)
                         .clip(CircleShape)
-                )
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text("Dr. Abdul Karim", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    Text("MBBS, MS, MCn (Neurologist)", color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp)
+                        .background(Color.White.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        appointment.doctorName.trim(),
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        appointment.qualification,
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 13.sp
+                    )
+                    if (appointment.departmentName.isNotEmpty()) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            appointment.departmentName,
+                            color = Color.White.copy(alpha = 0.65f),
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
-            Divider(color = Color.White.copy(alpha = 0.3f))
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
+            Divider(color = Color.White.copy(alpha = 0.2f))
+            Spacer(Modifier.height(14.dp))
 
-            AppointmentRow(Icons.Default.DateRange, "Tuesday - December 16")
-            AppointmentRow(Icons.Default.DateRange, "09:00 AM - 10:00 AM")
-            AppointmentRow(Icons.Default.LocationOn, "LifeSpring Medical Center")
+            AppointmentRow(Icons.Default.DateRange, formatAppointmentDate(appointment.appointmentDate))
+            Spacer(Modifier.height(6.dp))
+            AppointmentRow(Icons.Default.Schedule, formatSlotTime(appointment.slotTime))
+            if (appointment.clinicName.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                AppointmentRow(Icons.Default.LocationOn, appointment.clinicName)
+            }
         }
     }
 }
 
 @Composable
 fun AppointmentRow(icon: ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
-        Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(text, color = Color.White, fontSize = 13.sp)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(15.dp)
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(text, color = Color.White.copy(alpha = 0.9f), fontSize = 13.sp)
     }
 }
 
@@ -1307,29 +1493,10 @@ fun ArticleCard(title: String, author: String, date: String) {
 // ------------------- Other Section -------------------
 @Composable
 fun OtherSection() {
-    Box {
-//        modifier =
-//            Modifier.padding(bottom = 35.dp)
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)) {
-            Text("Other",
-                style = AppTextStyles.style18BCN())
-            Spacer(Modifier.height(12.dp))
-            Row {
-                /* Activities Chronicle
-                ChronicleCard(modifier = Modifier.weight(1f))
-                Spacer(Modifier.width(12.dp))
-                */
-                Column(modifier = Modifier.weight(1f)) {
-                    UploadReportCard()
-                    /* Lifestyle Intervention
-                    Spacer(Modifier.height(12.dp))
-                    LifestyleCard()
-                    */
-                }
-            }
-        }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text("Quick Actions", style = AppTextStyles.style18BCB())
+        Spacer(Modifier.height(12.dp))
+        UploadReportCard()
     }
 }
 
@@ -1373,25 +1540,51 @@ fun ChronicleCard(modifier: Modifier) {
 @Composable
 fun UploadReportCard() {
     val colors = LocalMyColorScheme.current
-
-
-    val context = LocalContext.current
-
     val navController = LocalNavController.current
 
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .height(95.dp)
-        .clickable() {
-
-            navController.navigate(Routes.LABREPORTS)
-        }, shape = RoundedCornerShape(18.dp), colors =
-        CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
-        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(painter = painterResource(R.drawable.upload_report), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Unspecified)
-            Spacer(Modifier.height(6.dp))
-            Text("Upload Report",
-                style = AppTextStyles.style14BCN())
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { navController.navigate(Routes.LABREPORTS) },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFF2F6FE4).copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.upload_report),
+                    contentDescription = null,
+                    modifier = Modifier.size(26.dp),
+                    tint = Color.Unspecified
+                )
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Upload Report", style = AppTextStyles.style14BCN())
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "Add your lab reports & documents",
+                    style = AppTextStyles.style12GCN()
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color(0xFFAAAAAA),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }

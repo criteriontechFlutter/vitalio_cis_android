@@ -35,7 +35,7 @@ class ReportRepositoryImpl @Inject constructor(
     override suspend fun fetchMedia(uhid: String, clientId: String): DomainResult<List<MediaItem>> = try {
         val params = mapOf("uhid" to uhid, "ClientId" to clientId)
         val json = prefs.getData(key = endpoints.fetchMedia, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fetchMedia, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fetchMedia, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")

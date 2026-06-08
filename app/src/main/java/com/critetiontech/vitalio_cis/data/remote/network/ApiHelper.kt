@@ -1,8 +1,8 @@
 package com.critetiontech.ctvitalio.data.remote.network
 
-import android.app.AlertDialog
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
@@ -17,44 +17,32 @@ class ApiHelper {
         context: Context,
         endpoint: String,
         cacheResponse: Boolean = false,
-        showNoConnectionDialog: Boolean = true,
+        showNoConnectionToast: Boolean = true,
         apiCall: suspend (String) -> Response<ResponseBody>
     ): Response<ResponseBody> = withContext(Dispatchers.IO) {
 
         val localKey = endpoint
-
-        // ✅ OFFLINE CASE
         if (!NetworkUtils.isConnected(context)) {
 
             val cached = PrefsManager(context).getString(context, localKey)
-
-            // 🔥 1. Agar cache hai → DIRECT return (NO dialog)
             if (cached != null) {
                 Log.d("ApiHelper", "Offline → Returning cached data")
                 return@withContext Response.success(
                     ResponseBody.create(null, cached)
                 )
             }
-
-            // 🔥 2. Cache nahi hai → tab decision lo
-            if (showNoConnectionDialog) {
+            if (showNoConnectionToast) {
                 withContext(Dispatchers.Main) {
-                    AlertDialog.Builder(context)
-                        .setTitle("No Internet Connection")
-                        .setMessage("Please check your network and try again.")
-                        .setPositiveButton("OK", null)
-                        .show()
+                    Toast.makeText(context, "No internet connection", Toast.LENGTH_SHORT).show()
                 }
             }
 
-            // ❌ No cache → error
             return@withContext Response.error(
                 504,
                 ResponseBody.create(null, "No Connection & No Cache")
             )
         }
 
-        // ✅ ONLINE CASE
         try {
             val response = apiCall(endpoint)
             val bodyString = response.body()?.string()
@@ -71,7 +59,6 @@ class ApiHelper {
                 )
             }
 
-            // ✅ SAVE CACHE
             if (cacheResponse && !bodyString.isNullOrEmpty()) {
                 PrefsManager(context).saveString(context, localKey, bodyString)
                 Log.d("ApiHelper", "Cached successfully")
@@ -86,7 +73,6 @@ class ApiHelper {
             Log.e("ApiHelper", "API Failed: ${e.message}")
             val cached = PrefsManager(context).getString(context, localKey)
 
-            // 🔥 Exception me bhi fallback
             return@withContext if (cached != null) {
                 Log.d("ApiHelper", "Exception → Returning cached data")
                 Response.success(ResponseBody.create(null, cached))

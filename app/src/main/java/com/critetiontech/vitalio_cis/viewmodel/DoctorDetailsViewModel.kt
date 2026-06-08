@@ -57,11 +57,12 @@ class DoctorDetailsViewModel : ViewModel() {
     fun setDepartmentId(value: String) { _departmentId.value = value }
     fun resetBookingState() { _bookingSuccess.value = false; _bookingError.value = null }
 
-    fun getDoctorProfile() {
+    fun getDoctorProfile(doctorId: String = _doctorId.value.orEmpty()) {
+        val id = doctorId.ifEmpty { _doctorId.value.orEmpty() }
         viewModelScope.launch {
             _loading.value = true
             val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
-            when (val r = deps.fetchDoctorProfile()(patient.clientId.toString(), _doctorId.value.orEmpty())) {
+            when (val r = deps.fetchDoctorProfile()(patient.clientId.toString(), id)) {
                 is DomainResult.Success -> _doctor.value = r.data
                 is DomainResult.Error -> Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
             }
@@ -69,11 +70,12 @@ class DoctorDetailsViewModel : ViewModel() {
         }
     }
 
-    fun fetchAvailableSlots(scheduleDate: String) {
+    fun fetchAvailableSlots(scheduleDate: String, doctorId: String = _doctorId.value.orEmpty()) {
+        val id = doctorId.ifEmpty { _doctorId.value.orEmpty() }
         viewModelScope.launch {
             _slotList.value = emptyList(); _loading.value = true
             val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
-            when (val r = deps.fetchAvailableSlots()(_doctorId.value.orEmpty(), scheduleDate, patient.clientId.toString())) {
+            when (val r = deps.fetchAvailableSlots()(id, scheduleDate, patient.clientId.toString())) {
                 is DomainResult.Success -> _slotList.value = r.data
                 is DomainResult.Error -> Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
             }

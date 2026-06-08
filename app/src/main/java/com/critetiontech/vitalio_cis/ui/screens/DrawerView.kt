@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,6 +41,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -69,49 +71,58 @@ import com.critetiontech.vitalio_cis.utils.PrefsManager
 
 @Composable
 fun DrawerScreen() {
-
-
     val colors = LocalMyColorScheme.current
-
     val navController = LocalNavController.current
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    var expanded by remember {
-        mutableStateOf(false)
+    var expanded by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        PrefsManager(context).clearAll()
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                ) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
+
     CommonAppBar(
         title = " ",
         actions = {
-
             Box {
-
-                IconButton(
-                    onClick = {
-                        expanded = true
-                    }
-                ) {
-
+                IconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = null
                     )
                 }
-
                 DropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = {
-                        expanded = false
-                    }
+                    onDismissRequest = { expanded = false }
                 ) {
-
                     DropdownMenuItem(
-                        text = {
-                            Text("Logout")
-                        },
+                        text = { Text("Logout") },
                         onClick = {
-                            PrefsManager(context).clearAll()
-                            navController.navigate(Routes.LOGIN)
                             expanded = false
+                            showLogoutDialog = true
                         }
                     )
                 }
@@ -156,16 +167,16 @@ fun DrawerScreen() {
             )
 
             Spacer(modifier = Modifier.height(12.dp))
-
-            MenuCard(
-                listOf(
-                    "My Observer" to "4",
-                    "Shared Accounts" to "4",
-                    "Family Health History" to "",
-                    "Connect Smart Watch" to "",
-                    "Emergency Contacts" to "4"
-                )
-            )
+//
+//            MenuCard(
+//                listOf(
+//                    "My Observer" to "4",
+//                    "Shared Accounts" to "4",
+//                    "Family Health History" to "",
+//                    "Connect Smart Watch" to "",
+//                    "Emergency Contacts" to "4"
+//                )
+//            )
         Spacer(modifier = Modifier.height(12.dp))
         ThemeSwitchItem()
 
@@ -255,6 +266,21 @@ fun ThemeSwitchItem() {
 @Composable
 fun ProfileCard() {
 
+    val context = LocalContext.current
+    val patient = remember { PrefsManager(context).getPatient() }
+    val fullName = remember(patient) {
+        listOfNotNull(patient?.firstName, patient?.lastName?.takeIf { it.isNotBlank() })
+            .joinToString(" ")
+            .ifEmpty { "—" }
+    }
+    val mobileDisplay = remember(patient) {
+        if (patient != null) {
+            val prefix = patient.countryCallingCode.takeIf { it.isNotBlank() }?.let { "+$it " } ?: ""
+            "$prefix${patient.mobileNo}".trim().ifEmpty { "—" }
+        } else "—"
+    }
+    val uhid = remember(patient) { patient?.uhId?.ifEmpty { null } }
+
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
     Column(
@@ -302,10 +328,18 @@ fun ProfileCard() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Text("Abhay Sharma", style = AppTextStyles.style18BCB())
+        Text(fullName, style = AppTextStyles.style18BCB())
+
+        if (uhid != null) {
+            Text(
+                "UHID: $uhid",
+                style = AppTextStyles.style14GCN(),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
 
         Text(
-            "+91 9876543210",
+            mobileDisplay,
             style = AppTextStyles.style14GCN(),
             modifier = Modifier.padding(top = 4.dp)
         )

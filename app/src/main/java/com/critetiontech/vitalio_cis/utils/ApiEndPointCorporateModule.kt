@@ -36,4 +36,5 @@ class ApiEndPointCorporateModule {
     val updatePatientProfile = "api/PatientRegistration/UpdatePatientProfile"
     val addAllergies = "api/PatientPrescription/AddAllergies"
     val fetchAllergies = "api/PatientPrescription/FetchAllergies"
+    val getPatientDashboardData = "api/PatientDashboard/GetPatientDashboardData"
 }

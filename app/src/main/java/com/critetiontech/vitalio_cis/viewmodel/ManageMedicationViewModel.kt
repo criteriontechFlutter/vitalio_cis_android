@@ -41,7 +41,7 @@ class ManageMedicationViewModel @Inject constructor() : ViewModel() {
                 val response = ApiHelper().callApi(
                     context,
                     ApiEndPointCorporateModule().fetchPatientMedicineIntakeByDate,
-                    showNoConnectionDialog = false
+                    showNoConnectionToast = false
                 ) { url ->
                     ApiClients.module4082.dynamicGet(url = url, params = queryParams)
                 }

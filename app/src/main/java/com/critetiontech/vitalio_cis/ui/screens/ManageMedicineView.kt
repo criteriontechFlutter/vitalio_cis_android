@@ -1,7 +1,8 @@
 package com.critetiontech.vitalio_cis.ui.screens
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -25,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -353,6 +355,7 @@ fun ManageMedicationsScreen(
 ) {
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
+    val context = LocalContext.current
 
     val today = remember { Calendar.getInstance() }
     val todayYear  = today.get(Calendar.YEAR)
@@ -383,7 +386,7 @@ fun ManageMedicationsScreen(
 
     LaunchedEffect(selectedIdx, selectedMonth, selectedYear) {
         val date = formatDate(selectedYear, selectedMonth, selected.number)
-        viewModel.fetchByDate(date)
+        viewModel.fetchByDate(context, date)
     }
 
     CommonAppBar(
@@ -482,12 +485,9 @@ fun ManageMedicationsScreen(
                 // ── Logged section ─────────────────────────────────────────────
                 SectionLabel("Logged")
                 Spacer(Modifier.height(8.dp))
-                if (loading) {
-                    Box(modifier = Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    }
-                } else if (loggedMedicines.isEmpty()) {
-                    SectionCard {
+                when {
+                    loading && loggedMedicines.isEmpty() -> LoggedSectionShimmer()
+                    !loading && loggedMedicines.isEmpty() -> SectionCard {
                         Text(
                             "No medicines logged for this date",
                             color    = TextSecondary,
@@ -495,8 +495,7 @@ fun ManageMedicationsScreen(
                             modifier = Modifier.padding(vertical = 16.dp)
                         )
                     }
-                } else {
-                    SectionCard {
+                    else -> SectionCard {
                         loggedMedicines.forEachIndexed { i, med ->
                             LoggedRow(med)
                             if (i < loggedMedicines.lastIndex)
@@ -508,10 +507,14 @@ fun ManageMedicationsScreen(
                 Spacer(Modifier.height(16.dp))
 
                 // ── All Medications section ────────────────────────────────────
-                SectionLabel("Your Medications (${allMedicines.size.toString().padStart(2, '0')})")
+                SectionLabel(
+                    if (loading) "Your Medications"
+                    else "Your Medications (${allMedicines.size.toString().padStart(2, '0')})"
+                )
                 Spacer(Modifier.height(8.dp))
-                if (allMedicines.isEmpty() && !loading) {
-                    SectionCard {
+                when {
+                    loading && allMedicines.isEmpty() -> MedChipsSectionShimmer()
+                    !loading && allMedicines.isEmpty() -> SectionCard {
                         Text(
                             "No medications found",
                             color    = TextSecondary,
@@ -519,8 +522,7 @@ fun ManageMedicationsScreen(
                             modifier = Modifier.padding(vertical = 16.dp)
                         )
                     }
-                } else {
-                    SectionCard {
+                    else -> SectionCard {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier
@@ -558,6 +560,66 @@ fun ManageMedicationsScreen(
             },
             onDismiss = { showMonthPicker = false },
         )
+    }
+}
+
+// ─── Shimmer ──────────────────────────────────────────────────────────────────
+
+@Composable
+private fun medShimmerBrush(): Brush {
+    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val transition = rememberInfiniteTransition(label = "medShimmer")
+    val translateX by transition.animateFloat(
+        initialValue = -600f, targetValue = 600f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Restart),
+        label = "medShimmerX"
+    )
+    return Brush.linearGradient(shimmerColors, start = Offset(translateX, 0f), end = Offset(translateX + 600f, 0f))
+}
+
+@Composable
+private fun LoggedSectionShimmer() {
+    val brush = medShimmerBrush()
+    SectionCard {
+        repeat(3) { i ->
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier              = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            ) {
+                Column {
+                    Box(modifier = Modifier.width(140.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                    Spacer(Modifier.height(6.dp))
+                    Box(modifier = Modifier.width(100.dp).height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                }
+                Box(modifier = Modifier.size(20.dp).clip(CircleShape).background(brush))
+            }
+            if (i < 2) HorizontalDivider(color = DividerColor, thickness = 0.5.dp)
+        }
+    }
+}
+
+@Composable
+private fun MedChipsSectionShimmer() {
+    val brush = medShimmerBrush()
+    SectionCard {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier              = Modifier.padding(vertical = 10.dp),
+        ) {
+            repeat(4) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier            = Modifier.width(70.dp),
+                ) {
+                    Box(modifier = Modifier.size(54.dp).clip(CircleShape).background(brush))
+                    Spacer(Modifier.height(6.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                    Spacer(Modifier.height(4.dp))
+                    Box(modifier = Modifier.fillMaxWidth(0.7f).height(10.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                }
+            }
+        }
     }
 }
 

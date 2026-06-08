@@ -26,7 +26,7 @@ class SymptomRepositoryImpl @Inject constructor(
     override suspend fun fetchSymptoms(uhid: String, clientId: String): DomainResult<List<SymptomItem>> = try {
         val params = mapOf("uhid" to uhid, "clientId" to clientId, "type" to "Symptoms")
         val json = prefs.getData(key = endpoints.getSymptoms, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.getSymptoms, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.getSymptoms, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -39,7 +39,7 @@ class SymptomRepositoryImpl @Inject constructor(
     } catch (e: Exception) { DomainResult.Error(e) }
 
     override suspend fun insertSymptoms(body: Map<String, Any>): DomainResult<Unit> = try {
-        val response = ApiHelper().callApi(context, endpoints.insertSymtoms, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.insertSymtoms, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
@@ -48,7 +48,7 @@ class SymptomRepositoryImpl @Inject constructor(
     override suspend fun getProblemsWithIcon(): DomainResult<List<Problem>> = try {
         val params = mapOf("problemName" to "", "languageId" to "1")
         val json = prefs.getData(key = endpoints.getProblemsWithIcon, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.getProblemsWithIcon, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.getProblemsWithIcon, showNoConnectionToast = false) { url ->
                 ApiClients.digidoctor_BaseURL.dynamicRawPost(url = url, body = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -59,7 +59,7 @@ class SymptomRepositoryImpl @Inject constructor(
 
     override suspend fun getAllProblems(query: String): DomainResult<List<Problem>> = try {
         val params = mapOf("alphabet" to query, "language" to 1)
-        val response = ApiHelper().callApi(context, endpoints.getAllProblems, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.getAllProblems, showNoConnectionToast = false) { url ->
             ApiClients.digidoctor_BaseURL.dynamicRawPost(url = url, body = params)
         }
         if (response.isSuccessful) {

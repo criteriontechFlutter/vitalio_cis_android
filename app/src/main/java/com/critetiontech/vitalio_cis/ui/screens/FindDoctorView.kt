@@ -1,6 +1,7 @@
 package com.critetiontech.vitalio_cis.ui.screens
 
 import android.net.Uri
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,11 +29,72 @@ import com.critetiontech.vitalio_cis.Routes
 import com.critetiontech.vitalio_cis.model.Doctor
 import com.critetiontech.vitalio_cis.model.DoctorDetails
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.components.ShowNoData
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.viewmodel.FindDoctorViewModel
 
-// -------------------- Data Model --------------------
+// -------------------- Shimmer --------------------
+@Composable
+private fun doctorShimmerBrush(): Brush {
+    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val transition = rememberInfiniteTransition(label = "docShimmer")
+    val translateX by transition.animateFloat(
+        initialValue = -600f, targetValue = 600f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Restart),
+        label = "docShimmerX"
+    )
+    return Brush.linearGradient(shimmerColors, start = Offset(translateX, 0f), end = Offset(translateX + 600f, 0f))
+}
+
+@Composable
+private fun DoctorCardShimmer() {
+    val colors = LocalMyColorScheme.current
+    val brush = doctorShimmerBrush()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(colors.dashboardContainerColor)
+            .padding(3.dp)
+    ) {
+        Column {
+            // Image placeholder
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(182.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(brush)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            // Name placeholder
+            Box(modifier = Modifier.fillMaxWidth(0.75f).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            Spacer(modifier = Modifier.height(7.dp))
+            // Department placeholder
+            Box(modifier = Modifier.fillMaxWidth(0.55f).height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            Spacer(modifier = Modifier.height(5.dp))
+            // Qualification placeholder
+            Box(modifier = Modifier.fillMaxWidth(0.45f).height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            Spacer(modifier = Modifier.height(5.dp))
+            // Days placeholder
+            Box(modifier = Modifier.fillMaxWidth(0.5f).height(10.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
+}
+
+@Composable
+private fun DoctorGridShimmer() {
+    val placeholders = remember { List(4) { it } }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxSize(),
+        userScrollEnabled = false
+    ) {
+        items(placeholders) { DoctorCardShimmer() }
+    }
+}
 
 // -------------------- Doctor Card --------------------
 @Composable
@@ -109,12 +173,9 @@ fun FindDoctorsScreen(
 
 
     val navController = LocalNavController.current
-
     val colors = LocalMyColorScheme.current
+    val isLoading by viewModel.loading.collectAsState()
 
-    var searchQuery by remember { mutableStateOf("") }
-
-    // Filter doctors by name or role
     val filteredDoctors = doctors.filter {
         val profile = doctorProfiles[it.assignedUserId]
         val name = profile?.name?.ifEmpty { null } ?: it.doctorName ?: ""
@@ -122,36 +183,26 @@ fun FindDoctorsScreen(
         name.contains(viewModel.searchText, ignoreCase = true) ||
                 dept.contains(viewModel.searchText, ignoreCase = true)
     }
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)
-        .background(colors.dashboardBackgroundColor)) {
 
-        // -------------------- Top Bar --------------------
-
-
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .background(colors.dashboardBackgroundColor)
+    ) {
         // -------------------- Clinic Info --------------------
         Card(
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(4.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClinicSwitch() }
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .padding(12.dp)
-                    .clickable() {
-
-                        navController.navigate(Routes.SELECTCLINIC)
-                    },
+                    .clickable { navController.navigate(Routes.SELECTCLINIC) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(Color.LightGray, CircleShape)
-                )
+                Box(modifier = Modifier.size(40.dp).background(Color.LightGray, CircleShape))
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(clinicName, fontWeight = FontWeight.Medium)
@@ -165,8 +216,6 @@ fun FindDoctorsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // -------------------- Search Bar --------------------
-
-
         MyTextField(
             value = viewModel.searchText,
             onValueChange = { viewModel.onSearchChange(it) },
@@ -176,21 +225,26 @@ fun FindDoctorsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // -------------------- Doctor Grid --------------------
-        ShowNoData(
-            list = filteredDoctors,
-            isLoading = viewModel.loading.value == true,
-            content={
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(filteredDoctors) { doctor ->
-                    DoctorCard(doctor, doctorProfiles[doctor.assignedUserId])
+        when {
+            isLoading && filteredDoctors.isEmpty() -> DoctorGridShimmer()
+            !isLoading && filteredDoctors.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No doctors found", color = Color.Gray)
                 }
             }
-        })
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(filteredDoctors) { doctor ->
+                        DoctorCard(doctor, doctorProfiles[doctor.assignedUserId])
+                    }
+                }
+            }
+        }
     }
 }
 

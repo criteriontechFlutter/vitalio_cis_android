@@ -98,17 +98,13 @@ fun AddMedicineReminderScreen(
 
             Text("Time Slot", style = AppTextStyles.style14BCN())
             Spacer(Modifier.height(6.dp))
-
-
             MyTextField(
                 value = viewModel.searchText,
                 onValueChange = { viewModel.onSearchChange(it) },
                 placeholderText = "HH:MM"
             )
 
-
             Spacer(Modifier.height(16.dp))
-
             Text("Instructions", style = AppTextStyles.style14BCN())
             Spacer(Modifier.height(6.dp))
 

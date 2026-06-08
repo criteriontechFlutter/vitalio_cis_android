@@ -37,16 +37,6 @@ fun LoginScreen() {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
 
-    val headerAlpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(600, easing = FastOutSlowInEasing),
-        label = "headerAlpha"
-    )
-    val headerY by animateFloatAsState(
-        targetValue = if (visible) 0f else -40f,
-        animationSpec = tween(600, easing = FastOutSlowInEasing),
-        label = "headerY"
-    )
     val imageAlpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = tween(800, delayMillis = 100, easing = FastOutSlowInEasing),
@@ -80,13 +70,6 @@ fun LoginScreen() {
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(30.dp))
 
-            Box(modifier = Modifier.graphicsLayer {
-                alpha = headerAlpha
-                translationY = headerY
-            }) {
-                TopHeader()
-            }
-
             Image(
                 painter = painterResource(id = R.drawable.img),
                 contentDescription = null,
@@ -109,23 +92,6 @@ fun LoginScreen() {
                 LoginCard()
             }
         }
-    }
-}
-
-@Composable
-fun TopHeader() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Our Smart App!",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
     }
 }
 

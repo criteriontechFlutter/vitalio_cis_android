@@ -38,7 +38,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun sendOtp(mobile: String): DomainResult<Boolean> = try {
         val params = mapOf("key" to mobile, "ifLoggedOutFromAllDevices" to true)
-        val response = ApiHelper().callApi(context, endpoints.corporateEmployeeLogin, showNoConnectionDialog = true) { url ->
+        val response = ApiHelper().callApi(context, endpoints.corporateEmployeeLogin, showNoConnectionToast = true) { url ->
             ApiClients.module4082.queryDynamicRawPost(url = url, params = params)
         }
         if (response.isSuccessful) {
@@ -54,7 +54,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun verifyOtp(uhid: String, otp: String, deviceToken: String): DomainResult<Patient> = try {
         val params = mapOf("key" to uhid, "otp" to otp, "deviceToken" to deviceToken, "ifLoggedOutFromAllDevices" to true)
-        val response = ApiHelper().callApi(context, endpoints.verifyLogInOTPForSHFCApp, showNoConnectionDialog = true) { url ->
+        val response = ApiHelper().callApi(context, endpoints.verifyLogInOTPForSHFCApp, showNoConnectionToast = true) { url ->
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         if (response.isSuccessful) {

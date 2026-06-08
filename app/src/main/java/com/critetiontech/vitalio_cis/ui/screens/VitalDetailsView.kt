@@ -1,6 +1,7 @@
 package com.critetiontech.vitalio_cis.ui.screens
 
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,11 +22,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import android.net.Uri
+import androidx.compose.ui.draw.clip
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
@@ -37,6 +40,64 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+
+// ─── Shimmer ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun vitalShimmerBrush(): Brush {
+    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val transition = rememberInfiniteTransition(label = "vitalShimmer")
+    val translateX by transition.animateFloat(
+        initialValue = -600f, targetValue = 600f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Restart),
+        label = "vitalShimmerX"
+    )
+    return Brush.linearGradient(shimmerColors, start = Offset(translateX, 0f), end = Offset(translateX + 600f, 0f))
+}
+
+@Composable
+private fun VitalCardShimmer(brush: Brush) {
+    val colors = LocalMyColorScheme.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // Title placeholder
+                Box(modifier = Modifier.width(130.dp).height(16.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                Spacer(modifier = Modifier.height(12.dp))
+                // Value + unit row
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Box(modifier = Modifier.width(64.dp).height(26.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(modifier = Modifier.width(36.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Time placeholder
+                Box(modifier = Modifier.width(80.dp).height(11.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            }
+            // "Add Vital" placeholder
+            Box(modifier = Modifier.width(52.dp).height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+        }
+    }
+}
+
+@Composable
+private fun VitalListShimmer() {
+    val brush = vitalShimmerBrush()
+    repeat(6) { VitalCardShimmer(brush) }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,50 +129,53 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
 
         Column(
             modifier = Modifier
-                .padding(16.dp).
-                    background(colors.dashboardBackgroundColor)
+                .padding(16.dp)
+                .background(colors.dashboardBackgroundColor)
                 .verticalScroll(rememberScrollState())
         ) {
-            val vitals by viewModel.vitalList.collectAsState()
-            if (vitals.isEmpty()) {
+            val vitals  by viewModel.vitalList.collectAsState()
+            val loading by viewModel.loading.collectAsState()
 
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+            when {
+                loading && vitals.isEmpty() -> VitalListShimmer()
+
+                !loading && vitals.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No vitals recorded yet", color = Color(0xFF9E9E9E))
+                    }
                 }
 
-            } else {
+                else -> {
+                    val bpSys = vitals.find { it.vitalName.equals("BP_Sys", true) }
+                    val bpDia = vitals.find { it.vitalName.equals("BP_Dias", true) }
 
-                val bpSys = vitals.find { it.vitalName.equals("BP_Sys", true) }
-                val bpDia = vitals.find { it.vitalName.equals("BP_Dias", true) }
-
-                // ✅ BP Combined Card
-                if (bpSys != null && bpDia != null) {
-                    VitalCard(
-                        title = "Blood Pressure",
-                        value = "${bpSys.vitalValue.toInt()}/${bpDia.vitalValue.toInt()}",
-                        unit = "mmHg",
-                        color = getBpColor(bpSys.vitalValue, bpDia.vitalValue),
-                        time = formatTimeAgo(bpSys.vitalDateTime),
-                        vitalIds = "${bpSys.vitalID},${bpDia.vitalID}"
-                    )
-                }
-
-                // ✅ Other vitals (BP skip)
-                vitals
-                    .filter { it.vitalName != "BP_Sys" && it.vitalName != "BP_Dias" }
-                    .forEach { vital ->
+                    if (bpSys != null && bpDia != null) {
                         VitalCard(
-                            title = getVitalDisplayName(vital.vitalName),
-                            value = formatValue(vital.vitalValue),
-                            unit = vital.unit.replace("/", ""),
-                            color = getVitalValueColor(vital.vitalName, vital.vitalValue),
-                            time = formatTimeAgo(vital.vitalDateTime),
-                            vitalIds = "${vital.vitalID}"
+                            title    = "Blood Pressure",
+                            value    = "${bpSys.vitalValue.toInt()}/${bpDia.vitalValue.toInt()}",
+                            unit     = "mmHg",
+                            color    = getBpColor(bpSys.vitalValue, bpDia.vitalValue),
+                            time     = formatTimeAgo(bpSys.vitalDateTime),
+                            vitalIds = "${bpSys.vitalID},${bpDia.vitalID}"
                         )
                     }
+
+                    vitals
+                        .filter { it.vitalName != "BP_Sys" && it.vitalName != "BP_Dias" }
+                        .forEach { vital ->
+                            VitalCard(
+                                title    = getVitalDisplayName(vital.vitalName),
+                                value    = formatValue(vital.vitalValue),
+                                unit     = vital.unit.replace("/", ""),
+                                color    = getVitalValueColor(vital.vitalName, vital.vitalValue),
+                                time     = formatTimeAgo(vital.vitalDateTime),
+                                vitalIds = "${vital.vitalID}"
+                            )
+                        }
+                }
             }
         }
     }

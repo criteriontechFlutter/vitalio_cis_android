@@ -52,13 +52,12 @@ fun DoctorDetailsScreen(
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
     val doctor by viewModel.doctor.collectAsState()
-    LaunchedEffect(Unit) {
+    LaunchedEffect(doctorId) {
         viewModel.setDoctorId(doctorId)
-        viewModel.getDoctorProfile()
+        viewModel.getDoctorProfile(doctorId)
         val today = LocalDate.now()
-        viewModel.fetchAvailableSlots("${today.year}/${today.monthValue}/${today.dayOfMonth}")
+        viewModel.fetchAvailableSlots("${today.year}/${today.monthValue}/${today.dayOfMonth}", doctorId)
         viewModel.setSlotDate("${today.year}/${today.monthValue}/${today.dayOfMonth}")
-
     }
 
     CommonAppBar(

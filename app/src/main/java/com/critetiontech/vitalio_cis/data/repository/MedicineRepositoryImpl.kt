@@ -27,7 +27,7 @@ class MedicineRepositoryImpl @Inject constructor(
     override suspend fun fetchMedicineIntake(pid: Int, givenDate: String, clientId: Int): DomainResult<List<MedicinePeriod>> = try {
         val params = mapOf("pid" to pid, "givenDate" to givenDate, "clientId" to clientId)
         val json = prefs.getData(key = "${endpoints.fetchPatientMedicineIntake}?pid=$pid&givenDate=$givenDate", shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fetchPatientMedicineIntake, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fetchPatientMedicineIntake, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -41,7 +41,7 @@ class MedicineRepositoryImpl @Inject constructor(
 
     override suspend fun markIntake(id: Int, scheduledDateTime: String): DomainResult<Unit> = try {
         val body = mapOf("id" to id, "ScheduledDateTime" to scheduledDateTime)
-        val response = ApiHelper().callApi(context, endpoints.insertMedicineIntake, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.insertMedicineIntake, showNoConnectionToast = false) { url ->
             ApiClients.module4082.queryRawPostApi(url = url, params = body, body = body)
         }
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
@@ -49,7 +49,7 @@ class MedicineRepositoryImpl @Inject constructor(
 
     override suspend fun fetchMedicineByDate(pid: Int, givenDate: String, clientId: Int): DomainResult<Pair<List<LoggedMedicine>, List<AllMedicine>>> = try {
         val params = mapOf("pid" to pid, "givenDate" to givenDate, "clientId" to clientId)
-        val response = ApiHelper().callApi(context, endpoints.fetchPatientMedicineIntakeByDate, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.fetchPatientMedicineIntakeByDate, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         if (response.isSuccessful) {

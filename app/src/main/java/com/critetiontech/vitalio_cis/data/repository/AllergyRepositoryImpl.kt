@@ -24,7 +24,7 @@ class AllergyRepositoryImpl @Inject constructor(
     override suspend fun fetchAllergies(uhid: String, clientId: Int, typeAllergy: String): DomainResult<List<AllergyItem>> = try {
         val params = mapOf("uhid" to uhid, "clientId" to clientId.toString(), "typeAllergy" to typeAllergy)
         val json = prefs.getData(key = "${endpoints.fetchAllergies}_$typeAllergy", shouldSave = false) {
-            val response = ApiHelper().callApi(context, endpoints.fetchAllergies, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fetchAllergies, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string()
@@ -40,7 +40,7 @@ class AllergyRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addAllergy(body: Map<String, Any>): DomainResult<Unit> = try {
-        val response = ApiHelper().callApi(context, endpoints.addAllergies, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.addAllergies, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
         if (response.isSuccessful) DomainResult.Success(Unit)

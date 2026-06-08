@@ -28,7 +28,7 @@ class DoctorRepositoryImpl @Inject constructor(
     override suspend fun fetchDoctors(clientId: String): DomainResult<List<Doctor>> = try {
         val params = mapOf("clientID" to clientId, "departmentId" to "0")
         val json = prefs.getData(key = endpoints.fetchDoctorsAvalability, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fetchDoctorsAvalability, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fetchDoctorsAvalability, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -40,7 +40,7 @@ class DoctorRepositoryImpl @Inject constructor(
     override suspend fun fetchDoctorProfile(clientId: String, doctorId: String): DomainResult<DoctorDetails?> = try {
         val params = mapOf("clientID" to clientId, "doctorId" to doctorId)
         val json = prefs.getData(key = endpoints.getDoctorProfile, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.getDoctorProfile, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.getDoctorProfile, showNoConnectionToast = false) { url ->
                 ApiClients.module4084.dynamicGet(url = url, params = params as Map<String, @JvmSuppressWildcards Any>)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -52,7 +52,7 @@ class DoctorRepositoryImpl @Inject constructor(
     override suspend fun fetchAvailableSlots(doctorId: String, scheduleDate: String, clientId: String): DomainResult<List<ShiftData>> = try {
         val params = mapOf("doctorId" to doctorId, "scheduleDate" to scheduleDate, "userId" to "1362", "clientID" to clientId)
         val json = prefs.getData(key = endpoints.fetchAvailableSlots, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fetchAvailableSlots, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fetchAvailableSlots, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -62,7 +62,7 @@ class DoctorRepositoryImpl @Inject constructor(
     } catch (e: Exception) { DomainResult.Error(e) }
 
     override suspend fun bookAppointment(params: Map<String, Any>): DomainResult<Unit> = try {
-        val response = ApiHelper().callApi(context, endpoints.bookAppointment, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.bookAppointment, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = params)
         }
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))

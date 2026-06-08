@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -56,6 +57,41 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+@Composable
+private fun outputShimmerBrush(): Brush {
+    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val transition = rememberInfiniteTransition(label = "outShimmer")
+    val translateX by transition.animateFloat(
+        initialValue = -600f, targetValue = 600f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Restart),
+        label = "outShimmerX"
+    )
+    return Brush.linearGradient(shimmerColors, start = Offset(translateX, 0f), end = Offset(translateX + 600f, 0f))
+}
+
+@Composable
+private fun FluidOutputLogShimmer() {
+    val brush = outputShimmerBrush()
+    repeat(5) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier.size(18.dp).clip(CircleShape).background(brush))
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Box(modifier = Modifier.fillMaxWidth(0.5f).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Box(modifier = Modifier.fillMaxWidth(0.33f).height(11.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+                }
+                Box(modifier = Modifier.width(48.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            }
+            Divider(color = Color(0xFFE0E0E0), thickness = 0.7.dp)
+        }
+    }
+}
 
 private fun colourNameToColor(colour: String): Color {
     if (colour.startsWith("#")) {
@@ -197,14 +233,7 @@ fun FluidOutputHistoryScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (isLoading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = Color(0xFF2F6BFF))
-                        }
+                        FluidOutputLogShimmer()
                     } else if (selectedTab == 0) {
                         if (filteredDaily.isEmpty()) {
                             Text(

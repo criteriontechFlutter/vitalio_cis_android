@@ -32,7 +32,7 @@ class FluidRepositoryImpl @Inject constructor(
     override suspend fun getManualFoodList(uhid: String): DomainResult<List<ManualFoodAssignItem>> = try {
         val params = mapOf("Uhid" to uhid, "intervalTimeInHour" to 24)
         val json = prefs.getData(key = endpoints.getManualFoodAssignList, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.getManualFoodAssignList, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.getManualFoodAssignList, showNoConnectionToast = false) { url ->
                 ApiClients.module4094.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -47,7 +47,7 @@ class FluidRepositoryImpl @Inject constructor(
     override suspend fun fetchIntakeItems(uhid: String, clientId: String, fromDate: String): DomainResult<List<IntakeItem>> = try {
         val params = mapOf("Uhid" to uhid, "entryType" to "N", "clientId" to clientId, "fromDate" to fromDate)
         val json = prefs.getData(key = "${endpoints.fetchIntake}_$fromDate", shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fetchIntake, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fetchIntake, showNoConnectionToast = false) { url ->
                 ApiClients.module4094.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -60,7 +60,7 @@ class FluidRepositoryImpl @Inject constructor(
     } catch (e: Exception) { DomainResult.Error(e) }
 
     override suspend fun addIntake(body: Map<String, Any>): DomainResult<Unit> = try {
-        val response = ApiHelper().callApi(context, endpoints.addIntake, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.addIntake, showNoConnectionToast = false) { url ->
             ApiClients.module4094.dynamicRawPost(url = url, body = body)
         }
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
@@ -69,7 +69,7 @@ class FluidRepositoryImpl @Inject constructor(
     override suspend fun fetchOutput(uhid: String, clientId: String, userId: String, fromDate: String): DomainResult<List<OutputItem>> = try {
         val params = mapOf("uhid" to uhid, "clientId" to clientId, "userId" to userId, "fromdate" to fromDate)
         val json = prefs.getData(key = "${endpoints.fetchOutput}_$fromDate", shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fetchOutput, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fetchOutput, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -82,7 +82,7 @@ class FluidRepositoryImpl @Inject constructor(
     } catch (e: Exception) { DomainResult.Error(e) }
 
     override suspend fun addOutput(body: Map<String, Any>): DomainResult<Unit> = try {
-        val response = ApiHelper().callApi(context, endpoints.addOutput, showNoConnectionDialog = false) { url ->
+        val response = ApiHelper().callApi(context, endpoints.addOutput, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
@@ -91,7 +91,7 @@ class FluidRepositoryImpl @Inject constructor(
     override suspend fun fetchFluidSummary(uhid: String, fromDate: String, toDate: String): DomainResult<List<FluidSummaryItem>> = try {
         val params = mapOf("Uhid" to uhid, "fromDate" to fromDate, "toDate" to toDate)
         val json = prefs.getData(key = "${endpoints.fluidSummaryByDateRange}_${fromDate}_$toDate", shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fluidSummaryByDateRange, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.fluidSummaryByDateRange, showNoConnectionToast = false) { url ->
                 ApiClients.module4094.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
@@ -106,7 +106,7 @@ class FluidRepositoryImpl @Inject constructor(
     override suspend fun fetchOutputSummary(uhid: String, clientId: String, fromDate: String, toDate: String): DomainResult<List<OutputSummaryItem>> = try {
         val params = mapOf("Uhid" to uhid, "clientId" to clientId, "fromDate" to fromDate, "toDate" to toDate)
         val json = prefs.getData(key = "${endpoints.outputSummaryByDateRange}_${fromDate}_$toDate", shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.outputSummaryByDateRange, showNoConnectionDialog = false) { url ->
+            val response = ApiHelper().callApi(context, endpoints.outputSummaryByDateRange, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
