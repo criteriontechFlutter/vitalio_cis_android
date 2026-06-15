@@ -30,7 +30,6 @@ class DoctorDetailsViewModel : ViewModel() {
     val bookingError: StateFlow<String?> = _bookingError
 
     private val _doctorId = MutableLiveData("")
-    val doctorId: androidx.lifecycle.LiveData<String> = _doctorId
 
     private val _slotTime = MutableLiveData("")
     val slotTime: androidx.lifecycle.LiveData<String> = _slotTime
@@ -39,10 +38,8 @@ class DoctorDetailsViewModel : ViewModel() {
     val slotDate: androidx.lifecycle.LiveData<String> = _slotDate
 
     private val _shiftId = MutableLiveData("")
-    val shiftId: androidx.lifecycle.LiveData<String> = _shiftId
 
     private val _departmentId = MutableLiveData("")
-    val departmentId: androidx.lifecycle.LiveData<String> = _departmentId
 
     private val _doctor = MutableStateFlow<DoctorDetails?>(null)
     val doctor: StateFlow<DoctorDetails?> = _doctor

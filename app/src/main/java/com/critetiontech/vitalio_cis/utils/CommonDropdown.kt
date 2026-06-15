@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.utils
+  package com.critetiontech.vitalio_cis.utils
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
