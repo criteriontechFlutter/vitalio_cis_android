@@ -6,12 +6,16 @@ import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.vitalio_cis.domain.model.DomainResult
 import com.critetiontech.vitalio_cis.domain.repository.DoctorRepository
+import com.critetiontech.vitalio_cis.model.AppointmentHistoryItem
+import com.critetiontech.vitalio_cis.model.AppointmentHistoryResponse
 import com.critetiontech.vitalio_cis.model.Doctor
 import com.critetiontech.vitalio_cis.model.DoctorDetails
 import com.critetiontech.vitalio_cis.model.DoctorResponse
 import com.critetiontech.vitalio_cis.model.DoctorResponsedata
 import com.critetiontech.vitalio_cis.model.ShiftData
 import com.critetiontech.vitalio_cis.model.ShiftResponse
+import com.critetiontech.vitalio_cis.model.UpcomingAppointmentItem
+import com.critetiontech.vitalio_cis.model.UpcomingAppointmentsResponse
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -66,5 +70,25 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicRawPost(url = url, body = params)
         }
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
+    } catch (e: Exception) { DomainResult.Error(e) }
+
+    override suspend fun fetchUpcomingAppointments(pid: String, clientId: String): DomainResult<List<UpcomingAppointmentItem>> = try {
+        val params = mapOf("pid" to pid, "ClientId" to clientId)
+        val response = ApiHelper().callApi(context, endpoints.fetchUpcomingAppointmentList, showNoConnectionToast = false) { url ->
+            ApiClients.module4082.dynamicGet(url = url, params = params)
+        }
+        val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, UpcomingAppointmentsResponse::class.java).responseValue else emptyList()
+        DomainResult.Success(list)
+    } catch (e: Exception) { DomainResult.Error(e) }
+
+    override suspend fun fetchAppointmentHistory(pid: String, clientId: String, userId: String): DomainResult<List<AppointmentHistoryItem>> = try {
+        val params = mapOf("pid" to pid, "clientId" to clientId, "userId" to userId)
+        val response = ApiHelper().callApi(context, endpoints.appointmentHistory, showNoConnectionToast = false) { url ->
+            ApiClients.module44374.dynamicGet(url = url, params = params)
+        }
+        val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, AppointmentHistoryResponse::class.java).responseValue else emptyList()
+        DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 }

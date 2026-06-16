@@ -15,12 +15,15 @@ import com.critetiontech.vitalio_cis.utils.MyApplication
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
 
     private val fetchLastVitalUseCase = AppDependencies.fetchLastVital()
     private val prefs = AppDependencies.prefs
+    private val networkMonitor = AppDependencies.networkMonitor
     private val endpoints = ApiEndPointCorporateModule()
 
     private val _loading = MutableStateFlow(false)
@@ -31,6 +34,19 @@ class HomeViewModel : ViewModel() {
 
     private val _appointments = MutableStateFlow<List<UpcomingAppointment>>(emptyList())
     val appointments: StateFlow<List<UpcomingAppointment>> = _appointments
+
+    init {
+        // Auto-refetch dashboard when network comes back after being offline
+        viewModelScope.launch {
+            networkMonitor.isOnline
+                .drop(1)           // skip initial emission
+                .filter { it }     // only fire when going offline → online
+                .collect {
+                    Log.d("HomeViewModel", "Network restored — refreshing dashboard")
+                    fetchDashboard()
+                }
+        }
+    }
 
     fun fetchDashboard() {
         viewModelScope.launch {

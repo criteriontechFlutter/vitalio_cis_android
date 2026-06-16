@@ -178,7 +178,7 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             }) {
                 Column {
                     Text(
-                        text = "Enter UHID/Mobile No./Email",
+                        text = "Enter UHID/Mobile No",
                         fontSize = 13.sp,
                         color = Color(0xFF444444)
                     )
@@ -186,7 +186,7 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                     CommonTextField(
                         value = viewModel.mobile,
                         onValueChange = { viewModel.onMobileChange(it) },
-                        hint = "Enter UHID/Mobile No./Email",
+                        hint = "Enter UHID/Mobile No.",
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Badge,

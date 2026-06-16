@@ -101,9 +101,8 @@ object ToastUtils {
 //    }
 
     // ---------------- Greeting Utility ----------------
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getSimpleGreeting(): String {
-        val hour = LocalTime.now().hour
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         return when (hour) {
             in 5..11 -> "Good Morning"
             in 12..17 -> "Good Afternoon"

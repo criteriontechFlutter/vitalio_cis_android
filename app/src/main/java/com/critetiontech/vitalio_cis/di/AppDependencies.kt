@@ -14,9 +14,11 @@ import com.critetiontech.vitalio_cis.domain.usecase.allergy.FetchAllergiesUseCas
 import com.critetiontech.vitalio_cis.domain.usecase.auth.SendOtpUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.auth.VerifyOtpUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.doctor.BookAppointmentUseCase
+import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchAppointmentHistoryUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchAvailableSlotsUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchDoctorProfileUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchDoctorsUseCase
+import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchUpcomingAppointmentsUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.fluid.AddIntakeUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.fluid.AddOutputUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.fluid.FetchFluidSummaryUseCase
@@ -38,6 +40,7 @@ import com.critetiontech.vitalio_cis.domain.usecase.symptom.InsertSymptomsUseCas
 import com.critetiontech.vitalio_cis.domain.usecase.vital.AddVitalUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.vital.FetchLastVitalUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.vital.FetchVitalAnalyticsUseCase
+import com.critetiontech.vitalio_cis.network.NetworkMonitor
 import com.critetiontech.vitalio_cis.utils.MyApplication
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 
@@ -46,6 +49,7 @@ import com.critetiontech.vitalio_cis.utils.PrefsManager
 object AppDependencies {
 
     val prefs: PrefsManager by lazy { PrefsManager(MyApplication.appContext) }
+    val networkMonitor: NetworkMonitor by lazy { NetworkMonitor(MyApplication.appContext) }
 
     // Repositories
     val authRepository by lazy { AuthRepositoryImpl(MyApplication.appContext, prefs) }
@@ -80,6 +84,8 @@ object AppDependencies {
     fun fetchDoctorProfile() = FetchDoctorProfileUseCase(doctorRepository)
     fun fetchAvailableSlots() = FetchAvailableSlotsUseCase(doctorRepository)
     fun bookAppointment() = BookAppointmentUseCase(doctorRepository)
+    fun fetchUpcomingAppointments() = FetchUpcomingAppointmentsUseCase(doctorRepository)
+    fun fetchAppointmentHistory() = FetchAppointmentHistoryUseCase(doctorRepository)
     fun fetchMedia() = FetchMediaUseCase(reportRepository)
     fun uploadMedia() = UploadMediaUseCase(reportRepository)
     fun aiReport() = AiReportUseCase(reportRepository)

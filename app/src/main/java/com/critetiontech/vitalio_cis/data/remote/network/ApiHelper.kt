@@ -9,6 +9,7 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import com.critetiontech.ctvitalio.utils.NetworkUtils
 import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.vitalio_cis.BuildConfig
 import okhttp3.ResponseBody.Companion.toResponseBody
 
 class ApiHelper {
@@ -46,7 +47,7 @@ class ApiHelper {
         try {
             val response = apiCall(endpoint)
             val bodyString = response.body()?.string()
-            Log.d("ApiHelper", "API Response [${response.code()}]: $bodyString")
+            if (BuildConfig.DEBUG) Log.d("ApiHelper", "API Response [${response.code()}]: $bodyString")
 
             if (!response.isSuccessful) {
                 val errorBodyString = response.errorBody()?.string()

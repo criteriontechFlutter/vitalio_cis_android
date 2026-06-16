@@ -3,6 +3,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import com.critetiontech.ctvitalio.utils.ToastUtils
 import androidx.activity.compose.BackHandler
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -748,7 +749,7 @@ fun Header() {
         Spacer(Modifier.width(10.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text("Good Morning,",
+            Text("${ToastUtils.getSimpleGreeting()},",
                     style = AppTextStyles.style12GCN())
             Text(patientData?.firstName.toString(),
                     style = AppTextStyles.style18BCN())
