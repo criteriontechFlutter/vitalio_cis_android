@@ -72,6 +72,8 @@ class AllergyViewModel : ViewModel() {
             val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val allergyEntry = listOf(mapOf("detailID" to 0, "detailsDate" to now, "details" to details.ifBlank { "Patient reports allergy to $substanceName." }, "substanceName" to substanceName, "allergy" to severity, "reaction" to reaction))
             val body = mapOf("uhId" to patient.uhId, "jsonAllergies" to Gson().toJson(allergyEntry), "userId" to 0, "clientId" to patient.clientId, "isFromPatient" to true, "typeAllergy" to typeAllergy)
+            Log.d("TAG", "addAllergy: $body")
+
             when (val r = addAllergyUseCase(body)) {
                 is DomainResult.Success -> { _addSuccess.value = true; fetchAllergies() }
                 is DomainResult.Error -> { _errorMessage.value = "Failed to add allergy."; Log.e("AllergyVM", r.exception.message.orEmpty()) }

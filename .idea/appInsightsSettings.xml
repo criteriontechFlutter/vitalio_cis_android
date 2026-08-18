@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AppInsightsSettings">
+    <option name="selectedTabId" value="Android vitals" />
     <option name="tabSettings">
       <map>
         <entry key="Android Vitals">
@@ -20,13 +21,25 @@
         <entry key="Android vitals">
           <value>
             <InsightsFilterSettings>
+              <option name="signal" value="SIGNAL_UNSPECIFIED" />
+              <option name="timeIntervalDays" value="SIXTY_DAYS" />
+              <option name="visibilityType" value="ALL" />
+            </InsightsFilterSettings>
+          </value>
+        </entry>
+        <entry key="Firebase Crashlytics">
+          <value>
+            <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="anandi.event" />
+                  <option name="appId" value="com.critetiontech.vitalio_cis" />
+                  <option name="mobileSdkAppId" value="1:1018332230934:android:a7cd771c29b308409bcc37" />
+                  <option name="projectId" value="vitaliocis" />
+                  <option name="projectNumber" value="1018332230934" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
-              <option name="timeIntervalDays" value="SEVEN_DAYS" />
+              <option name="timeIntervalDays" value="THIRTY_DAYS" />
               <option name="visibilityType" value="ALL" />
             </InsightsFilterSettings>
           </value>

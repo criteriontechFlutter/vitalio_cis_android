@@ -25,13 +25,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.animation.core.*
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -88,7 +88,7 @@ private fun FluidOutputLogShimmer() {
                 }
                 Box(modifier = Modifier.width(48.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
             }
-            Divider(color = Color(0xFFE0E0E0), thickness = 0.7.dp)
+            HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
         }
     }
 }
@@ -447,7 +447,7 @@ fun FluidOutputItem(
                 style = AppTextStyles.style14BCN())
         }
 
-        Divider(color = Color(0xFFE0E0E0), thickness = 0.7.dp)
+        HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
     }
 }
 

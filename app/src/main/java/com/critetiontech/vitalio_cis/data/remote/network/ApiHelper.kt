@@ -10,6 +10,8 @@ import retrofit2.Response
 import com.critetiontech.ctvitalio.utils.NetworkUtils
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.critetiontech.vitalio_cis.BuildConfig
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 import okhttp3.ResponseBody.Companion.toResponseBody
 
 class ApiHelper {
@@ -20,12 +22,11 @@ class ApiHelper {
         cacheResponse: Boolean = false,
         showNoConnectionToast: Boolean = true,
         apiCall: suspend (String) -> Response<ResponseBody>
-    ): Response<ResponseBody> = withContext(Dispatchers.IO) {
+    ): Response<ResponseBody> = withContext(IO) {
 
-        val localKey = endpoint
         if (!NetworkUtils.isConnected(context)) {
 
-            val cached = PrefsManager(context).getString(context, localKey)
+            val cached = PrefsManager(context).getString(context, endpoint)
             if (cached != null) {
                 Log.d("ApiHelper", "Offline → Returning cached data")
                 return@withContext Response.success(
@@ -33,14 +34,14 @@ class ApiHelper {
                 )
             }
             if (showNoConnectionToast) {
-                withContext(Dispatchers.Main) {
+                withContext(Main) {
                     Toast.makeText(context, "No internet connection", Toast.LENGTH_SHORT).show()
                 }
             }
 
             return@withContext Response.error(
                 504,
-                ResponseBody.create(null, "No Connection & No Cache")
+                "No Connection & No Cache".toResponseBody(null)
             )
         }
 
@@ -61,7 +62,7 @@ class ApiHelper {
             }
 
             if (cacheResponse && !bodyString.isNullOrEmpty()) {
-                PrefsManager(context).saveString(context, localKey, bodyString)
+                PrefsManager(context).saveString(context, endpoint, bodyString)
                 Log.d("ApiHelper", "Cached successfully")
             }
 
@@ -72,7 +73,7 @@ class ApiHelper {
         } catch (e: Exception) {
 
             Log.e("ApiHelper", "API Failed: ${e.message}")
-            val cached = PrefsManager(context).getString(context, localKey)
+            val cached = PrefsManager(context).getString(context, endpoint)
 
             return@withContext if (cached != null) {
                 Log.d("ApiHelper", "Exception → Returning cached data")
@@ -80,7 +81,7 @@ class ApiHelper {
             } else {
                 Response.error(
                     500,
-                    ResponseBody.create(null, "Exception: ${e.localizedMessage}")
+                    "Exception: ${e.localizedMessage}".toResponseBody(null)
                 )
             }
         }

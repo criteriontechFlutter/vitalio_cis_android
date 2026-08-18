@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +50,6 @@ fun DoctorDetailsScreen(
 
       viewModel: DoctorDetailsViewModel = viewModel()
  ) {
-    val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
     val doctor by viewModel.doctor.collectAsState()
     LaunchedEffect(doctorId) {
@@ -240,7 +240,7 @@ fun SlotGrid(list: List<SlotData>, ShifId: String, viewModel: DoctorDetailsViewM
 
 //    val parentEntry = remember {
 //        navController?.currentBackStackEntry!!
-//    }
+//
 //
 //    val viewModel: DoctorDetailsViewModel = viewModel(parentEntry)
     var selectedSlot by remember { mutableStateOf<SlotData?>(null) }
@@ -524,7 +524,7 @@ fun MonthYearDropdown(
                 )
             }
 
-            Divider()
+            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
 
             years.forEach { y ->
                 DropdownMenuItem(

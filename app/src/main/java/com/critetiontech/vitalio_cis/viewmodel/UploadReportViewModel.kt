@@ -62,7 +62,20 @@ class UploadReportViewModel : ViewModel() {
         viewModelScope.launch {
             _isAnalyzing.value = true
             when (val r = deps.aiReport()(file)) {
-                is DomainResult.Success -> { _responseString.value = r.data; _navigationEvent.emit(Routes.AIREPORT) }
+                is DomainResult.Success -> {
+                    _responseString.value = r.data
+                    _navigationEvent.emit(Routes.AIREPORT)
+                    // After navigation, auto-insert the AI results into InvestigationByPatient
+                    val patient = prefs.getPatient()
+                    if (patient != null) {
+                        when (val insertResult = deps.insertInvestigationResult()(r.data, patient.uhId, patient.clientId)) {
+                            is DomainResult.Success -> Log.d("UploadReportVM", "InsertResult: success")
+                            is DomainResult.Error   -> Log.e("UploadReportVM", "InsertResult failed: ${insertResult.exception.message}")
+                        }
+                    } else {
+                        Log.e("UploadReportVM", "InsertResult skipped — patient prefs not available")
+                    }
+                }
                 is DomainResult.Error -> Log.e("UploadReportVM", r.exception.message.orEmpty())
             }
             _isAnalyzing.value = false

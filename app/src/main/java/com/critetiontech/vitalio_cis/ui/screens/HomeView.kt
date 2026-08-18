@@ -26,6 +26,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Button
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
@@ -930,7 +931,11 @@ fun AppointmentCardShimmer() {
                 }
             }
             Spacer(Modifier.height(12.dp))
-            Divider(color = Color.White.copy(alpha = 0.3f))
+            HorizontalDivider(
+                Modifier,
+                DividerDefaults.Thickness,
+                color = Color.White.copy(alpha = 0.3f)
+            )
             Spacer(Modifier.height(12.dp))
             repeat(3) {
                 Row(
@@ -1428,7 +1433,11 @@ fun AppointmentCard(appointment: UpcomingAppointment) {
             }
 
             Spacer(Modifier.height(16.dp))
-            Divider(color = Color.White.copy(alpha = 0.2f))
+            HorizontalDivider(
+                Modifier,
+                DividerDefaults.Thickness,
+                color = Color.White.copy(alpha = 0.2f)
+            )
             Spacer(Modifier.height(14.dp))
 
             AppointmentRow(Icons.Default.DateRange, formatAppointmentDate(appointment.appointmentDate))

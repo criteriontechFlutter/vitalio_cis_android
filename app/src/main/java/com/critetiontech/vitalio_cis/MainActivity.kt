@@ -8,8 +8,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -32,6 +30,7 @@ import com.critetiontech.vitalio_cis.ui.screens.BookingDetails
 import com.critetiontech.vitalio_cis.ui.screens.BookingDetailsScreen
 import com.critetiontech.vitalio_cis.ui.screens.ConnectWatchScreen
 import com.critetiontech.vitalio_cis.ui.screens.ConnectionScreen
+import com.critetiontech.vitalio_cis.ui.screens.HealthConnectSyncScreen
  import com.critetiontech.vitalio_cis.ui.screens.DietChecklistScreen
 import com.critetiontech.vitalio_cis.ui.screens.DoctorDetailsScreen
 import com.critetiontech.vitalio_cis.ui.screens.DrawerScreen
@@ -91,17 +90,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-
-
-
-//
-//        val intentRoute = intent?.getStringExtra("route") // ⭐ HERE
-//
-//        LaunchedEffect(intentRoute) {
-//            if (!intentRoute.isNullOrEmpty()) {
-//                navController.navigate(intentRoute)
-//            }
-//        }
         setContent {
 
             RequestNotificationPermission()
@@ -110,9 +98,6 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {
-                    val themeViewModel = LocalThemeViewModel.current
-                    val colors by themeViewModel.colorScheme.collectAsState()
-
                     Surface(
                         modifier = androidx.compose.ui.Modifier.fillMaxSize(),
                      ) {
@@ -163,11 +148,6 @@ class MainActivity : ComponentActivity() {
                                         uploadReportViewModel
                                 )
                             }
-
-//                            composable(Routes.CONNECTION+"/{vitalName}") {
-//
-//                                ConnectionScreen() }
-
                             composable(
                                 route = Routes.CONNECTION + "/{vitalName}/{unitName}"
                             ) { backStackEntry ->
@@ -260,10 +240,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.LABREPORTS) { LabReportsScreen() }
                             composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
                             composable(Routes.RESEARCHARTICLES) { ResearchArticlesScreen() }
-
-
-
-
+                            composable(Routes.HEALTHCONNECTSYNC) { HealthConnectSyncScreen() }
                             composable("welcome") { WelcomeScreen( ) }
                             composable("gender") { GenderScreen( ) }
                             composable("dob") { DobScreen( ) }

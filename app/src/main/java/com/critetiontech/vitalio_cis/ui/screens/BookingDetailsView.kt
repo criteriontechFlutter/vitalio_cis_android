@@ -16,7 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -62,7 +63,11 @@ fun BookingDetailsScreen(
                 subtitle = bookingDetails?.qly.orEmpty()
             )
 
-            Divider(modifier = Modifier.padding(vertical = 12.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 12.dp),
+                thickness = DividerDefaults.Thickness,
+                color = DividerDefaults.color
+            )
 
             InfoRow(
                 title    = bookingDetails?.atHospital.orEmpty(),

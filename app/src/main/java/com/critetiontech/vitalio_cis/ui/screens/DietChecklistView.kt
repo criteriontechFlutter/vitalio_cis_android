@@ -28,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.R
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
@@ -36,9 +35,6 @@ import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 
 @Composable
 fun DietChecklistScreen() {
-
-
-    val navController = LocalNavController.current
 
 
     val colors = LocalMyColorScheme.current

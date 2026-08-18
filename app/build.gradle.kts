@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.critetiontech.vitalio_cis"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -69,6 +69,10 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.androidx.contentpager)
     testImplementation(libs.junit)
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -123,4 +127,7 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
     implementation("com.google.firebase:firebase-analytics")
+
+    // Android Health Connect — pulls data from Wear OS / Samsung Health / Google Fit
+    implementation("androidx.health.connect:connect-client:1.1.0-rc01")
  }

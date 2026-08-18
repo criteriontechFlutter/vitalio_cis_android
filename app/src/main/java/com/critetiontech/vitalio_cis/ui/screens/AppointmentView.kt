@@ -23,7 +23,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -173,7 +173,7 @@ private fun UpcomingAppointmentCard(item: UpcomingAppointmentItem) {
                 }
             }
 
-            Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
+            HorizontalDivider(Modifier, thickness = 1.dp, color = Color(0xFFEEEEEE))
 
             // Date / time / location
             Column(
@@ -310,7 +310,7 @@ private fun HistoryAppointmentCard(item: AppointmentHistoryItem) {
                 }
             }
 
-            Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
+            HorizontalDivider(Modifier, thickness = 1.dp, color = Color(0xFFEEEEEE))
 
             // Date / time / location
             Column(

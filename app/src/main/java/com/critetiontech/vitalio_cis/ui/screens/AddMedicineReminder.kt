@@ -43,7 +43,6 @@ import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.utils.CommonButton
 import com.critetiontech.vitalio_cis.viewmodel.AddMedicineReminderViewModel
-import androidx.compose.material.icons.filled.ArrowDropDown
 
 @Composable
 fun AddMedicineReminderScreen(
@@ -172,7 +171,6 @@ fun AddAllergyBottomSheet(
     onSubmit: (substanceName: String, severity: String, reaction: String, details: String, typeAllergy: String) -> Unit,
     isLoading: Boolean = false
 ) {
-    val colors = LocalMyColorScheme.current
 
     val allergyTypes = listOf("MedicineAllergy", "FoodAllergy")
     var typeExpanded by remember { mutableStateOf(false) }

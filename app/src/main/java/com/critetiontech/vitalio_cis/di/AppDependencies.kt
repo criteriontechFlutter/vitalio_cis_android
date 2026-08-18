@@ -32,6 +32,7 @@ import com.critetiontech.vitalio_cis.domain.usecase.medicine.MarkMedicineIntakeU
 import com.critetiontech.vitalio_cis.domain.usecase.profile.UpdateProfileUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.report.AiReportUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.report.FetchMediaUseCase
+import com.critetiontech.vitalio_cis.domain.usecase.report.InsertInvestigationResultUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.report.UploadMediaUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.symptom.FetchSymptomsUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.symptom.GetAllProblemsUseCase
@@ -89,6 +90,7 @@ object AppDependencies {
     fun fetchMedia() = FetchMediaUseCase(reportRepository)
     fun uploadMedia() = UploadMediaUseCase(reportRepository)
     fun aiReport() = AiReportUseCase(reportRepository)
+    fun insertInvestigationResult() = InsertInvestigationResultUseCase(reportRepository)
     fun fetchSymptoms() = FetchSymptomsUseCase(symptomRepository)
     fun insertSymptoms() = InsertSymptomsUseCase(symptomRepository)
     fun getProblemsWithIcon() = GetProblemsWithIconUseCase(symptomRepository)

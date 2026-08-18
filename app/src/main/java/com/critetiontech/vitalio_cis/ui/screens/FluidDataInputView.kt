@@ -27,7 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -772,7 +772,11 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                             verticalArrangement = Arrangement.SpaceEvenly
                         ) {
                             repeat(10) {
-                                Divider(color = Color.White.copy(alpha = 0.85f), thickness = 1.dp)
+                                HorizontalDivider(
+                                    Modifier,
+                                    thickness = 1.dp,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
                             }
                         }
                         Box(
