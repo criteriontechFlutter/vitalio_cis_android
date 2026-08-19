@@ -53,6 +53,12 @@ import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.critetiontech.vitalio_cis.viewmodel.HomeViewModel
 import com.example.vitalio_cis.viewmodel.ListeningState
 import com.example.vitalio_cis.viewmodel.VoiceCommandViewModel
+import com.critetiontech.vitalio_cis.voice.VoiceNavigationManager
+import com.critetiontech.vitalio_cis.voice.VoiceListeningOverlay
+import com.critetiontech.vitalio_cis.voice.FloatingVoiceFab
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.isGranted
 import kotlinx.coroutines.delay
 import java.util.Locale
 import com.critetiontech.vitalio_cis.R
@@ -90,15 +96,36 @@ private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Uni
 //  Placing the FAB and VoiceAssistantSheet here (rather than inside HomeView)
 //  makes the mic button persistent across all three bottom-nav tabs.
 // ─────────────────────────────────────────────────────────────────────────────
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DashboardScreen(
     homeViewModel: HomeViewModel = viewModel(),
     voiceViewModel: VoiceCommandViewModel = viewModel()
 ) {
     var selectedIndex by remember { mutableStateOf(0) }
-    var showVoiceSheet by remember { mutableStateOf(false) }
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val navController = LocalNavController.current
+
+    // ── VoiceNavigationManager state ──────────────────────────────────────────
+    val isListening          by VoiceNavigationManager.isListening.collectAsState()
+    val transcript           by VoiceNavigationManager.transcript.collectAsState()
+    val showListeningOverlay by VoiceNavigationManager.showListeningOverlay.collectAsState()
+    val showConfirmationCard by VoiceNavigationManager.showConfirmationCard.collectAsState()
+    val pendingData          by VoiceNavigationManager.pendingData.collectAsState()
+    val isSavingData         by VoiceNavigationManager.isSavingData.collectAsState()
+    val navigationCommand    by VoiceNavigationManager.navigationCommand.collectAsState()
+
+    // Mic permission (RECORD_AUDIO already in manifest)
+    val micPermission = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
+
+    // Navigate when VoiceNavigationManager resolves a command
+    LaunchedEffect(navigationCommand) {
+        navigationCommand?.let { route ->
+            navController.navigate(route)
+            VoiceNavigationManager.clearNavigationCommand()
+        }
+    }
 
     // Double-tap back to exit
     var backPressedOnce by remember { mutableStateOf(false) }
@@ -121,62 +148,73 @@ fun DashboardScreen(
         homeViewModel.fetchDashboard()
     }
 
-    Scaffold(
-        containerColor = colors.dashboardBackgroundColor,
-        modifier = Modifier.background(colors.dashboardBackgroundColor),
-        bottomBar = {
-            BottomNavigationBar(selectedIndex) { selectedIndex = it }
-        }
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = colors.dashboardBackgroundColor,
+            modifier = Modifier.background(colors.dashboardBackgroundColor),
+            bottomBar = {
+                BottomNavigationBar(selectedIndex) { selectedIndex = it }
+            }
+        ) { padding ->
 
-        Box(modifier = Modifier.padding(padding)) {
+            Box(modifier = Modifier.padding(padding)) {
 
-            Column {
-                Spacer(Modifier.height(20.dp))
-                Column(
-                    modifier = Modifier
-                        .background(colors.dashboardBackgroundColor)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Header()
+                Column {
                     Spacer(Modifier.height(20.dp))
+                    Column(
+                        modifier = Modifier
+                            .background(colors.dashboardBackgroundColor)
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Header()
+                        Spacer(Modifier.height(20.dp))
+                    }
+
+                    // Content switches based on the selected bottom-nav tab
+                    when (selectedIndex) {
+                        0 -> HomeView()
+                        1 -> AddActivityScreen()
+                        2 -> RemindersScreen()
+                    }
                 }
 
-                // Content switches based on the selected bottom-nav tab
-                when (selectedIndex) {
-                    0 -> HomeView()
-                    1 -> AddActivityScreen()
-                    2 -> RemindersScreen()
+                // New iOS-style floating mic FAB (bottom-right)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 20.dp, end = 20.dp)
+                ) {
+                    FloatingVoiceFab(
+                        isListening  = isListening,
+                        showOverlay  = showListeningOverlay,
+                        onClick = {
+                            if (micPermission.status.isGranted) {
+                                VoiceNavigationManager.startListening { route ->
+                                    navController.navigate(route)
+                                }
+                            } else {
+                                micPermission.launchPermissionRequest()
+                            }
+                        }
+                    )
                 }
-            }
-
-            // Mic FAB – always visible regardless of the active tab
-            FloatingActionButton(
-                onClick = { showVoiceSheet = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 20.dp, end = 20.dp),
-                containerColor = Color(0xFF2F6FE4)
-            ) {
-                Icon(
-                    Icons.Default.Mic,
-                    contentDescription = "Open voice assistant",
-                    tint = Color.White
-                )
             }
         }
 
-        // Voice assistant sheet – rendered outside the padded Box so it
-        // draws over everything including the bottom nav bar
-        if (showVoiceSheet) {
-            VoiceAssistantSheet(
-                voiceViewModel = voiceViewModel,
-                onDismiss = {
-                    showVoiceSheet = false
-                    voiceViewModel.reset()
-                }
-            )
-        }
+        // Full-screen voice listening overlay (drawn ABOVE everything, including bottom nav)
+        VoiceListeningOverlay(
+            isListening          = isListening,
+            showListeningOverlay = showListeningOverlay,
+            showConfirmationCard = showConfirmationCard,
+            pendingData          = pendingData,
+            transcript           = transcript,
+            isSavingData         = isSavingData,
+            onStop               = { VoiceNavigationManager.stopListening() },
+            onCancel             = { VoiceNavigationManager.cancelPendingData() },
+            onSaveAll            = { VoiceNavigationManager.confirmAndSaveAllPendingData() },
+            onRemoveVital        = { keys -> VoiceNavigationManager.removeVital(keys) },
+            onRemoveSymptom      = { id, name -> VoiceNavigationManager.removeSymptom(id, name) }
+        )
     }
 }
 

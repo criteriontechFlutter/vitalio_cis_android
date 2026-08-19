@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -99,7 +100,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
         )
     }
 
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
     val safeIndex = currentIndex.coerceIn(0, questions.lastIndex)
     val currentQuestion = questions[safeIndex]
     val currentSymptom = symptomList[safeIndex]
