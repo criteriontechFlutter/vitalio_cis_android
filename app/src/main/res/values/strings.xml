@@ -1,8 +1,6 @@
 <resources>
     <string name="app_name">Vitalio CIS</string>
 
-    <string name="primary_action">Primary Actions</string>
-
     <string name="vitals_details">Vitals\nDetails</string>
     <string name="fluid_intake">Fluid\nIntake/Output</string>
     <string name="symptoms_tracker">Symptoms\nTracker</string>
@@ -22,16 +20,6 @@
     <string name="activity">Activity</string>
     <string name="reminders">Reminders</string>
     <string name="chat">Chat</string>
-
-
-
-    <string name="add_vital">Add Vital</string>
-    <string name="vital">Vital</string>
-
-    <string name="symptom_tracker">Symptom Tracker</string>
-    <string name="back_to_previous_question">Back to previous question</string>
-
-
 
 
 </resources>
