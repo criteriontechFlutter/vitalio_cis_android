@@ -382,7 +382,7 @@ fun VitalCard(
                 Text(
                     "Add Vital",
                             style = AppTextStyles.style12PCN(),
-                    modifier = Modifier.clickable(){
+                    modifier = Modifier.clickable {
                         navController.navigate(Routes.CONNECTION+"/"+title.toString()+"/"+unit.toString())
                     })
 

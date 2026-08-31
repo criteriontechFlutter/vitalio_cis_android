@@ -106,7 +106,7 @@ fun DoctorDetailsScreen(
                         )
                     ) {
 
-                        Column( ) {
+                        Column {
 
                             DoctorTopSection(doc, days)
 

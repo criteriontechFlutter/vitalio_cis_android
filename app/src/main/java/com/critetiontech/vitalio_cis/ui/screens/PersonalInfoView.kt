@@ -78,7 +78,6 @@ fun PersonalInfoScreen(
 ) {
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
-    val navController = LocalNavController.current
     val prefs = PrefsManager(context)
     val patient = prefs.getPatient()
 

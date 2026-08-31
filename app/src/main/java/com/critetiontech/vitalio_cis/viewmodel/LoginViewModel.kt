@@ -25,7 +25,6 @@ class LoginViewModel : ViewModel() {
     val loading: StateFlow<Boolean> = _loading
 
     private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
 
     private val _navigationEvent = MutableSharedFlow<String>()
     val navigationEvent: SharedFlow<String> = _navigationEvent
@@ -50,5 +49,4 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    fun clearError() { _errorMessage.value = null }
 }

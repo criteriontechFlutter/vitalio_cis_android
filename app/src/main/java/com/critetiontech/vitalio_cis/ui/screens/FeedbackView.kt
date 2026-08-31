@@ -23,7 +23,7 @@ fun FeedbackScreen() {
 
     var email by remember { mutableStateOf("") }
     var feedback by remember { mutableStateOf("") }
-    var selectedRating by remember { mutableStateOf(3) }
+    var selectedRating by remember { mutableIntStateOf(3) }
     var expanded by remember { mutableStateOf(false) }
     var selectedModule by remember { mutableStateOf("Select Module") }
 

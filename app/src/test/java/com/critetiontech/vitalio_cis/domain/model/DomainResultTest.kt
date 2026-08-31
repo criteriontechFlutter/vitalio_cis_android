@@ -79,8 +79,7 @@ class DomainResultTest {
 
     @Test
     fun `DomainResult can be matched with when expression - Success branch`() {
-        val result: DomainResult<Int> = DomainResult.Success(42)
-        val output = when (result) {
+        val output = when (val result: DomainResult<Int> = DomainResult.Success(42)) {
             is DomainResult.Success -> "success:${result.data}"
             is DomainResult.Error -> "error:${result.exception.message}"
         }

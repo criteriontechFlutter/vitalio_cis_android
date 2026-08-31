@@ -81,22 +81,22 @@ interface ApiService {
 
         @Url url: String,
 
-        @retrofit2.http.Query("uhId")
+        @Query("uhId")
         uhid: String,
 
-        @retrofit2.http.Query("category")
+        @Query("category")
         category: String,
 
-        @retrofit2.http.Query("dateTime")
+        @Query("dateTime")
         dateTime: String,
 
-        @retrofit2.http.Query("clientId")
+        @Query("clientId")
         clientId: String,
 
-        @retrofit2.http.Query("subCategory")
+        @Query("subCategory")
         subCategory: String,
 
-        @retrofit2.http.Query("remark")
+        @Query("remark")
         remark: String,
 
         @Part formFile : MultipartBody.Part

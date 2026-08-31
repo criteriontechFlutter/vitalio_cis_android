@@ -28,7 +28,6 @@ class IntakeOutputViewModel : ViewModel() {
     private val prefs = deps.prefs
 
     var searchText by mutableStateOf(""); private set
-    fun onSearchChange(value: String) { searchText = value }
 
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading

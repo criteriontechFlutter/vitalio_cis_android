@@ -779,7 +779,7 @@ fun Header() {
             modifier = Modifier
                 .size(45.dp)
                 .clip(CircleShape)
-                .clickable() {
+                .clickable {
 
                     navController.navigate(Routes.DRAWER)
                 }
@@ -806,7 +806,7 @@ fun ToTakeCard() {
 
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
-    Column(modifier = Modifier.clickable(){
+    Column(modifier = Modifier.clickable {
 
         navController.navigate("welcome")
     }) {
@@ -840,7 +840,7 @@ fun ToTakeCard() {
 
 fun getTimeAgo(dateTime: String): String {
     return try {
-        val format = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val past = format.parse(dateTime)
         val now = java.util.Date()
 
@@ -1522,7 +1522,7 @@ fun ArticleCard(title: String, author: String, date: String) {
         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable() {
+            .clickable {
 
                 navController.navigate(Routes.ARTICALEDETAILS)
             }) {

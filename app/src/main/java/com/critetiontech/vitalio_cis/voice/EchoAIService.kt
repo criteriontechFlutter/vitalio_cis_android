@@ -108,8 +108,7 @@ object EchoAIService {
             val vitals = mutableMapOf<String, String>()
             fun extract(key: String) {
                 if (!myVital.has(key)) return
-                val raw = myVital.opt(key)
-                val str = when (raw) {
+                val str = when (val raw = myVital.opt(key)) {
                     is Number -> if (raw.toString() != "0") raw.toString() else null
                     is String -> if (raw.isNotEmpty() && raw != "0" && raw != "N/A") raw else null
                     else -> null
@@ -158,7 +157,6 @@ object EchoAIService {
                     val id = item.optInt("id", 0)
                         .takeIf { it != 0 }
                         ?: item.optInt("detailID", 0)
-                        ?: item.optInt("problemId", 0)
 
                     val pmId = item.optInt("pdmId", 2)
                         .takeIf { it != 0 } ?: item.optInt("pmId", 2)
@@ -189,9 +187,4 @@ object EchoAIService {
 
     // ── Backward-compat helpers ───────────────────────────────────────────────
 
-    suspend fun parseSpeechToVitals(text: String): Map<String, String> =
-        parseSpeechToEntities(text).vitals ?: emptyMap()
-
-    suspend fun parseSpeechToSymptoms(text: String): List<VoiceSymptomItem> =
-        parseSpeechToEntities(text).symptoms ?: emptyList()
 }

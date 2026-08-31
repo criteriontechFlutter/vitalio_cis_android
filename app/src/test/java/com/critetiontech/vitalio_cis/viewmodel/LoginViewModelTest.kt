@@ -39,7 +39,7 @@ class LoginViewModelTest {
     // Uses explicit TestScope so coroutines are fully controllable
     // ─────────────────────────────────────────────────────────────────
 
-    private inner class TestLoginState(private val sendOtpUseCase: SendOtpUseCase) {
+    private class TestLoginState(private val sendOtpUseCase: SendOtpUseCase) {
         var mobile = ""
             private set
 

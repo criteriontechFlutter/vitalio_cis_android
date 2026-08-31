@@ -116,7 +116,7 @@ fun HealthCard(
                     Icons.Default.MoreVert,
                     contentDescription = null,
                     tint = Color.Gray,
-                    modifier = Modifier.clickable() {
+                    modifier = Modifier.clickable {
                         expanded = true
                     }
                 )

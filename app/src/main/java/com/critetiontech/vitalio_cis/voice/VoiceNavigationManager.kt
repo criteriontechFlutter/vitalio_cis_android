@@ -97,8 +97,8 @@ object VoiceNavigationManager {
     private var lastTranslation = ""
 
     // Audio: 512 Float32 samples per packet → 2048 bytes → Base64
-    private val SAMPLE_RATE = 16000
-    private val PACKET_SAMPLES = 512
+    private const val SAMPLE_RATE = 16000
+    private const val PACKET_SAMPLES = 512
     private val floatBuffer = mutableListOf<Float>()
 
     private val httpClient by lazy {

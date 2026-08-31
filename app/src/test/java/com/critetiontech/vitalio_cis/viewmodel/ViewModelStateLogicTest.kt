@@ -29,8 +29,7 @@ class ViewModelStateLogicTest {
             AllergyItem(detailID = 1, substanceName = "Penicillin", allergy = "High"),
             AllergyItem(detailID = 2, substanceName = "Aspirin", allergy = "Medium")
         )
-        val result: DomainResult<List<AllergyItem>> = DomainResult.Success(items)
-        when (result) {
+        when (val result: DomainResult<List<AllergyItem>> = DomainResult.Success(items)) {
             is DomainResult.Success -> _medicineAllergies.value = result.data
             is DomainResult.Error -> { /* error */ }
         }
@@ -42,8 +41,7 @@ class ViewModelStateLogicTest {
     fun `AllergyViewModel state - food allergies update on success`() = runTest {
         val _foodAllergies = MutableStateFlow<List<AllergyItem>>(emptyList())
         val items = listOf(AllergyItem(detailID = 3, substanceName = "Shellfish"))
-        val result: DomainResult<List<AllergyItem>> = DomainResult.Success(items)
-        when (result) {
+        when (val result: DomainResult<List<AllergyItem>> = DomainResult.Success(items)) {
             is DomainResult.Success -> _foodAllergies.value = result.data
             is DomainResult.Error -> { /* error */ }
         }
@@ -166,8 +164,7 @@ class ViewModelStateLogicTest {
     fun `SymptomTrackerViewModel - symptom list updates on success`() = runTest {
         val _symptomTrackerList = MutableStateFlow<List<SymptomItem>>(emptyList())
         val items = listOf(SymptomItem(detailId = 5, details = "Dizziness", detailsDate = "2024-01-15"))
-        val result: DomainResult<List<SymptomItem>> = DomainResult.Success(items)
-        when (result) {
+        when (val result: DomainResult<List<SymptomItem>> = DomainResult.Success(items)) {
             is DomainResult.Success -> _symptomTrackerList.value = result.data
             is DomainResult.Error -> { /* error */ }
         }
@@ -186,8 +183,7 @@ class ViewModelStateLogicTest {
             Vital(id = 1, vitalName = "Blood Pressure", vitalValue = 120.0, unit = "mmHg"),
             Vital(id = 2, vitalName = "SpO2", vitalValue = 98.0, unit = "%")
         )
-        val result: DomainResult<List<Vital>> = DomainResult.Success(vitals)
-        when (result) {
+        when (val result: DomainResult<List<Vital>> = DomainResult.Success(vitals)) {
             is DomainResult.Success -> _vitalList.value = result.data
             is DomainResult.Error -> { /* error */ }
         }
@@ -199,8 +195,7 @@ class ViewModelStateLogicTest {
     fun `VitalDetailViewModel - analytics data updates on success`() = runTest {
         val _analyticsData = MutableStateFlow<List<VitalGraphEntry>>(emptyList())
         val entries = listOf(VitalGraphEntry(dateTime = "2024-01-01T10:00", details = emptyList()))
-        val result: DomainResult<List<VitalGraphEntry>> = DomainResult.Success(entries)
-        when (result) {
+        when (val result: DomainResult<List<VitalGraphEntry>> = DomainResult.Success(entries)) {
             is DomainResult.Success -> _analyticsData.value = result.data
             is DomainResult.Error -> { /* error */ }
         }

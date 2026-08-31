@@ -7,7 +7,6 @@ import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
 import com.critetiontech.vitalio_cis.model.DashboardResponse
 import com.critetiontech.vitalio_cis.model.UpcomingAppointment
 import com.critetiontech.vitalio_cis.model.Vital
@@ -21,7 +20,6 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
 
-    private val fetchLastVitalUseCase = AppDependencies.fetchLastVital()
     private val prefs = AppDependencies.prefs
     private val networkMonitor = AppDependencies.networkMonitor
     private val endpoints = ApiEndPointCorporateModule()
@@ -76,15 +74,4 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun fetchLastVital() {
-        viewModelScope.launch {
-            _loading.value = true
-            val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
-            when (val r = fetchLastVitalUseCase(patient.uhId, patient.clientId.toString(), patient.pid.toString())) {
-                is DomainResult.Success -> _vitalList.value = r.data
-                is DomainResult.Error -> Log.e("HomeViewModel", r.exception.message.orEmpty())
-            }
-            _loading.value = false
-        }
-    }
 }

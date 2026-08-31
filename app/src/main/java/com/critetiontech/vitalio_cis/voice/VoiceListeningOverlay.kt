@@ -86,7 +86,7 @@ private fun AIOrbMesh(modifier: Modifier = Modifier) {
         // 14 distorted orbit layers (matching iOS layer count)
         repeat(14) { layer ->
             val progress = layer / 36.0
-            val path = androidx.compose.ui.graphics.Path()
+            val path = Path()
             var first = true
 
             var angle = 0.0

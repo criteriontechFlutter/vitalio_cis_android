@@ -22,10 +22,8 @@ class EditProfileViewModel : ViewModel() {
     val updateSuccess: StateFlow<Boolean> = _updateSuccess
 
     private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
 
     fun resetSuccess() { _updateSuccess.value = false }
-    fun clearError() { _errorMessage.value = null }
 
     fun updateProfile(firstName: String, lastName: String, dob: String, mobileNo: String, emailId: String, address: String, zip: String, imageFile: File?) {
         viewModelScope.launch {
