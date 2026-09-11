@@ -27,7 +27,7 @@ class SymptomRepositoryImpl @Inject constructor(
         val params = mapOf("uhid" to uhid, "clientId" to clientId, "type" to "Symptoms")
         val json = prefs.getData(key = endpoints.getSymptoms, shouldSave = true) {
             val response = ApiHelper().callApi(context, endpoints.getSymptoms, showNoConnectionToast = false) { url ->
-                ApiClients.module4082.dynamicGet(url = url, params = params)
+                ApiClients.module4082.dynamicGet(url = url, headers = mapOf("Cache-Control" to "no-cache"), params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }

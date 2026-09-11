@@ -28,7 +28,9 @@ import com.critetiontech.vitalio_cis.domain.usecase.fluid.FetchOutputUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.fluid.GetManualFoodListUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.medicine.FetchMedicineByDateUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.medicine.FetchMedicineIntakeUseCase
+import com.critetiontech.vitalio_cis.domain.usecase.medicine.InsertMedicineUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.medicine.MarkMedicineIntakeUseCase
+import com.critetiontech.vitalio_cis.domain.usecase.medicine.SearchMedicineUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.profile.UpdateProfileUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.report.AiReportUseCase
 import com.critetiontech.vitalio_cis.domain.usecase.report.FetchMediaUseCase
@@ -81,7 +83,10 @@ object AppDependencies {
     fun fetchMedicineIntake() = FetchMedicineIntakeUseCase(medicineRepository)
     fun markMedicineIntake() = MarkMedicineIntakeUseCase(medicineRepository)
     fun fetchMedicineByDate() = FetchMedicineByDateUseCase(medicineRepository)
+    fun searchMedicine() = SearchMedicineUseCase(medicineRepository)
+    fun insertMedicine() = InsertMedicineUseCase(medicineRepository)
     fun fetchDoctors() = FetchDoctorsUseCase(doctorRepository)
+    fun fetchDepartments() = com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchDepartmentsUseCase(doctorRepository)
     fun fetchDoctorProfile() = FetchDoctorProfileUseCase(doctorRepository)
     fun fetchAvailableSlots() = FetchAvailableSlotsUseCase(doctorRepository)
     fun bookAppointment() = BookAppointmentUseCase(doctorRepository)

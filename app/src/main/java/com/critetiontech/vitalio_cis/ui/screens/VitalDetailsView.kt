@@ -36,6 +36,7 @@ import com.critetiontech.vitalio_cis.Routes
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.viewmodel.VitalDetailViewModel
+import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -126,10 +127,11 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
             }
         }
     ) {
+        val vitalDimens = rememberResponsiveDimens()
 
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(vitalDimens.screenPadding)
                 .background(colors.dashboardBackgroundColor)
                 .verticalScroll(rememberScrollState())
         ) {

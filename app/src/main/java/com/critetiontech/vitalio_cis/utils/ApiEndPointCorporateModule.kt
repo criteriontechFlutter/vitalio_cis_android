@@ -10,7 +10,9 @@ class ApiEndPointCorporateModule {
     val insertSymtoms="api/PatientPrescription/AddSymtomsOrDiagnosis"
     val getProblemsWithIcon="Patient/getProblemsWithIcon"
     val getAllProblems="Patient/getAllProblems"
-    val fetchDoctorsAvalability="api/DoctorOPDSchedule/FetchDoctorsAvalability"
+    val getAllDepartmentMaster="api/DepartmentMaster/GetAllDepartmentMaster"
+    val fetchDoctorsAvalability="api/DoctorShiftConfiguration/GetDoctorShiftConfiguration"
+    val fetchDoctorShiftConfig="api/DoctorShiftConfiguration/GetDoctorShiftConfigurationByDoctorId"
     val getDoctorProfile="api/Users/GetDoctorProfile"
     val fetchAvailableSlots="api/DoctorOPDSchedule/FetchAvailableSlots"
     val bookAppointment="api/PatientRegistration/BookAppointment"
@@ -39,4 +41,16 @@ class ApiEndPointCorporateModule {
     val getPatientDashboardData = "api/PatientDashboard/GetPatientDashboardData"
     val fetchUpcomingAppointmentList = "api/PatientRegistration/FetchUpcomingAppointmentList"
     val appointmentHistory = "api/PatientRegistration/AppointmentHistory"
+
+    val fetchShiftTypeSetting = "api/ShiftMaster/FetchShiftTypeSetting"
+    val fetchSchedule = "api/DoctorOPDSchedule/FetchSchedule"
+    val getLatestToken = "api/PatientRegistration/GetLatestToken"
+    val fetchConsent = "api/ConcentMaster/FetchConcent"
+    val addConsent = "api/PatientPrescription/AddConcent"
+
+    // Activity
+    val getAllActivityMaster = "api/ActivityMaster/GetAllActivityMaster"
+    val fetchPatientActivity = "api/PatientPhysicalActivityTracker/FetchPatientActivity"
+    val addPatientActivity = "api/PatientPhysicalActivityTracker/AddPatientActivity"
+    val deleteActivityMaster = "api/EmployeeActivity/DeleteActivityMasterById"
 }

@@ -35,11 +35,13 @@ import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.vitalio_cis.R
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
 
 @Composable
 fun PrescriptionScreen() {
 
     val colors = LocalMyColorScheme.current
+    val prescDimens = rememberResponsiveDimens()
     CommonAppBar(
         title = "Prescriptions",
     ) {
@@ -47,7 +49,7 @@ fun PrescriptionScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.dashboardBackgroundColor)
-                .padding(12.dp)
+                .padding(prescDimens.screenPadding)
         ) {
             PrescriptionCard(
                 title = "Prescription for Fever",

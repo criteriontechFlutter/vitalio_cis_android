@@ -19,13 +19,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
@@ -38,6 +38,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -63,6 +64,8 @@ import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.R
 import com.critetiontech.vitalio_cis.Routes
+import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveTwoPane
+import com.critetiontech.vitalio_cis.ui.adaptive.isTablet
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.AppTheme
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
@@ -130,14 +133,66 @@ fun DrawerScreen() {
         }
     ) {
 
-    Column(
+    if (isTablet()) {
+        AdaptiveTwoPane(
+            firstPane = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(colors.dashboardBackgroundColor)
+                        .padding(16.dp)
+                        .verticalScroll(scrollState)
+                ) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ProfileCard()
+                    Spacer(modifier = Modifier.height(12.dp))
+                    MedicalProfileCard()
+                }
+            },
+            secondPane = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(colors.dashboardBackgroundColor)
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    MenuCard(
+                        listOf(
+                            "Profile" to "",
+                            "Allergies" to "2",
+                            "Breathing Therapy" to "",
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    MenuCard(
+                        listOf(
+                            "Appointments" to "2",
+                            "Prescriptions" to "",
+                            "Reports" to ""
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ThemeSwitchItem()
+                    Spacer(modifier = Modifier.height(12.dp))
+                    MenuCard(
+                        listOf(
+                            "FAQ" to "4",
+                            "Feedback" to "4"
+                        )
+                    )
+                }
+            }
+        )
+    } else {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.dashboardBackgroundColor)
                 .padding(16.dp)
                 .verticalScroll(scrollState)
         ) {
-
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -153,6 +208,7 @@ fun DrawerScreen() {
                 listOf(
                     "Profile" to "",
                     "Allergies" to "2",
+                    "Breathing Therapy" to "",
                 )
             )
 
@@ -177,17 +233,18 @@ fun DrawerScreen() {
 //                    "Emergency Contacts" to "4"
 //                )
 //            )
-        Spacer(modifier = Modifier.height(12.dp))
-        ThemeSwitchItem()
+            Spacer(modifier = Modifier.height(12.dp))
+            ThemeSwitchItem()
 
-        Spacer(modifier = Modifier.height(12.dp))
-        MenuCard(
-            listOf(
-                "FAQ" to "4",
-                "Feedback" to "4"
+            Spacer(modifier = Modifier.height(12.dp))
+            MenuCard(
+                listOf(
+                    "FAQ" to "4",
+                    "Feedback" to "4"
+                )
             )
-        )
         }
+    }
     }
 }
 
@@ -399,11 +456,12 @@ fun MedicalProfileCard(
             ) {
 
                 CircularProgressIndicator(
-                    progress = progress,
-                    color = Color.White,
-                    trackColor = Color.Gray,
-                    strokeWidth = 6.dp,
-                    modifier = Modifier.fillMaxSize()
+                progress = { progress },
+                modifier = Modifier.fillMaxSize(),
+                color = Color.White,
+                strokeWidth = 6.dp,
+                trackColor = Color.Gray,
+                strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
                 )
 
                 Text(
@@ -486,7 +544,7 @@ fun MenuCard(items: List<Pair<String, String>>) {
 
         Column {
 
-            items.forEachIndexed { index, item ->
+            items.forEachIndexed { _, item ->
 
                 MenuRow(
                     title = item.first,
@@ -510,6 +568,7 @@ fun MenuRow(
     val route = when (title) {
 
         "Profile" -> Routes.PERSONALIFSCREEN
+        "Breathing Therapy" -> Routes.BREATHING_THERAPY
         "Allergies" -> Routes.ALLERGIESSCREEN
         "Appointments" -> Routes.APPOINTMENTS
         "Prescriptions" -> Routes.PRESCRIPTION
@@ -550,7 +609,7 @@ fun MenuRow(
         }
 
         Icon(
-            imageVector = Icons.Default.KeyboardArrowRight,
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             tint = Color.Gray
         )

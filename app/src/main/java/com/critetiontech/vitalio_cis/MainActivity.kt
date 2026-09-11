@@ -19,6 +19,7 @@ import com.critetiontech.ctvitalio.ui.screens.LoginScreen
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.notification.RequestNotificationPermission
 import com.critetiontech.vitalio_cis.ui.screens.AddActivityScreen
+import com.critetiontech.vitalio_cis.ui.screens.ActivityHistoryScreen
 import com.critetiontech.vitalio_cis.ui.screens.AddLabResultsScreen
 import com.critetiontech.vitalio_cis.ui.screens.AddMedicineReminderScreen
 import com.critetiontech.vitalio_cis.ui.screens.AddMemberScreen
@@ -43,6 +44,9 @@ import com.critetiontech.vitalio_cis.ui.screens.FluidDataInputScreen
 import com.critetiontech.vitalio_cis.ui.screens.FluidInputHistoryScreen
 import com.critetiontech.vitalio_cis.ui.screens.FluidOutputHistoryScreen
 import com.critetiontech.vitalio_cis.ui.screens.InteractionCheckerScreen
+import com.critetiontech.vitalio_cis.ui.screens.InteractionInstructionView
+import com.critetiontech.vitalio_cis.viewmodel.InteractionCheckerViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.vitalio_cis.ui.screens.LabReportsScreen
 import com.critetiontech.vitalio_cis.ui.screens.ManageMedicationsPreview
 import com.critetiontech.vitalio_cis.ui.screens.ManageMedicationsScreen
@@ -82,6 +86,7 @@ import com.critetiontech.vitalio_cis.ui.theme.LocalThemeViewModel
 import com.critetiontech.vitalio_cis.ui.theme.MyAppTheme
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.critetiontech.vitalio_cis.viewmodel.UploadReportViewModel
+import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveLayoutProvider
 import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.google.gson.Gson
 
@@ -95,7 +100,9 @@ class MainActivity : ComponentActivity() {
             RequestNotificationPermission()
             val navController = rememberNavController()
             val uploadReportViewModel: UploadReportViewModel = viewModel()
+            val interactionViewModel: InteractionCheckerViewModel = viewModel()
             val context = LocalContext.current
+            AdaptiveLayoutProvider {
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {
                     Surface(
@@ -110,7 +117,8 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.LOGIN) { LoginScreen() }
                             composable(Routes.MANAGEMEDICAIONS) { ManageMedicationsPreview() }
                             composable(Routes.ADDMEDICINEREMINDER) { AddMedicineReminderScreen() }
-                            composable(Routes.INTERACTIONCHECKER) { InteractionCheckerScreen() }
+                            composable(Routes.INTERACTIONCHECKER) { InteractionCheckerScreen(viewModel = interactionViewModel) }
+                            composable(Routes.INTERACTIONINSTRUCTION) { InteractionInstructionView(viewModel = interactionViewModel) }
                             composable(Routes.DIETCHECKLIST) { DietChecklistScreen() }
                             composable(Routes.PRESCRIPTION) { PrescriptionScreen() }
                             composable(Routes.FLUIDDATAINPUT) { FluidDataInputScreen() }
@@ -168,6 +176,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.MYOBSERVERS) { MyObserversScreen() }
                             composable(Routes.FAMILYHEALTH) { FamilyHealthScreen() }
                             composable(Routes.ADDACTIVITY) { AddActivityScreen() }
+                            composable(Routes.ACTIVITYHISTORY) { ActivityHistoryScreen() }
                             composable(Routes.REMINDERS) { RemindersScreen() }
                             composable(Routes.EMERGENCYCONTACTS) { EmergencyContactsScreen() }
                             composable(Routes.CONNECTWATCH) { ConnectWatchScreen() }
@@ -258,9 +267,12 @@ class MainActivity : ComponentActivity() {
                             composable("fluidIntakeDetails") { FluidIntakeDetailsScreen( ) }
                             composable("fluidDetails") { FluidDetailsScreen( ) }
                             composable("registrationCompleted") { RegistrationCompletedView( ) }
+                            composable(Routes.BREATHING_THERAPY) { com.critetiontech.vitalio_cis.ui.screens.BreathingTherapyScreen() }
+                            composable(Routes.DIGITAL_TWIN) { com.critetiontech.vitalio_cis.ui.screens.DigitalTwinScreen() }
                         }
                     }
                 }
+            }
             }
         }
     }

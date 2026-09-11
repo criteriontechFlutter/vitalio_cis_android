@@ -60,6 +60,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            REQUIRED for Health Connect permissions dialog to appear.
+            Without this alias, Health Connect cannot show the permission
+            rationale screen and silently denies all health permissions.
+        -->
+        <activity-alias
+            android:name=".MainActivity.HealthConnectPermissions"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity-alias>
+
     </application>
 
     <!-- Required for Health Connect SDK to resolve the provider -->

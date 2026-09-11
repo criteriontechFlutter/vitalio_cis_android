@@ -7,10 +7,16 @@ import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.vitalio_cis.domain.model.DomainResult
 import com.critetiontech.vitalio_cis.domain.repository.MedicineRepository
 import com.critetiontech.vitalio_cis.model.AllMedicine
+import com.critetiontech.vitalio_cis.model.InsertMedicineRequest
+import com.critetiontech.vitalio_cis.model.InsertMedicineResponse
 import com.critetiontech.vitalio_cis.model.LoggedMedicine
 import com.critetiontech.vitalio_cis.model.MedicineIntakeByDateResponse
 import com.critetiontech.vitalio_cis.model.MedicineIntakeResponse
 import com.critetiontech.vitalio_cis.model.MedicinePeriod
+import com.critetiontech.vitalio_cis.model.SearchMedicineItem
+import com.critetiontech.vitalio_cis.model.SearchMedicineResponse
+import com.critetiontech.vitalio_cis.model.DrugInteractionItem
+import com.critetiontech.vitalio_cis.model.DrugInteractionResponse
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -61,4 +67,60 @@ class MedicineRepositoryImpl @Inject constructor(
             } else DomainResult.Success(Pair(emptyList(), emptyList()))
         } else DomainResult.Error(Exception("API Error: ${response.code()}"))
     } catch (e: Exception) { DomainResult.Error(e) }
+
+    override suspend fun searchMedicine(alphabet: String): DomainResult<List<SearchMedicineItem>> = try {
+        val params = mapOf("alphabet" to alphabet)
+        val response = ApiHelper().callApi(context, "api/KnowMedApis/GetBrandList", showNoConnectionToast = false) { url ->
+            ApiClients.module4082.dynamicGet(url = url, params = params)
+        }
+        if (response.isSuccessful) {
+            val body = response.body()?.string()
+            if (!body.isNullOrEmpty()) {
+                val parsed = Gson().fromJson(body, SearchMedicineResponse::class.java)
+                DomainResult.Success(parsed.responseValue.take(50))
+            } else DomainResult.Success(emptyList())
+        } else DomainResult.Error(Exception("API Error: ${response.code()}"))
+    } catch (e: Exception) { DomainResult.Error(e) }
+
+    override suspend fun insertMedicine(request: InsertMedicineRequest): DomainResult<InsertMedicineResponse> = try {
+        val body: Map<String, Any> = mapOf(
+            "pid" to request.pid,
+            "medicineId" to request.medicineId,
+            "dosageType" to request.dosageType,
+            "dosageStrength" to request.dosageStrength,
+            "frequency" to request.frequency,
+            "frequencyValue" to request.frequencyValue,
+            "weekDays" to request.weekDays,
+            "monthDates" to request.monthDates,
+            "instructions" to request.instructions,
+            "timeSlotsJson" to request.timeSlotsJson,
+            "startdate" to request.startdate,
+            "enddate" to request.enddate,
+            "clientId" to request.clientId
+        )
+        val response = ApiHelper().callApi(context, endpoints.insertMedicineIntake, showNoConnectionToast = false) { url ->
+            ApiClients.module4082.dynamicRawPost(url = url, body = body)
+        }
+        if (response.isSuccessful) {
+            val bodyStr = response.body()?.string()
+            if (!bodyStr.isNullOrEmpty()) {
+                val parsed = Gson().fromJson(bodyStr, InsertMedicineResponse::class.java)
+                DomainResult.Success(parsed)
+            } else DomainResult.Error(Exception("Empty response"))
+        } else DomainResult.Error(Exception("API Error: ${response.code()}"))
+    } catch (e: Exception) { DomainResult.Error(e) }
+    override suspend fun getDrugInteraction(brandIds: String): DomainResult<List<DrugInteractionItem>> = try {
+        val body = mapOf("brandId" to brandIds, "medicineName" to "")
+        val response = ApiHelper().callApi(context, "api/ADRReport/getDrugIntraction", showNoConnectionToast = false) { url ->
+            ApiClients.module4082.dynamicRawPost(url = url, body = body)
+        }
+        if (response.isSuccessful) {
+            val bodyStr = response.body()?.string()
+            if (!bodyStr.isNullOrEmpty()) {
+                val parsed = Gson().fromJson(bodyStr, DrugInteractionResponse::class.java)
+                DomainResult.Success(parsed.responseValue ?: emptyList())
+            } else DomainResult.Error(Exception("Empty response"))
+        } else DomainResult.Error(Exception("API Error: ${response.code()}"))
+    } catch (e: Exception) { DomainResult.Error(e) }
 }
+

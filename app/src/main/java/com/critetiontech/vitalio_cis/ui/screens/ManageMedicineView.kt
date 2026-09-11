@@ -406,12 +406,28 @@ fun ManageMedicationsScreen(
 //            }
         }
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colors.dashboardBackgroundColor)
-                .padding(horizontal = 16.dp),
+        var isRefreshing by remember { mutableStateOf(false) }
+        val coroutineScope = rememberCoroutineScope()
+        @OptIn(ExperimentalMaterial3Api::class)
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                coroutineScope.launch {
+                    val date = formatDate(selectedYear, selectedMonth, selected.number)
+                    viewModel.fetchByDate(context, date)
+                    kotlinx.coroutines.delay(1000)
+                    isRefreshing = false
+                }
+            },
+            modifier = Modifier.fillMaxSize()
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.dashboardBackgroundColor)
+                    .padding(horizontal = 16.dp),
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -535,18 +551,19 @@ fun ManageMedicationsScreen(
                 }
             }
 
-//            // FAB
-//            FloatingActionButton(
-//                onClick        = { navController.navigate(Routes.ADDMEDICINEREMINDER) },
-//                containerColor = Blue500,
-//                contentColor   = Color.White,
-//                shape          = CircleShape,
-//                modifier       = Modifier
-//                    .align(Alignment.BottomEnd)
-//                    .padding(20.dp)
-//            ) {
-//                Icon(Icons.Rounded.Add, "Add")
-//            }
+            // FAB
+            FloatingActionButton(
+                onClick        = { navController.navigate(Routes.ADDMEDICINEREMINDER) },
+                containerColor = Blue500,
+                contentColor   = Color.White,
+                shape          = CircleShape,
+                modifier       = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(20.dp)
+            ) {
+                Icon(Icons.Rounded.Add, "Add")
+            }
+            }
         }
     }
 
@@ -567,7 +584,12 @@ fun ManageMedicationsScreen(
 
 @Composable
 private fun medShimmerBrush(): Brush {
-    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val colors = LocalMyColorScheme.current
+    val shimmerColors = listOf(
+        colors.dashboardContainerColor,
+        colors.borderGreyLightColor.copy(.3f),
+        colors.dashboardContainerColor
+    )
     val transition = rememberInfiniteTransition(label = "medShimmer")
     val translateX by transition.animateFloat(
         initialValue = -600f, targetValue = 600f,
@@ -646,6 +668,20 @@ private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
+private fun StatusTag(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, color: Color) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .background(color.copy(.1f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Icon(icon, null, tint = color, modifier = Modifier.size(14.dp))
+        Spacer(Modifier.width(5.dp))
+        Text(text, color = color, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+    }
+}
+
+@Composable
 private fun LoggedRow(med: LoggedMedicine) {
     val timeFormatted = try {
         val parts = med.takenDateTime.split("T")
@@ -666,7 +702,7 @@ private fun LoggedRow(med: LoggedMedicine) {
             .fillMaxWidth()
             .padding(vertical = 12.dp),
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(med.medicineName.trim(), style = AppTextStyles.style14BCN())
             Spacer(Modifier.height(2.dp))
             Text(
@@ -674,7 +710,8 @@ private fun LoggedRow(med: LoggedMedicine) {
                 style = AppTextStyles.style12GCN()
             )
         }
-        Icon(Icons.Rounded.Check, null, tint = Green500, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        StatusTag(Icons.Rounded.CheckCircle, "Taken", Color(0xFF1564ED))
     }
 }
 

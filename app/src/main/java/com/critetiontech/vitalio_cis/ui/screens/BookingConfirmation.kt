@@ -40,6 +40,8 @@ data class BookingDetails(
     val onDate: String,
     val onTime: String?,
     val free: String?,
+    val shiftId: Int = 0,
+    val queueNo: Int? = null
 )
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -188,8 +190,10 @@ fun BookingConfirmationScreen(
                     onClick   = {
                         viewModel.bookAppointment(
                             did             = bookingDetails?.dID.orEmpty(),
+                            shiftId         = bookingDetails?.shiftId ?: 0,
                             sTime           = bookingDetails?.onTime.orEmpty(),
-                            appointmentDate = bookingDetails?.onDate.orEmpty()
+                            appointmentDate = bookingDetails?.onDate.orEmpty(),
+                            queueNo         = bookingDetails?.queueNo
                         )
                     }
                 )

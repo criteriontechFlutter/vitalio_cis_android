@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveContentContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +110,9 @@ fun CommonAppBar(
                 .fillMaxSize()
                 .padding(padding)
         ){
-            content( )
+            AdaptiveContentContainer {
+                content( )
+            }
         }
 
 

@@ -51,6 +51,11 @@ import com.critetiontech.vitalio_cis.ui.theme.AppColors
 import com.critetiontech.vitalio_cis.utils.CommonButton
 import com.critetiontech.vitalio_cis.utils.CommonTextField
 import com.critetiontech.vitalio_cis.viewmodel.LoginViewModel
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.widthIn
+import com.critetiontech.vitalio_cis.ui.adaptive.isTablet
 
 @Composable
 fun LoginScreen() {
@@ -81,35 +86,72 @@ fun LoginScreen() {
         label = "cardY"
     )
 
+    val isTablet = isTablet()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF1E63D5))
             .imePadding()
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Spacer(modifier = Modifier.height(30.dp))
+        if (isTablet) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.img),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .graphicsLayer {
+                                alpha = imageAlpha
+                                scaleX = imageScale
+                                scaleY = imageScale
+                            },
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .graphicsLayer {
+                            alpha = cardAlpha
+                            translationY = cardY
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoginCard()
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Spacer(modifier = Modifier.height(30.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.img),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .graphicsLayer {
-                        alpha = imageAlpha
-                        scaleX = imageScale
-                        scaleY = imageScale
-                    },
-                contentScale = ContentScale.Fit,
-                alignment = Alignment.BottomCenter
-            )
+                Image(
+                    painter = painterResource(id = R.drawable.img),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .graphicsLayer {
+                            alpha = imageAlpha
+                            scaleX = imageScale
+                            scaleY = imageScale
+                        },
+                    contentScale = ContentScale.Fit,
+                    alignment = Alignment.BottomCenter
+                )
 
-            Box(modifier = Modifier.graphicsLayer {
-                alpha = cardAlpha
-                translationY = cardY
-            }) {
-                LoginCard()
+                Box(modifier = Modifier.graphicsLayer {
+                    alpha = cardAlpha
+                    translationY = cardY
+                }) {
+                    LoginCard()
+                }
             }
         }
     }
@@ -160,9 +202,18 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
         label = "buttonScale"
     )
 
+    val isTablet = isTablet()
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
+        modifier = if (isTablet) {
+            Modifier
+                .fillMaxWidth()
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = 480.dp)
+        } else {
+            Modifier.fillMaxWidth()
+        },
+        shape = if (isTablet) RoundedCornerShape(30.dp) else RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
@@ -176,7 +227,7 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             }) {
                 Column {
                     Text(
-                        text = "Login/Sign Up",
+                        text = "Login",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = AppColors.Primary

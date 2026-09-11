@@ -9,6 +9,8 @@ object Routes {
     const val FLUID = "fluid"
     const val SYMPTOMSTRACKER = "symptomsTracker"
     const val SYMPTOMS = "symptoms"
+    const val MEDICINETAILS = "medicinedetails"
+    const val DIGITAL_TWIN = "digital_twin"
     const val MEDICINE = "medicine"
     const val DIET = "diet"
     const val INTERACTION = "interaction"
@@ -28,6 +30,7 @@ object Routes {
     const val MANAGEMEDICAIONS  = "ManageMedicationsPreview"
     const val ADDMEDICINEREMINDER  = "AddMedicineReminderScreen"
     const val INTERACTIONCHECKER  = "InteractionCheckerScreen"
+    const val INTERACTIONINSTRUCTION = "InteractionInstructionScreen"
     const val DIETCHECKLIST  = "DietChecklistScreen"
     const val PRESCRIPTION  = "PrescriptionScreen"
     const val FLUIDDATAINPUT  = "FluidDataInputScreen"
@@ -39,6 +42,7 @@ object Routes {
     const val MYOBSERVERS  = "MyObserversScreen"
     const val FAMILYHEALTH  = "FamilyHealthScreen"
     const val ADDACTIVITY  = "AddActivityScreen"
+    const val ACTIVITYHISTORY  = "ActivityHistoryScreen"
     const val REMINDERS  = "RemindersScreen"
     const val EMERGENCYCONTACTS  = "EmergencyContactsScreen"
     const val CONNECTWATCH  = "ConnectWatchScreen"
@@ -50,5 +54,6 @@ object Routes {
     const val RESEARCHARTICLES  = "ResearchArticlesScreen"
     const val AIREPORT  = "AiReportScreen"
     const val HEALTHCONNECTSYNC = "HealthConnectSyncScreen"
+    const val BREATHING_THERAPY = "BreathingTherapyScreen"
 
 }

@@ -49,8 +49,14 @@ class SymptomTrackerViewModel : ViewModel() {
 
     fun updateSelectedSymptoms() { _selectedSymptoms.value = emptyList() }
     fun clearSearchResults() { _searchedSymptomList.value = emptyList() }
-    fun addSymptom(symptom: SymptomItem) { _selectedSymptoms.value = (_selectedSymptoms.value + symptom).distinctBy { it.detailId } }
-    fun removeSymptom(symptom: SymptomItem) { _selectedSymptoms.value = _selectedSymptoms.value.filterNot { it.detailId == symptom.detailId } }
+    fun addSymptom(symptom: SymptomItem) { 
+        val updated = symptom.copy(isStillFeeling = true)
+        _selectedSymptoms.value = _selectedSymptoms.value.filterNot { it.detailId == updated.detailId } + updated
+    }
+    fun removeSymptom(symptom: SymptomItem) { 
+        val updated = symptom.copy(isStillFeeling = false)
+        _selectedSymptoms.value = _selectedSymptoms.value.filterNot { it.detailId == updated.detailId } + updated
+    }
 
     fun getSymptoms() {
         viewModelScope.launch {
@@ -70,12 +76,29 @@ class SymptomTrackerViewModel : ViewModel() {
             _addLoading.value = true
             val patient = prefs.getPatient() ?: run { _addLoading.value = false; return@launch }
             val now = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
-            else SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(Date())
-            val dtDataTable = _selectedSymptoms.value.map { mapOf("detailID" to it.detailId, "detailsDate" to now, "details" to it.details, "pdmId" to 2) }
+                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+            else SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
+            
+            val dtDataTable = _selectedSymptoms.value.map { 
+                val dDate = if (it.detailsDate.isNotEmpty()) it.detailsDate else now
+                mapOf(
+                    "detailID" to it.detailId, 
+                    "detailsDate" to dDate, 
+                    "details" to it.details, 
+                    "pdmId" to 2,
+                    "isProvisionalDiagnosis" to 0,
+                    "isChronic" to 0,
+                    "isStillFeeling" to it.isStillFeeling
+                ) 
+            }
             val body = mapOf("uhId" to patient.uhId, "jsonSymtoms" to Gson().toJson(dtDataTable), "clientId" to patient.clientId, "type" to "Symptoms", "isFromPatient" to true)
             when (val r = deps.insertSymptoms()(body)) {
-                is DomainResult.Success -> _popBackEvent.emit(Unit)
+                is DomainResult.Success -> {
+                    _selectedSymptoms.value = emptyList()
+                    getSymptoms()
+                    getProblemsWithIcon()
+                    _popBackEvent.emit(Unit)
+                }
                 is DomainResult.Error -> Log.e("SymptomTrackerVM", r.exception.message.orEmpty())
             }
             _addLoading.value = false
@@ -83,7 +106,7 @@ class SymptomTrackerViewModel : ViewModel() {
     }
 
     fun saveProblems(selectedIds: List<Int>, allProblems: List<Problem>) {
-        _selectedSymptoms.value = allProblems.filter { it.problemId in selectedIds }.map { SymptomItem(detailId = it.problemId, details = it.problemName) }
+        _selectedSymptoms.value = allProblems.filter { it.problemId in selectedIds }.map { SymptomItem(detailId = it.problemId, details = it.problemName, isStillFeeling = true) }
         insertSymptoms()
     }
 

@@ -52,7 +52,12 @@ import com.critetiontech.vitalio_cis.model.UpcomingAppointmentItem
 import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.viewmodel.AppointmentViewModel
+import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
+import com.critetiontech.vitalio_cis.ui.adaptive.adaptiveGridItems
+import com.critetiontech.vitalio_cis.ui.adaptive.LocalWindowSizeClass
+import com.critetiontech.vitalio_cis.ui.adaptive.WindowWidthSizeClass
 import com.example.vitalio_cis.ui.screens.shimmerBrush
+
 
 @Composable
 fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
@@ -65,11 +70,14 @@ fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
     LaunchedEffect(Unit) { vm.fetchAll() }
 
     CommonAppBar(title = "Appointments") {
+        val appointDimens = rememberResponsiveDimens()
+        val gridCols = if (LocalWindowSizeClass.current != WindowWidthSizeClass.Compact) 2 else 1
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.dashboardBackgroundColor)
-                .padding(12.dp)
+                .padding(appointDimens.screenPadding)
         ) {
             AppointmentToggle(selected = selectedTab, onSelect = { selectedTab = it })
             Spacer(modifier = Modifier.height(12.dp))
@@ -85,10 +93,15 @@ fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
                 if (upcoming.isEmpty()) {
                     EmptyState("No upcoming appointments")
                 } else {
-                    LazyColumn {
-                        items(upcoming) { item ->
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(appointDimens.cardSpacing)
+                    ) {
+                        adaptiveGridItems(
+                            items = upcoming,
+                            columns = gridCols,
+                            spacing = appointDimens.cardSpacing
+                        ) { item ->
                             UpcomingAppointmentCard(item)
-                            Spacer(modifier = Modifier.height(12.dp))
                         }
                     }
                 }
@@ -96,10 +109,15 @@ fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
                 if (history.isEmpty()) {
                     EmptyState("No appointment history")
                 } else {
-                    LazyColumn {
-                        items(history) { item ->
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(appointDimens.cardSpacing)
+                    ) {
+                        adaptiveGridItems(
+                            items = history,
+                            columns = gridCols,
+                            spacing = appointDimens.cardSpacing
+                        ) { item ->
                             HistoryAppointmentCard(item)
-                            Spacer(modifier = Modifier.height(12.dp))
                         }
                     }
                 }

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.Routes
 import com.critetiontech.vitalio_cis.model.SlotData
@@ -53,11 +55,10 @@ fun DoctorDetailsScreen(
     val colors = LocalMyColorScheme.current
     val doctor by viewModel.doctor.collectAsState()
     LaunchedEffect(doctorId) {
-        viewModel.setDoctorId(doctorId)
-        viewModel.getDoctorProfile(doctorId)
+        viewModel.initDoctorConfiguration(doctorId)
         val today = LocalDate.now()
-        viewModel.fetchAvailableSlots("${today.year}/${today.monthValue}/${today.dayOfMonth}", doctorId)
-        viewModel.setSlotDate("${today.year}/${today.monthValue}/${today.dayOfMonth}")
+        val dateStr = "${today.year}/${today.monthValue}/${today.dayOfMonth}"
+        viewModel.onDateSelected(dateStr, doctorId)
     }
 
     CommonAppBar(
@@ -177,6 +178,8 @@ fun DoctorDetailsScreen(
                             onDate = viewModel.slotDate.value.toString(),
                             onTime =  viewModel.slotTime.value.toString(),
                             free = doc.name.toString(),
+                            shiftId = viewModel.shiftId.value?.toIntOrNull() ?: 0,
+                            queueNo = null
                         )
 
                         val json = Gson().toJson(data)
@@ -196,43 +199,108 @@ fun DoctorDetailsScreen(
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
 fun SlotScreen(viewModel: DoctorDetailsViewModel) {
+    val isSlotBased by viewModel.isSlotBased.collectAsState()
+    
+    if (isSlotBased) {
+        val shiftList by viewModel.slotList.collectAsState()
 
-//    val parentEntry = remember {
-//        navController?.currentBackStackEntry!!
-//    }
-//
-//    val viewModel: DoctorDetailsViewModel = viewModel(parentEntry)
-    val shiftList by viewModel.slotList.collectAsState()
+        Column {
+            shiftList.forEach { shift ->
+                Column(modifier = Modifier) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = shift.shift_Name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
 
-    Column {
-
-        shiftList.forEach { shift ->
-
-            Column(modifier = Modifier ) {
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = shift.shift_Name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-
-                val slotList: List<SlotData> = remember(shift.slotJson) {
-                    Gson().fromJson(
-                        shift.slotJson,
-                        Array<SlotData>::class.java
-                    ).toList()
-                }
-
+                    val slotList: List<SlotData> = remember(shift.slotJson) {
+                        Gson().fromJson(
+                            shift.slotJson,
+                            Array<SlotData>::class.java
+                        ).toList()
+                    }
 
                     Spacer(modifier = Modifier.height(6.dp))
-                    SlotGrid(slotList,shift.shiftId.toString(),viewModel)
-
-
+                    SlotGrid(slotList, shift.shiftId.toString(), viewModel)
+                }
+            }
+        }
+    } else {
+        // Token Based Flow
+        val scheduleList by viewModel.scheduleList.collectAsState()
+        val latestToken by viewModel.latestToken.collectAsState()
+        val currentShiftId = viewModel.shiftId.collectAsState().value
+        val colors = LocalMyColorScheme.current
+        
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (scheduleList.isEmpty()) {
+                Text(
+                    text = "No schedules available for token booking.",
+                    style = AppTextStyles.style14BCN(),
+                    modifier = Modifier.padding(16.dp)
+                )
+            } else {
+                scheduleList.forEach { schedule ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clickable {
+                                viewModel.setShiftId(schedule.shiftId.toString())
+                                viewModel.setSlotTime(schedule.shiftTimeFrom)
+                                viewModel.fetchLatestToken(
+                                    scheduleDate = viewModel.slotDate.value.toString(),
+                                    shiftId = schedule.shiftId.toString()
+                                )
+                            },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (currentShiftId == schedule.shiftId.toString()) 
+                                colors.primaryBlueColor.copy(alpha = 0.1f)
+                            else Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = schedule.shiftName,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = colors.primaryBlueColor
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "${schedule.shiftTimeFrom} - ${schedule.shiftTimeTo}",
+                                fontSize = 14.sp
+                            )
+                            
+                            if (currentShiftId == schedule.shiftId.toString()) {
+                                Spacer(Modifier.height(12.dp))
+                                if (latestToken != null) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Your Token No: ${latestToken!!.nextQueueNumber}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp,
+                                            color = Color.DarkGray
+                                        )
+                                    }
+                                } else {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
+
 
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
@@ -466,8 +534,7 @@ fun SelectDateUI( ) {
                         "DateClick",
                         "Selected: $year-$month-${item.date}"
                     )
-                    viewModel.setSlotDate("$year-$month-${item.date}")
-                    viewModel.fetchAvailableSlots("$year-$month-${item.date}")
+                    viewModel.onDateSelected("$year-$month-${item.date}")
                 }
             }
         }
@@ -667,3 +734,4 @@ fun ClinicToggle() {
         }
     }
 }
+

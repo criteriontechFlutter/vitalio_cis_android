@@ -7,7 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -92,7 +93,7 @@ private fun DoctorGridShimmer() {
         modifier = Modifier.fillMaxSize(),
         userScrollEnabled = false
     ) {
-        items(placeholders) { DoctorCardShimmer() }
+        gridItems(placeholders) { DoctorCardShimmer() }
     }
 }
 
@@ -101,9 +102,13 @@ private fun DoctorGridShimmer() {
 fun DoctorCard(doctor: Doctor, profile: DoctorDetails? = null) {
     val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
-    val shortDays = doctor.scheduleDays
-        .split(",")
-        .joinToString(", ") { it.trim().take(3) }
+    val shortDays = if (doctor.scheduleDays.isNotEmpty()) {
+        doctor.scheduleDays.split(",").joinToString(", ") { it.trim().take(3) }
+    } else if (doctor.workingDays.isNotEmpty()) {
+        doctor.workingDays.joinToString(", ") { it.dayName.take(3) }
+    } else {
+        "N/A"
+    }
 
     val displayName = profile?.name?.ifEmpty { null }
         ?: doctor.doctorName
@@ -119,8 +124,9 @@ fun DoctorCard(doctor: Doctor, profile: DoctorDetails? = null) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
+                val idToPass = if (doctor.assignedUserId != 0) doctor.assignedUserId else doctor.doctorId
                 navController.navigate(
-                    Routes.DOCTORDETAILS + "/${doctor.assignedUserId}/${Uri.encode(shortDays)}"
+                    Routes.DOCTORDETAILS + "/$idToPass/${Uri.encode(shortDays)}"
                 )
             }
             .clip(RoundedCornerShape(12.dp))
@@ -222,6 +228,61 @@ fun FindDoctorsScreen(
             placeholderText = "Search doctor by name or role"
         )
 
+        // -------------------- Category Tabs --------------------
+        val departments by viewModel.departmentList.collectAsState()
+        val selectedDept = viewModel.selectedDepartmentId
+
+        androidx.compose.foundation.lazy.LazyRow(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(28.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp)
+        ) {
+            item {
+                Column(
+                    modifier = Modifier.clickable { viewModel.onDepartmentSelected(null) },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "All",
+                        fontSize = 16.sp,
+                        fontWeight = if (selectedDept == null) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selectedDept == null) Color.Black else Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .height(3.dp)
+                            .fillMaxWidth()
+                            .background(if (selectedDept == null) Color(0xFF00305E) else Color.Transparent)
+                    ) {
+                        Text(text = "All", color = Color.Transparent, fontSize = 16.sp)
+                    }
+                }
+            }
+            items(departments) { dept ->
+                Column(
+                    modifier = Modifier.clickable { viewModel.onDepartmentSelected(dept.id) },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = dept.departmentName,
+                        fontSize = 16.sp,
+                        fontWeight = if (selectedDept == dept.id) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (selectedDept == dept.id) Color.Black else Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .height(3.dp)
+                            .fillMaxWidth()
+                            .background(if (selectedDept == dept.id) Color(0xFF00305E) else Color.Transparent)
+                    ) {
+                        Text(text = dept.departmentName, color = Color.Transparent, fontSize = 16.sp)
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
 
         // -------------------- Doctor Grid --------------------
@@ -239,7 +300,7 @@ fun FindDoctorsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredDoctors) { doctor ->
+                    gridItems(filteredDoctors) { doctor ->
                         DoctorCard(doctor, doctorProfiles[doctor.assignedUserId])
                     }
                 }
@@ -256,10 +317,11 @@ fun PreviewFindDoctors(viewModel: FindDoctorViewModel = viewModel()) {
     val doctorProfiles by viewModel.doctorProfiles.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchDoctorsAvalability()
+        viewModel.fetchDepartments()
+        viewModel.fetchDoctorsAvalability(0)
     }
 
     CommonAppBar(title = "Find Doctors") {
-        FindDoctorsScreen(doctors = doctors, doctorProfiles = doctorProfiles)
+        FindDoctorsScreen(doctors = doctors, doctorProfiles = doctorProfiles, viewModel = viewModel)
     }
 }

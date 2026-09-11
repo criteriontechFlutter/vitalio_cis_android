@@ -5,15 +5,43 @@ data class DoctorResponse(
     val message: String,
     val responseValue: List<Doctor>
 )
+data class SingleDoctorResponse(
+    val status: Int,
+    val message: String,
+    val responseValue: Doctor?
+)
 
 data class Doctor(
-    val assignedUserId: Int,
-    val totalDays: Int,
-    val scheduleDays: String = "",
+    val doctorId: Int = 0,
     val doctorName: String? = null,
+    val bookingType: String? = null,
+    val appointmentSlotSize: Int = 0,
+    val maxAppointmentsPerShift: Int = 0,
+    val allowOverbooking: Boolean = false,
+    val isDefaultBooking: Boolean = false,
+    val isDoctorShiftActive: Boolean = false,
+    val isShiftActive: Boolean = false,
+    val workingDays: List<WorkingDay> = emptyList(),
+    // Old fields mapped for compatibility
+    val assignedUserId: Int = 0,
+    val totalDays: Int = 0,
+    val scheduleDays: String = "",
     val qualification: String? = null,
     val departmentName: String? = null,
     val profileUrl: String = ""
+)
+
+data class WorkingDay(
+    val dayId: Int,
+    val dayName: String,
+    val shifts: List<DoctorShift>
+)
+
+data class DoctorShift(
+    val shiftId: Int,
+    val shiftName: String,
+    val shiftTimeFrom: String,
+    val shiftTimeTo: String
 )
 
 data class DoctorResponsedata(

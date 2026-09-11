@@ -1,17 +1,5 @@
 package com.critetiontech.ctvitalio.utils
 
-import android.annotation.SuppressLint
-import android.app.Dialog
-import android.content.Context
- import android.graphics.drawable.ColorDrawable
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.widget.TextView
-import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,13 +12,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
  import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
 import okhttp3.ResponseBody
-import java.time.LocalTime
 
 object ToastUtils {
 

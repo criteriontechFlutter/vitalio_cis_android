@@ -6,6 +6,6 @@ import com.critetiontech.vitalio_cis.model.Doctor
 import javax.inject.Inject
 
 class FetchDoctorsUseCase @Inject constructor(private val repository: DoctorRepository) {
-    suspend operator fun invoke(clientId: String): DomainResult<List<Doctor>> =
-        repository.fetchDoctors(clientId)
+    suspend operator fun invoke(clientId: String, departmentId: String = "0"): DomainResult<List<Doctor>> =
+        repository.fetchDoctors(clientId, departmentId)
 }

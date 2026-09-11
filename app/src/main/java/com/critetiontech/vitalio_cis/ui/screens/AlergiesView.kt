@@ -19,6 +19,7 @@ import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
 import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.utils.CommonButton
 import com.critetiontech.vitalio_cis.viewmodel.AllergyViewModel
+import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
 
 // ─── Severity helpers ─────────────────────────────────────────────────────────
 
@@ -90,9 +91,10 @@ fun AllergiesScreen(
 
     CommonAppBar(title = "Allergies") {
         val colors = LocalMyColorScheme.current
+        val allergyDimens = rememberResponsiveDimens()
 
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = allergyDimens.screenPadding)) {
 
                 // Error banner
                 if (errorMessage != null) {

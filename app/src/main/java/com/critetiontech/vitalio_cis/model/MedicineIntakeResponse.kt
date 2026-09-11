@@ -25,3 +25,42 @@ data class MedicineItem(
     val takenDateTime: String,
     val isSkipped: Boolean
 )
+
+data class SearchMedicineResponse(
+    val status: Int,
+    val message: String,
+    val responseValue: List<SearchMedicineItem>
+)
+
+data class SearchMedicineItem(
+    val id: Int,
+    val medicineID: Int,
+    val medicineName: String,
+    val name: String,
+    val brandName: String,
+    val dosageFormName: String,
+    val doseStrength: Double,
+    val unitName: String
+)
+
+data class InsertMedicineRequest(
+    val pid: String,
+    val medicineId: Int,
+    val dosageType: String,
+    val dosageStrength: Int,
+    val frequency: String,
+    val frequencyValue: String,
+    val weekDays: String,
+    val monthDates: String,
+    val instructions: String,
+    val timeSlotsJson: String,
+    val startdate: String,
+    val enddate: String,
+    val clientId: String
+)
+
+data class InsertMedicineResponse(
+    val status: Int,
+    val message: String,
+    val responseValue: String?
+)
