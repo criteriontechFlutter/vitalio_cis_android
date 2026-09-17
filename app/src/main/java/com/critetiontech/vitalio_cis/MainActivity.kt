@@ -269,6 +269,8 @@ class MainActivity : ComponentActivity() {
                             composable("registrationCompleted") { RegistrationCompletedView( ) }
                             composable(Routes.BREATHING_THERAPY) { com.critetiontech.vitalio_cis.ui.screens.BreathingTherapyScreen() }
                             composable(Routes.DIGITAL_TWIN) { com.critetiontech.vitalio_cis.ui.screens.DigitalTwinScreen() }
+                            composable(Routes.HEALTH_ORBIT) { com.critetiontech.vitalio_cis.ui.screens.HealthOrbitScreen() }
+                            composable(Routes.EDITPROFILE) { com.critetiontech.vitalio_cis.ui.screens.EditProfileScreen() }
                         }
                     }
                 }

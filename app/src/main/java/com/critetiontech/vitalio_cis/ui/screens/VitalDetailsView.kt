@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import android.net.Uri
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.ui.draw.clip
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
@@ -115,9 +116,18 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
         VitalColorInfoDialog(onDismiss = { showInfoDialog = false })
     }
 
+    val navController = LocalNavController.current
+
     CommonAppBar(
         title = "Vitals",
         actions = {
+            IconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Analytics,
+                    contentDescription = "Health Orbit",
+                    tint = colors.textDarkColor
+                )
+            }
             IconButton(onClick = { showInfoDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Info,

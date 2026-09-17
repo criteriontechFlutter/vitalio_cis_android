@@ -11,6 +11,7 @@ object Routes {
     const val SYMPTOMS = "symptoms"
     const val MEDICINETAILS = "medicinedetails"
     const val DIGITAL_TWIN = "digital_twin"
+    const val HEALTH_ORBIT = "health_orbit"
     const val MEDICINE = "medicine"
     const val DIET = "diet"
     const val INTERACTION = "interaction"
@@ -55,5 +56,6 @@ object Routes {
     const val AIREPORT  = "AiReportScreen"
     const val HEALTHCONNECTSYNC = "HealthConnectSyncScreen"
     const val BREATHING_THERAPY = "BreathingTherapyScreen"
+    const val EDITPROFILE = "EditProfileScreen"
 
 }

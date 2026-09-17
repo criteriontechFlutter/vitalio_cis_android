@@ -1332,11 +1332,17 @@ fun PrimaryActionsGrid(   ) {
         type = "articles"
     ),
 
-    GridItem(
-        title = "Digital Twin",
-        icon = R.drawable.vital_details,
-        type = "digitalTwin"
-    )
+//    GridItem(
+//        title = "Digital Twin",
+//        icon = R.drawable.vital_details,
+//        type = "digitalTwin"
+//    ),
+//
+//    GridItem(
+//        title = "Vitals Orbit",
+//        icon = R.drawable.activity,
+//        type = "healthOrbit"
+//    )a
     )
 
     var gridVisible by remember { mutableStateOf(false) }
@@ -1384,7 +1390,8 @@ fun PrimaryActionsGrid(   ) {
                             "interaction" -> navController.navigate(Routes.INTERACTIONCHECKER)
                             "findDoctor" -> navController.navigate(Routes.FINDDOCTOR)
                             "articles" -> navController.navigate(Routes.RESEARCHARTICLES)
-                            "digitalTwin" -> navController.navigate(Routes.DIGITAL_TWIN)
+//                            "digitalTwin" -> navController.navigate(Routes.DIGITAL_TWIN)
+//                            "healthOrbit" -> navController.navigate(Routes.HEALTH_ORBIT)
                         }   // ✅ GLOBAL NAV
                     },
                 shape = RoundedCornerShape(12.dp),
