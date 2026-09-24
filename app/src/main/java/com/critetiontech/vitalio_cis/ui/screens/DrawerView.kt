@@ -60,6 +60,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.vitalio_cis.R
@@ -352,13 +353,20 @@ fun ProfileCard() {
         ) {
 
             /// 🔹 Profile Image
-            Image(
-                painter = painterResource(id = R.drawable.img),
+            AsyncImage(
+                model = PrefsManager(context).getPatient()?.imageUrl
+                    ?.takeIf { it.isNotBlank() },
+
+                placeholder = painterResource(R.drawable.img),
+                error = painterResource(R.drawable.img),
+
                 contentDescription = "Profile",
+
+                contentScale = ContentScale.Crop,
+
                 modifier = Modifier
                     .size(90.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+                    .clip(CircleShape)
             )
 
             /// 🔹 Edit Icon

@@ -48,6 +48,10 @@ class EditProfileViewModel : ViewModel() {
         _updateSuccess.value = false
     }
 
+    fun resetError() {
+        _errorMessage.value = null
+    }
+
     // ── load country list from assets + pre-select saved values ──────────
     fun loadLocationData(countryId: Int, stateId: Int, cityId: Int) {
         viewModelScope.launch {
@@ -168,13 +172,27 @@ class EditProfileViewModel : ViewModel() {
                 "Female" -> 2
                 else -> if (gender.isNotBlank()) 3 else patient.genderId
             }
+            val genderNameStr = when (genderId) {
+                1 -> "Male"; 2 -> "Female"; else -> "Other"
+            }
+            val resolvedBloodGroupId = if (bloodGroupId > 0) bloodGroupId else patient.bloodGroupId
+            val bloodGroupNameStr = when (resolvedBloodGroupId) {
+                1 -> "A+"; 2 -> "A-"; 3 -> "B+"; 4 -> "B-"
+                5 -> "O+"; 6 -> "O-"; 7 -> "AB+"; 8 -> "AB-"
+                else -> patient.bloodGroupName ?: ""
+            }
 
             val updatedPatient = patient.copy(
                 genderId = genderId,
-                bloodGroupId = if (bloodGroupId > 0) bloodGroupId else patient.bloodGroupId,
+                genderName = genderNameStr,
+                bloodGroupId = resolvedBloodGroupId,
+                bloodGroupName = bloodGroupNameStr,
                 countryId = countryId,
+                countryName = _locationState.value.selectedCountryName.ifBlank { patient.countryName },
                 stateId = stateId,
-                cityId = cityId
+                stateName = _locationState.value.selectedStateName.ifBlank { patient.stateName },
+                cityId = cityId,
+                cityName = _locationState.value.selectedCityName.ifBlank { patient.cityName }
             )
 
             when (val r = updateProfileUseCase(

@@ -13,10 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
- import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
-import okhttp3.ResponseBody
 
 object ToastUtils {
 
@@ -98,16 +95,3 @@ object ToastUtils {
     }
 }
 
-// ---------------- Error Parsing ----------------
-object ErrorUtils {
-    fun parseErrorMessage(errorBody: ResponseBody?): String {
-        return try {
-            val gson = Gson()
-            val type = object : TypeToken<Map<String, Any>>() {}.type
-            val errorMap: Map<String, Any> = gson.fromJson(errorBody?.charStream(), type)
-            errorMap["message"]?.toString() ?: "Something went wrong"
-        } catch (e: Exception) {
-            "Unable to parse error"
-        }
-    }
-}

@@ -165,7 +165,8 @@ fun EditProfileScreen(
     val context = LocalContext.current
     val navController = LocalNavController.current
     val prefs = remember { PrefsManager(context) }
-    val patient = remember { prefs.getPatient() }
+    // Always read fresh patient data on screen open
+    val patient = prefs.getPatient()
 
     val loading by viewModel.loading.collectAsState()
     val updateSuccess by viewModel.updateSuccess.collectAsState()
@@ -182,8 +183,8 @@ fun EditProfileScreen(
     var mobileNo by rememberSaveable { mutableStateOf(patient?.mobileNo.orEmpty()) }
     var email by rememberSaveable { mutableStateOf(patient?.emailAddress.orEmpty()) }
     var weight by rememberSaveable { mutableStateOf("") }
-    var selectedBloodGroup by rememberSaveable {
-        mutableStateOf(bloodGroupOptions.firstOrNull { it.id == patient?.bloodGroupId })
+    var selectedBloodGroupId by rememberSaveable {
+        mutableStateOf(patient?.bloodGroupId ?: 0)
     }
     var address by rememberSaveable { mutableStateOf(patient?.address.orEmpty()) }
     var zipCode by rememberSaveable { mutableStateOf(patient?.zip.orEmpty()) }
@@ -239,10 +240,20 @@ fun EditProfileScreen(
         )
     }
 
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
     LaunchedEffect(updateSuccess) {
         if (updateSuccess) {
+            android.widget.Toast.makeText(context, "Profile updated successfully!", android.widget.Toast.LENGTH_SHORT).show()
             viewModel.resetSuccess()
             navController.popBackStack()
+        }
+    }
+
+    LaunchedEffect(errorMessage) {
+        if (!errorMessage.isNullOrBlank()) {
+            android.widget.Toast.makeText(context, errorMessage, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.resetError()
         }
     }
 
@@ -460,10 +471,10 @@ fun EditProfileScreen(
                                 fontSize = 14.sp
                             )
                             EditProfileDropdown(
-                                selectedValue = selectedBloodGroup?.name ?: "",
+                                selectedValue = bloodGroupOptions.firstOrNull { it.id == selectedBloodGroupId }?.name ?: "",
                                 options = bloodGroupOptions.map { it.name },
                                 onOptionSelected = { name ->
-                                    selectedBloodGroup = bloodGroupOptions.firstOrNull { it.name == name }
+                                    selectedBloodGroupId = bloodGroupOptions.firstOrNull { it.name == name }?.id ?: 0
                                 },
                                 placeholder = "Select",
                                 colors = colors
@@ -621,7 +632,7 @@ fun EditProfileScreen(
                                     zip = zipCode,
                                     imageFile = selectedImageFile,
                                     gender = gender,
-                                    bloodGroupId = selectedBloodGroup?.id ?: (patient?.bloodGroupId ?: 0),
+                                    bloodGroupId = if (selectedBloodGroupId > 0) selectedBloodGroupId else (patient?.bloodGroupId ?: 0),
                                     weight = weight,
                                     countryId = locationState.selectedCountryId ?: (patient?.countryId ?: 101),
                                     stateId = locationState.selectedStateId ?: (patient?.stateId ?: 0),

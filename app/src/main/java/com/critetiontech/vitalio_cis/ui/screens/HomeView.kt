@@ -65,6 +65,9 @@ import java.util.Locale
 import com.critetiontech.vitalio_cis.R
 import com.critetiontech.vitalio_cis.Routes
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.critetiontech.vitalio_cis.model.UpcomingAppointment
 import com.critetiontech.vitalio_cis.model.Vital
 import com.critetiontech.vitalio_cis.ui.screens.AddActivityScreen
@@ -74,6 +77,7 @@ import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveContentContainer
 import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import kotlin.time.Duration.Companion.milliseconds
 
 data class GridItem(val title: String, val icon: Int)
 
@@ -893,20 +897,21 @@ fun Header() {
             .graphicsLayer { this.alpha = alpha; translationY = offsetY },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(R.drawable.img),
-            contentDescription = null,
+        AsyncImage(
+            model = PrefsManager(context).getPatient()?.imageUrl
+                ?.takeIf { it.isNotBlank() },
+            placeholder = painterResource(R.drawable.img),
+            error = painterResource(R.drawable.img),
+            contentDescription = "Patient Profile",
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(45.dp)
                 .clip(CircleShape)
                 .clickable {
-
                     navController.navigate(Routes.DRAWER)
                 }
         )
-
         Spacer(Modifier.width(10.dp))
-
         Column(modifier = Modifier.weight(1f)) {
             Text("${ToastUtils.getSimpleGreeting()},",
                     style = AppTextStyles.style12GCN())
@@ -914,7 +919,6 @@ fun Header() {
                     style = AppTextStyles.style18BCN())
         }
 
-//        Icon(Icons.Default.Search, contentDescription = null)
         Spacer(Modifier.width(10.dp))
         Icon(Icons.Default.Notifications, contentDescription = null)
     }
@@ -1137,7 +1141,7 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
     // auto slide
     LaunchedEffect(Unit) {
         while (true) {
-            delay(2000)
+            delay(2000.milliseconds)
             val nextPage = (pagerState.currentPage + 1) % mergedVitals.size
             pagerState.animateScrollToPage(nextPage)
         }

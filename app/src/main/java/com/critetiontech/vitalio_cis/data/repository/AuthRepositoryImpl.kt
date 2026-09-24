@@ -69,7 +69,8 @@ class AuthRepositoryImpl @Inject constructor(
                     bloodGroupId = p.bloodGroupId, clientId = p.clientId, countryCallingCode = "",
                     guardianRelationId = 0, guardianName = "", countryId = 0, imageUrl = "",
                     zip = "", isActive = true, departmentName = null, cityName = "", stateName = "",
-                    countryName = "", genderName = "", guardianRelationName = null, bloodGroupName = null
+                    countryName = "", genderName = "", guardianRelationName = null, bloodGroupName = null,
+                    crNo = p.crNo   // ← capture crNo from login response
                 )
                 prefs.savePatient(patient)
                 DomainResult.Success(patient)

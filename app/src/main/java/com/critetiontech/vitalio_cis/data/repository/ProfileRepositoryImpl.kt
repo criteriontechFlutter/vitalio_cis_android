@@ -8,19 +8,15 @@ import com.critetiontech.vitalio_cis.domain.repository.ProfileRepository
 import com.critetiontech.vitalio_cis.utils.Patient
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.critetiontech.vitalio_cis.viewmodel.LocationItem
-import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class ProfileRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
+class ProfileRepositoryImpl(
+    private val context: Context,
     private val prefs: PrefsManager
 ) : ProfileRepository {
 
@@ -78,6 +74,7 @@ class ProfileRepositoryImpl @Inject constructor(
 
         val response = ApiClients.module4082.dynamicMultipartPut(
             url = endpoints.updatePatientProfile,
+            headers = emptyMap(),
             parts = parts
         )
 
@@ -169,6 +166,7 @@ class ProfileRepositoryImpl @Inject constructor(
     override suspend fun getStates(countryId: Int): List<LocationItem> = try {
         val response = ApiClients.module4119.dynamicGet(
             url = "https://vitaliocis.vitalio.care:4119/api/StateMaster/GetStateMasterByCountryId",
+            headers = emptyMap(),
             params = mapOf("id" to countryId.toString(), "clientId" to "176")
         )
         if (response.isSuccessful) {
@@ -191,6 +189,7 @@ class ProfileRepositoryImpl @Inject constructor(
     override suspend fun getCities(stateId: Int): List<LocationItem> = try {
         val response = ApiClients.module4119.dynamicGet(
             url = "https://vitaliocis.vitalio.care:4119/api/CityMaster/GetCityMasterByStateId",
+            headers = emptyMap(),
             params = mapOf("id" to stateId.toString(), "clientId" to "176")
         )
         if (response.isSuccessful) {
