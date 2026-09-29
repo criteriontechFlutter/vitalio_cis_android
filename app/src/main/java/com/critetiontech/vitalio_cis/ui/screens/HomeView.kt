@@ -11,7 +11,6 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Brush
-import androidx.activity.ComponentActivity
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -35,25 +34,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
  import com.critetiontech.vitalio_cis.ui.screens.RemindersScreen
  import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.critetiontech.vitalio_cis.viewmodel.HomeViewModel
-import com.example.vitalio_cis.viewmodel.ListeningState
-import com.example.vitalio_cis.viewmodel.VoiceCommandViewModel
 import com.critetiontech.vitalio_cis.voice.VoiceNavigationManager
 import com.critetiontech.vitalio_cis.voice.VoiceListeningOverlay
 import com.critetiontech.vitalio_cis.voice.FloatingVoiceFab
@@ -67,14 +59,14 @@ import com.critetiontech.vitalio_cis.Routes
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.critetiontech.vitalio_cis.model.UpcomingAppointment
 import com.critetiontech.vitalio_cis.model.Vital
 import com.critetiontech.vitalio_cis.ui.screens.AddActivityScreen
 import com.critetiontech.vitalio_cis.ui.adaptive.LocalWindowSizeClass
 import com.critetiontech.vitalio_cis.ui.adaptive.WindowWidthSizeClass
-import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveContentContainer
 import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
+import com.critetiontech.vitalio_cis.viewmodel.ListeningState
+import com.critetiontech.vitalio_cis.viewmodel.VoiceCommandViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import kotlin.time.Duration.Companion.milliseconds
@@ -113,7 +105,7 @@ fun DashboardScreen(
     homeViewModel: HomeViewModel = viewModel(),
     voiceViewModel: VoiceCommandViewModel = viewModel()
 ) {
-    var selectedIndex by remember { mutableStateOf(0) }
+    var selectedIndex by remember { mutableIntStateOf(0) }
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
     val navController = LocalNavController.current
@@ -128,6 +120,9 @@ fun DashboardScreen(
     val isExtractingData     by VoiceNavigationManager.isExtractingData.collectAsState()
     val processingTranscript by VoiceNavigationManager.processingTranscript.collectAsState()
     val navigationCommand    by VoiceNavigationManager.navigationCommand.collectAsState()
+    val anomalyAlerts        by VoiceNavigationManager.anomalyAlerts.collectAsState()
+    val multiTurnPrompt      by VoiceNavigationManager.multiTurnPrompt.collectAsState()
+    val vitalTrends          by VoiceNavigationManager.vitalTrends.collectAsState()
 
     // Mic permission (RECORD_AUDIO already in manifest)
     val micPermission = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
@@ -303,6 +298,9 @@ fun DashboardScreen(
             processingTranscript = processingTranscript,
             isSavingData         = isSavingData,
             isExtractingData     = isExtractingData,
+            anomalyAlerts        = anomalyAlerts,
+            multiTurnPrompt      = multiTurnPrompt,
+            vitalTrends          = vitalTrends,
             onStop               = { VoiceNavigationManager.stopListening() },
             onCancel             = { VoiceNavigationManager.cancelPendingData() },
             onSaveAll            = { VoiceNavigationManager.confirmAndSaveAllPendingData() },
@@ -327,7 +325,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
     val vitals by viewModel.vitalList.collectAsState()
     val appointments by viewModel.appointments.collectAsState()
-    val pendingMedicines by viewModel.pendingMedicines.collectAsState()
+    val dailyMedicines by viewModel.dailyMedicines.collectAsState()
     val markingMedicines by viewModel.markingMedicines.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
@@ -355,12 +353,12 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
                 .verticalScroll(rememberScrollState())
                 .padding(homeDimens.screenPadding)
         ) {
-            if (loading && vitals.isEmpty() && pendingMedicines.isEmpty()) {
+            if (loading && vitals.isEmpty() && dailyMedicines.isEmpty()) {
                 VitalsCardShimmer()
             } else {
                 AnimatedSection(delayMillis = 50) {
                     UpcomingMedicationsSection(
-                        pendingMedicines = pendingMedicines,
+                        dailyMedicines = dailyMedicines,
                         markingMedicines = markingMedicines,
                         onMarkIntake = { medicine ->
                             viewModel.markMedicineIntake(medicine)
@@ -1833,14 +1831,16 @@ fun LifestyleCard() {
 }
 @Composable
 fun UpcomingMedicationsSection(
-    pendingMedicines: List<com.critetiontech.vitalio_cis.model.PendingMedicine>,
+    dailyMedicines: List<com.critetiontech.vitalio_cis.model.MedicineItem>,
     markingMedicines: Set<Int>,
-    onMarkIntake: (com.critetiontech.vitalio_cis.model.PendingMedicine) -> Unit
+    onMarkIntake: (com.critetiontech.vitalio_cis.model.MedicineItem) -> Unit
 ) {
     val colors = LocalMyColorScheme.current
-    if (pendingMedicines.isEmpty()) return
+    if (dailyMedicines.isEmpty()) return
 
     val isExpanded = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    // Only show up to 2 items if not expanded
+    val visibleMedicines = if (isExpanded.value) dailyMedicines else dailyMedicines.take(2)
 
     Column(modifier = Modifier
         .fillMaxWidth()
@@ -1853,19 +1853,19 @@ fun UpcomingMedicationsSection(
                     interactionSource = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                     indication = null
                 ) {
-                    if (pendingMedicines.size > 1) {
+                    if (dailyMedicines.size > 2) {
                         isExpanded.value = !isExpanded.value
                     }
                 },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Upcoming Medications", style = AppTextStyles.style18BCB())
+            Text("Today's Medications", style = AppTextStyles.style18BCB())
             
-            if (pendingMedicines.size > 1) {
+            if (dailyMedicines.size > 2) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        if (isExpanded.value) "Show Less" else "+${pendingMedicines.size - 1} More",
+                        if (isExpanded.value) "Show Less" else "+${dailyMedicines.size - 2} More",
                         style = AppTextStyles.style12BCN().copy(color = Color(0xFF4F46E5))
                     )
                     Spacer(Modifier.width(4.dp))
@@ -1881,8 +1881,8 @@ fun UpcomingMedicationsSection(
         
         Spacer(Modifier.height(12.dp))
 
-        if (isExpanded.value || pendingMedicines.size == 1) {
-            pendingMedicines.forEach { medicine ->
+        Column(modifier = Modifier.fillMaxWidth()) {
+            visibleMedicines.forEach { medicine ->
                 MedicineCardItem(
                     medicine = medicine,
                     markingMedicines = markingMedicines,
@@ -1891,63 +1891,36 @@ fun UpcomingMedicationsSection(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
-        } else {
-            // Stacked collapsed view
-            Box(
-                contentAlignment = Alignment.TopCenter,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp)
-                    .clickable(
-                        interactionSource = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        indication = null
-                    ) { isExpanded.value = true }
-            ) {
-                val maxVisible = minOf(3, pendingMedicines.size)
-                
-                for (i in (maxVisible - 1) downTo 0) {
-                    val medicine = pendingMedicines[i]
-                    val isTop = (i == 0)
-                    
-                    // Professional Wallet-style stack math
-                    val scale by androidx.compose.animation.core.animateFloatAsState(if (isTop) 1f else 1f - (i * 0.08f))
-                    val yOffset by androidx.compose.animation.core.animateDpAsState((i * 16).dp)
-                    val alphaValue by androidx.compose.animation.core.animateFloatAsState(if (isTop) 1f else 1f - (i * 0.2f))
-                    
-                    MedicineCardItem(
-                        medicine = medicine,
-                        markingMedicines = markingMedicines,
-                        onMarkIntake = onMarkIntake,
-                        colors = colors,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = yOffset)
-                            .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                                this.alpha = alphaValue
-                                translationY = i * 8f
-                            }
-                            .zIndex((maxVisible - i).toFloat()),
-                        isClickable = isTop
-                    )
-                }
-            }
         }
     }
 }
 
 @Composable
 fun MedicineCardItem(
-    medicine: com.critetiontech.vitalio_cis.model.PendingMedicine,
+    medicine: com.critetiontech.vitalio_cis.model.MedicineItem,
     markingMedicines: Set<Int>,
-    onMarkIntake: (com.critetiontech.vitalio_cis.model.PendingMedicine) -> Unit,
+    onMarkIntake: (com.critetiontech.vitalio_cis.model.MedicineItem) -> Unit,
     colors: com.critetiontech.vitalio_cis.ui.theme.MyColorScheme,
-    modifier: Modifier = Modifier,
-    isClickable: Boolean = true
+    modifier: Modifier = Modifier
 ) {
     val isMarking = markingMedicines.contains(medicine.id)
     val cardAlpha by androidx.compose.animation.core.animateFloatAsState(if (isMarking) 0.65f else 1f)
+
+    // Status logic
+    val isTaken = medicine.isTaken && medicine.takenDateTime != "1900-01-01T00:00:00"
+    val isSkipped = medicine.isSkipped
+    val scheduled = try {
+        java.time.LocalDateTime.parse(medicine.scheduledDateTime)
+    } catch (e: Exception) {
+        null
+    }
+    val now = java.time.LocalDateTime.now()
+    val statusText = when {
+        isTaken -> "Taken"
+        isSkipped -> "Skipped"
+        scheduled != null && now >= scheduled -> "Take Now"
+        else -> "Upcoming"
+    }
 
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -1968,12 +1941,32 @@ fun MedicineCardItem(
             }
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("1 unit", style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B)))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${medicine.dosageStrength.toInt()} ${medicine.unit}",
+                        style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B))
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    // Status Badge
+                    val badgeColor = when (statusText) {
+                        "Taken" -> Color(0xFF1564ED)
+                        "Skipped" -> Color(0xFFE65100)
+                        "Take Now" -> Color(0xFF2E7D32)
+                        else -> Color(0xFF6A1B9A)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .background(badgeColor.copy(alpha = 0.1f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(statusText, color = badgeColor, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
                 Spacer(Modifier.height(4.dp))
                 Text(medicine.medicineName, style = AppTextStyles.style14BCB().copy(color = Color(0xFF0F172A), fontWeight = FontWeight.Bold))
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    if (medicine.instructions.isNotEmpty()) medicine.instructions else medicine.frequency,
+                    medicine.instructions.ifEmpty { "As prescribed" },
                     style = AppTextStyles.style12GCN().copy(color = Color(0xFF64748B))
                 )
             }
@@ -1989,12 +1982,12 @@ fun MedicineCardItem(
                         color = Color(0xFF4F46E5),
                         strokeWidth = 2.dp
                     )
-                } else {
+                } else if (!isTaken && !isSkipped && statusText == "Take Now") {
                     Box(
                         modifier = Modifier
                             .size(24.dp)
                             .border(1.5.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
-                            .clickable(enabled = isClickable && markingMedicines.isEmpty()) {
+                            .clickable(enabled = markingMedicines.isEmpty()) {
                                 onMarkIntake(medicine)
                             }
                     )
@@ -2003,3 +1996,4 @@ fun MedicineCardItem(
         }
     }
 }
+

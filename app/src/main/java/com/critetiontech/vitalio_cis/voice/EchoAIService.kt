@@ -46,9 +46,10 @@ object EchoAIService {
             if (trimmed.length < 2 || !trimmed.any { it.isLetter() }) return@withContext VoiceExtractedData()
 
             try {
-                val patient = prefs.getPatient()
-                val uhid   = patient?.uhId ?: ""
-                val userId = patient?.pid?.toString() ?: "1"
+                val patient  = prefs.getPatient()
+                val uhid     = patient?.uhId ?: ""
+                val userId   = patient?.pid?.toString() ?: "1"
+                val clientId = patient?.clientId ?: 1  // Use actual clientId — critical for multi-tenant / enterprise
 
                 // Build JSON payload matching the iOS structure exactly
                 val medicationArray = org.json.JSONArray().apply {
@@ -63,7 +64,7 @@ object EchoAIService {
                     put("uhid", uhid)
                     put("date", currentDate())
                     put("time", currentTime())
-                    put("clientID", 1)
+                    put("clientID", clientId)  // ✅ Fixed: was hardcoded to 1
                     put("medication", medicationArray)
                 }
                 val payload = JSONObject().apply {
@@ -332,7 +333,68 @@ object EchoAIService {
             }
         }
 
-        // --- Fluid Intake NLP fallback ---
+        // --- Pulse NLP fallback ---
+        if (result.vitals?.containsKey("vmValuePulse") != true) {
+            val pulsePat = Pattern.compile(
+                "(?:pulse|heart\\s*rate|hr|nabz|naad|dil\\s*ki\\s*dhadkan)\\s*(?:is|was|=|:)?\\s*(\\d{2,3})|" +
+                "(\\d{2,3})\\s*(?:bpm|beats\\s*per\\s*minute|beats)\\s*(?:pulse|heart\\s*rate|hr)?",
+                Pattern.CASE_INSENSITIVE
+            )
+            val m = pulsePat.matcher(lowerText)
+            if (m.find()) {
+                val valStr = (m.group(1) ?: m.group(2))?.trim()
+                val valInt = valStr?.toIntOrNull()
+                if (valInt != null && valInt in 30..250) {
+                    val newVitals = (result.vitals?.toMutableMap() ?: mutableMapOf())
+                    newVitals["vmValuePulse"] = valStr!!
+                    result = result.copy(vitals = newVitals)
+                    Log.d("EchoAI", "Pulse NLP fallback: $valStr")
+                }
+            }
+        }
+
+        // --- SpO2 / Oxygen NLP fallback ---
+        if (result.vitals?.containsKey("vmValueSPO2") != true) {
+            val spo2Pat = Pattern.compile(
+                "(?:spo2|oxygen|o2|saturation|oxygen\\s*saturation|spo)\\s*(?:level|reading|is|was|=|:)?\\s*(\\d{2,3})|" +
+                "(\\d{2,3})\\s*%?\\s*(?:spo2|oxygen|saturation)",
+                Pattern.CASE_INSENSITIVE
+            )
+            val m = spo2Pat.matcher(lowerText)
+            if (m.find()) {
+                val valStr = (m.group(1) ?: m.group(2))?.trim()
+                val valInt = valStr?.toIntOrNull()
+                if (valInt != null && valInt in 70..100) {
+                    val newVitals = (result.vitals?.toMutableMap() ?: mutableMapOf())
+                    newVitals["vmValueSPO2"] = valStr!!
+                    result = result.copy(vitals = newVitals)
+                    Log.d("EchoAI", "SpO2 NLP fallback: $valStr")
+                }
+            }
+        }
+
+        // --- Temperature NLP fallback ---
+        if (result.vitals?.containsKey("vmValueTemperature") != true) {
+            val tempPat = Pattern.compile(
+                "(?:temperature|temp|bukhar|badan\\s*ka\\s*taap)\\s*(?:is|was|=|:)?\\s*(\\d{2,3}(?:\\.\\d)?)|" +
+                "(\\d{2,3}(?:\\.\\d)?)\\s*(?:°f|°c|degree|celsius|fahrenheit)",
+                Pattern.CASE_INSENSITIVE
+            )
+            val m = tempPat.matcher(lowerText)
+            if (m.find()) {
+                val valStr = (m.group(1) ?: m.group(2))?.trim()
+                val valNum = valStr?.toDoubleOrNull()
+                // Valid range: 90–110°F or 32–44°C
+                if (valNum != null && (valNum in 90.0..110.0 || valNum in 32.0..44.0)) {
+                    val newVitals = (result.vitals?.toMutableMap() ?: mutableMapOf())
+                    newVitals["vmValueTemperature"] = valStr!!
+                    result = result.copy(vitals = newVitals)
+                    Log.d("EchoAI", "Temperature NLP fallback: $valStr")
+                }
+            }
+        }
+
+
         data class FluidSpec(val foodId: Int, val name: String, val keywords: List<String>)
         val fluidSpecs = listOf(
             FluidSpec(97694, "Water",  listOf("water", "pani", "paani")),
@@ -426,6 +488,52 @@ object EchoAIService {
             }
         } catch (e: Exception) {
             android.util.Log.e("EchoAI", "Medicine NLP Fallback failed: ${e.message}")
+        }
+
+        // --- Symptom NLP Fallback ---
+        // If EchoAI returned no symptoms, try keyword-based extraction (Hindi + English)
+        if (result.symptoms.isNullOrEmpty()) {
+            data class SymptomSpec(val keywords: List<String>, val displayName: String, val detailId: Int = 0)
+            val symptomSpecs = listOf(
+                SymptomSpec(listOf("fever", "bukhar", "bukhaar", "tez bukhar", "temperature high"), "Fever", 14),
+                SymptomSpec(listOf("headache", "sir dard", "sar dard", "sir mein dard", "migraine", "head pain"), "Headache", 15),
+                SymptomSpec(listOf("cough", "khansi", "khaansi", "dry cough", "wet cough"), "Cough", 12),
+                SymptomSpec(listOf("cold", "sardi", "nasal", "runny nose", "nazla", "nasal congestion"), "Cold", 17),
+                SymptomSpec(listOf("vomiting", "ulti", "vomit", "nausea", "ji machalna", "motions vomiting"), "Vomiting", 18),
+                SymptomSpec(listOf("diarrhea", "diarrhea", "loose motion", "loose motions", "dast", "latrin", "ulta"), "Diarrhea", 19),
+                SymptomSpec(listOf("chest pain", "seene mein dard", "sine mein dard", "heart pain", "angina"), "Chest Pain", 20),
+                SymptomSpec(listOf("shortness of breath", "saans lene mein takleef", "breathlessness", "saans phoolna", "dyspnea"), "Shortness of Breath", 21),
+                SymptomSpec(listOf("fatigue", "weakness", "kamzori", "thakan", "tired", "thaka hua"), "Fatigue", 22),
+                SymptomSpec(listOf("back pain", "kamar dard", "kamar mein dard", "peeth mein dard", "pith dard"), "Back Pain", 23),
+                SymptomSpec(listOf("joint pain", "jodo mein dard", "ghutne mein dard", "hath paon mein dard"), "Joint Pain", 24),
+                SymptomSpec(listOf("stomach pain", "pet dard", "stomach ache", "abdominal pain", "tummy ache"), "Stomach Pain", 25),
+                SymptomSpec(listOf("dizziness", "chakkar", "chakkar aana", "vertigo", "giddiness"), "Dizziness", 26),
+                SymptomSpec(listOf("swelling", "sujan", "edema", "puffiness"), "Swelling", 27),
+                SymptomSpec(listOf("skin rash", "rash", "khujli", "itching", "urticaria", "hives"), "Skin Rash", 28),
+                SymptomSpec(listOf("insomnia", "sleep problem", "neend nahi", "nind nahi", "sleeping issue"), "Insomnia", 29),
+                SymptomSpec(listOf("anxiety", "tension", "stress", "chinta", "ghabrahat"), "Anxiety", 30),
+                SymptomSpec(listOf("body pain", "badan mein dard", "whole body pain", "sar se pair tak dard"), "Body Pain", 31)
+            )
+            val existingSymNames = result.symptoms?.map { it.details.lowercase() }?.toSet() ?: emptySet()
+            val detectedSymptoms = mutableListOf<VoiceSymptomItem>()
+            for (spec in symptomSpecs) {
+                if (spec.displayName.lowercase() in existingSymNames) continue
+                for (kw in spec.keywords) {
+                    if (lowerText.contains(kw)) {
+                        detectedSymptoms.add(VoiceSymptomItem(
+                            detailID    = spec.detailId.toString(),
+                            detailsDate = "",
+                            details     = spec.displayName,
+                            pmId        = 2
+                        ))
+                        Log.d("EchoAI", "Symptom NLP fallback detected: ${spec.displayName}")
+                        break
+                    }
+                }
+            }
+            if (detectedSymptoms.isNotEmpty()) {
+                result = result.copy(symptoms = detectedSymptoms)
+            }
         }
 
         return result

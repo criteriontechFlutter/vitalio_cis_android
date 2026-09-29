@@ -1,8 +1,6 @@
 package com.critetiontech.vitalio_cis.ui.screens
 
 import android.annotation.SuppressLint
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -87,26 +85,16 @@ private fun iconResForFood(foodName: String): Int = when {
     else -> R.drawable.fluid_beverage
 }
 
-// Maps food name to glass fill gradient
-private fun gradientForFood(foodName: String): List<Color> = when {
-    foodName.contains("water", ignoreCase = true) -> listOf(Color(0xFFBFD3F2), Color(0xFF8FB3E8))
-    foodName.contains("juice", ignoreCase = true) -> listOf(Color(0xFFFFD89B), Color(0xFFF59E0B))
-    foodName.contains("milk", ignoreCase = true) -> listOf(Color.White, Color(0xFFE5E7EB))
-    foodName.contains("tea", ignoreCase = true) -> listOf(Color(0xFFFCD34D), Color(0xFFFB923C))
-    foodName.contains("coffee", ignoreCase = true) -> listOf(Color(0xFFB45309), Color(0xFF78350F))
-    else -> listOf(Color(0xFFA7F3D0), Color(0xFF10B981))
-}
-
 @SuppressLint("NewApi")
 @Composable
 fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
 
     var selectedItem by remember { mutableStateOf<ManualFoodAssignItem?>(null) }
-    var toggle by remember { mutableStateOf(0) }
+    var toggle by remember { mutableIntStateOf(0) }
 
-    var glassQuantity by remember { mutableStateOf(105) }
+    var glassQuantity by remember { mutableIntStateOf(105) }
     var selectedPreset by remember { mutableStateOf<Int?>(null) }
-    var glassMaxMl by remember { mutableStateOf(150) }
+    var glassMaxMl by remember { mutableIntStateOf(150) }
     val effectiveQuantity = selectedPreset ?: glassQuantity
 
     val manualFoodList by viewModel.manualFoodList.collectAsState()
@@ -302,11 +290,11 @@ fun ProgressSection(viewModel: IntakeOutputViewModel = viewModel()) {
     val fluidSummaryList by viewModel.fluidSummaryList.collectAsState()
     val colors = LocalMyColorScheme.current
 
-    val recommendedLimit = if (fluidSummaryList.orEmpty().isNotEmpty()) {
-        fluidSummaryList.orEmpty().maxOfOrNull { it.assignedLimit }?.takeIf { it > 0 } ?: 2000
+    val recommendedLimit = if (fluidSummaryList.isNotEmpty()) {
+        fluidSummaryList.maxOfOrNull { it.assignedLimit }?.takeIf { it > 0 } ?: 2000
     } else 2000
 
-    val totalIntake = intakeList.orEmpty().sumOf { it.foodQuantity }
+    val totalIntake = intakeList.sumOf { it.foodQuantity }
     val progressFraction = (totalIntake.toFloat() / recommendedLimit).coerceIn(0f, 1f)
     val remaining = (recommendedLimit - totalIntake).coerceAtLeast(0)
 
@@ -317,7 +305,7 @@ fun ProgressSection(viewModel: IntakeOutputViewModel = viewModel()) {
     }
 
     val foodLegendNames = remember(intakeList) {
-        intakeList.orEmpty().mapNotNull { it.foodName?.takeIf { n -> n.isNotEmpty() } }.distinct().take(4)
+        intakeList.mapNotNull { it.foodName?.takeIf { n -> n.isNotEmpty() } }.distinct().take(4)
     }
 
     val legendColors = listOf(
@@ -523,13 +511,13 @@ private val GlassOutlineShape = GenericShape { size, _ ->
     val bottomInset = size.width * 0.18f
     moveTo(topInset + 28f, 0f)
     lineTo(size.width - topInset - 28f, 0f)
-    quadraticBezierTo(size.width - topInset, 0f, size.width - topInset, 28f)
+    quadraticTo(size.width - topInset, 0f, size.width - topInset, 28f)
     lineTo(size.width - bottomInset, size.height - 28f)
-    quadraticBezierTo(size.width - bottomInset, size.height, size.width - bottomInset - 28f, size.height)
+    quadraticTo(size.width - bottomInset, size.height, size.width - bottomInset - 28f, size.height)
     lineTo(bottomInset + 28f, size.height)
-    quadraticBezierTo(bottomInset, size.height, bottomInset, size.height - 28f)
+    quadraticTo(bottomInset, size.height, bottomInset, size.height - 28f)
     lineTo(topInset, 28f)
-    quadraticBezierTo(topInset, 0f, topInset + 28f, 0f)
+    quadraticTo(topInset, 0f, topInset + 28f, 0f)
     close()
 }
 
@@ -543,7 +531,7 @@ fun SlideableWaterGlass(
 ) {
     val style = remember(foodName) { beverageStyle(foodName) }
 
-    var level by remember { mutableStateOf((quantity.toFloat() / maxMl).coerceIn(0f, 1f)) }
+    var level by remember { mutableFloatStateOf((quantity.toFloat() / maxMl).coerceIn(0f, 1f)) }
     var isDragging by remember { mutableStateOf(false) }
 
     LaunchedEffect(quantity, maxMl) {
@@ -922,7 +910,6 @@ fun FluidItem(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun IntakeSelector(
     viewModel: IntakeOutputViewModel = viewModel(),
@@ -1026,7 +1013,7 @@ fun IntakeSelector(
 @SuppressLint("NewApi")
 @Composable
 fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
-    var sliderValue by remember { mutableStateOf(550f) }
+    var sliderValue by remember { mutableFloatStateOf(550f) }
     var selectedColour by remember { mutableStateOf("") }
     val maxValue = 1000f
     val ovalHeight = 300.dp
@@ -1201,7 +1188,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                 val lastTime = java.time.LocalDateTime.parse(lastItem.outputDate.trim(), fmt)
                 val diff = java.time.Duration.between(lastTime, java.time.LocalDateTime.now())
                 Pair(diff.toHours().coerceAtLeast(0L), (diff.toMinutes() % 60).coerceAtLeast(0L))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -1284,7 +1271,7 @@ fun BpRangeIndicator(
     val selectedIndex = apiLabels.indexOf(selectedColour)
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Fixed height prevents multi-line chip labels from pushing the colour bar down
+        /* Fixed height prevents multi-line chip labels from pushing the colour bar down */
         Row(
             modifier = Modifier.fillMaxWidth().height(44.dp),
             verticalAlignment = Alignment.Bottom

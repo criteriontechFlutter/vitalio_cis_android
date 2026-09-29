@@ -87,6 +87,7 @@ import com.critetiontech.vitalio_cis.ui.theme.MyAppTheme
 import com.critetiontech.vitalio_cis.utils.PrefsManager
 import com.critetiontech.vitalio_cis.viewmodel.UploadReportViewModel
 import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveLayoutProvider
+import com.critetiontech.vitalio_cis.voice.VoiceNavigationManager
 import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.google.gson.Gson
 
@@ -102,6 +103,7 @@ class MainActivity : ComponentActivity() {
             val uploadReportViewModel: UploadReportViewModel = viewModel()
             val interactionViewModel: InteractionCheckerViewModel = viewModel()
             val context = LocalContext.current
+            VoiceNavigationManager.initTts(this)
             AdaptiveLayoutProvider {
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {
@@ -277,5 +279,11 @@ class MainActivity : ComponentActivity() {
             }
             }
         }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        VoiceNavigationManager.releaseTts()
     }
 }

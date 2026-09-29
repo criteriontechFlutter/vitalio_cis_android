@@ -165,6 +165,9 @@ fun VoiceListeningOverlay(
     isSavingData: Boolean,
     isExtractingData: Boolean,
     processingTranscript: String,
+    anomalyAlerts: List<VitalAlert> = emptyList(),
+    multiTurnPrompt: String = "",
+    vitalTrends: Map<String, VitalTrend> = emptyMap(),
     onStop: () -> Unit,
     onCancel: () -> Unit,
     onSaveAll: () -> Unit,
@@ -189,6 +192,9 @@ fun VoiceListeningOverlay(
                 isSavingData         = isSavingData,
                 isExtractingData     = isExtractingData,
                 processingTranscript = processingTranscript,
+                anomalyAlerts        = anomalyAlerts,
+                multiTurnPrompt      = multiTurnPrompt,
+                vitalTrends          = vitalTrends,
                 onCancel             = onCancel,
                 onSaveAll            = onSaveAll,
                 onStartListening     = onStartListening,
@@ -230,28 +236,67 @@ fun VoiceListeningOverlay(
 
                     Spacer(Modifier.height(32.dp))
 
-                    Text(
-                        text = transcript.ifEmpty { "Listening..." },
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White.copy(alpha = if (transcript.isEmpty()) 0.7f else 1f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 34.dp)
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Tap to cancel", fontSize = 14.sp, color = Color.Gray)
-                        Spacer(Modifier.height(4.dp))
+                    // Show multi-turn guided prompt when active, otherwise live transcript
+                    if (multiTurnPrompt.isNotEmpty()) {
+                        // Guided Q&A prompt card
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = Color(0xFF2563EB).copy(alpha = 0.88f),
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.QuestionAnswer,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        text = multiTurnPrompt,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                "Please speak your response",
+                                fontSize = 12.sp,
+                                color = Color.White.copy(alpha = 0.55f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
                         Text(
-                            "Speak to navigate or dictate health vitals",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.5f),
+                            text = transcript.ifEmpty { "Listening..." },
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White.copy(alpha = if (transcript.isEmpty()) 0.7f else 1f),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 26.dp)
+                            modifier = Modifier.padding(horizontal = 34.dp)
                         )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Tap to cancel", fontSize = 14.sp, color = Color.Gray)
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Speak to navigate or dictate health vitals",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White.copy(alpha = 0.5f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 26.dp)
+                            )
+                        }
                     }
 
                     Spacer(Modifier.weight(1f))
@@ -288,6 +333,9 @@ private fun UnifiedVoiceConfirmationFullScreen(
     isSavingData: Boolean,
     isExtractingData: Boolean,
     processingTranscript: String,
+    anomalyAlerts: List<VitalAlert> = emptyList(),
+    multiTurnPrompt: String = "",
+    vitalTrends: Map<String, VitalTrend> = emptyMap(),
     onCancel: () -> Unit,
     onSaveAll: () -> Unit,
     onStartListening: () -> Unit,
@@ -421,9 +469,54 @@ private fun UnifiedVoiceConfirmationFullScreen(
                     Spacer(Modifier.height(12.dp))
                 }
 
+                // Anomaly alerts — shown BEFORE vitals so user sees warnings first
+                if (anomalyAlerts.isNotEmpty()) {
+                    AnomalyAlertsSection(alerts = anomalyAlerts)
+                    Spacer(Modifier.height(12.dp))
+                }
+
+                // Multi-turn guided prompt card (shown when actively collecting a slot)
+                if (multiTurnPrompt.isNotEmpty()) {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2563EB).copy(alpha = 0.1f)),
+                        elevation = CardDefaults.cardElevation(0.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier.size(36.dp).clip(CircleShape)
+                                    .background(Color(0xFF2563EB).copy(alpha = 0.18f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.QuestionAnswer, null,
+                                    tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Please answer the question:",
+                                    fontWeight = FontWeight.Bold, fontSize = 13.sp,
+                                    color = Color(0xFF2563EB)
+                                )
+                                Text(
+                                    multiTurnPrompt,
+                                    fontSize = 14.sp, fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                }
+
                 // Vitals section
                 data.vitals?.takeIf { it.isNotEmpty() }?.let { vitals ->
-                    VitalsSection(vitals = vitals, onRemoveVital = onRemoveVital)
+                    VitalsSection(vitals = vitals, vitalTrends = vitalTrends, onRemoveVital = onRemoveVital)
                     Spacer(Modifier.height(12.dp))
                 }
 
@@ -633,11 +726,69 @@ private fun SectionHeader(
     }
 }
 
+// ── Anomaly Alerts Section ────────────────────────────────────────────────────
+
+@Composable
+private fun AnomalyAlertsSection(alerts: List<VitalAlert>) {
+    val criticalColor = Color(0xFFEF4444)
+    val warningColor  = Color(0xFFF97316)
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        alerts.forEach { alert ->
+            val isCritical = alert.severity == AnomalySeverity.CRITICAL
+            val alertColor = if (isCritical) criticalColor else warningColor
+
+            Card(
+                shape  = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = alertColor.copy(alpha = 0.08f)),
+                elevation = CardDefaults.cardElevation(0.dp),
+                modifier  = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(alert.emoji, fontSize = 20.sp, modifier = Modifier.padding(end = 10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                alert.vitalLabel,
+                                fontWeight = FontWeight.Bold,
+                                fontSize   = 13.sp,
+                                color      = alertColor
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(50),
+                                color = alertColor.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    if (isCritical) "CRITICAL" else "WARNING",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = alertColor,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            "${alert.value} — ${alert.message}",
+                            fontSize = 12.sp,
+                            color    = alertColor.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ── Vitals Section ────────────────────────────────────────────────────────────
 
 @Composable
 private fun VitalsSection(
     vitals: Map<String, String>,
+    vitalTrends: Map<String, VitalTrend> = emptyMap(),
     onRemoveVital: (List<String>) -> Unit
 ) {
     val blue = Color(0xFF2563EB)
@@ -653,20 +804,21 @@ private fun VitalsSection(
         val sys  = vitals["vmValueBPSys"]
         val dias = vitals["vmValueBPDias"]
         if (sys != null && dias != null) {
-            VitalPreviewRow("❤️", Color(0xFFEF4444), "Blood Pressure", "$sys/$dias mmHg") {
+            VitalPreviewRow("❤️", Color(0xFFEF4444), "Blood Pressure", "$sys/$dias mmHg",
+                trend = vitalTrends["vmValueBPSys"]) {
                 onRemoveVital(listOf("vmValueBPSys", "vmValueBPDias"))
             }
         } else {
-            sys?.let  { VitalPreviewRow("❤️", Color(0xFFEF4444), "BP Systolic",  "$it mmHg") { onRemoveVital(listOf("vmValueBPSys")) } }
-            dias?.let { VitalPreviewRow("❤️", Color(0xFFEF4444), "BP Diastolic", "$it mmHg") { onRemoveVital(listOf("vmValueBPDias")) } }
+            sys?.let  { VitalPreviewRow("❤️", Color(0xFFEF4444), "BP Systolic",  "$it mmHg",  trend = vitalTrends["vmValueBPSys"])  { onRemoveVital(listOf("vmValueBPSys")) } }
+            dias?.let { VitalPreviewRow("❤️", Color(0xFFEF4444), "BP Diastolic", "$it mmHg",  trend = vitalTrends["vmValueBPDias"]) { onRemoveVital(listOf("vmValueBPDias")) } }
         }
-        vitals["vmValuePulse"]?.let           { VitalPreviewRow("〰️", Color(0xFFEC4899), "Pulse Rate",        "$it bpm")    { onRemoveVital(listOf("vmValuePulse")) } }
-        vitals["vmValueSPO2"]?.let            { VitalPreviewRow("🫁", Color(0xFF06B6D4), "SpO2 Level",        "$it%")       { onRemoveVital(listOf("vmValueSPO2")) } }
-        vitals["vmValueTemperature"]?.let     { VitalPreviewRow("🌡️", Color(0xFFF97316), "Temperature",       "$it °F")     { onRemoveVital(listOf("vmValueTemperature")) } }
-        vitals["vmValueHeartRate"]?.let       { VitalPreviewRow("💓", Color(0xFFEF4444), "Heart Rate",        "$it bpm")    { onRemoveVital(listOf("vmValueHeartRate")) } }
-        vitals["vmValueRespiratoryRate"]?.let { VitalPreviewRow("🌬️", Color(0xFF06B6D4), "Respiratory Rate",  "$it /min")   { onRemoveVital(listOf("vmValueRespiratoryRate")) } }
-        vitals["vmValueRbs"]?.let             { VitalPreviewRow("🩸", Color(0xFF8B5CF6), "Blood Sugar (RBS)", "$it mg/dL")  { onRemoveVital(listOf("vmValueRbs")) } }
-        vitals["weight"]?.let                 { VitalPreviewRow("⚖️", Color(0xFF8B5CF6), "Body Weight",       "$it kg")     { onRemoveVital(listOf("weight")) } }
+        vitals["vmValuePulse"]?.let           { VitalPreviewRow("〰️", Color(0xFFEC4899), "Pulse Rate",        "$it bpm",    trend = vitalTrends["vmValuePulse"])           { onRemoveVital(listOf("vmValuePulse")) } }
+        vitals["vmValueSPO2"]?.let            { VitalPreviewRow("🫁", Color(0xFF06B6D4), "SpO2 Level",        "$it%",       trend = vitalTrends["vmValueSPO2"])             { onRemoveVital(listOf("vmValueSPO2")) } }
+        vitals["vmValueTemperature"]?.let     { VitalPreviewRow("🌡️", Color(0xFFF97316), "Temperature",       "$it °F",     trend = vitalTrends["vmValueTemperature"])      { onRemoveVital(listOf("vmValueTemperature")) } }
+        vitals["vmValueHeartRate"]?.let       { VitalPreviewRow("💓", Color(0xFFEF4444), "Heart Rate",        "$it bpm",    trend = vitalTrends["vmValueHeartRate"])         { onRemoveVital(listOf("vmValueHeartRate")) } }
+        vitals["vmValueRespiratoryRate"]?.let { VitalPreviewRow("🌬️", Color(0xFF06B6D4), "Respiratory Rate",  "$it /min",   trend = vitalTrends["vmValueRespiratoryRate"])  { onRemoveVital(listOf("vmValueRespiratoryRate")) } }
+        vitals["vmValueRbs"]?.let             { VitalPreviewRow("🩸", Color(0xFF8B5CF6), "Blood Sugar (RBS)", "$it mg/dL",  trend = vitalTrends["vmValueRbs"])              { onRemoveVital(listOf("vmValueRbs")) } }
+        vitals["weight"]?.let                 { VitalPreviewRow("⚖️", Color(0xFF8B5CF6), "Body Weight",       "$it kg",     trend = vitalTrends["weight"])                  { onRemoveVital(listOf("weight")) } }
     }
 }
 
@@ -875,6 +1027,7 @@ fun VitalPreviewRow(
     color: Color,
     title: String,
     value: String,
+    trend: VitalTrend? = null,
     onDelete: () -> Unit
 ) {
     Row(
@@ -884,7 +1037,33 @@ fun VitalPreviewRow(
         Text(emoji, fontSize = 14.sp, modifier = Modifier.width(24.dp))
         Text(title, fontSize = 13.sp, color = Color.Gray, modifier = Modifier.weight(1f))
         Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.width(6.dp))
+
+        // Trend delta badge
+        trend?.let { t ->
+            Spacer(Modifier.width(4.dp))
+            val (arrow, trendColor) = when (t.direction) {
+                TrendDirection.UP     -> Pair("↑", Color(0xFF22C55E))
+                TrendDirection.DOWN   -> Pair("↓", Color(0xFFEF4444))
+                TrendDirection.STABLE -> Pair("→", Color.Gray)
+            }
+            val deltaStr = if (kotlin.math.abs(t.delta) >= 1.0)
+                "${arrow}${kotlin.math.abs(t.delta).toInt()}"
+            else arrow
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = trendColor.copy(alpha = 0.12f)
+            ) {
+                Text(
+                    deltaStr,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = trendColor,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.width(4.dp))
         IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
             Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
         }

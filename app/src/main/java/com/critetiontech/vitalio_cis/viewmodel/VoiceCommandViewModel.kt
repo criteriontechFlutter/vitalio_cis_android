@@ -1,4 +1,4 @@
-package com.example.vitalio_cis.viewmodel
+package com.critetiontech.vitalio_cis.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.critetiontech.vitalio_cis.Routes
