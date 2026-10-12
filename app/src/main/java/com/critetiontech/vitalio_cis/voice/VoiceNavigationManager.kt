@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit
 private const val TAG = "VoiceNavManager"
 
 // WebSocket URL for the dictation backend (matching the iOS config)
-private const val DICTATION_WS_BASE = "ws://182.156.200.178:8023/ws"
+private const val DICTATION_WS_BASE = "ws://food.shopright.ai:3479/ws"
 
 // Data indicators to prevent treating health data dictation as navigation commands
 private val DATA_INDICATORS = listOf(

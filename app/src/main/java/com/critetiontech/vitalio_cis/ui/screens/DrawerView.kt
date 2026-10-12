@@ -201,7 +201,7 @@ fun DrawerScreen() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            MedicalProfileCard()
+//            MedicalProfileCard()
 
             Spacer(modifier = Modifier.height(12.dp))
 

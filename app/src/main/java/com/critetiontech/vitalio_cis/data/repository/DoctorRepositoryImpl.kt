@@ -105,7 +105,7 @@ class DoctorRepositoryImpl @Inject constructor(
     override suspend fun fetchAppointmentHistory(pid: String, clientId: String, userId: String): DomainResult<List<AppointmentHistoryItem>> = try {
         val params = mapOf("pid" to pid, "clientId" to clientId, "userId" to userId)
         val response = ApiHelper().callApi(context, endpoints.appointmentHistory, showNoConnectionToast = false) { url ->
-            ApiClients.module44374.dynamicGet(url = url, params = params)
+            ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, AppointmentHistoryResponse::class.java).responseValue else emptyList()

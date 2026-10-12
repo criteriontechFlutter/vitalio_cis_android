@@ -31,7 +31,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.sqrt
 
@@ -91,8 +90,8 @@ fun BreathingTherapyScreen() {
 @SuppressLint("MissingPermission")
 @Composable
 fun BreathingBiofeedbackVisualizer(modifier: Modifier = Modifier) {
-    var breathPower by remember { mutableStateOf(0f) }
-    var repetitions by remember { mutableStateOf(0) }
+    var breathPower by remember { mutableFloatStateOf(0f) }
+    var repetitions by remember { mutableIntStateOf(0) }
     var hasReachedPeak by remember { mutableStateOf(false) }
 
     // Idle pulse animation for a "breathing" feel when not blowing

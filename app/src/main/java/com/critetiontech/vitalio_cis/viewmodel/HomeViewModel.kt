@@ -81,17 +81,20 @@ class HomeViewModel : ViewModel() {
 
     fun markMedicineIntake(medicine: com.critetiontech.vitalio_cis.model.MedicineItem) {
         viewModelScope.launch {
-            _markingMedicines.value = _markingMedicines.value + medicine.id
+            _markingMedicines.value += medicine.id
+            Log.d("HomeViewModel", "🔵 markMedicineIntake called → id=${medicine.id}, scheduledDateTime=${medicine.scheduledDateTime}, medicineName=${medicine.medicineName}")
             try {
                 val result = AppDependencies.markMedicineIntake()(medicine.id, medicine.scheduledDateTime)
+                Log.d("HomeViewModel", "🔵 markMedicineIntake result → $result")
                 if (result is com.critetiontech.vitalio_cis.domain.model.DomainResult.Success) {
                     // Refetch medicines
                     fetchDashboardNoCache()
-                } else {
+                } else if (result is com.critetiontech.vitalio_cis.domain.model.DomainResult.Error) {
+                    Log.e("HomeViewModel", "🔴 markMedicineIntake API error: ${result.exception.message}", result.exception)
                     android.widget.Toast.makeText(MyApplication.appContext, "Failed to mark medicine", android.widget.Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "Error marking intake: ${e.message}")
+                Log.e("HomeViewModel", "🔴 Error marking intake: ${e.message}", e)
             } finally {
                 _markingMedicines.value = _markingMedicines.value - medicine.id
             }

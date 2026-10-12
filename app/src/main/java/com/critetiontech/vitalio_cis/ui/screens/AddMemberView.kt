@@ -24,7 +24,6 @@ fun AddMemberScreen() {
     val colors = LocalMyColorScheme.current
 
     var code by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
 
     CommonAppBar(
         title = "Add Member",

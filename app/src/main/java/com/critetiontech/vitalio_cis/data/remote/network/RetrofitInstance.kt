@@ -26,12 +26,12 @@ object RetrofitInstance {
     private const val DEFAULT_BASE_URL = BASE_5082
 
     // 50 MB disk cache — GET responses served instantly on repeat calls
-    private val httpCache by lazy {
-        Cache(
-            directory = File(MyApplication.appContext.cacheDir, "http_cache"),
-            maxSize = 50L * 1024 * 1024
-        )
-    }
+//    private val httpCache by lazy {
+//        Cache(
+//            directory = File(MyApplication.appContext.cacheDir, "http_cache"),
+//            maxSize = 50L * 1024 * 1024
+//        )
+//    }
 
     // Force Cache-Control on responses so OkHttp caches them for 60 s when online
     private val onlineCacheInterceptor = Interceptor { chain ->
@@ -43,15 +43,15 @@ object RetrofitInstance {
     }
 
     // When offline, serve stale cache up to 7 days
-    private val offlineCacheInterceptor = Interceptor { chain ->
-        var request = chain.request()
-        if (!NetworkUtils.isConnected(MyApplication.appContext)) {
-            request = request.newBuilder()
-                .header("Cache-Control", "public, only-if-cached, max-age=${7 * 24 * 60 * 60}")
-                .build()
-        }
-        chain.proceed(request)
-    }
+//    private val offlineCacheInterceptor = Interceptor { chain ->
+//        var request = chain.request()
+//        if (!NetworkUtils.isConnected(MyApplication.appContext)) {
+//            request = request.newBuilder()
+//                .header("Cache-Control", "public, only-if-cached, max-age=${7 * 24 * 60 * 60}")
+//                .build()
+//        }
+//        chain.proceed(request)
+//    }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
@@ -61,8 +61,8 @@ object RetrofitInstance {
     // Shared base client — all per-URL clients derive from this
     private val baseClient by lazy {
         OkHttpClient.Builder()
-            .cache(httpCache)
-            .addInterceptor(offlineCacheInterceptor)   // offline: serve cache
+//            .cache(httpCache)
+//            .addInterceptor(offlineCacheInterceptor)   // offline: serve cache
             .addInterceptor(RetryInterceptor(maxRetries = 3))
             .addInterceptor(loggingInterceptor)
             .addNetworkInterceptor(onlineCacheInterceptor) // online: write cache headers

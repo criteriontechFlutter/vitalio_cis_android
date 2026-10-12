@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -168,17 +167,10 @@ fun DoctorCard(doctor: Doctor, profile: DoctorDetails? = null) {
 fun FindDoctorsScreen(
     doctors: List<Doctor>,
     doctorProfiles: Map<Int, DoctorDetails> = emptyMap(),
-    clinicName: String = "LifeSpring Medical",
-    clinicAddress: String = "Main Bazaar Road, Aluva, Kochi - 683101",
-    selectedDate: String = "16.01.2025",
-    onBack: () -> Unit = {},
-    onClinicSwitch: () -> Unit = {},
     viewModel: FindDoctorViewModel = viewModel()
 ) {
 
 
-
-    val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
     val isLoading by viewModel.loading.collectAsState()
 
@@ -197,27 +189,27 @@ fun FindDoctorsScreen(
             .background(colors.dashboardBackgroundColor)
     ) {
         // -------------------- Clinic Info --------------------
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(4.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(12.dp)
-                    .clickable { navController.navigate(Routes.SELECTCLINIC) },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(modifier = Modifier.size(40.dp).background(Color.LightGray, CircleShape))
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(clinicName, fontWeight = FontWeight.Medium)
-                    Text(clinicAddress, fontSize = 12.sp, color = Color.Gray)
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                Text("Switch Clinic", color = Color(0xFF007AFF), fontSize = 12.sp)
-            }
-        }
+//        Card(
+//            shape = RoundedCornerShape(12.dp),
+//            elevation = CardDefaults.cardElevation(4.dp),
+//            modifier = Modifier.fillMaxWidth()
+//        ) {
+//            Row(
+//                modifier = Modifier
+//                    .padding(12.dp)
+//                    .clickable { navController.navigate(Routes.SELECTCLINIC) },
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Box(modifier = Modifier.size(40.dp).background(Color.LightGray, CircleShape))
+//                Spacer(modifier = Modifier.width(12.dp))
+//                Column {
+//                    Text(clinicName, fontWeight = FontWeight.Medium)
+//                    Text(clinicAddress, fontSize = 12.sp, color = Color.Gray)
+//                }
+//                Spacer(modifier = Modifier.weight(1f))
+//                Text("Switch Clinic", color = Color(0xFF007AFF), fontSize = 12.sp)
+//            }
+//        }
 
         Spacer(modifier = Modifier.height(12.dp))
 

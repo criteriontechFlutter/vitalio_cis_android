@@ -55,12 +55,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.critetiontech.vitalio_cis.ui.adaptive.isTablet
 
 @Composable
 fun LoginScreen() {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
 
     val imageAlpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
@@ -242,7 +246,8 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-
+            val keyboardController = LocalSoftwareKeyboardController.current
+            val focusManager = LocalFocusManager.current
             Box(modifier = Modifier.graphicsLayer {
                 alpha = fieldAlpha
                 translationY = fieldY
@@ -268,11 +273,12 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Done
+                            imeAction = ImeAction.Go
                         ),
                         keyboardActions = KeyboardActions(
-                            onDone = {
-                                viewModel.sendOTP()
+                            onGo = {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
                             }
                         )
                     )

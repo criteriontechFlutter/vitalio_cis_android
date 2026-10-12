@@ -47,11 +47,17 @@ class MedicineRepositoryImpl @Inject constructor(
 
     override suspend fun markIntake(id: Int, scheduledDateTime: String): DomainResult<Unit> = try {
         val body = mapOf("id" to id, "ScheduledDateTime" to scheduledDateTime)
+        android.util.Log.d("MedicineRepo", "🔵 markIntake request → id=$id, ScheduledDateTime=$scheduledDateTime, body=$body")
         val response = ApiHelper().callApi(context, endpoints.insertMedicineIntake, showNoConnectionToast = false) { url ->
+            android.util.Log.d("MedicineRepo", "🔵 markIntake URL → $url")
             ApiClients.module4082.queryRawPostApi(url = url, params = body, body = body)
         }
+        android.util.Log.d("MedicineRepo", "🔵 markIntake response → code=${response.code()}, isSuccessful=${response.isSuccessful}, body=${response.body()?.string()}")
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
-    } catch (e: Exception) { DomainResult.Error(e) }
+    } catch (e: Exception) {
+        android.util.Log.e("MedicineRepo", "🔴 markIntake exception", e)
+        DomainResult.Error(e)
+    }
 
     override suspend fun fetchMedicineByDate(pid: Int, givenDate: String, clientId: Int): DomainResult<Pair<List<LoggedMedicine>, List<AllMedicine>>> = try {
         val params = mapOf("pid" to pid, "givenDate" to givenDate, "clientId" to clientId)
