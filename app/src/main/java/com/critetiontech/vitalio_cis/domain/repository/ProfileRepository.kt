@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.repository
+package com.critetiontech.ctvitalio.domain.repository
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.utils.Patient
-import com.critetiontech.vitalio_cis.viewmodel.LocationItem
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.utils.Patient
+import com.critetiontech.ctvitalio.viewmodel.LocationItem
 import java.io.File
 
 interface ProfileRepository {

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.adaptive
+package com.critetiontech.ctvitalio.ui.adaptive
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 
 // ─── Navigation Item Model ───────────────────────────────────────────────────
 

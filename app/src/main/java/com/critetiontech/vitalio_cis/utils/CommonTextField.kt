@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.utils
+package com.critetiontech.ctvitalio.utils
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.critetiontech.vitalio_cis.ui.theme.AppColors
+import com.critetiontech.ctvitalio.ui.theme.AppColors
 
 @Composable
 fun CommonTextField(

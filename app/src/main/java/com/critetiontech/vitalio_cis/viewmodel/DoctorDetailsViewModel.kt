@@ -1,16 +1,16 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.ConsentItem
-import com.critetiontech.vitalio_cis.model.DoctorDetails
-import com.critetiontech.vitalio_cis.model.DoctorSchedule
-import com.critetiontech.vitalio_cis.model.LatestToken
-import com.critetiontech.vitalio_cis.model.ShiftData
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.ConsentItem
+import com.critetiontech.ctvitalio.model.DoctorDetails
+import com.critetiontech.ctvitalio.model.DoctorSchedule
+import com.critetiontech.ctvitalio.model.LatestToken
+import com.critetiontech.ctvitalio.model.ShiftData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -91,7 +91,7 @@ class DoctorDetailsViewModel : ViewModel() {
         fetchConsent()
     }
 
-    private val _shiftConfig = MutableStateFlow<com.critetiontech.vitalio_cis.model.Doctor?>(null)
+    private val _shiftConfig = MutableStateFlow<com.critetiontech.ctvitalio.model.Doctor?>(null)
 
     fun checkShiftType(doctorId: String) {
         viewModelScope.launch {

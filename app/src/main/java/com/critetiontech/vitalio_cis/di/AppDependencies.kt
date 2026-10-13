@@ -1,51 +1,52 @@
-package com.critetiontech.vitalio_cis.di
+package com.critetiontech.ctvitalio.di
 
-import com.critetiontech.vitalio_cis.data.repository.AllergyRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.AuthRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.DoctorRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.FluidRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.MedicineRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.ProfileRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.ReportRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.SymptomRepositoryImpl
-import com.critetiontech.vitalio_cis.data.repository.VitalRepositoryImpl
-import com.critetiontech.vitalio_cis.domain.usecase.allergy.AddAllergyUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.allergy.FetchAllergiesUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.auth.SendOtpUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.auth.VerifyOtpUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.doctor.BookAppointmentUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchAppointmentHistoryUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchAvailableSlotsUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchDoctorProfileUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchDoctorsUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchUpcomingAppointmentsUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.fluid.AddIntakeUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.fluid.AddOutputUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.fluid.FetchFluidSummaryUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.fluid.FetchIntakeUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.fluid.FetchOutputSummaryUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.fluid.FetchOutputUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.fluid.GetManualFoodListUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.medicine.FetchMedicineByDateUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.medicine.FetchMedicineIntakeUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.medicine.InsertMedicineUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.medicine.MarkMedicineIntakeUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.medicine.SearchMedicineUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.profile.UpdateProfileUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.report.AiReportUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.report.FetchMediaUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.report.InsertInvestigationResultUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.report.UploadMediaUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.symptom.FetchSymptomsUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.symptom.GetAllProblemsUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.symptom.GetProblemsWithIconUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.symptom.InsertSymptomsUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.vital.AddVitalUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.vital.FetchLastVitalUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.vital.FetchVitalAnalyticsUseCase
-import com.critetiontech.vitalio_cis.network.NetworkMonitor
-import com.critetiontech.vitalio_cis.utils.MyApplication
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.data.repository.AllergyRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.AuthRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.DoctorRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.FluidRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.MedicineRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.ProfileRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.ReportRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.SymptomRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.VitalRepositoryImpl
+import com.critetiontech.ctvitalio.domain.usecase.allergy.AddAllergyUseCase
+import com.critetiontech.ctvitalio.domain.usecase.allergy.FetchAllergiesUseCase
+import com.critetiontech.ctvitalio.domain.usecase.auth.SendOtpUseCase
+import com.critetiontech.ctvitalio.domain.usecase.auth.VerifyOtpUseCase
+import com.critetiontech.ctvitalio.domain.usecase.doctor.BookAppointmentUseCase
+import com.critetiontech.ctvitalio.domain.usecase.doctor.FetchAppointmentHistoryUseCase
+import com.critetiontech.ctvitalio.domain.usecase.doctor.FetchAvailableSlotsUseCase
+import com.critetiontech.ctvitalio.domain.usecase.doctor.FetchDoctorProfileUseCase
+import com.critetiontech.ctvitalio.domain.usecase.doctor.FetchDoctorsUseCase
+import com.critetiontech.ctvitalio.domain.usecase.doctor.FetchUpcomingAppointmentsUseCase
+import com.critetiontech.ctvitalio.domain.usecase.fluid.AddIntakeUseCase
+import com.critetiontech.ctvitalio.domain.usecase.fluid.AddOutputUseCase
+import com.critetiontech.ctvitalio.domain.usecase.fluid.FetchFluidSummaryUseCase
+import com.critetiontech.ctvitalio.domain.usecase.fluid.FetchIntakeUseCase
+import com.critetiontech.ctvitalio.domain.usecase.fluid.FetchOutputSummaryUseCase
+import com.critetiontech.ctvitalio.domain.usecase.fluid.FetchOutputUseCase
+import com.critetiontech.ctvitalio.domain.usecase.fluid.GetManualFoodListUseCase
+import com.critetiontech.ctvitalio.domain.usecase.medicine.FetchMedicineByDateUseCase
+import com.critetiontech.ctvitalio.domain.usecase.medicine.FetchMedicineIntakeUseCase
+import com.critetiontech.ctvitalio.domain.usecase.medicine.InsertMedicineUseCase
+import com.critetiontech.ctvitalio.domain.usecase.medicine.MarkMedicineIntakeUseCase
+import com.critetiontech.ctvitalio.domain.usecase.medicine.SearchMedicineUseCase
+import com.critetiontech.ctvitalio.domain.usecase.profile.UpdateProfileUseCase
+import com.critetiontech.ctvitalio.domain.usecase.report.AiReportUseCase
+import com.critetiontech.ctvitalio.domain.usecase.report.FetchMediaUseCase
+import com.critetiontech.ctvitalio.domain.usecase.report.InsertInvestigationResultUseCase
+import com.critetiontech.ctvitalio.domain.usecase.report.UploadMediaUseCase
+import com.critetiontech.ctvitalio.domain.usecase.report.UploadPrescriptionUseCase
+import com.critetiontech.ctvitalio.domain.usecase.symptom.FetchSymptomsUseCase
+import com.critetiontech.ctvitalio.domain.usecase.symptom.GetAllProblemsUseCase
+import com.critetiontech.ctvitalio.domain.usecase.symptom.GetProblemsWithIconUseCase
+import com.critetiontech.ctvitalio.domain.usecase.symptom.InsertSymptomsUseCase
+import com.critetiontech.ctvitalio.domain.usecase.vital.AddVitalUseCase
+import com.critetiontech.ctvitalio.domain.usecase.vital.FetchLastVitalUseCase
+import com.critetiontech.ctvitalio.domain.usecase.vital.FetchVitalAnalyticsUseCase
+import com.critetiontech.ctvitalio.network.NetworkMonitor
+import com.critetiontech.ctvitalio.utils.MyApplication
+import com.critetiontech.ctvitalio.utils.PrefsManager
 
 // Manual service locator used until Hilt annotation processing is unblocked.
 // All objects are lazily created and the PrefsManager + repositories are singletons.
@@ -86,7 +87,7 @@ object AppDependencies {
     fun searchMedicine() = SearchMedicineUseCase(medicineRepository)
     fun insertMedicine() = InsertMedicineUseCase(medicineRepository)
     fun fetchDoctors() = FetchDoctorsUseCase(doctorRepository)
-    fun fetchDepartments() = com.critetiontech.vitalio_cis.domain.usecase.doctor.FetchDepartmentsUseCase(doctorRepository)
+    fun fetchDepartments() = com.critetiontech.ctvitalio.domain.usecase.doctor.FetchDepartmentsUseCase(doctorRepository)
     fun fetchDoctorProfile() = FetchDoctorProfileUseCase(doctorRepository)
     fun fetchAvailableSlots() = FetchAvailableSlotsUseCase(doctorRepository)
     fun bookAppointment() = BookAppointmentUseCase(doctorRepository)
@@ -96,6 +97,7 @@ object AppDependencies {
     fun uploadMedia() = UploadMediaUseCase(reportRepository)
     fun aiReport() = AiReportUseCase(reportRepository)
     fun insertInvestigationResult() = InsertInvestigationResultUseCase(reportRepository)
+    fun uploadPrescription() = UploadPrescriptionUseCase(reportRepository)
     fun fetchSymptoms() = FetchSymptomsUseCase(symptomRepository)
     fun insertSymptoms() = InsertSymptomsUseCase(symptomRepository)
     fun getProblemsWithIcon() = GetProblemsWithIconUseCase(symptomRepository)

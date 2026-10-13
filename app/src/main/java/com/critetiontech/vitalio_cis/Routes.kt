@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis
+package com.critetiontech.ctvitalio
 
 object Routes {
 
@@ -54,6 +54,8 @@ object Routes {
     const val MEDICALPROFILE  = "MedicalProfileScreen"
     const val RESEARCHARTICLES  = "ResearchArticlesScreen"
     const val AIREPORT  = "AiReportScreen"
+    const val UPLOADPRESCRIPTION  = "UploadPrescriptionScreen"
+    const val PRESCRIPTIONANALYSIS  = "PrescriptionAnalysisScreen"
     const val HEALTHCONNECTSYNC = "HealthConnectSyncScreen"
     const val BREATHING_THERAPY = "BreathingTherapyScreen"
     const val EDITPROFILE = "EditProfileScreen"

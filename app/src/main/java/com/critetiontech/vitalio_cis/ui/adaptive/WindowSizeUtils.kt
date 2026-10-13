@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.adaptive
+package com.critetiontech.ctvitalio.ui.adaptive
 
 import androidx.compose.runtime.compositionLocalOf
 

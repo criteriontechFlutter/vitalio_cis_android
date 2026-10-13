@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.usecase.vital
+package com.critetiontech.ctvitalio.domain.usecase.vital
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.VitalRepository
-import com.critetiontech.vitalio_cis.model.Vital
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.VitalRepository
+import com.critetiontech.ctvitalio.model.Vital
 import javax.inject.Inject
 
 class FetchLastVitalUseCase @Inject constructor(private val repository: VitalRepository) {

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.components
+package com.critetiontech.ctvitalio.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

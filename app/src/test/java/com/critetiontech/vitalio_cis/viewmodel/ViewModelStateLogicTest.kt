@@ -1,11 +1,11 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.AllergyItem
-import com.critetiontech.vitalio_cis.model.Problem
-import com.critetiontech.vitalio_cis.model.SymptomItem
-import com.critetiontech.vitalio_cis.model.Vital
-import com.critetiontech.vitalio_cis.model.VitalGraphEntry
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.AllergyItem
+import com.critetiontech.ctvitalio.model.Problem
+import com.critetiontech.ctvitalio.model.SymptomItem
+import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.model.VitalGraphEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest

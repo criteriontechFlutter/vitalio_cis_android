@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 
 import androidx.compose.foundation.background
@@ -59,14 +59,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.InvestigationDetail
-import com.critetiontech.vitalio_cis.viewmodel.PatientVitalDetail
-import com.critetiontech.vitalio_cis.viewmodel.PrescriptionDetail
-import com.critetiontech.vitalio_cis.viewmodel.PrescriptionViewModel
-import com.critetiontech.vitalio_cis.viewmodel.ProblemDetail
-import com.critetiontech.vitalio_cis.viewmodel.VitalFrequencyDetail
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.InvestigationDetail
+import com.critetiontech.ctvitalio.viewmodel.PatientVitalDetail
+import com.critetiontech.ctvitalio.viewmodel.PrescriptionDetail
+import com.critetiontech.ctvitalio.viewmodel.PrescriptionViewModel
+import com.critetiontech.ctvitalio.viewmodel.ProblemDetail
+import com.critetiontech.ctvitalio.viewmodel.VitalFrequencyDetail
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────────
 private val Blue = Color(0xFF2E5BFF)

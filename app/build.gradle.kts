@@ -7,15 +7,15 @@ plugins {
 }
 
 android {
-    namespace = "com.critetiontech.vitalio_cis"
+    namespace = "com.critetiontech.ctvitalio"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.critetiontech.vitalio_cis"
+        applicationId = "com.critetiontech.ctvitalio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 31
+        versionName = "2.0.24"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

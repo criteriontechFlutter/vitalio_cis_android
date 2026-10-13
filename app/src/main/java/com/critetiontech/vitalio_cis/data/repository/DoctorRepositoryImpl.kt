@@ -1,22 +1,22 @@
-package com.critetiontech.vitalio_cis.data.repository
+package com.critetiontech.ctvitalio.data.repository
 
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.DoctorRepository
-import com.critetiontech.vitalio_cis.model.AppointmentHistoryItem
-import com.critetiontech.vitalio_cis.model.AppointmentHistoryResponse
-import com.critetiontech.vitalio_cis.model.Doctor
-import com.critetiontech.vitalio_cis.model.DoctorDetails
-import com.critetiontech.vitalio_cis.model.DoctorResponse
-import com.critetiontech.vitalio_cis.model.DoctorResponsedata
-import com.critetiontech.vitalio_cis.model.ShiftData
-import com.critetiontech.vitalio_cis.model.ShiftResponse
-import com.critetiontech.vitalio_cis.model.UpcomingAppointmentItem
-import com.critetiontech.vitalio_cis.model.UpcomingAppointmentsResponse
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.DoctorRepository
+import com.critetiontech.ctvitalio.model.AppointmentHistoryItem
+import com.critetiontech.ctvitalio.model.AppointmentHistoryResponse
+import com.critetiontech.ctvitalio.model.Doctor
+import com.critetiontech.ctvitalio.model.DoctorDetails
+import com.critetiontech.ctvitalio.model.DoctorResponse
+import com.critetiontech.ctvitalio.model.DoctorResponsedata
+import com.critetiontech.ctvitalio.model.ShiftData
+import com.critetiontech.ctvitalio.model.ShiftResponse
+import com.critetiontech.ctvitalio.model.UpcomingAppointmentItem
+import com.critetiontech.ctvitalio.model.UpcomingAppointmentsResponse
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -47,7 +47,7 @@ class DoctorRepositoryImpl @Inject constructor(
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun fetchDepartments(clientId: String): DomainResult<List<com.critetiontech.vitalio_cis.model.Department>> = try {
+    override suspend fun fetchDepartments(clientId: String): DomainResult<List<com.critetiontech.ctvitalio.model.Department>> = try {
         val params = mapOf("clientId" to clientId)
         // 4119 is module 4119, wait, we don't have ApiClients.module4119 mapped, but ApiClients might have dynamicGet we can just use module4082 and let URL handle it if base URL includes port? 
         // No, ApiClients use fixed base URLs. We should probably use the same module4082 for now, wait, in Android, there is no port specified in the endpoint, the URL builder might handle it or the base URL.
@@ -57,7 +57,7 @@ class DoctorRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.vitalio_cis.model.DepartmentResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.DepartmentResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -112,17 +112,17 @@ class DoctorRepositoryImpl @Inject constructor(
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun fetchShiftTypeSetting(doctorId: String, clientId: String): DomainResult<List<com.critetiontech.vitalio_cis.model.ShiftTypeSetting>> = try {
+    override suspend fun fetchShiftTypeSetting(doctorId: String, clientId: String): DomainResult<List<com.critetiontech.ctvitalio.model.ShiftTypeSetting>> = try {
         val params = mapOf("assigneduserId" to doctorId, "clientId" to clientId)
         val response = ApiHelper().callApi(context, endpoints.fetchShiftTypeSetting, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.vitalio_cis.model.ShiftTypeSettingResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.ShiftTypeSettingResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun fetchDoctorShiftConfig(doctorId: String, clientId: String): DomainResult<com.critetiontech.vitalio_cis.model.Doctor?> = try {
+    override suspend fun fetchDoctorShiftConfig(doctorId: String, clientId: String): DomainResult<com.critetiontech.ctvitalio.model.Doctor?> = try {
         val params = mapOf("doctorId" to doctorId, "clientId" to clientId)
         val json = prefs.getData(key = "${endpoints.fetchDoctorShiftConfig}_$doctorId", shouldSave = true) {
             val response = ApiHelper().callApi(context, endpoints.fetchDoctorShiftConfig, showNoConnectionToast = false) { url ->
@@ -130,37 +130,37 @@ class DoctorRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val doctor = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.vitalio_cis.model.SingleDoctorResponse::class.java).responseValue else null
+        val doctor = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.SingleDoctorResponse::class.java).responseValue else null
         DomainResult.Success(doctor)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun fetchSchedule(doctorId: String, clientId: String, dayId: String): DomainResult<List<com.critetiontech.vitalio_cis.model.DoctorSchedule>> = try {
+    override suspend fun fetchSchedule(doctorId: String, clientId: String, dayId: String): DomainResult<List<com.critetiontech.ctvitalio.model.DoctorSchedule>> = try {
         val params = mapOf("doctorId" to doctorId, "clientId" to clientId, "dayId" to dayId)
         val response = ApiHelper().callApi(context, endpoints.fetchSchedule, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.vitalio_cis.model.ScheduleResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.ScheduleResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun getLatestToken(doctorId: String, scheduleDate: String, shiftId: String, departmentId: String, clientId: String): DomainResult<List<com.critetiontech.vitalio_cis.model.LatestToken>> = try {
+    override suspend fun getLatestToken(doctorId: String, scheduleDate: String, shiftId: String, departmentId: String, clientId: String): DomainResult<List<com.critetiontech.ctvitalio.model.LatestToken>> = try {
         val params = mapOf("doctorId" to doctorId, "targetDate" to scheduleDate, "shiftId" to shiftId, "clientId" to clientId)
         val response = ApiHelper().callApi(context, endpoints.getLatestToken, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.vitalio_cis.model.LatestTokenResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.LatestTokenResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun fetchConsent(clientId: String): DomainResult<List<com.critetiontech.vitalio_cis.model.ConsentItem>> = try {
+    override suspend fun fetchConsent(clientId: String): DomainResult<List<com.critetiontech.ctvitalio.model.ConsentItem>> = try {
         val params = mapOf("clientId" to clientId)
         val response = ApiHelper().callApi(context, endpoints.fetchConsent, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.vitalio_cis.model.ConsentResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.ConsentResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -169,7 +169,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicRawPost(url = url, body = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val msg = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.vitalio_cis.model.AddConsentResponse::class.java).message else null
+        val msg = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.AddConsentResponse::class.java).message else null
         DomainResult.Success(msg)
     } catch (e: Exception) { DomainResult.Error(e) }
 }

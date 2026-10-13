@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.voice
+package com.critetiontech.ctvitalio.voice
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -9,8 +9,8 @@ import android.os.Build
 import android.speech.tts.TextToSpeech
 import android.util.Base64
 import android.util.Log
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

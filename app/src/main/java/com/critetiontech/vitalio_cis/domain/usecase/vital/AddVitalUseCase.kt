@@ -1,7 +1,7 @@
-package com.critetiontech.vitalio_cis.domain.usecase.vital
+package com.critetiontech.ctvitalio.domain.usecase.vital
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.VitalRepository
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.VitalRepository
 import javax.inject.Inject
 
 class AddVitalUseCase @Inject constructor(private val repository: VitalRepository) {

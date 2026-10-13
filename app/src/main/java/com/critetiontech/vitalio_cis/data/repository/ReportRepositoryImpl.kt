@@ -1,17 +1,18 @@
-package com.critetiontech.vitalio_cis.data.repository
+package com.critetiontech.ctvitalio.data.repository
 
 import android.content.Context
 import android.util.Log
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.BuildConfig
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.ReportRepository
-import com.critetiontech.vitalio_cis.model.MediaItem
-import com.critetiontech.vitalio_cis.model.MediaResponse
-import com.critetiontech.vitalio_cis.ui.screens.ReportItem
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.BuildConfig
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.ReportRepository
+import com.critetiontech.ctvitalio.model.MediaItem
+import com.critetiontech.ctvitalio.model.MediaResponse
+import com.critetiontech.ctvitalio.model.PrescriptionResponseItem
+import com.critetiontech.ctvitalio.ui.screens.ReportItem
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -117,7 +118,7 @@ class ReportRepositoryImpl @Inject constructor(
         val gson = Gson()
 
         // Parse the AI response to extract report items
-        data class AiApiResponse(val response: List<com.critetiontech.vitalio_cis.ui.screens.ResponseData> = emptyList())
+        data class AiApiResponse(val response: List<com.critetiontech.ctvitalio.ui.screens.ResponseData> = emptyList())
         val aiResponse = gson.fromJson(responseJson, AiApiResponse::class.java)
         val responseData = aiResponse.response.firstOrNull()
         val reportItems: List<ReportItem> = responseData?.report ?: emptyList()
@@ -138,7 +139,7 @@ class ReportRepositoryImpl @Inject constructor(
         val investigationResults = JSONArray()
         reportItems.forEach { item ->
             // Determine isNormal: 1 = normal (green), 0 = abnormal
-            val rangeColor = com.critetiontech.vitalio_cis.ui.screens.parseRangeColor(item.result, item.normal_values)
+            val rangeColor = com.critetiontech.ctvitalio.ui.screens.parseRangeColor(item.result, item.normal_values)
             val isNormal = if (rangeColor == null || rangeColor == androidx.compose.ui.graphics.Color(0xFF16A34A)) "1" else "0"
 
             investigationResults.put(JSONObject().apply {
@@ -184,5 +185,46 @@ class ReportRepositoryImpl @Inject constructor(
         if (BuildConfig.DEBUG) Log.e(TAG, "InsertResult exception: ${e.message}", e)
         DomainResult.Error(e)
     }
+
+    /**
+     * Uploads a prescription image/PDF to the AI prescription reader.
+     * Response: { "response": [ {patient, prescription} ] } on success,
+     * or { "response": [ "<message>" ] } when the document could not be read.
+     */
+    override suspend fun uploadPrescription(file: File, mimeType: String): DomainResult<PrescriptionResponseItem> = try {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(90, TimeUnit.SECONDS)
+            .readTimeout(90, TimeUnit.SECONDS)
+            .writeTimeout(90, TimeUnit.SECONDS)
+            .build()
+
+        val requestBody = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("file", file.name, file.asRequestBody(mimeType.toMediaTypeOrNull()))
+            .build()
+
+        val url = "http://food.shopright.ai:3480/uploadPrescription/"
+        val request = Request.Builder().url(url).post(requestBody).build()
+
+        if (BuildConfig.DEBUG) Log.d(TAG, "UploadPrescription → POST $url file=${file.name}, size=${file.length()} bytes")
+
+        val (isSuccessful, body) = withContext(Dispatchers.IO) {
+            client.newCall(request).execute().use { response ->
+                Pair(response.isSuccessful, response.body?.string())
+            }
+        }
+
+        if (BuildConfig.DEBUG) Log.d(TAG, "UploadPrescription ← body=$body")
+
+        if (isSuccessful && !body.isNullOrEmpty()) {
+            val responseArray = JSONObject(body).getJSONArray("response")
+            when {
+                responseArray.length() == 0 -> DomainResult.Error(Exception("No data returned from server"))
+                responseArray.get(0) is JSONObject -> DomainResult.Success(
+                    Gson().fromJson(responseArray.getJSONObject(0).toString(), PrescriptionResponseItem::class.java)
+                )
+                else -> DomainResult.Error(Exception(responseArray.getString(0)))
+            }
+        } else DomainResult.Error(Exception("Prescription analysis failed"))
+    } catch (e: Exception) { DomainResult.Error(e) }
 }
 

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.theme
+package com.critetiontech.ctvitalio.ui.theme
 
 import android.app.Application
 import androidx.compose.runtime.Composable
@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

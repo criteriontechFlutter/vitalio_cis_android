@@ -1,9 +1,9 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.AuthRepository
-import com.critetiontech.vitalio_cis.domain.usecase.auth.SendOtpUseCase
-import com.critetiontech.vitalio_cis.utils.Patient
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.AuthRepository
+import com.critetiontech.ctvitalio.domain.usecase.auth.SendOtpUseCase
+import com.critetiontech.ctvitalio.utils.Patient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

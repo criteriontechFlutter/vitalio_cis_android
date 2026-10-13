@@ -1,13 +1,13 @@
-package com.critetiontech.vitalio_cis.data.repository
+package com.critetiontech.ctvitalio.data.repository
 
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.ProfileRepository
-import com.critetiontech.vitalio_cis.utils.Patient
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.critetiontech.vitalio_cis.viewmodel.LocationItem
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.ProfileRepository
+import com.critetiontech.ctvitalio.utils.Patient
+import com.critetiontech.ctvitalio.utils.PrefsManager
+import com.critetiontech.ctvitalio.viewmodel.LocationItem
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -9,12 +9,12 @@ import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.model.ActivityMasterResponse
-import com.critetiontech.vitalio_cis.model.ActivityModel
-import com.critetiontech.vitalio_cis.model.PatientActivityItem
-import com.critetiontech.vitalio_cis.model.PatientActivityResponse
-import com.critetiontech.vitalio_cis.utils.MyApplication
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.model.ActivityMasterResponse
+import com.critetiontech.ctvitalio.model.ActivityModel
+import com.critetiontech.ctvitalio.model.PatientActivityItem
+import com.critetiontech.ctvitalio.model.PatientActivityResponse
+import com.critetiontech.ctvitalio.utils.MyApplication
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis
+package com.critetiontech.ctvitalio
 
 import org.junit.Assert.*
 import org.junit.Test

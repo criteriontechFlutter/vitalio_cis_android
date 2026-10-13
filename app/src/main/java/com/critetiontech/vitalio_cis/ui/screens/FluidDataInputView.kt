@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
@@ -47,12 +47,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.model.ManualFoodAssignItem
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.IntakeOutputViewModel
-import com.critetiontech.vitalio_cis.R
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.model.ManualFoodAssignItem
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.IntakeOutputViewModel
+import com.critetiontech.ctvitalio.R
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.critetiontech.ctvitalio.utils.AppTextStyles

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import android.content.ContentValues
 import android.net.Uri
@@ -79,11 +79,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.critetiontech.vitalio_cis.viewmodel.EditProfileViewModel
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.utils.PrefsManager
+import com.critetiontech.ctvitalio.viewmodel.EditProfileViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -778,7 +778,7 @@ private fun AvatarHeaderCard(
 private fun SectionCard(
     title: String,
     icon: ImageVector,
-    colors: com.critetiontech.vitalio_cis.ui.theme.MyColorScheme,
+    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -831,7 +831,7 @@ private fun GenderPill(
     title: String,
     isSelected: Boolean,
     onSelect: () -> Unit,
-    colors: com.critetiontech.vitalio_cis.ui.theme.MyColorScheme,
+    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -883,7 +883,7 @@ private fun EditProfileTextField(
     placeholder: String,
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
-    colors: com.critetiontech.vitalio_cis.ui.theme.MyColorScheme
+    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme
 ) {
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = colors.primaryBlueColor,
@@ -923,7 +923,7 @@ private fun EditProfileDropdown(
     options: List<String>,
     onOptionSelected: (String) -> Unit,
     placeholder: String,
-    colors: com.critetiontech.vitalio_cis.ui.theme.MyColorScheme
+    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme
 ) {
     var expanded by remember { mutableStateOf(false) }
 

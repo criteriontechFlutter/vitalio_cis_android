@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
@@ -33,14 +33,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.model.MedicineItem
-import com.critetiontech.vitalio_cis.model.MedicinePeriod
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.MedicineReminderViewModel
-import com.critetiontech.vitalio_cis.viewmodel.ToastData
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.model.MedicineItem
+import com.critetiontech.ctvitalio.model.MedicinePeriod
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.MedicineReminderViewModel
+import com.critetiontech.ctvitalio.viewmodel.ToastData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime

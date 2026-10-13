@@ -42,31 +42,31 @@ import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
- import com.critetiontech.vitalio_cis.ui.screens.RemindersScreen
- import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.critetiontech.vitalio_cis.viewmodel.HomeViewModel
-import com.critetiontech.vitalio_cis.voice.VoiceNavigationManager
-import com.critetiontech.vitalio_cis.voice.VoiceListeningOverlay
-import com.critetiontech.vitalio_cis.voice.FloatingVoiceFab
+ import com.critetiontech.ctvitalio.ui.screens.SmartRingScreen
+ import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.utils.PrefsManager
+import com.critetiontech.ctvitalio.viewmodel.HomeViewModel
+import com.critetiontech.ctvitalio.voice.VoiceNavigationManager
+import com.critetiontech.ctvitalio.voice.VoiceListeningOverlay
+import com.critetiontech.ctvitalio.voice.FloatingVoiceFab
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.isGranted
 import kotlinx.coroutines.delay
 import java.util.Locale
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.Routes
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.Routes
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
-import com.critetiontech.vitalio_cis.model.UpcomingAppointment
-import com.critetiontech.vitalio_cis.model.Vital
-import com.critetiontech.vitalio_cis.ui.screens.AddActivityScreen
-import com.critetiontech.vitalio_cis.ui.adaptive.LocalWindowSizeClass
-import com.critetiontech.vitalio_cis.ui.adaptive.WindowWidthSizeClass
-import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
-import com.critetiontech.vitalio_cis.viewmodel.ListeningState
-import com.critetiontech.vitalio_cis.viewmodel.VoiceCommandViewModel
+import com.critetiontech.ctvitalio.model.UpcomingAppointment
+import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.ui.screens.AddActivityScreen
+import com.critetiontech.ctvitalio.ui.adaptive.LocalWindowSizeClass
+import com.critetiontech.ctvitalio.ui.adaptive.WindowWidthSizeClass
+import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
+import com.critetiontech.ctvitalio.viewmodel.ListeningState
+import com.critetiontech.ctvitalio.viewmodel.VoiceCommandViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import kotlin.time.Duration.Companion.milliseconds
@@ -182,7 +182,7 @@ fun DashboardScreen(
                         val items = listOf(
                             Triple(R.drawable.home, "Home", 0),
                             Triple(R.drawable.activity, "Activity", 1),
-                            Triple(R.drawable.reminders, "Reminders", 2),
+                            Triple(R.drawable.ring, "Ring", 2),
                             Triple(R.drawable.chat, "Chat", 3)
                         )
                         items.forEach { (iconRes, label, index) ->
@@ -217,7 +217,7 @@ fun DashboardScreen(
                             when (selectedIndex) {
                                 0 -> HomeView()
                                 1 -> AddActivityScreen()
-                                2 -> RemindersScreen()
+                                2 -> SmartRingScreen()
                             }
                         }
                         Box(
@@ -260,7 +260,7 @@ fun DashboardScreen(
                     when (selectedIndex) {
                         0 -> HomeView()
                         1 -> AddActivityScreen()
-                        2 -> RemindersScreen()
+                        2 -> SmartRingScreen()
                     }
                 }
 
@@ -846,7 +846,7 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
         val items = listOf(
             Triple(R.drawable.home,stringResource(R.string.home), 0),
             Triple(R.drawable.activity, stringResource(R.string.activity), 1),
-            Triple(R.drawable.reminders, stringResource(R.string.reminders), 2),
+            Triple(R.drawable.ring, stringResource(R.string.ring), 2),
             Triple(R.drawable.chat, stringResource(R.string.chat), 3)
         )
 
@@ -1721,7 +1721,15 @@ fun OtherSection() {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Quick Actions", style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(12.dp))
-        UploadReportCard()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            UploadReportCard(Modifier.weight(1f).fillMaxHeight())
+            UploadPrescriptionCard(Modifier.weight(1f).fillMaxHeight())
+        }
     }
 }
 
@@ -1763,53 +1771,80 @@ fun ChronicleCard(modifier: Modifier) {
 }
 
 @Composable
-fun UploadReportCard() {
-    val colors = LocalMyColorScheme.current
+fun UploadReportCard(modifier: Modifier = Modifier) {
     val navController = LocalNavController.current
+    QuickActionCard(
+        title = "Upload Report",
+        subtitle = "Add your lab reports & documents",
+        accent = Color(0xFF2F6FE4),
+        modifier = modifier,
+        onClick = { navController.navigate(Routes.LABREPORTS) }
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.upload_report),
+            contentDescription = null,
+            modifier = Modifier.size(26.dp),
+            tint = Color.Unspecified
+        )
+    }
+}
 
+@Composable
+fun UploadPrescriptionCard(modifier: Modifier = Modifier) {
+    val navController = LocalNavController.current
+    QuickActionCard(
+        title = "Upload Prescription",
+        subtitle = "AI reads medicines & sets reminders",
+        accent = Color(0xFF0E9384),
+        modifier = modifier,
+        onClick = { navController.navigate(Routes.UPLOADPRESCRIPTION) }
+    ) {
+        Icon(
+            Icons.Default.DocumentScanner,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = Color(0xFF0E9384)
+        )
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    title: String,
+    subtitle: String,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit
+) {
+    val colors = LocalMyColorScheme.current
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { navController.navigate(Routes.LABREPORTS) },
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF2F6FE4).copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(accent.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) { icon() }
+                Spacer(Modifier.weight(1f))
                 Icon(
-                    painter = painterResource(R.drawable.upload_report),
+                    Icons.Default.ChevronRight,
                     contentDescription = null,
-                    modifier = Modifier.size(26.dp),
-                    tint = Color.Unspecified
+                    tint = Color(0xFFAAAAAA),
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Upload Report", style = AppTextStyles.style14BCN())
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    "Add your lab reports & documents",
-                    style = AppTextStyles.style12GCN()
-                )
-            }
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color(0xFFAAAAAA),
-                modifier = Modifier.size(20.dp)
-            )
+            Spacer(Modifier.height(12.dp))
+            Text(title, style = AppTextStyles.style14BCN())
+            Spacer(Modifier.height(2.dp))
+            Text(subtitle, style = AppTextStyles.style12GCN())
         }
     }
 }
@@ -1831,9 +1866,9 @@ fun LifestyleCard() {
 }
 @Composable
 fun UpcomingMedicationsSection(
-    dailyMedicines: List<com.critetiontech.vitalio_cis.model.MedicineItem>,
+    dailyMedicines: List<com.critetiontech.ctvitalio.model.MedicineItem>,
     markingMedicines: Set<Int>,
-    onMarkIntake: (com.critetiontech.vitalio_cis.model.MedicineItem) -> Unit
+    onMarkIntake: (com.critetiontech.ctvitalio.model.MedicineItem) -> Unit
 ) {
     val colors = LocalMyColorScheme.current
     if (dailyMedicines.isEmpty()) return
@@ -1897,10 +1932,10 @@ fun UpcomingMedicationsSection(
 
 @Composable
 fun MedicineCardItem(
-    medicine: com.critetiontech.vitalio_cis.model.MedicineItem,
+    medicine: com.critetiontech.ctvitalio.model.MedicineItem,
     markingMedicines: Set<Int>,
-    onMarkIntake: (com.critetiontech.vitalio_cis.model.MedicineItem) -> Unit,
-    colors: com.critetiontech.vitalio_cis.ui.theme.MyColorScheme,
+    onMarkIntake: (com.critetiontech.ctvitalio.model.MedicineItem) -> Unit,
+    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme,
     modifier: Modifier = Modifier
 ) {
     val isMarking = markingMedicines.contains(medicine.id)

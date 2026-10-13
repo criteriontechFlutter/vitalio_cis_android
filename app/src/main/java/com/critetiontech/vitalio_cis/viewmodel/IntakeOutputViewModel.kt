@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.os.Build
 import android.util.Log
@@ -7,13 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.FluidSummaryItem
-import com.critetiontech.vitalio_cis.model.IntakeItem
-import com.critetiontech.vitalio_cis.model.ManualFoodAssignItem
-import com.critetiontech.vitalio_cis.model.OutputItem
-import com.critetiontech.vitalio_cis.model.OutputSummaryItem
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.FluidSummaryItem
+import com.critetiontech.ctvitalio.model.IntakeItem
+import com.critetiontech.ctvitalio.model.ManualFoodAssignItem
+import com.critetiontech.ctvitalio.model.OutputItem
+import com.critetiontech.ctvitalio.model.OutputSummaryItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

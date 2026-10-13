@@ -1,14 +1,14 @@
-package com.critetiontech.vitalio_cis.data.repository
+package com.critetiontech.ctvitalio.data.repository
 
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.AllergyRepository
-import com.critetiontech.vitalio_cis.model.AllergyApiResponse
-import com.critetiontech.vitalio_cis.model.AllergyItem
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.AllergyRepository
+import com.critetiontech.ctvitalio.model.AllergyApiResponse
+import com.critetiontech.ctvitalio.model.AllergyItem
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

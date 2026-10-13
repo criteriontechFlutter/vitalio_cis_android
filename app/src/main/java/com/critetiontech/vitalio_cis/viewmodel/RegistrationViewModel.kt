@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf

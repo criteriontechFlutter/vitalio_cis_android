@@ -1,15 +1,15 @@
-package com.critetiontech.vitalio_cis.domain.usecase
+package com.critetiontech.ctvitalio.domain.usecase
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.AllergyRepository
-import com.critetiontech.vitalio_cis.domain.repository.AuthRepository
-import com.critetiontech.vitalio_cis.domain.repository.VitalRepository
-import com.critetiontech.vitalio_cis.domain.usecase.auth.SendOtpUseCase
-import com.critetiontech.vitalio_cis.domain.usecase.auth.VerifyOtpUseCase
-import com.critetiontech.vitalio_cis.model.AllergyItem
-import com.critetiontech.vitalio_cis.model.Vital
-import com.critetiontech.vitalio_cis.model.VitalGraphEntry
-import com.critetiontech.vitalio_cis.utils.Patient
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.AllergyRepository
+import com.critetiontech.ctvitalio.domain.repository.AuthRepository
+import com.critetiontech.ctvitalio.domain.repository.VitalRepository
+import com.critetiontech.ctvitalio.domain.usecase.auth.SendOtpUseCase
+import com.critetiontech.ctvitalio.domain.usecase.auth.VerifyOtpUseCase
+import com.critetiontech.ctvitalio.model.AllergyItem
+import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.model.VitalGraphEntry
+import com.critetiontech.ctvitalio.utils.Patient
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.domain.model
+package com.critetiontech.ctvitalio.domain.model
 
 import org.junit.Assert.*
 import org.junit.Test

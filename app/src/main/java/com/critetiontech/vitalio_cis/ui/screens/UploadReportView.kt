@@ -1,4 +1,4 @@
-   package com.critetiontech.vitalio_cis.ui.screens
+   package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,12 +41,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.model.MediaItem
-import com.critetiontech.vitalio_cis.model.ReportCategory
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.UploadReportViewModel
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.model.MediaItem
+import com.critetiontech.ctvitalio.model.ReportCategory
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.UploadReportViewModel
 
 // ------------------------------------------------------------
 // SCREEN

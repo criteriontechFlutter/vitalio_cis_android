@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.usecase.doctor
+package com.critetiontech.ctvitalio.domain.usecase.doctor
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.DoctorRepository
-import com.critetiontech.vitalio_cis.model.Department
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.DoctorRepository
+import com.critetiontech.ctvitalio.model.Department
 import javax.inject.Inject
 
 class FetchDepartmentsUseCase @Inject constructor(private val repository: DoctorRepository) {

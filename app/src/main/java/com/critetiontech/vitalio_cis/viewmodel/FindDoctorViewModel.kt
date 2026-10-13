@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -6,10 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.Doctor
-import com.critetiontech.vitalio_cis.model.DoctorDetails
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.Doctor
+import com.critetiontech.ctvitalio.model.DoctorDetails
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,8 +33,8 @@ class FindDoctorViewModel : ViewModel() {
     private val _doctorProfiles = MutableStateFlow<Map<Int, DoctorDetails>>(emptyMap())
     val doctorProfiles: StateFlow<Map<Int, DoctorDetails>> = _doctorProfiles
 
-    private val _departmentList = MutableStateFlow<List<com.critetiontech.vitalio_cis.model.Department>>(emptyList())
-    val departmentList: StateFlow<List<com.critetiontech.vitalio_cis.model.Department>> = _departmentList
+    private val _departmentList = MutableStateFlow<List<com.critetiontech.ctvitalio.model.Department>>(emptyList())
+    val departmentList: StateFlow<List<com.critetiontech.ctvitalio.model.Department>> = _departmentList
 
     var selectedDepartmentId by mutableStateOf<Int?>(null)
         private set

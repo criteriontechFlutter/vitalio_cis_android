@@ -1,7 +1,7 @@
-package com.critetiontech.vitalio_cis.domain.usecase.auth
+package com.critetiontech.ctvitalio.domain.usecase.auth
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.AuthRepository
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.AuthRepository
 import javax.inject.Inject
 
 class

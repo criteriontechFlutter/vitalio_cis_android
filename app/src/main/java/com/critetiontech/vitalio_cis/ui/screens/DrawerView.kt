@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -63,15 +63,15 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveTwoPane
-import com.critetiontech.vitalio_cis.ui.adaptive.isTablet
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.AppTheme
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.ui.theme.LocalThemeViewModel
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.ui.adaptive.AdaptiveTwoPane
+import com.critetiontech.ctvitalio.ui.adaptive.isTablet
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.AppTheme
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.LocalThemeViewModel
+import com.critetiontech.ctvitalio.utils.PrefsManager
 
 @Composable
 fun DrawerScreen() {

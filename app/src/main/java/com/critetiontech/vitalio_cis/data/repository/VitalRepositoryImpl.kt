@@ -1,17 +1,17 @@
-package com.critetiontech.vitalio_cis.data.repository
+package com.critetiontech.ctvitalio.data.repository
 
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.VitalRepository
-import com.critetiontech.vitalio_cis.model.Vital
-import com.critetiontech.vitalio_cis.model.VitalAnalyticsResponse
-import com.critetiontech.vitalio_cis.model.VitalApiResponse
-import com.critetiontech.vitalio_cis.model.VitalGraphDetail
-import com.critetiontech.vitalio_cis.model.VitalGraphEntry
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.VitalRepository
+import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.model.VitalAnalyticsResponse
+import com.critetiontech.ctvitalio.model.VitalApiResponse
+import com.critetiontech.ctvitalio.model.VitalGraphDetail
+import com.critetiontech.ctvitalio.model.VitalGraphEntry
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

@@ -1,8 +1,8 @@
 @Composable
 fun UpcomingMedicationsSection(
-    pendingMedicines: List<com.critetiontech.vitalio_cis.model.PendingMedicine>,
+    pendingMedicines: List<com.critetiontech.ctvitalio.model.PendingMedicine>,
     markingMedicines: Set<Int>,
-    onMarkIntake: (com.critetiontech.vitalio_cis.model.PendingMedicine) -> Unit
+    onMarkIntake: (com.critetiontech.ctvitalio.model.PendingMedicine) -> Unit
 ) {
     val colors = LocalMyColorScheme.current
     if (pendingMedicines.isEmpty()) return

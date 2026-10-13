@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.voice
+package com.critetiontech.ctvitalio.voice
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  VoiceSessionContext

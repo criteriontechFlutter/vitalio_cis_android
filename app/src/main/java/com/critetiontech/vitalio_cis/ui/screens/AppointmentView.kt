@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,16 +46,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.model.AppointmentHistoryItem
-import com.critetiontech.vitalio_cis.model.UpcomingAppointmentItem
-import com.critetiontech.vitalio_cis.ui.adaptive.LocalWindowSizeClass
-import com.critetiontech.vitalio_cis.ui.adaptive.WindowWidthSizeClass
-import com.critetiontech.vitalio_cis.ui.adaptive.adaptiveGridItems
-import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.AppointmentViewModel
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.model.AppointmentHistoryItem
+import com.critetiontech.ctvitalio.model.UpcomingAppointmentItem
+import com.critetiontech.ctvitalio.ui.adaptive.LocalWindowSizeClass
+import com.critetiontech.ctvitalio.ui.adaptive.WindowWidthSizeClass
+import com.critetiontech.ctvitalio.ui.adaptive.adaptiveGridItems
+import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.AppointmentViewModel
 import com.example.vitalio_cis.ui.screens.shimmerBrush
 
 @Composable

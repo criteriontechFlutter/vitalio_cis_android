@@ -46,18 +46,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.ui.theme.AppColors
-import com.critetiontech.vitalio_cis.utils.CommonButton
-import com.critetiontech.vitalio_cis.utils.CommonTextField
-import com.critetiontech.vitalio_cis.viewmodel.LoginViewModel
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.AppColors
+import com.critetiontech.ctvitalio.utils.CommonButton
+import com.critetiontech.ctvitalio.utils.CommonTextField
+import com.critetiontech.ctvitalio.viewmodel.LoginViewModel
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import com.critetiontech.vitalio_cis.ui.adaptive.isTablet
+import com.critetiontech.ctvitalio.ui.adaptive.isTablet
 
 @Composable
 fun LoginScreen() {

@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.usecase.fluid
+package com.critetiontech.ctvitalio.domain.usecase.fluid
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.FluidRepository
-import com.critetiontech.vitalio_cis.model.OutputSummaryItem
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.FluidRepository
+import com.critetiontech.ctvitalio.model.OutputSummaryItem
 import javax.inject.Inject
 
 class FetchOutputSummaryUseCase @Inject constructor(private val repository: FluidRepository) {

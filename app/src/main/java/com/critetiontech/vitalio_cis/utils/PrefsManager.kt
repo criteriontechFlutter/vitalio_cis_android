@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.utils
+package com.critetiontech.ctvitalio.utils
 import android.content.Context
 import android.util.Log
 import androidx.core.content.edit

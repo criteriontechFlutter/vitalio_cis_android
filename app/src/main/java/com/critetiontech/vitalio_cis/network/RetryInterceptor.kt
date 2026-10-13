@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.network
+package com.critetiontech.ctvitalio.network
 
 import android.util.Log
 import okhttp3.Interceptor

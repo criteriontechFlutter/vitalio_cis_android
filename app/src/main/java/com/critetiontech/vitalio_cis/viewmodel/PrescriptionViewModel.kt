@@ -1,10 +1,10 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.networking.RetrofitInstance
-import com.critetiontech.vitalio_cis.di.AppDependencies
+import com.critetiontech.ctvitalio.di.AppDependencies
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.flow.MutableStateFlow

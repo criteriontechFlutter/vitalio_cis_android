@@ -1,9 +1,9 @@
 package com.critetiontech.ctvitalio.networking
 
-import com.critetiontech.vitalio_cis.network.RetryInterceptor
-import com.critetiontech.vitalio_cis.utils.MyApplication
+import com.critetiontech.ctvitalio.network.RetryInterceptor
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.utils.NetworkUtils
-import com.critetiontech.vitalio_cis.BuildConfig
+import com.critetiontech.ctvitalio.BuildConfig
 import okhttp3.Cache
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient

@@ -1,16 +1,16 @@
-package com.critetiontech.vitalio_cis.data.repository
+package com.critetiontech.ctvitalio.data.repository
 
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.SymptomRepository
-import com.critetiontech.vitalio_cis.model.Problem
-import com.critetiontech.vitalio_cis.model.ProblemResponse
-import com.critetiontech.vitalio_cis.model.SymptomApiResponse
-import com.critetiontech.vitalio_cis.model.SymptomItem
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.SymptomRepository
+import com.critetiontech.ctvitalio.model.Problem
+import com.critetiontech.ctvitalio.model.ProblemResponse
+import com.critetiontech.ctvitalio.model.SymptomApiResponse
+import com.critetiontech.ctvitalio.model.SymptomItem
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

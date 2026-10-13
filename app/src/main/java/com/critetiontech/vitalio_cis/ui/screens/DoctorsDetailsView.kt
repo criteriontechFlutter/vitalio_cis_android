@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import android.annotation.SuppressLint
 import android.net.Uri
@@ -32,12 +32,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.model.SlotData
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.utils.CommonButton
-import com.critetiontech.vitalio_cis.viewmodel.DoctorDetailsViewModel
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.model.SlotData
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.utils.CommonButton
+import com.critetiontech.ctvitalio.viewmodel.DoctorDetailsViewModel
 import com.google.gson.Gson
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -399,7 +399,7 @@ fun SlotItem(
 
 @Composable
 fun DoctorTopSection(
-    doc: com.critetiontech.vitalio_cis.model.DoctorDetails,
+    doc: com.critetiontech.ctvitalio.model.DoctorDetails,
     days: String
 ) {
 

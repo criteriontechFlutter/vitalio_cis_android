@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,11 +23,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.InteractionCheckerViewModel
-import com.critetiontech.vitalio_cis.viewmodel.InteractionInstructionItem
-import com.critetiontech.vitalio_cis.viewmodel.InteractionSeverity
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.InteractionCheckerViewModel
+import com.critetiontech.ctvitalio.viewmodel.InteractionInstructionItem
+import com.critetiontech.ctvitalio.viewmodel.InteractionSeverity
 import com.critetiontech.myapplication.utils.LocalNavController
 
 @Composable

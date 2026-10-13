@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
@@ -31,15 +31,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import kotlin.math.cos
 import kotlin.math.sin
 
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.critetiontech.vitalio_cis.viewmodel.VitalDetailViewModel
+import com.critetiontech.ctvitalio.viewmodel.VitalDetailViewModel
 
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.Routes
+import com.critetiontech.ctvitalio.Routes
 
 @Composable
 fun HealthOrbitScreen(viewModel: VitalDetailViewModel = viewModel()) {

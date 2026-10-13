@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.utils
+package com.critetiontech.ctvitalio.utils
 
 import android.app.Application
 

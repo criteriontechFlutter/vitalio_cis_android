@@ -1,6 +1,6 @@
-package com.critetiontech.vitalio_cis.utils
+package com.critetiontech.ctvitalio.utils
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.model.DomainResult
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test

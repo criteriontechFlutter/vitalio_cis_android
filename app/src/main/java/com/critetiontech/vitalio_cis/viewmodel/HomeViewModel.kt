@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -6,11 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.model.DashboardResponse
-import com.critetiontech.vitalio_cis.model.UpcomingAppointment
-import com.critetiontech.vitalio_cis.model.Vital
-import com.critetiontech.vitalio_cis.utils.MyApplication
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.model.DashboardResponse
+import com.critetiontech.ctvitalio.model.UpcomingAppointment
+import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,8 +33,8 @@ class HomeViewModel : ViewModel() {
     private val _appointments = MutableStateFlow<List<UpcomingAppointment>>(emptyList())
     val appointments: StateFlow<List<UpcomingAppointment>> = _appointments
 
-    private val _dailyMedicines = MutableStateFlow<List<com.critetiontech.vitalio_cis.model.MedicineItem>>(emptyList())
-    val dailyMedicines: StateFlow<List<com.critetiontech.vitalio_cis.model.MedicineItem>> = _dailyMedicines
+    private val _dailyMedicines = MutableStateFlow<List<com.critetiontech.ctvitalio.model.MedicineItem>>(emptyList())
+    val dailyMedicines: StateFlow<List<com.critetiontech.ctvitalio.model.MedicineItem>> = _dailyMedicines
 
     fun fetchDashboard() {
         viewModelScope.launch {
@@ -62,7 +62,7 @@ class HomeViewModel : ViewModel() {
                 // 2. Fetch Full Daily Medicine Intake (To show upcoming/taken status)
                 val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
                 val medsRes = AppDependencies.fetchMedicineIntake()(patient.pid, currentDate, patient.clientId)
-                if (medsRes is com.critetiontech.vitalio_cis.domain.model.DomainResult.Success) {
+                if (medsRes is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
                     val allMeds = medsRes.data.flatMap { it.medicineData }
                         .filter { it.medicineName.isNotBlank() }
                         .sortedBy { it.scheduledDateTime }
@@ -79,17 +79,17 @@ class HomeViewModel : ViewModel() {
     private val _markingMedicines = MutableStateFlow<Set<Int>>(emptySet())
     val markingMedicines: StateFlow<Set<Int>> = _markingMedicines
 
-    fun markMedicineIntake(medicine: com.critetiontech.vitalio_cis.model.MedicineItem) {
+    fun markMedicineIntake(medicine: com.critetiontech.ctvitalio.model.MedicineItem) {
         viewModelScope.launch {
             _markingMedicines.value += medicine.id
             Log.d("HomeViewModel", "🔵 markMedicineIntake called → id=${medicine.id}, scheduledDateTime=${medicine.scheduledDateTime}, medicineName=${medicine.medicineName}")
             try {
                 val result = AppDependencies.markMedicineIntake()(medicine.id, medicine.scheduledDateTime)
                 Log.d("HomeViewModel", "🔵 markMedicineIntake result → $result")
-                if (result is com.critetiontech.vitalio_cis.domain.model.DomainResult.Success) {
+                if (result is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
                     // Refetch medicines
                     fetchDashboardNoCache()
-                } else if (result is com.critetiontech.vitalio_cis.domain.model.DomainResult.Error) {
+                } else if (result is com.critetiontech.ctvitalio.domain.model.DomainResult.Error) {
                     Log.e("HomeViewModel", "🔴 markMedicineIntake API error: ${result.exception.message}", result.exception)
                     android.widget.Toast.makeText(MyApplication.appContext, "Failed to mark medicine", android.widget.Toast.LENGTH_SHORT).show()
                 }
@@ -119,7 +119,7 @@ class HomeViewModel : ViewModel() {
                 }
                 val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
                 val medsRes = AppDependencies.fetchMedicineIntake()(patient.pid, currentDate, patient.clientId)
-                if (medsRes is com.critetiontech.vitalio_cis.domain.model.DomainResult.Success) {
+                if (medsRes is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
                     val allMeds = medsRes.data.flatMap { it.medicineData }
                         .filter { it.medicineName.isNotBlank() }
                         .sortedBy { it.scheduledDateTime }

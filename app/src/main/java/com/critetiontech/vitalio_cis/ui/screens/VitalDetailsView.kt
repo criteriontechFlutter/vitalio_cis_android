@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 
 import androidx.compose.animation.core.*
@@ -33,11 +33,11 @@ import androidx.compose.ui.draw.clip
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.VitalDetailViewModel
-import com.critetiontech.vitalio_cis.ui.adaptive.rememberResponsiveDimens
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.VitalDetailViewModel
+import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

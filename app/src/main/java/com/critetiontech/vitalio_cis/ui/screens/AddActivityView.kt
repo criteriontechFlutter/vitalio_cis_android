@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
@@ -25,11 +25,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.model.PatientActivityItem
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.ActivityViewModel
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.model.PatientActivityItem
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.ActivityViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 

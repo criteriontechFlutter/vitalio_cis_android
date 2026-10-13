@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -42,12 +42,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.Drug
-import com.critetiontech.vitalio_cis.viewmodel.InteractionCheckerViewModel
-import com.critetiontech.vitalio_cis.viewmodel.InteractionInstructionItem
-import com.critetiontech.vitalio_cis.viewmodel.InteractionSeverity
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.Drug
+import com.critetiontech.ctvitalio.viewmodel.InteractionCheckerViewModel
+import com.critetiontech.ctvitalio.viewmodel.InteractionInstructionItem
+import com.critetiontech.ctvitalio.viewmodel.InteractionSeverity
 import com.critetiontech.myapplication.utils.LocalNavController
 
 @Composable
@@ -226,7 +226,7 @@ fun InteractionCheckerScreen(
                     onClick = {
                         viewModel.fetchDrugInteractions { success ->
                             if (success) {
-                                navController.navigate(com.critetiontech.vitalio_cis.Routes.INTERACTIONINSTRUCTION)
+                                navController.navigate(com.critetiontech.ctvitalio.Routes.INTERACTIONINSTRUCTION)
                             }
                         }
                     },

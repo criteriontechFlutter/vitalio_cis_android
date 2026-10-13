@@ -1,7 +1,7 @@
-package com.critetiontech.vitalio_cis.domain.usecase.report
+package com.critetiontech.ctvitalio.domain.usecase.report
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.ReportRepository
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.ReportRepository
 import javax.inject.Inject
 
 class InsertInvestigationResultUseCase @Inject constructor(private val repository: ReportRepository) {

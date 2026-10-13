@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.components
+package com.critetiontech.ctvitalio.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
@@ -17,8 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.ui.adaptive.AdaptiveContentContainer
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.adaptive.AdaptiveContentContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

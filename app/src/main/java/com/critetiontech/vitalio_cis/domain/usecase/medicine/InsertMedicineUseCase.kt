@@ -1,9 +1,9 @@
-package com.critetiontech.vitalio_cis.domain.usecase.medicine
+package com.critetiontech.ctvitalio.domain.usecase.medicine
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.MedicineRepository
-import com.critetiontech.vitalio_cis.model.InsertMedicineRequest
-import com.critetiontech.vitalio_cis.model.InsertMedicineResponse
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.MedicineRepository
+import com.critetiontech.ctvitalio.model.InsertMedicineRequest
+import com.critetiontech.ctvitalio.model.InsertMedicineResponse
 import javax.inject.Inject
 
 class InsertMedicineUseCase @Inject constructor(private val repository: MedicineRepository) {

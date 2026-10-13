@@ -61,6 +61,20 @@
             </intent-filter>
         </activity>
 
+        <!-- Ultrahuman smart ring OAuth redirect (same callback scheme as iOS) -->
+        <activity
+            android:name=".ring.RingOAuthRedirectActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.critetiontech.ctvitalio" />
+            </intent-filter>
+        </activity>
+
         <!--
             REQUIRED for Health Connect permissions dialog to appear.
             Without this alias, Health Connect cannot show the permission

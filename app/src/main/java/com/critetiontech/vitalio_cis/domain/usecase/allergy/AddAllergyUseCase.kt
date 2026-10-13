@@ -1,7 +1,7 @@
-package com.critetiontech.vitalio_cis.domain.usecase.allergy
+package com.critetiontech.ctvitalio.domain.usecase.allergy
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.AllergyRepository
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.AllergyRepository
 import javax.inject.Inject
 
 class AddAllergyUseCase @Inject constructor(private val repository: AllergyRepository) {

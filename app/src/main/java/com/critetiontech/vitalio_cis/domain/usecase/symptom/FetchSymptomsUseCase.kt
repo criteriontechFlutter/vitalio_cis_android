@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.usecase.symptom
+package com.critetiontech.ctvitalio.domain.usecase.symptom
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.SymptomRepository
-import com.critetiontech.vitalio_cis.model.SymptomItem
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.SymptomRepository
+import com.critetiontech.ctvitalio.model.SymptomItem
 import javax.inject.Inject
 
 class FetchSymptomsUseCase @Inject constructor(private val repository: SymptomRepository) {

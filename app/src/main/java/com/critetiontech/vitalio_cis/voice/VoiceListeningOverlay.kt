@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.voice
+package com.critetiontech.ctvitalio.voice
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*

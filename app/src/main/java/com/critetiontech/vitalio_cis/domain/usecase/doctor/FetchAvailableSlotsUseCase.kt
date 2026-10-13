@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.usecase.doctor
+package com.critetiontech.ctvitalio.domain.usecase.doctor
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.DoctorRepository
-import com.critetiontech.vitalio_cis.model.ShiftData
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.DoctorRepository
+import com.critetiontech.ctvitalio.model.ShiftData
 import javax.inject.Inject
 
 class FetchAvailableSlotsUseCase @Inject constructor(private val repository: DoctorRepository) {
