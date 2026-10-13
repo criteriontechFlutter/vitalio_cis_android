@@ -125,7 +125,11 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                         DateRangeSection(viewModel)
                     }
 
-                    // Card 5: Special Instructions
+                    // Card 5: Special Ins
+                    //
+                    //
+                    //
+                    // tructions
                     MedicineFormCard(title = "Special Instructions", icon = Icons.Rounded.Edit, iconColor = Teal500) {
                         OutlinedTextField(
                             value = viewModel.instructions,

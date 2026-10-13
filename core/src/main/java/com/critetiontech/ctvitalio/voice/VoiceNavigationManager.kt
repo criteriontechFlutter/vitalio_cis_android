@@ -9,8 +9,6 @@ import android.os.Build
 import android.speech.tts.TextToSpeech
 import android.util.Base64
 import android.util.Log
-import com.critetiontech.ctvitalio.di.AppDependencies
-import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -168,7 +166,13 @@ object VoiceNavigationManager {
             .build()
     }
 
-    private val prefs by lazy { AppDependencies.prefs }
+    private val backend get() = VoiceCore.backend
+
+    /**
+     * When false, spoken screen names ("vitals", "medicine") are never treated as
+     * navigation commands — used by the watch, which has no phone screens to open.
+     */
+    var navigationEnabled = true
 
     // VAD (Voice Activity Detection) state
     private var lastSpeechTime = 0L
@@ -232,7 +236,7 @@ object VoiceNavigationManager {
         MultiTurnConversationManager.reset()
 
         // Start session analytics
-        val patient = prefs.getPatient()
+        val patient = backend.currentPatient()
         VoiceSessionAnalytics.startSession(
             patientId = patient?.pid?.toString() ?: "unknown",
             nurseMode = _sessionConfig.value?.isNurseMode == true
@@ -272,7 +276,8 @@ object VoiceNavigationManager {
         // Flush any pending AI text before shutting down (mirrors iOS)
         val aiText = if (lastTranslation.isNotEmpty()) lastTranslation else lastOriginalText
         val cleanedAI = aiText.trim()
-        if (cleanedAI.isNotEmpty() && cleanedAI != lastProcessedAIText && !containsNavigationCommand(cleanedAI.lowercase())) {
+        if (cleanedAI.isNotEmpty() && cleanedAI != lastProcessedAIText &&
+            !(navigationEnabled && containsNavigationCommand(cleanedAI.lowercase()))) {
             aiDebounceJob?.cancel()
             triggerAIExtraction(cleanedAI)
         }
@@ -554,7 +559,7 @@ object VoiceNavigationManager {
 
     private suspend fun connectWebSocket(onNavigationCommand: (String) -> Unit): Unit =
         withContext(Dispatchers.IO) {
-            val patient  = prefs.getPatient()
+            val patient  = backend.currentPatient()
             val userId   = patient?.pid?.toString() ?: "625"
             val language = "hindi_v2/drpdvoiceagent"
             val dept     = "GENERAL_MEDICINE"
@@ -626,7 +631,7 @@ object VoiceNavigationManager {
             val loweredAI = aiText.lowercase()
 
             // 1. Navigation command detection
-            if (containsNavigationCommand(loweredUI) || containsNavigationCommand(loweredAI)) {
+            if (navigationEnabled && (containsNavigationCommand(loweredUI) || containsNavigationCommand(loweredAI))) {
                 val cmdText = if (containsNavigationCommand(loweredUI)) loweredUI else loweredAI
                 val route   = resolveNavigationRoute(cmdText)
                 if (route != null) {
@@ -766,7 +771,7 @@ object VoiceNavigationManager {
     // ── SAVE HELPERS ──────────────────────────────────────────────────────────
 
     private suspend fun saveVitals(vitals: Map<String, String>): String {
-        val patient     = prefs.getPatient() ?: return "Vitals saved"
+        val patient     = backend.currentPatient() ?: return "Vitals saved"
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val currentTime = SimpleDateFormat("HH:mm",      Locale.getDefault()).format(Date())
 
@@ -792,14 +797,11 @@ object VoiceNavigationManager {
             put("isFromMachine", "0")
             put("positionId",    "0")
         }
-        return when (AppDependencies.addVital()(body)) {
-            is DomainResult.Success -> formatVitalSummary(vitals)
-            is DomainResult.Error   -> "Error saving vitals"
-        }
+        return if (backend.addVital(body)) formatVitalSummary(vitals) else "Error saving vitals"
     }
 
     private suspend fun saveSymptoms(symptoms: List<VoiceSymptomItem>): String {
-        val patient = prefs.getPatient() ?: return "Symptoms saved"
+        val patient = backend.currentPatient() ?: return "Symptoms saved"
         // ✅ Use ISO date format matching SymptomTrackerViewModel (was "yyyy-MM-dd HH:mm:ss.SSS")
         val now = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O)
             java.time.LocalDateTime.now()
@@ -828,14 +830,11 @@ object VoiceNavigationManager {
             "type"          to "Symptoms",
             "isFromPatient" to true
         )
-        return when (AppDependencies.insertSymptoms()(body)) {
-            is DomainResult.Success -> formatSymptomSummary(symptoms)
-            is DomainResult.Error   -> "Error saving symptoms"
-        }
+        return if (backend.insertSymptoms(body)) formatSymptomSummary(symptoms) else "Error saving symptoms"
     }
 
     private suspend fun saveFluidIntakes(intakes: List<VoiceFluidIntakeItem>): String {
-        val patient  = prefs.getPatient() ?: return "Fluid intake saved"
+        val patient  = backend.currentPatient() ?: return "Fluid intake saved"
         val foodDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             java.time.Instant.now().toString()
         else
@@ -855,16 +854,14 @@ object VoiceNavigationManager {
                 "entryType"     to "N",
                 "isFromPatient" to 1
             )
-            when (AppDependencies.addIntake()(body)) {
-                is DomainResult.Success -> savedNames.add("${intake.name} ${intake.quantity}ml")
-                is DomainResult.Error   -> Log.e(TAG, "Error saving intake: ${intake.name}")
-            }
+            if (backend.addIntake(body)) savedNames.add("${intake.name} ${intake.quantity}ml")
+            else Log.e(TAG, "Error saving intake: ${intake.name}")
         }
         return if (savedNames.isEmpty()) "Fluid intake saved" else "Logged Intake: ${savedNames.joinToString(", ")}"
     }
 
     private suspend fun saveFluidOutput(output: VoiceFluidOutputItem): String {
-        val patient    = prefs.getPatient() ?: return "Fluid output saved"
+        val patient    = backend.currentPatient() ?: return "Fluid output saved"
         val outputDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         else
@@ -880,19 +877,15 @@ object VoiceNavigationManager {
             "clientId"     to patient.clientId,
             "uhid"         to patient.uhId
         )
-        return when (AppDependencies.addOutput()(body)) {
-            is DomainResult.Success -> "Logged Output: ${output.quantity}ml (${output.colourName})"
-            is DomainResult.Error   -> "Error saving fluid output"
-        }
+        return if (backend.addOutput(body)) "Logged Output: ${output.quantity}ml (${output.colourName})"
+               else "Error saving fluid output"
     }
 
     private suspend fun saveMedicines(medicines: List<VoiceMedicineItem>): String {
         val savedNames = mutableListOf<String>()
         for (med in medicines) {
-            when (AppDependencies.markMedicineIntake()(med.medicineId, med.scheduledDateTime)) {
-                is DomainResult.Success -> savedNames.add(med.medicineName)
-                is DomainResult.Error   -> Log.e(TAG, "Error marking medicine: ${med.medicineName}")
-            }
+            if (backend.markMedicineTaken(med.medicineId, med.scheduledDateTime)) savedNames.add(med.medicineName)
+            else Log.e(TAG, "Error marking medicine: ${med.medicineName}")
         }
         return if (savedNames.isEmpty()) "Medication recorded" else "Taken: ${savedNames.joinToString(", ")}"
     }
@@ -970,23 +963,17 @@ object VoiceNavigationManager {
     private suspend fun loadSessionContext() {
         withContext(Dispatchers.IO) {
             try {
-                val patient = prefs.getPatient() ?: return@withContext
+                if (backend.currentPatient() == null) return@withContext
                 val today   = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
                 // ── Last Vitals — for trend computation ──────────────────────
-                // FetchLastVitalUseCase.invoke(uhid: String, clientId: String, userId: String)
                 val lastVitalsMap = mutableMapOf<String, String>()
                 try {
-                    val vitalRes = AppDependencies.fetchLastVital()(
-                        patient.uhId,
-                        patient.clientId.toString(),
-                        patient.pid.toString()
-                    )
-                    if (vitalRes is DomainResult.Success) {
-                        // Vital is a flat list: each entry has vitalName + vitalValue.
+                    val readings = backend.lastVitalReadings()
+                    if (readings.isNotEmpty()) {
                         // Map vitalName → canonical voice key used throughout the voice system.
-                        vitalRes.data.forEach { vital ->
-                            val key = when (vital.vitalName.lowercase().trim()) {
+                        readings.forEach { (vitalName, vitalValue) ->
+                            val key = when (vitalName.lowercase().trim()) {
                                 "systolic", "bp systolic", "bpsys", "vmvaluebpsys"         -> "vmValueBPSys"
                                 "diastolic", "bp diastolic", "bpdias", "vmvaluebpdias"     -> "vmValueBPDias"
                                 "pulse", "pulse rate", "vmvaluepulse"                       -> "vmValuePulse"
@@ -998,8 +985,8 @@ object VoiceNavigationManager {
                                 "weight", "body weight", "vmvalueweight"                    -> "weight"
                                 else -> null
                             }
-                            if (key != null && vital.vitalValue != 0.0) {
-                                lastVitalsMap[key] = vital.vitalValue.toString()
+                            if (key != null && vitalValue != 0.0) {
+                                lastVitalsMap[key] = vitalValue.toString()
                             }
                         }
                         Log.d(TAG, "Last vitals loaded for trend: ${lastVitalsMap.keys}")
@@ -1009,29 +996,11 @@ object VoiceNavigationManager {
                 }
 
                 // ── Scheduled Medicines — for personalized keyword matching ──
-                val scheduledMeds = mutableListOf<ScheduledMedicineRef>()
-                val medKeywords   = mutableMapOf<String, Int>()
+                var scheduledMeds = emptyList<ScheduledMedicineRef>()
                 try {
-                    val medRes = AppDependencies.fetchMedicineIntake()(
-                        patient.pid,
-                        today,
-                        patient.clientId
-                    )
-                    if (medRes is DomainResult.Success) {
-                        medRes.data.flatMap { it.medicineData }.filter { !it.isTaken }.forEach { med ->
-                            scheduledMeds.add(ScheduledMedicineRef(
-                                id                = med.id,
-                                name              = med.medicineName,
-                                scheduledDateTime = med.scheduledDateTime,
-                                dosageStrength    = med.dosageStrength.toString(),
-                                unit              = med.unit,
-                                isTaken           = med.isTaken
-                            ))
-                            medKeywords[med.medicineName.lowercase().trim()] = med.id
-                        }
-                        personalizedMedKeywords = medKeywords
-                        Log.d(TAG, "Loaded ${scheduledMeds.size} pending medicines for keyword matching")
-                    }
+                    scheduledMeds = backend.pendingMedicines(today)
+                    personalizedMedKeywords = scheduledMeds.associate { it.name.lowercase().trim() to it.id }
+                    Log.d(TAG, "Loaded ${scheduledMeds.size} pending medicines for keyword matching")
                 } catch (e: Exception) {
                     Log.w(TAG, "Could not load medicines for context: ${e.message}")
                 }

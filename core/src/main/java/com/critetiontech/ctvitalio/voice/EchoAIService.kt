@@ -1,10 +1,6 @@
 package com.critetiontech.ctvitalio.voice
 
 import android.util.Log
-import com.critetiontech.ctvitalio.di.AppDependencies
-import com.critetiontech.ctvitalio.domain.model.DomainResult
-import com.critetiontech.ctvitalio.utils.MyApplication
-import com.critetiontech.ctvitalio.utils.PrefsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -25,7 +21,7 @@ private const val ECHO_AI_URL = "http://food.shopright.ai:3478/api/echo/"
 
 object EchoAIService {
 
-    private val prefs by lazy { PrefsManager(MyApplication.appContext) }
+    private val backend get() = VoiceCore.backend
 
     private fun currentDate(): String =
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -46,8 +42,8 @@ object EchoAIService {
             if (trimmed.length < 2 || !trimmed.any { it.isLetter() }) return@withContext VoiceExtractedData()
 
             try {
-                val patient  = prefs.getPatient()
-                val uhid     = patient?.uhId ?: ""
+                val patient  = backend.currentPatient()
+                val uhid    = patient?.uhId ?: ""
                 val userId   = patient?.pid?.toString() ?: "1"
                 val clientId = patient?.clientId ?: 1  // Use actual clientId — critical for multi-tenant / enterprise
 
@@ -455,35 +451,29 @@ object EchoAIService {
         // --- Medicine NLP Fallback ---
         // If AI missed medicine, we extract it directly from pending medicines
         try {
-            val patient = prefs.getPatient()
-            if (patient != null) {
-                val dateStr = currentDate()
-                val medsRes =
-                    AppDependencies.fetchMedicineIntake()(patient.pid, dateStr, patient.clientId)
-                if (medsRes is DomainResult.Success) {
-                    val pendingMeds = medsRes.data.flatMap { it.medicineData }.filter { !it.isTaken }
-                    val currentMeds = result.medicines?.toMutableList() ?: mutableListOf()
-                    val existingIds = currentMeds.map { it.medicineId }.toSet()
-                    
-                    var changed = false
-                    for (med in pendingMeds) {
-                        if (med.id in existingIds) continue
-                        // Check if medicine name is spoken
-                        val medNameLower = med.medicineName.lowercase().trim()
-                        if (medNameLower.isNotEmpty() && lowerText.contains(medNameLower)) {
-                            currentMeds.add(VoiceMedicineItem(
-                                medicineId = med.id, // We use schedule id as medicineId for markIntake!
-                                medicineName = med.medicineName,
-                                scheduledDateTime = med.scheduledDateTime,
-                                instructions = med.dosageStrength.toString(),
-                                frequency = med.unit
-                            ))
-                            changed = true
-                        }
+            if (backend.currentPatient() != null) {
+                val pendingMeds = backend.pendingMedicines(currentDate())
+                val currentMeds = result.medicines?.toMutableList() ?: mutableListOf()
+                val existingIds = currentMeds.map { it.medicineId }.toSet()
+
+                var changed = false
+                for (med in pendingMeds) {
+                    if (med.id in existingIds) continue
+                    // Check if medicine name is spoken
+                    val medNameLower = med.name.lowercase().trim()
+                    if (medNameLower.isNotEmpty() && lowerText.contains(medNameLower)) {
+                        currentMeds.add(VoiceMedicineItem(
+                            medicineId = med.id, // We use schedule id as medicineId for markIntake!
+                            medicineName = med.name,
+                            scheduledDateTime = med.scheduledDateTime,
+                            instructions = med.dosageStrength,
+                            frequency = med.unit
+                        ))
+                        changed = true
                     }
-                    if (changed) {
-                        result = result.copy(medicines = currentMeds)
-                    }
+                }
+                if (changed) {
+                    result = result.copy(medicines = currentMeds)
                 }
             }
         } catch (e: Exception) {
