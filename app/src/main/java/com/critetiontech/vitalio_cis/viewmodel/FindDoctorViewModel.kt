@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -6,10 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.Doctor
-import com.critetiontech.vitalio_cis.model.DoctorDetails
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.Doctor
+import com.critetiontech.ctvitalio.model.DoctorDetails
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,11 +33,32 @@ class FindDoctorViewModel : ViewModel() {
     private val _doctorProfiles = MutableStateFlow<Map<Int, DoctorDetails>>(emptyMap())
     val doctorProfiles: StateFlow<Map<Int, DoctorDetails>> = _doctorProfiles
 
-    fun fetchDoctorsAvalability() {
+    private val _departmentList = MutableStateFlow<List<com.critetiontech.ctvitalio.model.Department>>(emptyList())
+    val departmentList: StateFlow<List<com.critetiontech.ctvitalio.model.Department>> = _departmentList
+
+    var selectedDepartmentId by mutableStateOf<Int?>(null)
+        private set
+
+    fun onDepartmentSelected(id: Int?) {
+        selectedDepartmentId = id
+        fetchDoctorsAvalability(id ?: 0)
+    }
+
+    fun fetchDepartments() {
+        viewModelScope.launch {
+            val patient = prefs.getPatient() ?: return@launch
+            when (val r = deps.fetchDepartments()(patient.clientId.toString())) {
+                is DomainResult.Success -> _departmentList.value = r.data
+                is DomainResult.Error -> Log.e("FindDoctorVM", r.exception.message.orEmpty())
+            }
+        }
+    }
+
+    fun fetchDoctorsAvalability(departmentId: Int = 0) {
         viewModelScope.launch {
             _loading.value = true
             val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
-            when (val r = deps.fetchDoctors()(patient.clientId.toString())) {
+            when (val r = deps.fetchDoctors()(patient.clientId.toString(), departmentId.toString())) {
                 is DomainResult.Success -> {
                     _doctorList.value = r.data
                     fetchDoctorProfiles(r.data, patient.clientId.toString())

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 
 
 @Composable
@@ -23,7 +23,7 @@ fun FeedbackScreen() {
 
     var email by remember { mutableStateOf("") }
     var feedback by remember { mutableStateOf("") }
-    var selectedRating by remember { mutableStateOf(3) }
+    var selectedRating by remember { mutableIntStateOf(3) }
     var expanded by remember { mutableStateOf(false) }
     var selectedModule by remember { mutableStateOf("Select Module") }
 

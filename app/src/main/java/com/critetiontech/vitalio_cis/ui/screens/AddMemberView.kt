@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 
 import androidx.compose.foundation.Image
@@ -12,19 +12,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.utils.CommonButton
-import com.critetiontech.vitalio_cis.R
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.utils.CommonButton
+import com.critetiontech.ctvitalio.R
 @Composable
 fun AddMemberScreen() {
 
     val colors = LocalMyColorScheme.current
 
     var code by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
 
     CommonAppBar(
         title = "Add Member",

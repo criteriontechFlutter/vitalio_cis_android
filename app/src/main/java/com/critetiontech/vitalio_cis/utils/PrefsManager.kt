@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.utils
+package com.critetiontech.ctvitalio.utils
 import android.content.Context
 import android.util.Log
 import androidx.core.content.edit
@@ -33,7 +33,8 @@ data class VerifyOtpPatient(
     val bloodGroupId: Int = 0,
     val joinedOn: String = "",
     val lastVisitDate: String? = null,
-    val patientStatus: String? = null
+    val patientStatus: String? = null,
+    val crNo: String? = null      // CR Number — used by PatientOPDAllHistory API
 )
 
 data class VerifyOtpResponse(
@@ -70,7 +71,8 @@ data class Patient(
     val countryName: String,
     val genderName: String,
     val guardianRelationName: String?,
-    val bloodGroupName: String?
+    val bloodGroupName: String?,
+    val crNo: String? = null   // CR Number — required by PatientOPDAllHistory API
 )
 data class EmployeeGoal(
     val pid: Int,

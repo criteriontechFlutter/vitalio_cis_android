@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding
+package com.critetiontech.ctvitalio.ui.screens.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,11 +18,11 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.unit.sp
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.components.ProgressCard
-import com.critetiontech.vitalio_cis.viewmodel.RegistrationViewModel
+import com.critetiontech.ctvitalio.ui.screens.onboarding.components.ProgressCard
+import com.critetiontech.ctvitalio.viewmodel.RegistrationViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import com.critetiontech.vitalio_cis.R
+import com.critetiontech.ctvitalio.R
 @Composable
 fun DobScreen() {
 

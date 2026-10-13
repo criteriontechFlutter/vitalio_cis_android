@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.model
+package com.critetiontech.ctvitalio.model
 
 data class DashboardResponse(
     val status: Int = 0,
@@ -25,10 +25,12 @@ data class UpcomingAppointment(
 )
 
 data class PendingMedicine(
+    val id: Int = 0,
     val pid: Int = 0,
     val isTaken: Boolean = false,
     val medicineId: Int = 0,
     val medicineName: String = "",
     val frequency: String = "",
-    val instructions: String = ""
+    val instructions: String = "",
+    val scheduledDateTime: String = ""
 )

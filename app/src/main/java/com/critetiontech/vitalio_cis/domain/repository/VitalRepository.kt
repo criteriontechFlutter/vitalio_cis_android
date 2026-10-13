@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.repository
+package com.critetiontech.ctvitalio.domain.repository
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.Vital
-import com.critetiontech.vitalio_cis.model.VitalGraphEntry
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.model.VitalGraphEntry
 
 interface VitalRepository {
     suspend fun fetchLastVital(uhid: String, clientId: String, userId: String): DomainResult<List<Vital>>

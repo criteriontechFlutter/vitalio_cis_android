@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding.components
+package com.critetiontech.ctvitalio.ui.screens.onboarding.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -14,10 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.critetiontech.vitalio_cis.ui.theme.AppDimens
-import com.critetiontech.vitalio_cis.ui.theme.LightGray
-import com.critetiontech.vitalio_cis.ui.theme.PrimaryBlue
-import com.critetiontech.vitalio_cis.ui.theme.TextPrimary
+import com.critetiontech.ctvitalio.ui.theme.AppDimens
+import com.critetiontech.ctvitalio.ui.theme.LightGray
+import com.critetiontech.ctvitalio.ui.theme.PrimaryBlue
+import com.critetiontech.ctvitalio.ui.theme.TextPrimary
 
 @Composable
 fun SelectionCard(

@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.usecase.auth
+package com.critetiontech.ctvitalio.domain.usecase.auth
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.AuthRepository
-import com.critetiontech.vitalio_cis.utils.Patient
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.AuthRepository
+import com.critetiontech.ctvitalio.utils.Patient
 import javax.inject.Inject
 
 class VerifyOtpUseCase @Inject constructor(private val repository: AuthRepository) {

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.theme
+package com.critetiontech.ctvitalio.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp

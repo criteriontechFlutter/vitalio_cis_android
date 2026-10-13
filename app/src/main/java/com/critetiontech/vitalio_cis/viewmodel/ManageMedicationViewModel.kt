@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.content.Context
 import android.util.Log
@@ -7,10 +7,10 @@ import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.model.AllMedicine
-import com.critetiontech.vitalio_cis.model.LoggedMedicine
-import com.critetiontech.vitalio_cis.model.MedicineIntakeByDateResponse
-import com.critetiontech.vitalio_cis.utils.PrefsManager
+import com.critetiontech.ctvitalio.model.AllMedicine
+import com.critetiontech.ctvitalio.model.LoggedMedicine
+import com.critetiontech.ctvitalio.model.MedicineIntakeByDateResponse
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.os.Build
 import android.util.Log
@@ -7,13 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.FluidSummaryItem
-import com.critetiontech.vitalio_cis.model.IntakeItem
-import com.critetiontech.vitalio_cis.model.ManualFoodAssignItem
-import com.critetiontech.vitalio_cis.model.OutputItem
-import com.critetiontech.vitalio_cis.model.OutputSummaryItem
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.FluidSummaryItem
+import com.critetiontech.ctvitalio.model.IntakeItem
+import com.critetiontech.ctvitalio.model.ManualFoodAssignItem
+import com.critetiontech.ctvitalio.model.OutputItem
+import com.critetiontech.ctvitalio.model.OutputSummaryItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -28,7 +28,6 @@ class IntakeOutputViewModel : ViewModel() {
     private val prefs = deps.prefs
 
     var searchText by mutableStateOf(""); private set
-    fun onSearchChange(value: String) { searchText = value }
 
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
@@ -50,6 +49,15 @@ class IntakeOutputViewModel : ViewModel() {
 
     private val _intakeLoading = MutableStateFlow(false)
     val intakeLoading: StateFlow<Boolean> = _intakeLoading
+
+    private val _intakeSuccess = MutableStateFlow(false)
+    val intakeSuccess: StateFlow<Boolean> = _intakeSuccess
+
+    private val _outputSuccess = MutableStateFlow(false)
+    val outputSuccess: StateFlow<Boolean> = _outputSuccess
+
+    fun resetIntakeSuccess() { _intakeSuccess.value = false }
+    fun resetOutputSuccess() { _outputSuccess.value = false }
 
     private val _manualFoodList = MutableStateFlow<List<ManualFoodAssignItem>>(emptyList())
     val manualFoodList: StateFlow<List<ManualFoodAssignItem>> = _manualFoodList
@@ -85,7 +93,12 @@ class IntakeOutputViewModel : ViewModel() {
             val foodDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Instant.now().toString() else System.currentTimeMillis().toString()
             val body = mapOf<String, Any>("FoodDate" to foodDate, "FoodQuantity" to value, "UserID" to patient.pid, "foodId" to fId, "clientId" to patient.clientId, "FoodUnitId" to 27, "uhid" to patient.uhId, "isGiven" to 1, "entryType" to "N", "isFromPatient" to 1)
             when (val r = deps.addIntake()(body)) {
-                is DomainResult.Success -> Log.d("IntakeOutputVM", "addIntake success")
+                is DomainResult.Success -> {
+                    Log.d("IntakeOutputVM", "addIntake success")
+                    _intakeSuccess.value = true
+                    // Refresh today's intake bar chart data
+                    fetchIntake()
+                }
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
             _intakeLoading.value = false
@@ -111,7 +124,10 @@ class IntakeOutputViewModel : ViewModel() {
             val outputDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) else java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
             val body = mapOf<String, Any>("outputTypeID" to 51, "quantity" to quantity, "unitID" to 1, "outputDate" to outputDate, "colour" to colour, "userID" to patient.pid, "clientId" to patient.clientId, "uhid" to patient.uhId)
             when (val r = deps.addOutput()(body)) {
-                is DomainResult.Success -> Log.d("IntakeOutputVM", "addOutput success")
+                is DomainResult.Success -> {
+                    Log.d("IntakeOutputVM", "addOutput success")
+                    _outputSuccess.value = true
+                }
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
             _outputLoading.value = false

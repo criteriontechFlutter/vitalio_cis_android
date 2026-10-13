@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -20,10 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.model.VitalGraphEntry
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.VitalDetailViewModel
+import com.critetiontech.ctvitalio.model.VitalGraphEntry
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.VitalDetailViewModel
 import java.time.*
 import java.time.format.DateTimeFormatter
 import kotlin.math.*

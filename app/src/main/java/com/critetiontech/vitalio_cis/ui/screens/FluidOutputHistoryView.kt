@@ -1,14 +1,11 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,21 +18,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.animation.core.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,16 +45,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.IntakeOutputViewModel
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.IntakeOutputViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import androidx.core.graphics.toColorInt
 
 @Composable
 private fun outputShimmerBrush(): Brush {
@@ -88,7 +86,7 @@ private fun FluidOutputLogShimmer() {
                 }
                 Box(modifier = Modifier.width(48.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
             }
-            Divider(color = Color(0xFFE0E0E0), thickness = 0.7.dp)
+            HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
         }
     }
 }
@@ -96,8 +94,8 @@ private fun FluidOutputLogShimmer() {
 private fun colourNameToColor(colour: String): Color {
     if (colour.startsWith("#")) {
         return try {
-            Color(android.graphics.Color.parseColor(colour))
-        } catch (e: Exception) {
+            Color(colour.toColorInt())
+        } catch (_: Exception) {
             Color.Gray
         }
     }
@@ -116,9 +114,9 @@ private fun colourNameToColor(colour: String): Color {
 
 @Composable
 fun FluidOutputHistoryScreen(
-    viewModel: IntakeOutputViewModel = viewModel()
+    viewModel: IntakeOutputViewModel = viewModel(),
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
 
     val outputList by viewModel.outputList.collectAsState()
@@ -285,7 +283,7 @@ fun FluidOutputHistoryScreen(
                                 val formattedDate = try {
                                     LocalDateTime.parse(item.outputDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                         .format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
-                                } catch (e: Exception) {
+                                } catch (_: Exception) {
                                     item.outputDate
                                 }
                                 Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
@@ -351,13 +349,12 @@ fun outputTabSection(selected: Int, onTabChange: (Int) -> Unit) {
 
 /* ================= DATE ROW ================= */
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun outputDateRow(
     currentDate: LocalDate,
     mode: DateMode,
     onPrevious: () -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
 ) {
 
     val colors = LocalMyColorScheme.current
@@ -393,7 +390,7 @@ fun outputDateRow(
                 contentColor = colors.btnDarkColor
             )
         ) {
-            Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
         }
 
         Text(text, style = AppTextStyles.style14GCN())
@@ -403,7 +400,7 @@ fun outputDateRow(
                 contentColor = colors.btnDarkColor
             )
         ) {
-            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
 
     }
@@ -414,7 +411,7 @@ fun FluidOutputItem(
     title: String,
     time: String,
     value: String,
-    color: Color
+    color: Color,
 ) {
 
     Column {
@@ -447,28 +444,7 @@ fun FluidOutputItem(
                 style = AppTextStyles.style14BCN())
         }
 
-        Divider(color = Color(0xFFE0E0E0), thickness = 0.7.dp)
+        HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
     }
 }
 
-@Composable
-fun RowScope.ToggleOutputItem(text: String, selected: Boolean) {
-
-    Box(
-        modifier = Modifier
-            .weight(1f)
-            .clip(RoundedCornerShape(30.dp))
-            .background(
-                if (selected) Color(0xFF2F6BFF)
-                else Color.Transparent
-            )
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text,
-            color = if (selected) Color.White else Color.Gray,
-            fontSize = 14.sp
-        )
-    }
-}

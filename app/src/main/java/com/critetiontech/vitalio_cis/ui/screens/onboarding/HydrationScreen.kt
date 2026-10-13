@@ -1,4 +1,3 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding
+package com.critetiontech.ctvitalio.ui.screens.onboarding
 
-class HydrationScreen {
-}
+class HydrationScreen

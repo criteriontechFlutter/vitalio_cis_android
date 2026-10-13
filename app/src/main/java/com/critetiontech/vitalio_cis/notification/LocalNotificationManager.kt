@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.notification
+package com.critetiontech.ctvitalio.notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,8 +9,8 @@ import android.widget.RemoteViews
 
 import androidx.core.app.NotificationCompat
 
-import com.critetiontech.vitalio_cis.MainActivity
-import com.critetiontech.vitalio_cis.R
+import com.critetiontech.ctvitalio.MainActivity
+import com.critetiontech.ctvitalio.R
 
 class LocalNotificationManager(
 

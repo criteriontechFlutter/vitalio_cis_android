@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+  <!-- Ring band -->
+  <path
+      android:pathData="M10,4.5C14.142,4.5 17.5,7.186 17.5,10.5C17.5,13.814 14.142,16.5 10,16.5C5.858,16.5 2.5,13.814 2.5,10.5C2.5,7.186 5.858,4.5 10,4.5Z"
+      android:strokeWidth="1.6"
+      android:strokeColor="#5F6471"
+      android:fillColor="#00000000"/>
+  <path
+      android:pathData="M10,7C12.761,7 15,8.567 15,10.5C15,12.433 12.761,14 10,14C7.239,14 5,12.433 5,10.5C5,8.567 7.239,7 10,7Z"
+      android:strokeWidth="1.2"
+      android:strokeColor="#5F6471"
+      android:fillColor="#00000000"/>
+  <!-- Sensor bump -->
+  <path
+      android:pathData="M8.5,2.5h3a0.8,0.8 0,0 1,0.8 0.8v1.2h-4.6v-1.2a0.8,0.8 0,0 1,0.8 -0.8z"
+      android:fillColor="#5F6471"/>
+</vector>

@@ -9,9 +9,9 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.ui.theme.MyColorScheme
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.MyColorScheme
 
 val latoFont =FontFamily(
     Font(R.font.lato_regular, weight = FontWeight.Normal),

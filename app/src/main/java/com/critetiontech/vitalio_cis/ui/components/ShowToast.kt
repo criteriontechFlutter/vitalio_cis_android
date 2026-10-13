@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.components
+package com.critetiontech.ctvitalio.ui.components
 
 import android.content.Context
 import android.widget.Toast

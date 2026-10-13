@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding
+package com.critetiontech.ctvitalio.ui.screens.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.components.ProgressCard
-import com.critetiontech.vitalio_cis.viewmodel.RegistrationViewModel
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.screens.onboarding.components.ProgressCard
+import com.critetiontech.ctvitalio.viewmodel.RegistrationViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable

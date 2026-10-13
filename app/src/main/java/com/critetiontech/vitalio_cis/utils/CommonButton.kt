@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.utils
+package com.critetiontech.ctvitalio.utils
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.ui.theme.AppColors
+import com.critetiontech.ctvitalio.ui.theme.AppColors
 import androidx.compose.ui.text.TextStyle
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

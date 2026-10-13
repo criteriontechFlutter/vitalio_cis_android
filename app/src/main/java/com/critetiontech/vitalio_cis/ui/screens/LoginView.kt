@@ -1,9 +1,21 @@
 package com.critetiontech.ctvitalio.ui.screens
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -11,14 +23,21 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -26,16 +45,26 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.critetiontech.vitalio_cis.viewmodel.LoginViewModel
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.ui.theme.AppColors
-import com.critetiontech.vitalio_cis.utils.CommonButton
-import com.critetiontech.vitalio_cis.utils.CommonTextField
-import com.critetiontech.vitalio_cis.R
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.AppColors
+import com.critetiontech.ctvitalio.utils.CommonButton
+import com.critetiontech.ctvitalio.utils.CommonTextField
+import com.critetiontech.ctvitalio.viewmodel.LoginViewModel
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import com.critetiontech.ctvitalio.ui.adaptive.isTablet
+
 @Composable
 fun LoginScreen() {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
 
     val imageAlpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
@@ -61,35 +90,72 @@ fun LoginScreen() {
         label = "cardY"
     )
 
+    val isTablet = isTablet()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF1E63D5))
             .imePadding()
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Spacer(modifier = Modifier.height(30.dp))
+        if (isTablet) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.img),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .graphicsLayer {
+                                alpha = imageAlpha
+                                scaleX = imageScale
+                                scaleY = imageScale
+                            },
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .graphicsLayer {
+                            alpha = cardAlpha
+                            translationY = cardY
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoginCard()
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Spacer(modifier = Modifier.height(30.dp))
 
-            Image(
-                painter = painterResource(id = R.drawable.img),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .graphicsLayer {
-                        alpha = imageAlpha
-                        scaleX = imageScale
-                        scaleY = imageScale
-                    },
-                contentScale = ContentScale.Fit,
-                alignment = Alignment.BottomCenter
-            )
+                Image(
+                    painter = painterResource(id = R.drawable.img),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .graphicsLayer {
+                            alpha = imageAlpha
+                            scaleX = imageScale
+                            scaleY = imageScale
+                        },
+                    contentScale = ContentScale.Fit,
+                    alignment = Alignment.BottomCenter
+                )
 
-            Box(modifier = Modifier.graphicsLayer {
-                alpha = cardAlpha
-                translationY = cardY
-            }) {
-                LoginCard()
+                Box(modifier = Modifier.graphicsLayer {
+                    alpha = cardAlpha
+                    translationY = cardY
+                }) {
+                    LoginCard()
+                }
             }
         }
     }
@@ -140,9 +206,18 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
         label = "buttonScale"
     )
 
+    val isTablet = isTablet()
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
+        modifier = if (isTablet) {
+            Modifier
+                .fillMaxWidth()
+                .wrapContentWidth(Alignment.CenterHorizontally)
+                .widthIn(max = 480.dp)
+        } else {
+            Modifier.fillMaxWidth()
+        },
+        shape = if (isTablet) RoundedCornerShape(30.dp) else RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
@@ -156,7 +231,7 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             }) {
                 Column {
                     Text(
-                        text = "Login/Sign Up",
+                        text = "Login",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = AppColors.Primary
@@ -171,7 +246,8 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-
+            val keyboardController = LocalSoftwareKeyboardController.current
+            val focusManager = LocalFocusManager.current
             Box(modifier = Modifier.graphicsLayer {
                 alpha = fieldAlpha
                 translationY = fieldY
@@ -197,11 +273,12 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Done
+                            imeAction = ImeAction.Go
                         ),
                         keyboardActions = KeyboardActions(
-                            onDone = {
-                                viewModel.sendOTP()
+                            onGo = {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
                             }
                         )
                     )

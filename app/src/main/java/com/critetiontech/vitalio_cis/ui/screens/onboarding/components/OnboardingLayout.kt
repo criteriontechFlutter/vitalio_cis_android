@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding.components
+package com.critetiontech.ctvitalio.ui.screens.onboarding.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -16,8 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.critetiontech.vitalio_cis.ui.theme.AppDimens
-import com.critetiontech.vitalio_cis.ui.theme.PrimaryBlue
+import com.critetiontech.ctvitalio.ui.theme.AppDimens
+import com.critetiontech.ctvitalio.ui.theme.PrimaryBlue
 
 @Composable
 fun OnboardingLayout(

@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,11 +40,11 @@ import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.ui.theme.ThemeViewModel
-import com.critetiontech.vitalio_cis.utils.CommonButton
-import com.critetiontech.vitalio_cis.viewmodel.SymptomTrackerViewModel
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.ThemeViewModel
+import com.critetiontech.ctvitalio.utils.CommonButton
+import com.critetiontech.ctvitalio.viewmodel.SymptomTrackerViewModel
 import kotlinx.coroutines.delay
 
 @Composable

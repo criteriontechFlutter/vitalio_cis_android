@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.repository
+package com.critetiontech.ctvitalio.domain.repository
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.Problem
-import com.critetiontech.vitalio_cis.model.SymptomItem
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.Problem
+import com.critetiontech.ctvitalio.model.SymptomItem
 
 interface SymptomRepository {
     suspend fun fetchSymptoms(uhid: String, clientId: String): DomainResult<List<SymptomItem>>

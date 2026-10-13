@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding
+package com.critetiontech.ctvitalio.ui.screens.onboarding
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -12,8 +12,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.components.OnboardingLayout
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.components.SelectionCard
+import com.critetiontech.ctvitalio.ui.screens.onboarding.components.OnboardingLayout
+import com.critetiontech.ctvitalio.ui.screens.onboarding.components.SelectionCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

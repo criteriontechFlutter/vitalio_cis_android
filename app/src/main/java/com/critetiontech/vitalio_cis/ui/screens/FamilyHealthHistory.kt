@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 
 import androidx.compose.foundation.background
@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,9 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.*
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.utils.CommonButton
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.utils.CommonButton
 
 /* ================= MAIN SCREEN ================= */
 
@@ -115,7 +116,7 @@ fun HealthCard(
                     Icons.Default.MoreVert,
                     contentDescription = null,
                     tint = Color.Gray,
-                    modifier = Modifier.clickable() {
+                    modifier = Modifier.clickable {
                         expanded = true
                     }
                 )
@@ -192,7 +193,7 @@ fun ActionMenu(
                 icon = Icons.Default.Edit,
                 onClick = onEdit
             )
-            Divider()
+            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
             MenuItem(
                 text = "Remove",
                 icon = Icons.Default.Delete,

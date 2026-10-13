@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.model
+package com.critetiontech.ctvitalio.model
 
 data class VitalApiResponse(
     val status: Int,

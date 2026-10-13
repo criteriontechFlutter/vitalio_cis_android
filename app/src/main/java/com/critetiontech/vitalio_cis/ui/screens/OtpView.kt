@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
@@ -53,9 +53,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.viewmodel.OTPViewModel
+import com.critetiontech.ctvitalio.viewmodel.OTPViewModel
 import kotlinx.coroutines.delay
-import com.critetiontech.vitalio_cis.R
+import com.critetiontech.ctvitalio.R
 @Composable
 fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
     val navController = LocalNavController.current

@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.critetiontech.vitalio_cis.ui.theme.ThemeViewModel
+import com.critetiontech.ctvitalio.ui.theme.ThemeViewModel
 
 @Composable
 fun MyButton(

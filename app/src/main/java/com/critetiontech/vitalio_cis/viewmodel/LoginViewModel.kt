@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -25,7 +25,6 @@ class LoginViewModel : ViewModel() {
     val loading: StateFlow<Boolean> = _loading
 
     private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
 
     private val _navigationEvent = MutableSharedFlow<String>()
     val navigationEvent: SharedFlow<String> = _navigationEvent
@@ -50,5 +49,4 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    fun clearError() { _errorMessage.value = null }
 }

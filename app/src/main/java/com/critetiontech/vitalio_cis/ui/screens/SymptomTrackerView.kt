@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,12 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.utils.CommonButton
-import com.critetiontech.vitalio_cis.viewmodel.SymptomTrackerViewModel
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.utils.CommonButton
+import com.critetiontech.ctvitalio.viewmodel.SymptomTrackerViewModel
 
 data class SymptomQuestion(
     val id: Int,
@@ -99,7 +100,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
         )
     }
 
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
     val safeIndex = currentIndex.coerceIn(0, questions.lastIndex)
     val currentQuestion = questions[safeIndex]
     val currentSymptom = symptomList[safeIndex]

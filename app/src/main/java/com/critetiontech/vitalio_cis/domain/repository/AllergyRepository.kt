@@ -1,7 +1,7 @@
-package com.critetiontech.vitalio_cis.domain.repository
+package com.critetiontech.ctvitalio.domain.repository
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.AllergyItem
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.AllergyItem
 
 interface AllergyRepository {
     suspend fun fetchAllergies(uhid: String, clientId: Int, typeAllergy: String): DomainResult<List<AllergyItem>>

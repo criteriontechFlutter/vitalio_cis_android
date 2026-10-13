@@ -1,8 +1,8 @@
-package com.critetiontech.vitalio_cis.domain.usecase.profile
+package com.critetiontech.ctvitalio.domain.usecase.profile
 
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.ProfileRepository
-import com.critetiontech.vitalio_cis.utils.Patient
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.ProfileRepository
+import com.critetiontech.ctvitalio.utils.Patient
 import java.io.File
 import javax.inject.Inject
 

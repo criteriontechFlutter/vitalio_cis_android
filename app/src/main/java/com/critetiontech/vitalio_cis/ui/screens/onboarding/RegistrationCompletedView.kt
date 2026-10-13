@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding
+package com.critetiontech.ctvitalio.ui.screens.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -28,7 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.components.ProgressCard
+import com.critetiontech.ctvitalio.ui.screens.onboarding.components.ProgressCard
 
 
 @Composable

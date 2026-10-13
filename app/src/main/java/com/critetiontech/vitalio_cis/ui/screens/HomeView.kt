@@ -11,7 +11,7 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.graphics.Brush
-import androidx.activity.ComponentActivity
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -26,6 +26,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.Button
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
@@ -33,33 +34,42 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
- import com.critetiontech.vitalio_cis.ui.screens.RemindersScreen
- import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.critetiontech.vitalio_cis.viewmodel.HomeViewModel
-import com.example.vitalio_cis.viewmodel.ListeningState
-import com.example.vitalio_cis.viewmodel.VoiceCommandViewModel
+ import com.critetiontech.ctvitalio.ui.screens.SmartRingScreen
+ import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.utils.PrefsManager
+import com.critetiontech.ctvitalio.viewmodel.HomeViewModel
+import com.critetiontech.ctvitalio.voice.VoiceNavigationManager
+import com.critetiontech.ctvitalio.voice.VoiceListeningOverlay
+import com.critetiontech.ctvitalio.voice.FloatingVoiceFab
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.isGranted
 import kotlinx.coroutines.delay
 import java.util.Locale
-import com.critetiontech.vitalio_cis.R
-import com.critetiontech.vitalio_cis.Routes
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.Routes
 import androidx.compose.ui.geometry.Offset
-import com.critetiontech.vitalio_cis.model.UpcomingAppointment
-import com.critetiontech.vitalio_cis.model.Vital
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import com.critetiontech.ctvitalio.model.UpcomingAppointment
+import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.ui.screens.AddActivityScreen
+import com.critetiontech.ctvitalio.ui.adaptive.LocalWindowSizeClass
+import com.critetiontech.ctvitalio.ui.adaptive.WindowWidthSizeClass
+import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
+import com.critetiontech.ctvitalio.viewmodel.ListeningState
+import com.critetiontech.ctvitalio.viewmodel.VoiceCommandViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import kotlin.time.Duration.Companion.milliseconds
 
 data class GridItem(val title: String, val icon: Int)
 
@@ -89,15 +99,41 @@ private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Uni
 //  Placing the FAB and VoiceAssistantSheet here (rather than inside HomeView)
 //  makes the mic button persistent across all three bottom-nav tabs.
 // ─────────────────────────────────────────────────────────────────────────────
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DashboardScreen(
     homeViewModel: HomeViewModel = viewModel(),
     voiceViewModel: VoiceCommandViewModel = viewModel()
 ) {
-    var selectedIndex by remember { mutableStateOf(0) }
-    var showVoiceSheet by remember { mutableStateOf(false) }
+    var selectedIndex by remember { mutableIntStateOf(0) }
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val navController = LocalNavController.current
+
+    // ── VoiceNavigationManager state ──────────────────────────────────────────
+    val isListening          by VoiceNavigationManager.isListening.collectAsState()
+    val transcript           by VoiceNavigationManager.transcript.collectAsState()
+    val showListeningOverlay by VoiceNavigationManager.showListeningOverlay.collectAsState()
+    val showConfirmationCard by VoiceNavigationManager.showConfirmationCard.collectAsState()
+    val pendingData          by VoiceNavigationManager.pendingData.collectAsState()
+    val isSavingData         by VoiceNavigationManager.isSavingData.collectAsState()
+    val isExtractingData     by VoiceNavigationManager.isExtractingData.collectAsState()
+    val processingTranscript by VoiceNavigationManager.processingTranscript.collectAsState()
+    val navigationCommand    by VoiceNavigationManager.navigationCommand.collectAsState()
+    val anomalyAlerts        by VoiceNavigationManager.anomalyAlerts.collectAsState()
+    val multiTurnPrompt      by VoiceNavigationManager.multiTurnPrompt.collectAsState()
+    val vitalTrends          by VoiceNavigationManager.vitalTrends.collectAsState()
+
+    // Mic permission (RECORD_AUDIO already in manifest)
+    val micPermission = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
+
+    // Navigate when VoiceNavigationManager resolves a command
+    LaunchedEffect(navigationCommand) {
+        navigationCommand?.let { route ->
+            navController.navigate(route)
+            VoiceNavigationManager.clearNavigationCommand()
+        }
+    }
 
     // Double-tap back to exit
     var backPressedOnce by remember { mutableStateOf(false) }
@@ -120,69 +156,164 @@ fun DashboardScreen(
         homeViewModel.fetchDashboard()
     }
 
-    Scaffold(
-        containerColor = colors.dashboardBackgroundColor,
-        modifier = Modifier.background(colors.dashboardBackgroundColor),
-        bottomBar = {
-            BottomNavigationBar(selectedIndex) { selectedIndex = it }
-        }
-    ) { padding ->
+    val windowSize = LocalWindowSizeClass.current
+    val useNavRail = windowSize != WindowWidthSizeClass.Compact
 
-        Box(modifier = Modifier.padding(padding)) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = colors.dashboardBackgroundColor,
+            modifier = Modifier.background(colors.dashboardBackgroundColor),
+            bottomBar = {
+                // Only show bottom nav on phones
+                if (!useNavRail) {
+                    BottomNavigationBar(selectedIndex) { selectedIndex = it }
+                }
+            }
+        ) { padding ->
 
-            Column {
-                Spacer(Modifier.height(20.dp))
-                Column(
-                    modifier = Modifier
-                        .background(colors.dashboardBackgroundColor)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Header()
+            if (useNavRail) {
+                // ── Tablet: Navigation Rail on the left ──
+                Row(modifier = Modifier.padding(padding).fillMaxSize()) {
+                    NavigationRail(
+                        modifier = Modifier.fillMaxHeight(),
+                        containerColor = colors.dashboardContainerColor
+                    ) {
+                        Spacer(Modifier.height(12.dp))
+                        val items = listOf(
+                            Triple(R.drawable.home, "Home", 0),
+                            Triple(R.drawable.activity, "Activity", 1),
+                            Triple(R.drawable.ring, "Ring", 2),
+                            Triple(R.drawable.chat, "Chat", 3)
+                        )
+                        items.forEach { (iconRes, label, index) ->
+                            NavigationRailItem(
+                                selected = selectedIndex == index,
+                                onClick = { selectedIndex = index },
+                                icon = { Icon(painterResource(id = iconRes), contentDescription = label) },
+                                label = { Text(label) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    selectedIconColor = Color.Blue,
+                                    selectedTextColor = Color.Blue,
+                                    unselectedIconColor = Color.Gray,
+                                    unselectedTextColor = Color.Gray,
+                                    indicatorColor = Color.Transparent
+                                )
+                            )
+                        }
+                    }
+
+                    // Main content
+                    Box(modifier = Modifier.weight(1f)) {
+                        Column {
+                            Spacer(Modifier.height(20.dp))
+                            Column(
+                                modifier = Modifier
+                                    .background(colors.dashboardBackgroundColor)
+                                    .padding(horizontal = 24.dp)
+                            ) {
+                                Header()
+                                Spacer(Modifier.height(20.dp))
+                            }
+                            when (selectedIndex) {
+                                0 -> HomeView()
+                                1 -> AddActivityScreen()
+                                2 -> SmartRingScreen()
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(bottom = 20.dp, end = 20.dp)
+                        ) {
+                            FloatingVoiceFab(
+                                isListening  = isListening,
+                                showOverlay  = showListeningOverlay,
+                                onClick = {
+                                    if (micPermission.status.isGranted) {
+                                        VoiceNavigationManager.startListening { route ->
+                                            navController.navigate(route)
+                                        }
+                                    } else {
+                                        micPermission.launchPermissionRequest()
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            } else {
+                // ── Phone: existing layout ──
+            Box(modifier = Modifier.padding(padding)) {
+
+                Column {
                     Spacer(Modifier.height(20.dp))
+                    Column(
+                        modifier = Modifier
+                            .background(colors.dashboardBackgroundColor)
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Header()
+                        Spacer(Modifier.height(20.dp))
+                    }
+
+                    // Content switches based on the selected bottom-nav tab
+                    when (selectedIndex) {
+                        0 -> HomeView()
+                        1 -> AddActivityScreen()
+                        2 -> SmartRingScreen()
+                    }
                 }
 
-                // Content switches based on the selected bottom-nav tab
-                when (selectedIndex) {
-                    0 -> HomeView()
-                    1 -> AddActivityScreen()
-                    2 -> RemindersScreen()
+                // New iOS-style floating mic FAB (bottom-right)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 20.dp, end = 20.dp)
+                ) {
+                    FloatingVoiceFab(
+                        isListening  = isListening,
+                        showOverlay  = showListeningOverlay,
+                        onClick = {
+                            if (micPermission.status.isGranted) {
+                                VoiceNavigationManager.startListening { route ->
+                                    navController.navigate(route)
+                                }
+                            } else {
+                                micPermission.launchPermissionRequest()
+                            }
+                        }
+                    )
                 }
             }
-
-            // Mic FAB – always visible regardless of the active tab
-            FloatingActionButton(
-                onClick = { showVoiceSheet = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 20.dp, end = 20.dp),
-                containerColor = Color(0xFF2F6FE4)
-            ) {
-                Icon(
-                    Icons.Default.Mic,
-                    contentDescription = "Open voice assistant",
-                    tint = Color.White
-                )
             }
         }
 
-        // Voice assistant sheet – rendered outside the padded Box so it
-        // draws over everything including the bottom nav bar
-        if (showVoiceSheet) {
-            VoiceAssistantSheet(
-                voiceViewModel = voiceViewModel,
-                onDismiss = {
-                    showVoiceSheet = false
-                    voiceViewModel.reset()
-                }
-            )
-        }
+        // Full-screen voice listening overlay (drawn ABOVE everything, including bottom nav)
+        VoiceListeningOverlay(
+            isListening          = isListening,
+            showListeningOverlay = showListeningOverlay,
+            showConfirmationCard = showConfirmationCard,
+            pendingData          = pendingData,
+            transcript           = transcript,
+            processingTranscript = processingTranscript,
+            isSavingData         = isSavingData,
+            isExtractingData     = isExtractingData,
+            anomalyAlerts        = anomalyAlerts,
+            multiTurnPrompt      = multiTurnPrompt,
+            vitalTrends          = vitalTrends,
+            onStop               = { VoiceNavigationManager.stopListening() },
+            onCancel             = { VoiceNavigationManager.cancelPendingData() },
+            onSaveAll            = { VoiceNavigationManager.confirmAndSaveAllPendingData() },
+            onStartListening     = { VoiceNavigationManager.startListening { route -> navController.navigate(route) } },
+            onRemoveVital        = { keys -> VoiceNavigationManager.removeVital(keys) },
+            onRemoveSymptom      = { id, name -> VoiceNavigationManager.removeSymptom(id, name) },
+            onRemoveFluidIntake  = { type -> VoiceNavigationManager.removeFluidIntake(type) },
+            onRemoveFluidOutput  = { VoiceNavigationManager.removeFluidOutput() },
+            onRemoveMedicine     = { medicineId -> VoiceNavigationManager.removeMedicine(medicineId) }
+        )
     }
 }
 
-@Composable
-fun AddActivityScreen() {
-    TODO("Not yet implemented")
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  HomeView  (tab 0 content)
@@ -194,22 +325,51 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
     val vitals by viewModel.vitalList.collectAsState()
     val appointments by viewModel.appointments.collectAsState()
+    val dailyMedicines by viewModel.dailyMedicines.collectAsState()
+    val markingMedicines by viewModel.markingMedicines.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.dashboardBackgroundColor)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        if (loading && vitals.isEmpty()) {
-            VitalsCardShimmer()
-        } else {
-            VitalsCard(vitals)
-        }
+    var isRefreshing by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
-        Spacer(Modifier.height(20.dp))
+    val homeDimens = rememberResponsiveDimens()
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            coroutineScope.launch {
+                viewModel.fetchDashboard()
+                kotlinx.coroutines.delay(1000)
+                isRefreshing = false
+            }
+        },
+        modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(homeDimens.screenPadding)
+        ) {
+            if (loading && vitals.isEmpty() && dailyMedicines.isEmpty()) {
+                VitalsCardShimmer()
+            } else {
+                AnimatedSection(delayMillis = 50) {
+                    UpcomingMedicationsSection(
+                        dailyMedicines = dailyMedicines,
+                        markingMedicines = markingMedicines,
+                        onMarkIntake = { medicine ->
+                            viewModel.markMedicineIntake(medicine)
+                        }
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                AnimatedSection(delayMillis = 100) { VitalsCard(vitals = vitals, onUpdateClick = { viewModel.fetchDashboardNoCache() }) }
+            }
+
+            Spacer(Modifier.height(20.dp))
 
         AnimatedSection(delayMillis = 200) {
             Text(text = "Primary Actions", style = AppTextStyles.style18BCB())
@@ -229,6 +389,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
 
         // Extra bottom padding so the last card clears the persistent mic FAB
         Spacer(Modifier.height(80.dp))
+    }
     }
 }
 
@@ -685,7 +846,7 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
         val items = listOf(
             Triple(R.drawable.home,stringResource(R.string.home), 0),
             Triple(R.drawable.activity, stringResource(R.string.activity), 1),
-            Triple(R.drawable.reminders, stringResource(R.string.reminders), 2),
+            Triple(R.drawable.ring, stringResource(R.string.ring), 2),
             Triple(R.drawable.chat, stringResource(R.string.chat), 3)
         )
 
@@ -734,20 +895,21 @@ fun Header() {
             .graphicsLayer { this.alpha = alpha; translationY = offsetY },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(R.drawable.img),
-            contentDescription = null,
+        AsyncImage(
+            model = PrefsManager(context).getPatient()?.imageUrl
+                ?.takeIf { it.isNotBlank() },
+            placeholder = painterResource(R.drawable.img),
+            error = painterResource(R.drawable.img),
+            contentDescription = "Patient Profile",
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(45.dp)
                 .clip(CircleShape)
-                .clickable() {
-
+                .clickable {
                     navController.navigate(Routes.DRAWER)
                 }
         )
-
         Spacer(Modifier.width(10.dp))
-
         Column(modifier = Modifier.weight(1f)) {
             Text("${ToastUtils.getSimpleGreeting()},",
                     style = AppTextStyles.style12GCN())
@@ -755,7 +917,6 @@ fun Header() {
                     style = AppTextStyles.style18BCN())
         }
 
-        Icon(Icons.Default.Search, contentDescription = null)
         Spacer(Modifier.width(10.dp))
         Icon(Icons.Default.Notifications, contentDescription = null)
     }
@@ -767,7 +928,7 @@ fun ToTakeCard() {
 
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
-    Column(modifier = Modifier.clickable(){
+    Column(modifier = Modifier.clickable {
 
         navController.navigate("welcome")
     }) {
@@ -801,7 +962,7 @@ fun ToTakeCard() {
 
 fun getTimeAgo(dateTime: String): String {
     return try {
-        val format = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val past = format.parse(dateTime)
         val now = java.util.Date()
 
@@ -930,7 +1091,11 @@ fun AppointmentCardShimmer() {
                 }
             }
             Spacer(Modifier.height(12.dp))
-            Divider(color = Color.White.copy(alpha = 0.3f))
+            HorizontalDivider(
+                Modifier,
+                DividerDefaults.Thickness,
+                color = Color.White.copy(alpha = 0.3f)
+            )
             Spacer(Modifier.height(12.dp))
             repeat(3) {
                 Row(
@@ -949,7 +1114,7 @@ fun AppointmentCardShimmer() {
 // ------------------- Vitals Card -------------------
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun VitalsCard(vitals: List<Vital>) {
+fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
 
     val colors = LocalMyColorScheme.current
     val mergedVitals = remember(vitals) { mergeVitals(vitals) }
@@ -974,7 +1139,7 @@ fun VitalsCard(vitals: List<Vital>) {
     // auto slide
     LaunchedEffect(Unit) {
         while (true) {
-            delay(2000)
+            delay(2000.milliseconds)
             val nextPage = (pagerState.currentPage + 1) % mergedVitals.size
             pagerState.animateScrollToPage(nextPage)
         }
@@ -997,48 +1162,89 @@ fun VitalsCard(vitals: List<Vital>) {
 
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = colors.dashboardContainerColor
+                    containerColor = Color(0xFFF9FBFC)
                 ),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(5.dp)
             ) {
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    Icon(
-                        Icons.Default.Favorite,
-                        contentDescription = null,
-                        tint = Color.Red
-                    )
-
-                    Spacer(Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-
-                        Text(
-                            vital.vitalName,
-                            style = AppTextStyles.style12BCN()
-                        )
-
-                        Text(
-                            getTimeAgo(vital.vitalDateTime),
-                            style = AppTextStyles.style12GCN()
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFEAF2FF)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.vital_details),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    Text(
-                        if (vital.displayValue.isNotEmpty())
-                            "${vital.displayValue} ${vital.unit}"
-                        else
-                            "${vital.vitalValue.toInt()} ${vital.unit}",
-                        style = AppTextStyles.style12GCN()
-                    )
+                    Spacer(Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = vital.vitalName,
+                            style = AppTextStyles.style14BCB().copy(color = Color(0xFF1E293B), fontWeight = FontWeight.Bold)
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = getTimeAgo(vital.vitalDateTime),
+                            style = AppTextStyles.style12GCN().copy(color = Color(0xFF64748B))
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        val displayVal = if (vital.displayValue.isNotEmpty()) vital.displayValue else vital.vitalValue.toInt().toString()
+                        
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                text = displayVal,
+                                style = AppTextStyles.style24BCB().copy(fontSize = 24.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Bold),
+                                modifier = Modifier.alignByBaseline()
+                            )
+                            Spacer(Modifier.width(2.dp))
+                            Text(
+                                text = vital.unit,
+                                style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B)),
+                                modifier = Modifier.alignByBaseline()
+                            )
+                        }
+                        
+                        Spacer(Modifier.height(4.dp))
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { onUpdateClick() }
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Update",
+                                style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B))
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Refresh",
+                                tint = Color(0xFF64748B),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -1050,21 +1256,15 @@ fun VitalsCard(vitals: List<Vital>) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-
             repeat(mergedVitals.size) { index ->
-
                 val selected = pagerState.currentPage == index
-
                 Box(
                     modifier = Modifier
                         .padding(2.dp)
-                        .size(if (selected) 8.dp else 6.dp)
+                        .size(if (selected) 6.dp else 4.dp)
                         .clip(CircleShape)
                         .background(
-                            if (selected)
-                                colors.primaryBlueColor
-                            else
-                                Color.LightGray
+                            if (selected) Color(0xFF94A3B8) else Color(0xFFE2E8F0)
                         )
                 )
             }
@@ -1132,19 +1332,37 @@ fun PrimaryActionsGrid(   ) {
         title = stringResource(R.string.research_based_articles),
         icon = R.drawable.medicine_reminder,
         type = "articles"
-    )
+    ),
+
+//    GridItem(
+//        title = "Digital Twin",
+//        icon = R.drawable.vital_details,
+//        type = "digitalTwin"
+//    ),
+//
+//    GridItem(
+//        title = "Vitals Orbit",
+//        icon = R.drawable.activity,
+//        type = "healthOrbit"
+//    )a
     )
 
     var gridVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { gridVisible = true }
 
+    val dimens = rememberResponsiveDimens()
+    val gridColumns = if (LocalWindowSizeClass.current == WindowWidthSizeClass.Compact) 3 else 4
+    // Calculate grid height based on number of rows
+    val rowCount = (items.size + gridColumns - 1) / gridColumns
+    val gridHeight = (rowCount * 110 + (rowCount - 1) * 10).dp
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
+        columns = GridCells.Fixed(gridColumns),
         modifier = Modifier
             .fillMaxWidth()
-            .height(320.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+            .height(gridHeight),
+        verticalArrangement = Arrangement.spacedBy(dimens.cardSpacing),
+        horizontalArrangement = Arrangement.spacedBy(dimens.cardSpacing)
     ) {
 
         itemsIndexed(items) { index, item ->
@@ -1174,6 +1392,8 @@ fun PrimaryActionsGrid(   ) {
                             "interaction" -> navController.navigate(Routes.INTERACTIONCHECKER)
                             "findDoctor" -> navController.navigate(Routes.FINDDOCTOR)
                             "articles" -> navController.navigate(Routes.RESEARCHARTICLES)
+//                            "digitalTwin" -> navController.navigate(Routes.DIGITAL_TWIN)
+//                            "healthOrbit" -> navController.navigate(Routes.HEALTH_ORBIT)
                         }   // ✅ GLOBAL NAV
                     },
                 shape = RoundedCornerShape(12.dp),
@@ -1428,7 +1648,11 @@ fun AppointmentCard(appointment: UpcomingAppointment) {
             }
 
             Spacer(Modifier.height(16.dp))
-            Divider(color = Color.White.copy(alpha = 0.2f))
+            HorizontalDivider(
+                Modifier,
+                DividerDefaults.Thickness,
+                color = Color.White.copy(alpha = 0.2f)
+            )
             Spacer(Modifier.height(14.dp))
 
             AppointmentRow(Icons.Default.DateRange, formatAppointmentDate(appointment.appointmentDate))
@@ -1475,7 +1699,7 @@ fun ArticleCard(title: String, author: String, date: String) {
         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable() {
+            .clickable {
 
                 navController.navigate(Routes.ARTICALEDETAILS)
             }) {
@@ -1497,7 +1721,15 @@ fun OtherSection() {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text("Quick Actions", style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(12.dp))
-        UploadReportCard()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            UploadReportCard(Modifier.weight(1f).fillMaxHeight())
+            UploadPrescriptionCard(Modifier.weight(1f).fillMaxHeight())
+        }
     }
 }
 
@@ -1539,53 +1771,80 @@ fun ChronicleCard(modifier: Modifier) {
 }
 
 @Composable
-fun UploadReportCard() {
-    val colors = LocalMyColorScheme.current
+fun UploadReportCard(modifier: Modifier = Modifier) {
     val navController = LocalNavController.current
+    QuickActionCard(
+        title = "Upload Report",
+        subtitle = "Add your lab reports & documents",
+        accent = Color(0xFF2F6FE4),
+        modifier = modifier,
+        onClick = { navController.navigate(Routes.LABREPORTS) }
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.upload_report),
+            contentDescription = null,
+            modifier = Modifier.size(26.dp),
+            tint = Color.Unspecified
+        )
+    }
+}
 
+@Composable
+fun UploadPrescriptionCard(modifier: Modifier = Modifier) {
+    val navController = LocalNavController.current
+    QuickActionCard(
+        title = "Upload Prescription",
+        subtitle = "AI reads medicines & sets reminders",
+        accent = Color(0xFF0E9384),
+        modifier = modifier,
+        onClick = { navController.navigate(Routes.UPLOADPRESCRIPTION) }
+    ) {
+        Icon(
+            Icons.Default.DocumentScanner,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = Color(0xFF0E9384)
+        )
+    }
+}
+
+@Composable
+private fun QuickActionCard(
+    title: String,
+    subtitle: String,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    icon: @Composable () -> Unit
+) {
+    val colors = LocalMyColorScheme.current
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { navController.navigate(Routes.LABREPORTS) },
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF2F6FE4).copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(accent.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) { icon() }
+                Spacer(Modifier.weight(1f))
                 Icon(
-                    painter = painterResource(R.drawable.upload_report),
+                    Icons.Default.ChevronRight,
                     contentDescription = null,
-                    modifier = Modifier.size(26.dp),
-                    tint = Color.Unspecified
+                    tint = Color(0xFFAAAAAA),
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Upload Report", style = AppTextStyles.style14BCN())
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    "Add your lab reports & documents",
-                    style = AppTextStyles.style12GCN()
-                )
-            }
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color(0xFFAAAAAA),
-                modifier = Modifier.size(20.dp)
-            )
+            Spacer(Modifier.height(12.dp))
+            Text(title, style = AppTextStyles.style14BCN())
+            Spacer(Modifier.height(2.dp))
+            Text(subtitle, style = AppTextStyles.style12GCN())
         }
     }
 }
@@ -1605,3 +1864,171 @@ fun LifestyleCard() {
         }
     }
 }
+@Composable
+fun UpcomingMedicationsSection(
+    dailyMedicines: List<com.critetiontech.ctvitalio.model.MedicineItem>,
+    markingMedicines: Set<Int>,
+    onMarkIntake: (com.critetiontech.ctvitalio.model.MedicineItem) -> Unit
+) {
+    val colors = LocalMyColorScheme.current
+    if (dailyMedicines.isEmpty()) return
+
+    val isExpanded = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    // Only show up to 2 items if not expanded
+    val visibleMedicines = if (isExpanded.value) dailyMedicines else dailyMedicines.take(2)
+
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .animateContentSize()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) {
+                    if (dailyMedicines.size > 2) {
+                        isExpanded.value = !isExpanded.value
+                    }
+                },
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Today's Medications", style = AppTextStyles.style18BCB())
+            
+            if (dailyMedicines.size > 2) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (isExpanded.value) "Show Less" else "+${dailyMedicines.size - 2} More",
+                        style = AppTextStyles.style12BCN().copy(color = Color(0xFF4F46E5))
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        imageVector = if (isExpanded.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = Color(0xFF4F46E5),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+        
+        Spacer(Modifier.height(12.dp))
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            visibleMedicines.forEach { medicine ->
+                MedicineCardItem(
+                    medicine = medicine,
+                    markingMedicines = markingMedicines,
+                    onMarkIntake = onMarkIntake,
+                    colors = colors,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MedicineCardItem(
+    medicine: com.critetiontech.ctvitalio.model.MedicineItem,
+    markingMedicines: Set<Int>,
+    onMarkIntake: (com.critetiontech.ctvitalio.model.MedicineItem) -> Unit,
+    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme,
+    modifier: Modifier = Modifier
+) {
+    val isMarking = markingMedicines.contains(medicine.id)
+    val cardAlpha by androidx.compose.animation.core.animateFloatAsState(if (isMarking) 0.65f else 1f)
+
+    // Status logic
+    val isTaken = medicine.isTaken && medicine.takenDateTime != "1900-01-01T00:00:00"
+    val isSkipped = medicine.isSkipped
+    val scheduled = try {
+        java.time.LocalDateTime.parse(medicine.scheduledDateTime)
+    } catch (e: Exception) {
+        null
+    }
+    val now = java.time.LocalDateTime.now()
+    val statusText = when {
+        isTaken -> "Taken"
+        isSkipped -> "Skipped"
+        scheduled != null && now >= scheduled -> "Take Now"
+        else -> "Upcoming"
+    }
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = cardAlpha }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFEFF6FF)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(painter = painterResource(id = R.drawable.medicine_reminder), contentDescription = null, modifier = Modifier.size(24.dp))
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "${medicine.dosageStrength.toInt()} ${medicine.unit}",
+                        style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B))
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    // Status Badge
+                    val badgeColor = when (statusText) {
+                        "Taken" -> Color(0xFF1564ED)
+                        "Skipped" -> Color(0xFFE65100)
+                        "Take Now" -> Color(0xFF2E7D32)
+                        else -> Color(0xFF6A1B9A)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .background(badgeColor.copy(alpha = 0.1f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(statusText, color = badgeColor, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(medicine.medicineName, style = AppTextStyles.style14BCB().copy(color = Color(0xFF0F172A), fontWeight = FontWeight.Bold))
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    medicine.instructions.ifEmpty { "As prescribed" },
+                    style = AppTextStyles.style12GCN().copy(color = Color(0xFF64748B))
+                )
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.height(64.dp)
+            ) {
+                if (isMarking) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFF4F46E5),
+                        strokeWidth = 2.dp
+                    )
+                } else if (!isTaken && !isSkipped && statusText == "Take Now") {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .border(1.5.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+                            .clickable(enabled = markingMedicines.isEmpty()) {
+                                onMarkIntake(medicine)
+                            }
+                    )
+                }
+            }
+        }
+    }
+}
+

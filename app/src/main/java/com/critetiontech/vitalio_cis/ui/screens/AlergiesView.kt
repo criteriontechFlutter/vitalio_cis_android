@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,11 +14,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.vitalio_cis.model.AllergyItem as ApiAllergyItem
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.utils.CommonButton
-import com.critetiontech.vitalio_cis.viewmodel.AllergyViewModel
+import com.critetiontech.ctvitalio.model.AllergyItem as ApiAllergyItem
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.utils.CommonButton
+import com.critetiontech.ctvitalio.viewmodel.AllergyViewModel
+import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
 
 // ─── Severity helpers ─────────────────────────────────────────────────────────
 
@@ -90,9 +91,10 @@ fun AllergiesScreen(
 
     CommonAppBar(title = "Allergies") {
         val colors = LocalMyColorScheme.current
+        val allergyDimens = rememberResponsiveDimens()
 
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = allergyDimens.screenPadding)) {
 
                 // Error banner
                 if (errorMessage != null) {

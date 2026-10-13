@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis
+package com.critetiontech.ctvitalio
 
 import android.os.Build
 import android.os.Bundle
@@ -8,8 +8,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -19,70 +17,80 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.critetiontech.ctvitalio.ui.screens.LoginScreen
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.notification.RequestNotificationPermission
-import com.critetiontech.vitalio_cis.ui.screens.AddActivityScreen
-import com.critetiontech.vitalio_cis.ui.screens.AddLabResultsScreen
-import com.critetiontech.vitalio_cis.ui.screens.AddMedicineReminderScreen
-import com.critetiontech.vitalio_cis.ui.screens.AddMemberScreen
-import com.critetiontech.vitalio_cis.ui.screens.AiReportScreen
-import com.critetiontech.vitalio_cis.ui.screens.AllergiesScreen
-import com.critetiontech.vitalio_cis.ui.screens.ArticleDetailScreen
-import com.critetiontech.vitalio_cis.ui.screens.BookingConfirmationScreen
-import com.critetiontech.vitalio_cis.ui.screens.BookingDetails
-import com.critetiontech.vitalio_cis.ui.screens.BookingDetailsScreen
-import com.critetiontech.vitalio_cis.ui.screens.ConnectWatchScreen
-import com.critetiontech.vitalio_cis.ui.screens.ConnectionScreen
- import com.critetiontech.vitalio_cis.ui.screens.DietChecklistScreen
-import com.critetiontech.vitalio_cis.ui.screens.DoctorDetailsScreen
-import com.critetiontech.vitalio_cis.ui.screens.DrawerScreen
-import com.critetiontech.vitalio_cis.ui.screens.EmergencyContactsScreen
-import com.critetiontech.vitalio_cis.ui.screens.FAQScreen
-import com.critetiontech.vitalio_cis.ui.screens.FamilyHealthScreen
-import com.critetiontech.vitalio_cis.ui.screens.FeedbackScreen
-import com.critetiontech.vitalio_cis.ui.screens.FindDoctorsTopSection
-import com.critetiontech.vitalio_cis.ui.screens.FluidDataInputScreen
-import com.critetiontech.vitalio_cis.ui.screens.FluidInputHistoryScreen
-import com.critetiontech.vitalio_cis.ui.screens.FluidOutputHistoryScreen
-import com.critetiontech.vitalio_cis.ui.screens.InteractionCheckerScreen
-import com.critetiontech.vitalio_cis.ui.screens.LabReportsScreen
-import com.critetiontech.vitalio_cis.ui.screens.ManageMedicationsPreview
-import com.critetiontech.vitalio_cis.ui.screens.ManageMedicationsScreen
-import com.critetiontech.vitalio_cis.ui.screens.MedicalProfileScreen
-import com.critetiontech.vitalio_cis.ui.screens.MedicineReminderScreen
-import com.critetiontech.vitalio_cis.ui.screens.MyObserversScreen
-import com.critetiontech.vitalio_cis.ui.screens.OtpScreen
-import com.critetiontech.vitalio_cis.ui.screens.PersonalInfoScreen
-import com.critetiontech.vitalio_cis.ui.screens.PrescriptionScreen
-import com.critetiontech.vitalio_cis.ui.screens.PreviewFindDoctors
- import com.critetiontech.vitalio_cis.ui.screens.RemindersScreen
-import com.critetiontech.vitalio_cis.ui.screens.ResearchArticlesScreen
-import com.critetiontech.vitalio_cis.ui.screens.SelectClinicScreen
-import com.critetiontech.vitalio_cis.ui.screens.SharedAccountScreen
-import com.critetiontech.vitalio_cis.ui.screens.SymptomTrackerScreen
-import com.critetiontech.vitalio_cis.ui.screens.SymptomsView
-import com.critetiontech.vitalio_cis.ui.screens.VitalHistoryScreen
-import com.critetiontech.vitalio_cis.ui.screens.VitalsScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.BloodScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.ChronicDiseaseScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.CreateAccountPreviewScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.DobScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.FamilyHistoryScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.FluidDetailsScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.FluidIntakeDetailsScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.GenderScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.HeightScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.HydrationScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.LocationScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.RegistrationCompletedView
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.ReminderPreferenceScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.ReminderScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.ThankYouView
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.WeightScreen
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.WelcomeScreen
-import com.critetiontech.vitalio_cis.ui.theme.LocalThemeViewModel
-import com.critetiontech.vitalio_cis.ui.theme.MyAppTheme
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.critetiontech.vitalio_cis.viewmodel.UploadReportViewModel
+import com.critetiontech.ctvitalio.notification.RequestNotificationPermission
+import com.critetiontech.ctvitalio.ui.screens.AddActivityScreen
+import com.critetiontech.ctvitalio.ui.screens.ActivityHistoryScreen
+import com.critetiontech.ctvitalio.ui.screens.AddLabResultsScreen
+import com.critetiontech.ctvitalio.ui.screens.AddMedicineReminderScreen
+import com.critetiontech.ctvitalio.ui.screens.AddMemberScreen
+import com.critetiontech.ctvitalio.ui.screens.AiReportScreen
+import com.critetiontech.ctvitalio.ui.screens.AllergiesScreen
+import com.critetiontech.ctvitalio.ui.screens.ArticleDetailScreen
+import com.critetiontech.ctvitalio.ui.screens.BookingConfirmationScreen
+import com.critetiontech.ctvitalio.ui.screens.BookingDetails
+import com.critetiontech.ctvitalio.ui.screens.BookingDetailsScreen
+import com.critetiontech.ctvitalio.ui.screens.ConnectWatchScreen
+import com.critetiontech.ctvitalio.ui.screens.ConnectionScreen
+import com.critetiontech.ctvitalio.ui.screens.HealthConnectSyncScreen
+ import com.critetiontech.ctvitalio.ui.screens.DietChecklistScreen
+import com.critetiontech.ctvitalio.ui.screens.DoctorDetailsScreen
+import com.critetiontech.ctvitalio.ui.screens.DrawerScreen
+import com.critetiontech.ctvitalio.ui.screens.EmergencyContactsScreen
+import com.critetiontech.ctvitalio.ui.screens.FAQScreen
+import com.critetiontech.ctvitalio.ui.screens.FamilyHealthScreen
+import com.critetiontech.ctvitalio.ui.screens.FeedbackScreen
+import com.critetiontech.ctvitalio.ui.screens.FindDoctorsTopSection
+import com.critetiontech.ctvitalio.ui.screens.FluidDataInputScreen
+import com.critetiontech.ctvitalio.ui.screens.FluidInputHistoryScreen
+import com.critetiontech.ctvitalio.ui.screens.FluidOutputHistoryScreen
+import com.critetiontech.ctvitalio.ui.screens.InteractionCheckerScreen
+import com.critetiontech.ctvitalio.ui.screens.InteractionInstructionView
+import com.critetiontech.ctvitalio.viewmodel.InteractionCheckerViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.ui.screens.LabReportsScreen
+import com.critetiontech.ctvitalio.ui.screens.ManageMedicationsPreview
+import com.critetiontech.ctvitalio.ui.screens.ManageMedicationsScreen
+import com.critetiontech.ctvitalio.ui.screens.MedicalProfileScreen
+import com.critetiontech.ctvitalio.ui.screens.MedicineReminderScreen
+import com.critetiontech.ctvitalio.ui.screens.MyObserversScreen
+import com.critetiontech.ctvitalio.ui.screens.OtpScreen
+import com.critetiontech.ctvitalio.ui.screens.PersonalInfoScreen
+import com.critetiontech.ctvitalio.ui.screens.PrescriptionScreen
+import com.critetiontech.ctvitalio.ui.screens.PreviewFindDoctors
+ import com.critetiontech.ctvitalio.ui.screens.RemindersScreen
+import com.critetiontech.ctvitalio.ui.screens.ResearchArticlesScreen
+import com.critetiontech.ctvitalio.ui.screens.SelectClinicScreen
+import com.critetiontech.ctvitalio.ui.screens.SharedAccountScreen
+import com.critetiontech.ctvitalio.ui.screens.SymptomTrackerScreen
+import com.critetiontech.ctvitalio.ui.screens.SymptomsView
+import com.critetiontech.ctvitalio.ui.screens.VitalHistoryScreen
+import com.critetiontech.ctvitalio.ui.screens.VitalsScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.BloodScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.ChronicDiseaseScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.CreateAccountPreviewScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.DobScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.FamilyHistoryScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.FluidDetailsScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.FluidIntakeDetailsScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.GenderScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.HeightScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.HydrationScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.LocationScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.RegistrationCompletedView
+import com.critetiontech.ctvitalio.ui.screens.onboarding.ReminderPreferenceScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.ReminderScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.ThankYouView
+import com.critetiontech.ctvitalio.ui.screens.onboarding.WeightScreen
+import com.critetiontech.ctvitalio.ui.screens.onboarding.WelcomeScreen
+import com.critetiontech.ctvitalio.ui.theme.LocalThemeViewModel
+import com.critetiontech.ctvitalio.ui.theme.MyAppTheme
+import com.critetiontech.ctvitalio.utils.PrefsManager
+import com.critetiontech.ctvitalio.viewmodel.UploadReportViewModel
+import com.critetiontech.ctvitalio.viewmodel.UploadPrescriptionViewModel
+import com.critetiontech.ctvitalio.ui.screens.UploadPrescriptionScreen
+import com.critetiontech.ctvitalio.ui.screens.PrescriptionAnalysisScreen
+import com.critetiontech.ctvitalio.ui.adaptive.AdaptiveLayoutProvider
+import com.critetiontech.ctvitalio.voice.VoiceNavigationManager
 import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.google.gson.Gson
 
@@ -91,28 +99,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-
-
-
-//
-//        val intentRoute = intent?.getStringExtra("route") // ⭐ HERE
-//
-//        LaunchedEffect(intentRoute) {
-//            if (!intentRoute.isNullOrEmpty()) {
-//                navController.navigate(intentRoute)
-//            }
-//        }
         setContent {
 
             RequestNotificationPermission()
             val navController = rememberNavController()
             val uploadReportViewModel: UploadReportViewModel = viewModel()
+            val uploadPrescriptionViewModel: UploadPrescriptionViewModel = viewModel()
+            val interactionViewModel: InteractionCheckerViewModel = viewModel()
             val context = LocalContext.current
+            VoiceNavigationManager.initTts(this)
+            AdaptiveLayoutProvider {
             MyAppTheme {
                 CompositionLocalProvider(LocalNavController provides navController) {
-                    val themeViewModel = LocalThemeViewModel.current
-                    val colors by themeViewModel.colorScheme.collectAsState()
-
                     Surface(
                         modifier = androidx.compose.ui.Modifier.fillMaxSize(),
                      ) {
@@ -125,7 +123,8 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.LOGIN) { LoginScreen() }
                             composable(Routes.MANAGEMEDICAIONS) { ManageMedicationsPreview() }
                             composable(Routes.ADDMEDICINEREMINDER) { AddMedicineReminderScreen() }
-                            composable(Routes.INTERACTIONCHECKER) { InteractionCheckerScreen() }
+                            composable(Routes.INTERACTIONCHECKER) { InteractionCheckerScreen(viewModel = interactionViewModel) }
+                            composable(Routes.INTERACTIONINSTRUCTION) { InteractionInstructionView(viewModel = interactionViewModel) }
                             composable(Routes.DIETCHECKLIST) { DietChecklistScreen() }
                             composable(Routes.PRESCRIPTION) { PrescriptionScreen() }
                             composable(Routes.FLUIDDATAINPUT) { FluidDataInputScreen() }
@@ -163,11 +162,12 @@ class MainActivity : ComponentActivity() {
                                         uploadReportViewModel
                                 )
                             }
-
-//                            composable(Routes.CONNECTION+"/{vitalName}") {
-//
-//                                ConnectionScreen() }
-
+                            composable(Routes.UPLOADPRESCRIPTION) {
+                                UploadPrescriptionScreen(viewModel = uploadPrescriptionViewModel)
+                            }
+                            composable(Routes.PRESCRIPTIONANALYSIS) {
+                                PrescriptionAnalysisScreen(viewModel = uploadPrescriptionViewModel)
+                            }
                             composable(
                                 route = Routes.CONNECTION + "/{vitalName}/{unitName}"
                             ) { backStackEntry ->
@@ -188,6 +188,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.MYOBSERVERS) { MyObserversScreen() }
                             composable(Routes.FAMILYHEALTH) { FamilyHealthScreen() }
                             composable(Routes.ADDACTIVITY) { AddActivityScreen() }
+                            composable(Routes.ACTIVITYHISTORY) { ActivityHistoryScreen() }
                             composable(Routes.REMINDERS) { RemindersScreen() }
                             composable(Routes.EMERGENCYCONTACTS) { EmergencyContactsScreen() }
                             composable(Routes.CONNECTWATCH) { ConnectWatchScreen() }
@@ -260,10 +261,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.LABREPORTS) { LabReportsScreen() }
                             composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
                             composable(Routes.RESEARCHARTICLES) { ResearchArticlesScreen() }
-
-
-
-
+                            composable(Routes.HEALTHCONNECTSYNC) { HealthConnectSyncScreen() }
                             composable("welcome") { WelcomeScreen( ) }
                             composable("gender") { GenderScreen( ) }
                             composable("dob") { DobScreen( ) }
@@ -281,10 +279,21 @@ class MainActivity : ComponentActivity() {
                             composable("fluidIntakeDetails") { FluidIntakeDetailsScreen( ) }
                             composable("fluidDetails") { FluidDetailsScreen( ) }
                             composable("registrationCompleted") { RegistrationCompletedView( ) }
+                            composable(Routes.BREATHING_THERAPY) { com.critetiontech.ctvitalio.ui.screens.BreathingTherapyScreen() }
+                            composable(Routes.DIGITAL_TWIN) { com.critetiontech.ctvitalio.ui.screens.DigitalTwinScreen() }
+                            composable(Routes.HEALTH_ORBIT) { com.critetiontech.ctvitalio.ui.screens.HealthOrbitScreen() }
+                            composable(Routes.EDITPROFILE) { com.critetiontech.ctvitalio.ui.screens.EditProfileScreen() }
                         }
                     }
                 }
             }
+            }
         }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        VoiceNavigationManager.releaseTts()
     }
 }

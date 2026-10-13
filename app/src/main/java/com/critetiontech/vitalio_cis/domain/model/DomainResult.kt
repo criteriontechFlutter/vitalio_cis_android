@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.domain.model
+package com.critetiontech.ctvitalio.domain.model
 
 sealed class DomainResult<out T> {
     data class Success<T>(val data: T) : DomainResult<T>()

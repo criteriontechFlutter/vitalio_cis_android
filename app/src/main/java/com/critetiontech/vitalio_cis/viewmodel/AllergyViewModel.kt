@@ -1,11 +1,11 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.AllergyItem
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.AllergyItem
 import com.google.gson.Gson
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,6 +72,8 @@ class AllergyViewModel : ViewModel() {
             val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val allergyEntry = listOf(mapOf("detailID" to 0, "detailsDate" to now, "details" to details.ifBlank { "Patient reports allergy to $substanceName." }, "substanceName" to substanceName, "allergy" to severity, "reaction" to reaction))
             val body = mapOf("uhId" to patient.uhId, "jsonAllergies" to Gson().toJson(allergyEntry), "userId" to 0, "clientId" to patient.clientId, "isFromPatient" to true, "typeAllergy" to typeAllergy)
+            Log.d("TAG", "addAllergy: $body")
+
             when (val r = addAllergyUseCase(body)) {
                 is DomainResult.Success -> { _addSuccess.value = true; fetchAllergies() }
                 is DomainResult.Error -> { _errorMessage.value = "Failed to add allergy."; Log.e("AllergyVM", r.exception.message.orEmpty()) }

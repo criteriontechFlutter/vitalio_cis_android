@@ -1,12 +1,12 @@
-package com.critetiontech.vitalio_cis.viewmodel
+package com.critetiontech.ctvitalio.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.di.AppDependencies
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.model.MediaItem
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.MediaItem
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -62,7 +62,20 @@ class UploadReportViewModel : ViewModel() {
         viewModelScope.launch {
             _isAnalyzing.value = true
             when (val r = deps.aiReport()(file)) {
-                is DomainResult.Success -> { _responseString.value = r.data; _navigationEvent.emit(Routes.AIREPORT) }
+                is DomainResult.Success -> {
+                    _responseString.value = r.data
+                    _navigationEvent.emit(Routes.AIREPORT)
+                    // After navigation, auto-insert the AI results into InvestigationByPatient
+                    val patient = prefs.getPatient()
+                    if (patient != null) {
+                        when (val insertResult = deps.insertInvestigationResult()(r.data, patient.uhId, patient.clientId)) {
+                            is DomainResult.Success -> Log.d("UploadReportVM", "InsertResult: success")
+                            is DomainResult.Error   -> Log.e("UploadReportVM", "InsertResult failed: ${insertResult.exception.message}")
+                        }
+                    } else {
+                        Log.e("UploadReportVM", "InsertResult skipped — patient prefs not available")
+                    }
+                }
                 is DomainResult.Error -> Log.e("UploadReportVM", r.exception.message.orEmpty())
             }
             _isAnalyzing.value = false

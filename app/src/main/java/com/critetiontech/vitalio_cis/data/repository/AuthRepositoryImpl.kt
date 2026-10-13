@@ -1,14 +1,14 @@
-package com.critetiontech.vitalio_cis.data.repository
+package com.critetiontech.ctvitalio.data.repository
 
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
-import com.critetiontech.vitalio_cis.domain.model.DomainResult
-import com.critetiontech.vitalio_cis.domain.repository.AuthRepository
-import com.critetiontech.vitalio_cis.utils.Patient
-import com.critetiontech.vitalio_cis.utils.PrefsManager
-import com.critetiontech.vitalio_cis.utils.VerifyOtpResponse
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.AuthRepository
+import com.critetiontech.ctvitalio.utils.Patient
+import com.critetiontech.ctvitalio.utils.PrefsManager
+import com.critetiontech.ctvitalio.utils.VerifyOtpResponse
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -69,7 +69,8 @@ class AuthRepositoryImpl @Inject constructor(
                     bloodGroupId = p.bloodGroupId, clientId = p.clientId, countryCallingCode = "",
                     guardianRelationId = 0, guardianName = "", countryId = 0, imageUrl = "",
                     zip = "", isActive = true, departmentName = null, cityName = "", stateName = "",
-                    countryName = "", genderName = "", guardianRelationName = null, bloodGroupName = null
+                    countryName = "", genderName = "", guardianRelationName = null, bloodGroupName = null,
+                    crNo = p.crNo   // ← capture crNo from login response
                 )
                 prefs.savePatient(patient)
                 DomainResult.Success(patient)

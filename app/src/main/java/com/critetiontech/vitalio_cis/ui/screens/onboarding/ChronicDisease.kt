@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens.onboarding
+package com.critetiontech.ctvitalio.ui.screens.onboarding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,8 +21,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.ui.screens.onboarding.components.ProgressCard
-import com.critetiontech.vitalio_cis.R
+import com.critetiontech.ctvitalio.ui.screens.onboarding.components.ProgressCard
+import com.critetiontech.ctvitalio.R
 @Composable
 fun ChronicDiseaseScreen() {
 

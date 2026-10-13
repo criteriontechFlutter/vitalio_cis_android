@@ -1,4 +1,4 @@
-package com.critetiontech.vitalio_cis.ui.screens
+package com.critetiontech.ctvitalio.ui.screens
 
 
 import androidx.compose.animation.core.*
@@ -28,14 +28,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import android.net.Uri
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.ui.draw.clip
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.vitalio_cis.Routes
-import com.critetiontech.vitalio_cis.ui.components.CommonAppBar
-import com.critetiontech.vitalio_cis.ui.theme.LocalMyColorScheme
-import com.critetiontech.vitalio_cis.viewmodel.VitalDetailViewModel
+import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.ui.components.CommonAppBar
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.viewmodel.VitalDetailViewModel
+import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -114,9 +116,18 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
         VitalColorInfoDialog(onDismiss = { showInfoDialog = false })
     }
 
+    val navController = LocalNavController.current
+
     CommonAppBar(
         title = "Vitals",
         actions = {
+            IconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Analytics,
+                    contentDescription = "Health Orbit",
+                    tint = colors.textDarkColor
+                )
+            }
             IconButton(onClick = { showInfoDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Info,
@@ -126,10 +137,11 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
             }
         }
     ) {
+        val vitalDimens = rememberResponsiveDimens()
 
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(vitalDimens.screenPadding)
                 .background(colors.dashboardBackgroundColor)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -382,7 +394,7 @@ fun VitalCard(
                 Text(
                     "Add Vital",
                             style = AppTextStyles.style12PCN(),
-                    modifier = Modifier.clickable(){
+                    modifier = Modifier.clickable {
                         navController.navigate(Routes.CONNECTION+"/"+title.toString()+"/"+unit.toString())
                     })
 
