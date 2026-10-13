@@ -1,8 +1,10 @@
 package com.critetiontech.ctvitalio.ui.screens
 
-import android.content.ContentValues
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
-import android.provider.MediaStore
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -216,7 +218,7 @@ fun EditProfileScreen(
         }
     }
     val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
+        TakePictureWithPermission()
     ) { success ->
         if (success) {
             cameraUri?.let {
@@ -224,6 +226,20 @@ fun EditProfileScreen(
                 selectedImageFile = FileUtils.getFile(context, it)
             }
         }
+    }
+
+    fun launchCamera() {
+        val uri = createImageUri(context)
+        cameraUri = uri
+        cameraLauncher.launch(uri)
+    }
+
+    // CAMERA is declared in the manifest, so IMAGE_CAPTURE throws SecurityException until it's granted
+    val cameraPermLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) launchCamera()
+        else Toast.makeText(context, "Camera permission is required to take a photo", Toast.LENGTH_SHORT).show()
     }
 
     LaunchedEffect(Unit) {
@@ -276,13 +292,13 @@ fun EditProfileScreen(
         ImagePickerBottomSheet(
             onCameraClick = {
                 showImageSheet = false
-                val values = ContentValues().apply {
-                    put(MediaStore.Images.Media.DISPLAY_NAME, "profile_${System.currentTimeMillis()}.jpg")
-                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_GRANTED
+                ) {
+                    launchCamera()
+                } else {
+                    cameraPermLauncher.launch(Manifest.permission.CAMERA)
                 }
-                val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-                cameraUri = uri
-                uri?.let { cameraLauncher.launch(it) }
             },
             onUploadClick = {
                 showImageSheet = false
