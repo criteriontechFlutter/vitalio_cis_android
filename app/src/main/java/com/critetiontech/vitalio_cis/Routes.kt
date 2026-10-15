@@ -59,5 +59,6 @@ object Routes {
     const val HEALTHCONNECTSYNC = "HealthConnectSyncScreen"
     const val BREATHING_THERAPY = "BreathingTherapyScreen"
     const val EDITPROFILE = "EditProfileScreen"
+    const val MEDICINE_REMINDER_SETTINGS = "MedicineReminderSettingsScreen"
 
 }

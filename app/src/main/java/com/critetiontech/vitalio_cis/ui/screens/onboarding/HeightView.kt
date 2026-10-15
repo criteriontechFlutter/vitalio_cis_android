@@ -1,4 +1,6 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -141,7 +143,7 @@ fun HeightScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("chronicDisease")
             },
@@ -345,7 +347,7 @@ fun HeightPickerBottomSheet(
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        Button(
+        HapticButton(
             onClick = onSubmit,
             modifier = Modifier
                 .fillMaxWidth()

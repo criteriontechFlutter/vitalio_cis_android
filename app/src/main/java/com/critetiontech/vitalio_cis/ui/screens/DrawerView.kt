@@ -1,5 +1,13 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticEvent
+import com.critetiontech.ctvitalio.ui.feedback.HapticSwitch
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+import com.critetiontech.ctvitalio.ui.feedback.rememberHaptics
+import androidx.compose.material.icons.filled.Vibration
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -88,10 +96,12 @@ fun DrawerScreen() {
             title = { Text("Logout") },
             text = { Text("Are you sure you want to logout?") },
             confirmButton = {
-                TextButton(
+                HapticTextButton(
                     onClick = {
                         showLogoutDialog = false
                         PrefsManager(context).clearAll()
+                        // Patient is gone, so this cancels every medicine alarm.
+                        com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler.requestSync(context)
                         navController.navigate(Routes.LOGIN) {
                             popUpTo(0) { inclusive = true }
                         }
@@ -101,7 +111,7 @@ fun DrawerScreen() {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
+                HapticTextButton(onClick = { showLogoutDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -112,7 +122,7 @@ fun DrawerScreen() {
         title = " ",
         actions = {
             Box {
-                IconButton(onClick = { expanded = true }) {
+                HapticIconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = null
@@ -177,6 +187,8 @@ fun DrawerScreen() {
                     Spacer(modifier = Modifier.height(12.dp))
                     ThemeSwitchItem()
                     Spacer(modifier = Modifier.height(12.dp))
+                    HapticsSwitchItem()
+                    Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
                         listOf(
                             "FAQ" to "4",
@@ -236,6 +248,8 @@ fun DrawerScreen() {
 //            )
             Spacer(modifier = Modifier.height(12.dp))
             ThemeSwitchItem()
+            Spacer(modifier = Modifier.height(12.dp))
+            HapticsSwitchItem()
 
             Spacer(modifier = Modifier.height(12.dp))
             MenuCard(
@@ -252,13 +266,47 @@ fun DrawerScreen() {
 
 @Composable
 fun ThemeSwitchItem() {
-
     val themeViewModel = LocalThemeViewModel.current
-    val colors = LocalMyColorScheme.current
-
     val selectedTheme by themeViewModel.selectedTheme.collectAsState()
 
-    val isDarkMode = selectedTheme == AppTheme.DARK
+    SettingSwitchRow(
+        icon = Icons.Default.DarkMode,
+        title = "Dark Mode",
+        checked = selectedTheme == AppTheme.DARK,
+        onCheckedChange = { themeViewModel.toggleTheme() },
+    )
+}
+
+@Composable
+fun HapticsSwitchItem() {
+    val context = LocalContext.current
+    val haptic = rememberHaptics()
+    var enabled by remember { mutableStateOf(Haptics.isEnabled(context)) }
+
+    SettingSwitchRow(
+        icon = Icons.Default.Vibration,
+        title = "Haptic feedback",
+        subtitle = "Gentle vibration on taps and actions",
+        checked = enabled,
+        onCheckedChange = { on ->
+            Haptics.setEnabled(context, on)
+            enabled = on
+            // The switch's own tap haptic ran while haptics were still off; confirm turning on.
+            if (on) haptic(HapticEvent.Toggle)
+        },
+    )
+}
+
+/** A settings card with an icon, title, optional subtitle and a switch, as used in the drawer. */
+@Composable
+fun SettingSwitchRow(
+    icon: ImageVector,
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    subtitle: String? = null,
+) {
+    val colors = LocalMyColorScheme.current
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -269,51 +317,36 @@ fun ThemeSwitchItem() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // 🌙 ICON + TEXT
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Icon(
-                    imageVector = Icons.Default.DarkMode,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = colors.textGreyColor,
                     modifier = Modifier.size(18.dp)
                 )
-
                 Spacer(modifier = Modifier.width(10.dp))
-
-                Text(
-                    text = "Dark Mode",
-                    color = colors.textDarkColor,
-                    fontSize = 16.sp
-                )
+                Column {
+                    Text(text = title, color = colors.textDarkColor, fontSize = 16.sp)
+                    if (subtitle != null) {
+                        Text(text = subtitle, color = colors.textGreyColor, fontSize = 12.sp)
+                    }
+                }
             }
 
-            // 🔥 SWITCH
-            Switch(
+            HapticSwitch(
                 colors = SwitchDefaults.colors(
-
                     checkedThumbColor = Color.White,
-
                     checkedTrackColor = colors.primaryBlueColor,
-
                     uncheckedThumbColor = Color.White,
-
                     uncheckedTrackColor = Color.LightGray
                 ),
-
-                checked = isDarkMode,
-
-                onCheckedChange = {
-
-                    themeViewModel.toggleTheme()
-                }
+                checked = checked,
+                onCheckedChange = onCheckedChange
             )
         }
     }

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -149,7 +151,7 @@ fun WelcomeScreen( ) {
         Spacer(modifier = Modifier.weight(1f))
 
         // 🔘 Next Button
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("gender")
                 viewModel.updatePer(0.1f)

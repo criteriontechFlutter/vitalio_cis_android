@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticSwitch
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -159,9 +162,9 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
             ) {
                 Text(text = "Pending Medicines: $medsPending", color = colors.textDarkColor)
                 Row {
-                    Button(onClick = { if (medsPending > 0) viewModel.pendingMedicinesCount.value -= 1 }) { Text("-") }
+                    HapticButton(onClick = { if (medsPending > 0) viewModel.pendingMedicinesCount.value -= 1 }) { Text("-") }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = { viewModel.pendingMedicinesCount.value += 1 }) { Text("+") }
+                    HapticButton(onClick = { viewModel.pendingMedicinesCount.value += 1 }) { Text("+") }
                 }
             }
 
@@ -174,7 +177,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Vitals Normal?", color = colors.textDarkColor)
-                Switch(
+                HapticSwitch(
                     checked = vitalsOk,
                     onCheckedChange = { viewModel.vitalsNormal.value = it }
                 )

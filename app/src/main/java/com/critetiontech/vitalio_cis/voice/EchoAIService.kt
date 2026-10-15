@@ -80,7 +80,7 @@ object EchoAIService {
                     setRequestProperty("Content-Type", "application/json")
                     doOutput = true
                     connectTimeout = 10_000
-                    readTimeout    = 10_000
+                    readTimeout    = 20_000   // one call per turn now, so allow the LLM time to answer
                 }
 
                 connection.outputStream.use { it.write(payload.toString().toByteArray()) }
@@ -499,7 +499,7 @@ object EchoAIService {
                 SymptomSpec(listOf("headache", "sir dard", "sar dard", "sir mein dard", "migraine", "head pain"), "Headache", 15),
                 SymptomSpec(listOf("cough", "khansi", "khaansi", "dry cough", "wet cough"), "Cough", 12),
                 SymptomSpec(listOf("cold", "sardi", "nasal", "runny nose", "nazla", "nasal congestion"), "Cold", 17),
-                SymptomSpec(listOf("vomiting", "ulti", "vomit", "nausea", "ji machalna", "motions vomiting"), "Vomiting", 18),
+                SymptomSpec(listOf("vomiting", "ulti", "vomit", "nausea", "nauseous", "nauseated", "ji machalna", "motions vomiting"), "Vomiting", 18),
                 SymptomSpec(listOf("diarrhea", "diarrhea", "loose motion", "loose motions", "dast", "latrin", "ulta"), "Diarrhea", 19),
                 SymptomSpec(listOf("chest pain", "seene mein dard", "sine mein dard", "heart pain", "angina"), "Chest Pain", 20),
                 SymptomSpec(listOf("shortness of breath", "saans lene mein takleef", "breathlessness", "saans phoolna", "dyspnea"), "Shortness of Breath", 21),
@@ -507,7 +507,7 @@ object EchoAIService {
                 SymptomSpec(listOf("back pain", "kamar dard", "kamar mein dard", "peeth mein dard", "pith dard"), "Back Pain", 23),
                 SymptomSpec(listOf("joint pain", "jodo mein dard", "ghutne mein dard", "hath paon mein dard"), "Joint Pain", 24),
                 SymptomSpec(listOf("stomach pain", "pet dard", "stomach ache", "abdominal pain", "tummy ache"), "Stomach Pain", 25),
-                SymptomSpec(listOf("dizziness", "chakkar", "chakkar aana", "vertigo", "giddiness"), "Dizziness", 26),
+                SymptomSpec(listOf("dizziness", "dizzy", "chakkar", "chakkar aana", "vertigo", "giddiness", "head is spinning", "head spinning", "lightheaded", "light headed", "sar ghoom", "sir ghoom"), "Dizziness", 26),
                 SymptomSpec(listOf("swelling", "sujan", "edema", "puffiness"), "Swelling", 27),
                 SymptomSpec(listOf("skin rash", "rash", "khujli", "itching", "urticaria", "hives"), "Skin Rash", 28),
                 SymptomSpec(listOf("insomnia", "sleep problem", "neend nahi", "nind nahi", "sleeping issue"), "Insomnia", 29),

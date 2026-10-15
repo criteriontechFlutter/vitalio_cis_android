@@ -73,7 +73,7 @@ class ReportRepositoryImpl @Inject constructor(
             .addFormDataPart("file", file.name, file.asRequestBody("image/*".toMediaTypeOrNull()))
             .build()
 
-        val url = "http://182.156.200.178:8016/uploadLabreport/"
+        val url = "http://food.shopright.ai:3480/uploadLabreport/"
         val request = Request.Builder().url(url).post(requestBody).build()
 
         if (BuildConfig.DEBUG) {

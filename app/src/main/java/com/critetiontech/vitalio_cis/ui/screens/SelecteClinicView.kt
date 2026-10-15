@@ -1,4 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
+
+import androidx.compose.foundation.lazy.itemsIndexed
+
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -71,12 +75,14 @@ fun SelectClinicScreen() {
 
             LazyColumn {
 
-                items(filtered) { clinic ->
+                itemsIndexed(filtered) { i, clinic ->
+                    AnimatedEnter(index = i) {
 
-                    ClinicItem(
-                        name = clinic.name,
-                        address = clinic.address
-                    )
+                        ClinicItem(
+                            name = clinic.name,
+                            address = clinic.address
+                        )
+                    }
                 }
             }
         }

@@ -1,5 +1,10 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
+import com.critetiontech.ctvitalio.ui.feedback.HapticOutlinedButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -438,10 +443,10 @@ fun HealthConnectSyncScreen(
                 ) {
                     Text("Select Metrics to Sync", style = AppTextStyles.style14BCB())
                     Row {
-                        TextButton(onClick = { viewModel.selectAll() }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
+                        HapticTextButton(onClick = { viewModel.selectAll() }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
                             Text("All", fontSize = 12.sp, color = Color(0xFF1565C0))
                         }
-                        TextButton(onClick = { viewModel.deselectAll() }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
+                        HapticTextButton(onClick = { viewModel.deselectAll() }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
                             Text("None", fontSize = 12.sp, color = Color(0xFF9E9E9E))
                         }
                     }
@@ -570,7 +575,7 @@ private fun HealthMetricCard(metric: HealthMetric, isBusy: Boolean, onToggle: ()
             if (metric.isSynced) {
                 Icon(Icons.Filled.CheckCircle, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(22.dp))
             } else {
-                Checkbox(
+                HapticCheckbox(
                     checked = metric.isSelected, onCheckedChange = { if (!isBusy) onToggle() },
                     colors = CheckboxDefaults.colors(checkedColor = metric.iconTint, uncheckedColor = Color(0xFFBBBBBB))
                 )
@@ -581,7 +586,7 @@ private fun HealthMetricCard(metric: HealthMetric, isBusy: Boolean, onToggle: ()
 
 @Composable
 private fun SyncButton(enabled: Boolean, onClick: () -> Unit) {
-    Button(
+    HapticButton(
         onClick = onClick, enabled = enabled,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(54.dp),
         shape = RoundedCornerShape(16.dp),
@@ -619,7 +624,7 @@ private fun SuccessBanner(count: Int, onSyncAgain: () -> Unit) {
         Text("Successfully Synced!", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF2E7D32))
         Text("$count vital(s) pulled from your wearable and saved.", fontSize = 13.sp, color = Color(0xFF546788), textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(16.dp))
-        OutlinedButton(onClick = onSyncAgain, shape = RoundedCornerShape(12.dp),
+        HapticOutlinedButton(onClick = onSyncAgain, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF2E7D32))
         ) { Text("Sync Again") }
     }
@@ -637,7 +642,7 @@ private fun ErrorBanner(message: String, onRetry: () -> Unit) {
         Text("Sync Failed", fontWeight = FontWeight.Bold, color = Color(0xFFC62828))
         Text(message, fontSize = 12.sp, color = Color(0xFF546788), textAlign = TextAlign.Center, lineHeight = 17.sp)
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedButton(onClick = onRetry, shape = RoundedCornerShape(12.dp),
+        HapticOutlinedButton(onClick = onRetry, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC62828))
         ) { Text("Retry") }
     }
@@ -731,7 +736,7 @@ private fun PermissionsDeniedCard(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Primary — re-request permissions (works every time with Health Connect)
-        Button(
+        HapticButton(
             onClick = onRequestAgain,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
@@ -745,7 +750,7 @@ private fun PermissionsDeniedCard(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Secondary — open Health Connect settings manually
-        OutlinedButton(
+        HapticOutlinedButton(
             onClick = onOpenSettings,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
@@ -784,7 +789,7 @@ private fun NotInstalledCard(onInstall: () -> Unit) {
             fontSize = 13.sp, color = Color(0xFF546788), textAlign = TextAlign.Center, lineHeight = 19.sp
         )
         Spacer(modifier = Modifier.height(20.dp))
-        Button(onClick = onInstall, shape = RoundedCornerShape(12.dp),
+        HapticButton(onClick = onInstall, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
         ) {
             Icon(Icons.Filled.Download, null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -806,7 +811,7 @@ private fun UpdateRequiredCard(onUpdate: () -> Unit) {
         Text("Health Connect Needs Update", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFFE65100))
         Text("Please update Health Connect in Play Store to continue.", fontSize = 13.sp, color = Color(0xFF546788), textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onUpdate, shape = RoundedCornerShape(12.dp),
+        HapticButton(onClick = onUpdate, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
         ) { Text("Update Health Connect", color = Color.White) }
     }

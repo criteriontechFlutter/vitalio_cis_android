@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.voice
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticOutlinedButton
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -168,6 +172,7 @@ fun VoiceListeningOverlay(
     anomalyAlerts: List<VitalAlert> = emptyList(),
     multiTurnPrompt: String = "",
     vitalTrends: Map<String, VitalTrend> = emptyMap(),
+    statusMessage: String = "",
     onStop: () -> Unit,
     onCancel: () -> Unit,
     onSaveAll: () -> Unit,
@@ -195,6 +200,7 @@ fun VoiceListeningOverlay(
                 anomalyAlerts        = anomalyAlerts,
                 multiTurnPrompt      = multiTurnPrompt,
                 vitalTrends          = vitalTrends,
+                onStop               = onStop,
                 onCancel             = onCancel,
                 onSaveAll            = onSaveAll,
                 onStartListening     = onStartListening,
@@ -210,7 +216,7 @@ fun VoiceListeningOverlay(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.65f))
-                    .clickable(enabled = !showConfirmationCard) { onStop() },
+                    .clickable(enabled = isListening) { onStop() },
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -273,6 +279,34 @@ fun VoiceListeningOverlay(
                                 textAlign = TextAlign.Center
                             )
                         }
+                    } else if (isExtractingData) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                                Spacer(Modifier.width(10.dp))
+                                Text("Analyzing what you said...", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                            }
+                            if (processingTranscript.isNotEmpty()) {
+                                Spacer(Modifier.height(10.dp))
+                                Text(
+                                    "\"$processingTranscript\"",
+                                    fontSize = 14.sp,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 4,
+                                    modifier = Modifier.padding(horizontal = 26.dp)
+                                )
+                            }
+                        }
+                    } else if (!isListening && statusMessage.isNotEmpty()) {
+                        Text(
+                            text = statusMessage,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 30.dp)
+                        )
                     } else {
                         Text(
                             text = transcript.ifEmpty { "Listening..." },
@@ -280,16 +314,17 @@ fun VoiceListeningOverlay(
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White.copy(alpha = if (transcript.isEmpty()) 0.7f else 1f),
                             textAlign = TextAlign.Center,
+                            maxLines = 6,
                             modifier = Modifier.padding(horizontal = 34.dp)
                         )
 
                         Spacer(Modifier.height(12.dp))
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Tap to cancel", fontSize = 14.sp, color = Color.Gray)
+                            Text("Take your time. It is analysed when you pause.", fontSize = 14.sp, color = Color.Gray)
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "Speak to navigate or dictate health vitals",
+                                "Say your vitals, symptoms, fluids or medicines",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color.White.copy(alpha = 0.5f),
@@ -301,20 +336,33 @@ fun VoiceListeningOverlay(
 
                     Spacer(Modifier.weight(1f))
 
-                    Box(
-                        modifier = Modifier
-                            .size(58.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFEF4444).copy(alpha = 0.9f))
-                            .clickable { onStop() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Stop listening",
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp)
-                        )
+                    when {
+                        isListening -> Box(
+                            modifier = Modifier
+                                .size(58.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFEF4444).copy(alpha = 0.9f))
+                                .clickable { onStop() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Stop,
+                                contentDescription = "Stop and analyse",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        !isExtractingData -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            HapticOutlinedButton(
+                                onClick = onCancel,
+                                shape = CircleShape,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
+                                modifier = Modifier.height(50.dp)
+                            ) {
+                                Text("Close", color = Color.White, fontWeight = FontWeight.SemiBold)
+                            }
+                            SpeakAgainButton(onClick = onStartListening, modifier = Modifier.height(50.dp))
+                        }
                     }
                     Spacer(Modifier.height(70.dp))
                 }
@@ -336,6 +384,7 @@ private fun UnifiedVoiceConfirmationFullScreen(
     anomalyAlerts: List<VitalAlert> = emptyList(),
     multiTurnPrompt: String = "",
     vitalTrends: Map<String, VitalTrend> = emptyMap(),
+    onStop: () -> Unit,
     onCancel: () -> Unit,
     onSaveAll: () -> Unit,
     onStartListening: () -> Unit,
@@ -561,9 +610,29 @@ private fun UnifiedVoiceConfirmationFullScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Save All button
-                Button(
+                if (isListening) {
+                    HapticOutlinedButton(
+                        onClick  = onStop,
+                        shape    = CircleShape,
+                        border   = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFEF4444)),
+                        modifier = Modifier.height(50.dp)
+                    ) {
+                        Icon(Icons.Default.Stop, null, tint = Color(0xFFEF4444), modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Stop", fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                    }
+                } else {
+                    SpeakAgainButton(
+                        onClick  = onStartListening,
+                        enabled  = !isSavingData && !isExtractingData,
+                        modifier = Modifier.height(50.dp),
+                        onLight  = true
+                    )
+                }
+
+                HapticButton(
                     onClick  = onSaveAll,
-                    enabled  = !isSavingData && !isExtractingData,
+                    enabled  = !isSavingData && !isExtractingData && !isListening,
                     modifier = Modifier.weight(1f).height(50.dp),
                     shape    = CircleShape,
                     colors   = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -573,7 +642,7 @@ private fun UnifiedVoiceConfirmationFullScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
-                                if (isSavingData || isExtractingData)
+                                if (isSavingData || isExtractingData || isListening)
                                     Brush.horizontalGradient(listOf(Color.Gray.copy(alpha = 0.45f), Color.Gray.copy(alpha = 0.45f)))
                                 else
                                     Brush.horizontalGradient(listOf(Color(0xFF2563EB), Color(0xFF06B6D4))),
@@ -602,6 +671,27 @@ private fun UnifiedVoiceConfirmationFullScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SpeakAgainButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onLight: Boolean = false,
+) {
+    val tint = (if (onLight) Color(0xFF2563EB) else Color.White).copy(alpha = if (enabled) 1f else 0.35f)
+    HapticOutlinedButton(
+        onClick  = onClick,
+        enabled  = enabled,
+        shape    = CircleShape,
+        border   = androidx.compose.foundation.BorderStroke(1.5.dp, tint),
+        modifier = modifier
+    ) {
+        Icon(Icons.Default.Mic, null, tint = tint, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text("Speak again", fontWeight = FontWeight.Bold, color = tint)
     }
 }
 
@@ -859,7 +949,7 @@ private fun SymptomsSection(
                     )
                 }
                 Spacer(Modifier.width(4.dp))
-                IconButton(onClick = { onRemoveSymptom(symptom.detailID, symptom.details) }, modifier = Modifier.size(24.dp)) {
+                HapticIconButton(onClick = { onRemoveSymptom(symptom.detailID, symptom.details) }, modifier = Modifier.size(24.dp)) {
                     Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
                 }
             }
@@ -933,7 +1023,7 @@ private fun FluidOutputSection(
             }
             Text("${output.quantity} ml", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.width(6.dp))
-            IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
+            HapticIconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
                 Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
             }
         }
@@ -981,7 +1071,7 @@ private fun MedicinesSection(
                                 Text(med.instructions.trim(), fontSize = 12.sp, color = Color.Gray)
                             }
                         }
-                        IconButton(onClick = { onRemove(med.id) }, modifier = Modifier.size(28.dp)) {
+                        HapticIconButton(onClick = { onRemove(med.id) }, modifier = Modifier.size(28.dp)) {
                             Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
                         }
                     }
@@ -1064,7 +1154,7 @@ fun VitalPreviewRow(
         }
 
         Spacer(Modifier.width(4.dp))
-        IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+        HapticIconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
             Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
         }
     }

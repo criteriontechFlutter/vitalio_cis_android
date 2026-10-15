@@ -1,4 +1,9 @@
 package com.example.vitalio_cis.ui.screens
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticOutlinedButton
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -16,6 +21,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +38,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -68,29 +77,31 @@ import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
 import com.critetiontech.ctvitalio.viewmodel.ListeningState
 import com.critetiontech.ctvitalio.viewmodel.VoiceCommandViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+import com.critetiontech.ctvitalio.ui.feedback.ContentState
+import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedCheckMark
+import com.critetiontech.ctvitalio.ui.feedback.successPulse
+import com.critetiontech.ctvitalio.ui.feedback.HapticEvent
+import com.critetiontech.ctvitalio.ui.feedback.PullRefreshHaptics
+import com.critetiontech.ctvitalio.ui.feedback.PullStretchHeader
+import com.critetiontech.ctvitalio.ui.feedback.bounceClick
+import com.critetiontech.ctvitalio.ui.feedback.hapticCombinedClick
+import com.critetiontech.ctvitalio.ui.feedback.rememberHaptics
+import com.critetiontech.ctvitalio.ui.feedback.stretchOffsetPx
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.compositeOver
 import java.text.SimpleDateFormat
 import kotlin.time.Duration.Companion.milliseconds
 
 data class GridItem(val title: String, val icon: Int)
 
 @Composable
-private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Unit) {
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(450, delayMillis = delayMillis, easing = FastOutSlowInEasing),
-        label = "sectionAlpha"
-    )
-    val offsetY by animateFloatAsState(
-        targetValue = if (visible) 0f else 24f,
-        animationSpec = tween(450, delayMillis = delayMillis, easing = FastOutSlowInEasing),
-        label = "sectionY"
-    )
-    Box(modifier = Modifier.graphicsLayer { this.alpha = alpha; translationY = offsetY }) {
-        content()
-    }
-}
+private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Unit) =
+    AnimatedEnter(delayMillis = delayMillis, content = content)
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,7 +110,7 @@ private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Uni
 //  Placing the FAB and VoiceAssistantSheet here (rather than inside HomeView)
 //  makes the mic button persistent across all three bottom-nav tabs.
 // ─────────────────────────────────────────────────────────────────────────────
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     homeViewModel: HomeViewModel = viewModel(),
@@ -123,6 +134,7 @@ fun DashboardScreen(
     val anomalyAlerts        by VoiceNavigationManager.anomalyAlerts.collectAsState()
     val multiTurnPrompt      by VoiceNavigationManager.multiTurnPrompt.collectAsState()
     val vitalTrends          by VoiceNavigationManager.vitalTrends.collectAsState()
+    val voiceStatusMessage   by VoiceNavigationManager.statusMessage.collectAsState()
 
     // Mic permission (RECORD_AUDIO already in manifest)
     val micPermission = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
@@ -159,7 +171,62 @@ fun DashboardScreen(
     val windowSize = LocalWindowSizeClass.current
     val useNavRail = windowSize != WindowWidthSizeClass.Compact
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // Dashboard look: white page with light-grey cards. Dark theme keeps its own palette.
+    val baseColors = LocalMyColorScheme.current
+    val dashboardColors = remember(baseColors) {
+        if (baseColors.dashboardContainerColor == Color.White)
+            baseColors.copy(dashboardBackgroundColor = Color.White, dashboardContainerColor = DashboardCardGrey)
+        else baseColors
+    }
+
+    // Pull-to-refresh lives here (not in HomeView) so the header and status bar can stretch.
+    val pullState = rememberPullToRefreshState()
+    var isRefreshing by remember { mutableStateOf(false) }
+    val refreshScope = rememberCoroutineScope()
+    val onRefresh: () -> Unit = {
+        isRefreshing = true
+        refreshScope.launch {
+            val startedAt = System.currentTimeMillis()
+            homeViewModel.fetchDashboard()
+            // fetchDashboard flips loading on asynchronously; wait for it to settle.
+            delay(300)
+            kotlinx.coroutines.withTimeoutOrNull(20_000) { homeViewModel.loading.first { !it } }
+            delay((900 - (System.currentTimeMillis() - startedAt)).coerceAtLeast(0))
+            isRefreshing = false
+        }
+    }
+    val pulledDown by remember { derivedStateOf { pullState.distanceFraction > 0.15f } }
+
+    // Dark status-bar icons on the white page (light icons in dark theme, and over the blue pull area).
+    val view = androidx.compose.ui.platform.LocalView.current
+    val lightPage = dashboardColors.dashboardBackgroundColor == Color.White
+    // Read in composition (not inside SideEffect) so a pull recomposes and re-applies it.
+    val darkStatusIcons = lightPage && !pulledDown
+    if (!view.isInEditMode) {
+        SideEffect {
+            (view.context as? Activity)?.window?.let { window ->
+                androidx.core.view.WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars =
+                    darkStatusIcons
+            }
+        }
+    }
+
+    CompositionLocalProvider(LocalMyColorScheme provides dashboardColors) {
+    val colors = LocalMyColorScheme.current
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    // How far the page is pulled down; the content slides by this much and the blue area fills the gap.
+    val stretchPx = { pullState.stretchOffsetPx(density) }
+    PullRefreshHaptics(pullState, isRefreshing)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pullToRefresh(
+                isRefreshing = isRefreshing,
+                state = pullState,
+                enabled = selectedIndex == 0,
+                onRefresh = onRefresh,
+            )
+    ) {
         Scaffold(
             containerColor = colors.dashboardBackgroundColor,
             modifier = Modifier.background(colors.dashboardBackgroundColor),
@@ -204,7 +271,7 @@ fun DashboardScreen(
 
                     // Main content
                     Box(modifier = Modifier.weight(1f)) {
-                        Column {
+                        Column(Modifier.graphicsLayer { translationY = stretchPx() }) {
                             Spacer(Modifier.height(20.dp))
                             Column(
                                 modifier = Modifier
@@ -245,7 +312,7 @@ fun DashboardScreen(
                 // ── Phone: existing layout ──
             Box(modifier = Modifier.padding(padding)) {
 
-                Column {
+                Column(Modifier.graphicsLayer { translationY = stretchPx() }) {
                     Spacer(Modifier.height(20.dp))
                     Column(
                         modifier = Modifier
@@ -288,6 +355,13 @@ fun DashboardScreen(
             }
         }
 
+        PullStretchHeader(
+            state = pullState,
+            isRefreshing = isRefreshing,
+            color = colors.primaryBlueColor,
+            behindStatusBar = true,
+        )
+
         // Full-screen voice listening overlay (drawn ABOVE everything, including bottom nav)
         VoiceListeningOverlay(
             isListening          = isListening,
@@ -301,6 +375,7 @@ fun DashboardScreen(
             anomalyAlerts        = anomalyAlerts,
             multiTurnPrompt      = multiTurnPrompt,
             vitalTrends          = vitalTrends,
+            statusMessage        = voiceStatusMessage,
             onStop               = { VoiceNavigationManager.stopListening() },
             onCancel             = { VoiceNavigationManager.cancelPendingData() },
             onSaveAll            = { VoiceNavigationManager.confirmAndSaveAllPendingData() },
@@ -312,8 +387,10 @@ fun DashboardScreen(
             onRemoveMedicine     = { medicineId -> VoiceNavigationManager.removeMedicine(medicineId) }
         )
     }
+    }
 }
 
+private val DashboardCardGrey = Color(0xFFF3F5F8)
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  HomeView  (tab 0 content)
@@ -329,47 +406,40 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
     val markingMedicines by viewModel.markingMedicines.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
-    var isRefreshing by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-
     val homeDimens = rememberResponsiveDimens()
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            coroutineScope.launch {
-                viewModel.fetchDashboard()
-                kotlinx.coroutines.delay(1000)
-                isRefreshing = false
-            }
-        },
-        modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)
-    ) {
+    // Pull-to-refresh is handled by DashboardScreen so the header can stretch with the pull.
+    Box(modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(homeDimens.screenPadding)
         ) {
-            if (loading && vitals.isEmpty() && dailyMedicines.isEmpty()) {
-                VitalsCardShimmer()
-            } else {
-                AnimatedSection(delayMillis = 50) {
-                    UpcomingMedicationsSection(
-                        dailyMedicines = dailyMedicines,
-                        markingMedicines = markingMedicines,
-                        onMarkIntake = { medicine ->
-                            viewModel.markMedicineIntake(medicine)
-                        }
-                    )
+            ContentStateCrossfade(
+                // No separate empty state here: each section shows its own.
+                state = if (loading && vitals.isEmpty() && dailyMedicines.isEmpty()) ContentState.Loading else ContentState.Content,
+                loading = { VitalsCardShimmer() },
+            ) {
+                Column {
+                    AnimatedSection(delayMillis = 50) {
+                        UpcomingMedicationsSection(
+                            dailyMedicines = dailyMedicines,
+                            markingMedicines = markingMedicines,
+                            onMarkIntake = { medicine ->
+                                viewModel.markMedicineIntake(medicine)
+                            }
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    AnimatedSection(delayMillis = 100) { VitalsCard(vitals = vitals, onUpdateClick = { viewModel.fetchDashboardNoCache() }) }
                 }
-                Spacer(Modifier.height(16.dp))
-                AnimatedSection(delayMillis = 100) { VitalsCard(vitals = vitals, onUpdateClick = { viewModel.fetchDashboardNoCache() }) }
             }
 
             Spacer(Modifier.height(20.dp))
+
+        // Renders nothing (not even spacing) when there are no appointments.
+        AnimatedSection(delayMillis = 150) { HomeScreen(appointments = appointments, loading = loading) }
 
         AnimatedSection(delayMillis = 200) {
             Text(text = "Primary Actions", style = AppTextStyles.style18BCB())
@@ -378,10 +448,6 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
         Spacer(Modifier.height(12.dp))
 
         PrimaryActionsGrid()
-
-        Spacer(Modifier.height(20.dp))
-
-        AnimatedSection(delayMillis = 600) { HomeScreen(appointments = appointments, loading = loading) }
 
         Spacer(Modifier.height(20.dp))
 
@@ -818,7 +884,7 @@ fun VoiceAssistantSheet(
             Spacer(Modifier.height(16.dp))
 
             // ── Cancel button ─────────────────────────────────────────────────
-            OutlinedButton(
+            HapticOutlinedButton(
                 onClick = onDismiss,
                 border = BorderStroke(1.dp, Color(0xFF2D3748)),
                 shape = RoundedCornerShape(24.dp),
@@ -840,6 +906,7 @@ fun VoiceAssistantSheet(
 fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
 
     val colors = LocalMyColorScheme.current
+    val haptic = rememberHaptics()
 
     NavigationBar(containerColor = colors.dashboardBackgroundColor) {
 
@@ -853,7 +920,10 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
         items.forEach { (iconRes, label, index) ->
             NavigationBarItem(
                 selected = selectedIndex == index,
-                onClick = { onItemSelected(index) },
+                onClick = {
+                    if (index != selectedIndex) haptic(HapticEvent.Selection)
+                    onItemSelected(index)
+                },
                 icon = { Icon(painterResource(id = iconRes), contentDescription = label) },
                 label = { Text(label) },
                 colors = NavigationBarItemDefaults.colors(
@@ -954,7 +1024,7 @@ fun ToTakeCard() {
                                     style = AppTextStyles.style12GCN())
                 }
 
-                Checkbox(checked = false, onCheckedChange = {})
+                HapticCheckbox(checked = false, onCheckedChange = {})
             }
         }
     }
@@ -1162,7 +1232,7 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
 
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF9FBFC)
+                    containerColor = colors.dashboardContainerColor
                 ),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
@@ -1382,7 +1452,7 @@ fun PrimaryActionsGrid(   ) {
                     .fillMaxWidth()
                     .height(100.dp)
                     .graphicsLayer { alpha = itemAlpha; translationY = itemY }
-                    .clickable {
+                    .bounceClick {
                         when (item.type) {
                             "vitals" -> navController.navigate(Routes.VITALS)
                             "fluid" -> navController.navigate(Routes.FLUIDDATAINPUT)
@@ -1559,7 +1629,7 @@ fun HomeScreen(
                 }
                 Spacer(Modifier.height(12.dp))
                 AppointmentCardShimmer()
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(20.dp))
             }
             appointments.isNotEmpty() -> {
                 Row(
@@ -1576,10 +1646,19 @@ fun HomeScreen(
                     )
                 }
                 Spacer(Modifier.height(12.dp))
-                appointments.forEach { appointment ->
-                    AppointmentCard(appointment)
-                    Spacer(Modifier.height(12.dp))
+                // Several appointments: cards scroll sideways and the next one peeks in.
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val cardWidth = if (appointments.size == 1) maxWidth else maxWidth * 0.85f
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(appointments) { appointment ->
+                            AppointmentCard(appointment, modifier = Modifier.width(cardWidth))
+                        }
+                    }
                 }
+                Spacer(Modifier.height(20.dp))
             }
         }
     }
@@ -1599,12 +1678,12 @@ fun formatSlotTime(time: String): String = try {
 } catch (e: Exception) { time }
 
 @Composable
-fun AppointmentCard(appointment: UpcomingAppointment) {
+fun AppointmentCard(appointment: UpcomingAppointment, modifier: Modifier = Modifier.fillMaxWidth()) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2458C6)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1759,7 +1838,7 @@ fun ChronicleCard(modifier: Modifier) {
                     ,
                     style = AppTextStyles.style12GCN())
                 Spacer(Modifier.height(8.dp))
-                Button(
+                HapticButton(
                     onClick = {},
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FE4))
@@ -1864,66 +1943,101 @@ fun LifestyleCard() {
         }
     }
 }
+private enum class IntakeStatus { Taken, Skipped, Due, Upcoming }
+
+private fun com.critetiontech.ctvitalio.model.MedicineItem.scheduledAt(): java.time.LocalDateTime? =
+    try { java.time.LocalDateTime.parse(scheduledDateTime) } catch (e: Exception) { null }
+
+private fun com.critetiontech.ctvitalio.model.MedicineItem.intakeStatus(): IntakeStatus {
+    val scheduled = scheduledAt()
+    return when {
+        isTaken && takenDateTime != "1900-01-01T00:00:00" -> IntakeStatus.Taken
+        isSkipped -> IntakeStatus.Skipped
+        scheduled != null && java.time.LocalDateTime.now() >= scheduled -> IntakeStatus.Due
+        else -> IntakeStatus.Upcoming
+    }
+}
+
+private val MedBlue = Color(0xFF2F6FE4)
+
+/**
+ * Today's medicines as a card stack: the next one needing attention sits on top with
+ * the rest peeking out underneath. Tapping the stack (or "+N More") fans it out into a list.
+ */
 @Composable
 fun UpcomingMedicationsSection(
     dailyMedicines: List<com.critetiontech.ctvitalio.model.MedicineItem>,
     markingMedicines: Set<Int>,
     onMarkIntake: (com.critetiontech.ctvitalio.model.MedicineItem) -> Unit
 ) {
-    val colors = LocalMyColorScheme.current
     if (dailyMedicines.isEmpty()) return
 
-    val isExpanded = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    // Only show up to 2 items if not expanded
-    val visibleMedicines = if (isExpanded.value) dailyMedicines else dailyMedicines.take(2)
+    var expanded by remember { mutableStateOf(false) }
+    val ordered = remember(dailyMedicines) {
+        val (pending, done) = dailyMedicines.partition {
+            it.intakeStatus() == IntakeStatus.Due || it.intakeStatus() == IntakeStatus.Upcoming
+        }
+        pending + done
+    }
+    val extra = ordered.size - 1
+    val arrowRotation by animateFloatAsState(if (expanded) 180f else 0f, label = "medArrow")
 
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .animateContentSize()
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null
-                ) {
-                    if (dailyMedicines.size > 2) {
-                        isExpanded.value = !isExpanded.value
-                    }
-                },
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Today's Medications", style = AppTextStyles.style18BCB())
-            
-            if (dailyMedicines.size > 2) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            if (extra > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(0.dp))
+                        .clickable { expanded = !expanded }
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) {
                     Text(
-                        if (isExpanded.value) "Show Less" else "+${dailyMedicines.size - 2} More",
-                        style = AppTextStyles.style12BCN().copy(color = Color(0xFF4F46E5))
+                        if (expanded) "Show Less" else "+$extra More",
+                        style = AppTextStyles.style12BCN().copy(color = MedBlue, fontWeight = FontWeight.SemiBold)
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(2.dp))
                     Icon(
-                        imageVector = if (isExpanded.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = Color(0xFF4F46E5),
-                        modifier = Modifier.size(20.dp)
+                        Icons.Default.KeyboardArrowDown, null,
+                        tint = MedBlue,
+                        modifier = Modifier.size(18.dp).graphicsLayer { rotationZ = arrowRotation }
                     )
                 }
             }
         }
-        
+
         Spacer(Modifier.height(12.dp))
 
-        Column(modifier = Modifier.fillMaxWidth()) {
-            visibleMedicines.forEach { medicine ->
-                MedicineCardItem(
-                    medicine = medicine,
+        androidx.compose.animation.AnimatedContent(
+            targetState = expanded,
+            transitionSpec = {
+                (androidx.compose.animation.fadeIn(tween(220, delayMillis = 60)) togetherWith
+                    androidx.compose.animation.fadeOut(tween(120)))
+                    .using(androidx.compose.animation.SizeTransform(clip = false))
+            },
+            label = "medStack"
+        ) { isExpanded ->
+            if (isExpanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ordered.forEach { med ->
+                        MedicineCardItem(
+                            medicine = med,
+                            isMarking = med.id in markingMedicines,
+                            onMarkIntake = onMarkIntake,
+                        )
+                    }
+                }
+            } else {
+                MedicineStack(
+                    medicines = ordered,
                     markingMedicines = markingMedicines,
                     onMarkIntake = onMarkIntake,
-                    colors = colors,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    onExpand = { if (extra > 0) expanded = true }
                 )
             }
         }
@@ -1931,100 +2045,139 @@ fun UpcomingMedicationsSection(
 }
 
 @Composable
-fun MedicineCardItem(
-    medicine: com.critetiontech.ctvitalio.model.MedicineItem,
+private fun MedicineStack(
+    medicines: List<com.critetiontech.ctvitalio.model.MedicineItem>,
     markingMedicines: Set<Int>,
     onMarkIntake: (com.critetiontech.ctvitalio.model.MedicineItem) -> Unit,
-    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme,
-    modifier: Modifier = Modifier
+    onExpand: () -> Unit,
 ) {
-    val isMarking = markingMedicines.contains(medicine.id)
-    val cardAlpha by androidx.compose.animation.core.animateFloatAsState(if (isMarking) 0.65f else 1f)
+    val colors = LocalMyColorScheme.current
+    val layers = (medicines.size - 1).coerceAtMost(2)
+    val shape = RoundedCornerShape(16.dp)
+    val peek = 7.dp
 
-    // Status logic
-    val isTaken = medicine.isTaken && medicine.takenDateTime != "1900-01-01T00:00:00"
-    val isSkipped = medicine.isSkipped
-    val scheduled = try {
-        java.time.LocalDateTime.parse(medicine.scheduledDateTime)
-    } catch (e: Exception) {
-        null
+    Box(modifier = Modifier.fillMaxWidth().padding(bottom = peek * layers)) {
+        // Back layers first so the front card draws on top.
+        for (layer in layers downTo 1) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .padding(horizontal = 10.dp * layer)
+                    .offset(y = peek * layer)
+                    .shadow(1.dp, shape)
+                    .clip(shape)
+                    .background(colors.dashboardContainerColor)
+            )
+        }
+        MedicineCardItem(
+            medicine = medicines.first(),
+            isMarking = medicines.first().id in markingMedicines,
+            onMarkIntake = onMarkIntake,
+            onCardClick = if (layers > 0) onExpand else null,
+        )
     }
-    val now = java.time.LocalDateTime.now()
-    val statusText = when {
-        isTaken -> "Taken"
-        isSkipped -> "Skipped"
-        scheduled != null && now >= scheduled -> "Take Now"
-        else -> "Upcoming"
+}
+
+@Composable
+fun MedicineCardItem(
+    medicine: com.critetiontech.ctvitalio.model.MedicineItem,
+    isMarking: Boolean,
+    onMarkIntake: (com.critetiontech.ctvitalio.model.MedicineItem) -> Unit,
+    modifier: Modifier = Modifier,
+    onCardClick: (() -> Unit)? = null,
+) {
+    val colors = LocalMyColorScheme.current
+    val context = LocalContext.current
+    val navController = LocalNavController.current
+    val status = medicine.intakeStatus()
+    val shape = RoundedCornerShape(16.dp)
+    val timeText = medicine.scheduledAt()?.format(
+        java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.getDefault())
+    ).orEmpty()
+    val strength = medicine.dosageStrength.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() }
+    val doseText = "$strength ${medicine.unit.orEmpty()}".trim()
+    var menuOpen by remember { mutableStateOf(false) }
+
+    val onCheck: () -> Unit = {
+        when (status) {
+            IntakeStatus.Due -> onMarkIntake(medicine)
+            IntakeStatus.Upcoming -> android.widget.Toast.makeText(
+                context, "Scheduled for $timeText. You can mark it once it is due.", android.widget.Toast.LENGTH_SHORT
+            ).show()
+            else -> Unit
+        }
     }
 
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer { alpha = cardAlpha }
+            .shadow(2.dp, shape, ambientColor = Color(0x14000000), spotColor = Color(0x14000000))
+            .clip(shape)
+            .background(colors.dashboardContainerColor)
+            // Long-press opens the same menu as the ⋮ button.
+            .hapticCombinedClick(onClick = onCardClick, onLongClick = { menuOpen = true })
+            .padding(start = 16.dp, end = 6.dp, top = 14.dp, bottom = 12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFEFF6FF)),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(painter = painterResource(id = R.drawable.medicine_reminder), contentDescription = null, modifier = Modifier.size(24.dp))
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+        CapsuleIcon(tint = if (status == IntakeStatus.Taken) Color(0xFF2DBE7E) else Color(0xFFA3AAB8))
+
+        Spacer(Modifier.width(14.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (doseText.isNotBlank()) {
                     Text(
-                        "${medicine.dosageStrength.toInt()} ${medicine.unit}",
-                        style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B))
+                        doseText,
+                        style = AppTextStyles.style12BCN().copy(fontSize = 11.sp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(colors.dashboardBackgroundColor)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                     Spacer(Modifier.width(8.dp))
-                    // Status Badge
-                    val badgeColor = when (statusText) {
-                        "Taken" -> Color(0xFF1564ED)
-                        "Skipped" -> Color(0xFFE65100)
-                        "Take Now" -> Color(0xFF2E7D32)
-                        else -> Color(0xFF6A1B9A)
-                    }
-                    Box(
-                        modifier = Modifier
-                            .background(badgeColor.copy(alpha = 0.1f), RoundedCornerShape(20.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(statusText, color = badgeColor, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                    }
                 }
-                Spacer(Modifier.height(4.dp))
-                Text(medicine.medicineName, style = AppTextStyles.style14BCB().copy(color = Color(0xFF0F172A), fontWeight = FontWeight.Bold))
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    medicine.instructions.ifEmpty { "As prescribed" },
-                    style = AppTextStyles.style12GCN().copy(color = Color(0xFF64748B))
-                )
+                val (label, labelColor) = when (status) {
+                    IntakeStatus.Taken -> "Taken" to Color(0xFF2DBE7E)
+                    IntakeStatus.Skipped -> "Skipped" to Color(0xFFE65100)
+                    IntakeStatus.Due -> "Take now · $timeText" to MedBlue
+                    IntakeStatus.Upcoming -> timeText to Color(0xFF94A3B8)
+                }
+                if (label.isNotBlank()) {
+                    Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = labelColor)
+                }
             }
-            Spacer(Modifier.width(16.dp))
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.height(64.dp)
-            ) {
-                if (isMarking) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color(0xFF4F46E5),
-                        strokeWidth = 2.dp
-                    )
-                } else if (!isTaken && !isSkipped && statusText == "Take Now") {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .border(1.5.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
-                            .clickable(enabled = markingMedicines.isEmpty()) {
-                                onMarkIntake(medicine)
-                            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                medicine.medicineName.orEmpty(),
+                style = AppTextStyles.style18BCB().copy(fontSize = 17.sp),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                medicine.instructions.orEmpty().ifBlank { "As prescribed" },
+                style = AppTextStyles.style12BCN().copy(color = MedBlue, fontSize = 13.sp),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            IntakeCheckbox(status = status, isMarking = isMarking, onClick = onCheck)
+            Box {
+                HapticIconButton(onClick = { menuOpen = true }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Default.MoreVert, "More", tint = colors.textDarkColor, modifier = Modifier.size(20.dp))
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    if (status == IntakeStatus.Due) {
+                        DropdownMenuItem(
+                            text = { Text("Mark as taken") },
+                            onClick = { menuOpen = false; onMarkIntake(medicine) }
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text("Manage medications") },
+                        onClick = { menuOpen = false; navController.navigate(Routes.MANAGE_MEDICINE) }
                     )
                 }
             }
@@ -2032,3 +2185,69 @@ fun MedicineCardItem(
     }
 }
 
+@Composable
+private fun CapsuleIcon(tint: Color) {
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(36.dp)) {
+        Box(
+            Modifier
+                .graphicsLayer { rotationZ = -45f }
+                .size(width = 30.dp, height = 13.dp)
+                .border(1.5.dp, tint, RoundedCornerShape(50))
+        ) {
+            Box(
+                Modifier
+                    .align(Alignment.Center)
+                    .width(1.5.dp)
+                    .fillMaxHeight()
+                    .background(tint)
+            )
+        }
+    }
+}
+
+@Composable
+private fun IntakeCheckbox(status: IntakeStatus, isMarking: Boolean, onClick: () -> Unit) {
+    val colors = LocalMyColorScheme.current
+    val checked = status == IntakeStatus.Taken
+    val fill by animateColorAsState(if (checked) MedBlue else Color.Transparent, label = "boxFill")
+    val stroke by animateColorAsState(
+        when (status) {
+            IntakeStatus.Taken -> MedBlue
+            IntakeStatus.Due -> colors.textDarkColor
+            else -> Color(0xFFCBD5E1)
+        },
+        label = "boxStroke"
+    )
+    // A small bounce of the box as it fills.
+    val boxScale by animateFloatAsState(
+        if (checked) 1f else 0.92f,
+        spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMedium),
+        label = "boxScale"
+    )
+
+    // 40dp touch target around a 22dp box.
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .successPulse(done = checked, color = MedBlue)
+            .clickable(enabled = !isMarking && (status == IntakeStatus.Due || status == IntakeStatus.Upcoming), onClick = onClick)
+    ) {
+        // The box stays composed under the spinner so the tick can draw in once the save lands.
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(22.dp)
+                .graphicsLayer { alpha = if (isMarking) 0f else 1f; scaleX = boxScale; scaleY = boxScale }
+                .clip(RoundedCornerShape(6.dp))
+                .background(fill)
+                .border(1.6.dp, stroke, RoundedCornerShape(6.dp))
+        ) {
+            AnimatedCheckMark(checked = checked, modifier = Modifier.size(18.dp))
+        }
+        if (isMarking) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MedBlue, strokeWidth = 2.dp)
+        }
+    }
+}

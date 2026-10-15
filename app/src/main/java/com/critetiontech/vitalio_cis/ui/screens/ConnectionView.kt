@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -165,7 +167,7 @@ fun ConnectionScreen(
 
                 /* ---------------- MANUAL VITAL BUTTON ---------------- */
 
-                Button(
+                HapticButton(
                     onClick = { showDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -237,7 +239,7 @@ fun ConnectionScreen(
                             Spacer(modifier = Modifier.height(24.dp))
 
                             /* -------- SAVE BUTTON -------- */
-                            Button(
+                            HapticButton(
                                 onClick = {
                                     when (vitalName) {
                                         "Blood Pressure" -> viewModel.addVital(

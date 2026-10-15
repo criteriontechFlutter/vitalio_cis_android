@@ -1,5 +1,11 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.foundation.lazy.itemsIndexed
+
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -80,7 +86,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
         actions = {
             // Save button
             val btnBg = if (isLoading) colors.borderGreyLightColor else colors.primaryBlueColor
-            Button(
+            HapticButton(
                 onClick = { viewModel.AddMedia() },
                 enabled = !isLoading,
                 shape = RoundedCornerShape(10.dp),
@@ -321,9 +327,11 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
             }
 
             // ─── Lab result cards ─────────────────────────
-            items(report) { item ->
-                ReportResultCard(item = item, colors = colors)
-                Spacer(Modifier.height(10.dp))
+            itemsIndexed(report) { i, item ->
+                AnimatedEnter(index = i) {
+                    ReportResultCard(item = item, colors = colors)
+                    Spacer(Modifier.height(10.dp))
+                }
             }
 
             // empty state

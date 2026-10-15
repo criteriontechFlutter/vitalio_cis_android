@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -106,7 +108,7 @@ fun RegistrationCompletedView() {
 
 
 
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("height")
             },

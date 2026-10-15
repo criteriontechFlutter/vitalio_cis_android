@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -248,8 +250,8 @@ class DoctorDetailsViewModel : ViewModel() {
             }
 
             when (val r = deps.bookAppointment()(params)) {
-                is DomainResult.Success -> _bookingSuccess.value = true
-                is DomainResult.Error -> { _bookingError.value = "Booking failed."; Log.e("DoctorDetailsVM", r.exception.message.orEmpty()) }
+                is DomainResult.Success -> { _bookingSuccess.value = true; Haptics.success() }
+                is DomainResult.Error -> { _bookingError.value = "Booking failed."; Haptics.error(); Log.e("DoctorDetailsVM", r.exception.message.orEmpty()) }
             }
             _bookingLoading.value = false
         }

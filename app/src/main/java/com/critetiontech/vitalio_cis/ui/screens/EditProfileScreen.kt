@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -272,13 +274,13 @@ fun EditProfileScreen(
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                TextButton(onClick = {
+                HapticTextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { dobMillis = it }
                     showDatePicker = false
                 }) { Text("OK", color = colors.primaryBlueColor) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                HapticTextButton(onClick = { showDatePicker = false }) {
                     Text("Cancel", color = colors.textGreyColor)
                 }
             }

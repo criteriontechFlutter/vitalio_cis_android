@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -177,7 +180,7 @@ fun LocationScreen() {
         }
 
         Spacer(modifier = Modifier.weight(1f))
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("weight")
             },
@@ -244,7 +247,7 @@ fun CustomDropdown(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             trailingIcon = {
-                IconButton(onClick = { expanded = true }) {
+                HapticIconButton(onClick = { expanded = true }) {
                     Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                 }
             },

@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.*
@@ -194,14 +198,14 @@ fun VitalHistoryScreen(
             ) {
                 Text("$vitalName Log", style = AppTextStyles.style16BCN())
                 Row {
-                    IconButton(onClick = { viewMode = ViewMode.LIST }) {
+                    HapticIconButton(onClick = { viewMode = ViewMode.LIST }) {
                         Icon(
                             Icons.AutoMirrored.Filled.List,
                             contentDescription = null,
                             tint = if (viewMode == ViewMode.LIST) Color(0xFF2F6BFF) else Color.Gray
                         )
                     }
-                    IconButton(onClick = { viewMode = ViewMode.GRAPH }) {
+                    HapticIconButton(onClick = { viewMode = ViewMode.GRAPH }) {
                         Icon(
                             Icons.Default.ShowChart,
                             contentDescription = null,
@@ -222,7 +226,7 @@ fun VitalHistoryScreen(
                 }
             } else {
                 when (viewMode) {
-                    ViewMode.LIST -> displayEntries.forEach { DynamicLogItem(it) }
+                    ViewMode.LIST -> displayEntries.forEachIndexed { i, entry -> AnimatedEnter(index = i) { DynamicLogItem(entry) } }
                     ViewMode.GRAPH -> DynamicVitalGraph(displayEntries)
                 }
             }
@@ -426,14 +430,14 @@ fun vitalDateRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
+        HapticIconButton(
             onClick = { onPrevious() },
             colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
         ) { Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null) }
 
         Text(text, style = AppTextStyles.style14GCN())
 
-        IconButton(
+        HapticIconButton(
             onClick = { onNext() },
             colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
         ) { Icon(Icons.Default.KeyboardArrowRight, contentDescription = null) }

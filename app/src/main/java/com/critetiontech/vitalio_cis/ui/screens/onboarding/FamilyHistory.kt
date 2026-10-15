@@ -1,4 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -209,7 +212,7 @@ fun FamilyHistoryScreen() {
 
         /// NEXT BUTTON
 
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("createAccount")
             },
@@ -367,7 +370,7 @@ fun FamilyHistoryScreen() {
                                 fontSize = 14.sp
                             )
 
-                            Checkbox(
+                            HapticCheckbox(
                                 checked = selectedRelations.contains(relation),
                                 onCheckedChange = { checked ->
 
@@ -388,7 +391,7 @@ fun FamilyHistoryScreen() {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Button(
+                    HapticButton(
                         onClick = {
                             showRelationDialog = false
                         },

@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticOutlinedButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -72,7 +76,7 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
             title = { Text("Session Expired") },
             text = { Text("Patient profile or session data is missing. Please log in again or reselect your profile.") },
             confirmButton = {
-                TextButton(onClick = {
+                HapticTextButton(onClick = {
                     viewModel.dismissSessionAlert()
                     navController.popBackStack()
                 }) { Text("OK") }
@@ -210,7 +214,7 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (medicines.isNotEmpty()) {
                     val enabled = !isSaving && !savedOk && insertable.isNotEmpty()
-                    Button(
+                    HapticButton(
                         onClick = { viewModel.insertPrescriptionMedicines(toInsert) },
                         enabled = enabled,
                         modifier = Modifier
@@ -252,7 +256,7 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                     }
                 }
 
-                OutlinedButton(
+                HapticOutlinedButton(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier
                         .fillMaxWidth()

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.media.AudioFormat
@@ -71,7 +73,7 @@ fun BreathingTherapyScreen() {
 
             if (!micPermission.status.isGranted) {
                 Spacer(modifier = Modifier.weight(1f))
-                Button(
+                HapticButton(
                     onClick = { micPermission.launchPermissionRequest() },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),

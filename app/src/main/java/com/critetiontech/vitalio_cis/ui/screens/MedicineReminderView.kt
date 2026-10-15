@@ -1,5 +1,16 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
+
+import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
+
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedCheckMark
+import com.critetiontech.ctvitalio.ui.feedback.PopSwap
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -130,7 +141,7 @@ fun MedicineReminderScreen(
         CommonAppBar(
             title = "Medicine Reminder",
             actions = {
-                TextButton(onClick = { navController.navigate(Routes.MANAGEMEDICAIONS) }) {
+                HapticTextButton(onClick = { navController.navigate(Routes.MANAGEMEDICAIONS) }) {
                     Text(
                         "View Log",
                         color = colors.primaryBlueColor,
@@ -149,7 +160,7 @@ fun MedicineReminderScreen(
             var isRefreshing by remember { mutableStateOf(false) }
             val coroutineScope = rememberCoroutineScope()
             @OptIn(ExperimentalMaterial3Api::class)
-            androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            com.critetiontech.ctvitalio.ui.feedback.StretchPullRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = {
                     isRefreshing = true
@@ -163,8 +174,9 @@ fun MedicineReminderScreen(
                     .fillMaxSize()
                     .background(colors.dashboardBackgroundColor)
             ) {
-                when {
-                    loading -> {
+                ContentStateCrossfade(
+                    state = contentStateOf(loading = loading, empty = periods.isEmpty()),
+                    loading = {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -174,8 +186,8 @@ fun MedicineReminderScreen(
                         ) {
                             repeat(3) { MedicinePeriodShimmer() }
                         }
-                    }
-                    periods.isEmpty() -> {
+                    },
+                    empty = {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -197,23 +209,25 @@ fun MedicineReminderScreen(
                                 textAlign = TextAlign.Center
                             )
                         }
-                    }
-                    else -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            periods.forEachIndexed { idx, period ->
+                    },
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        periods.forEachIndexed { idx, period ->
+                            AnimatedEnter(index = idx) {
                                 MedicinePeriodSection(period, viewModel)
                                 if (idx < periods.lastIndex)
                                     HorizontalDivider(color = colors.borderGreyLightColor.copy(.4f))
                             }
-                            Spacer(Modifier.height(8.dp))
                         }
+                        Spacer(Modifier.height(8.dp))
                     }
+
                 }
             }
         }
@@ -329,14 +343,14 @@ fun MedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel) {
                 )
             },
             confirmButton = {
-                Button(
+                HapticButton(
                     onClick = { showConfirm = false; viewModel.markIntake(item.id, item.scheduledDateTime) },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor),
                     shape = RoundedCornerShape(10.dp)
                 ) { Text("Yes, Take") }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirm = false }) {
+                HapticTextButton(onClick = { showConfirm = false }) {
                     Text("Cancel", color = colors.textGreyColor)
                 }
             },
@@ -421,8 +435,14 @@ fun MedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel) {
 
 @Composable
 private fun StatusBadge(status: MedicineStatus, onClick: () -> Unit) {
+    // Keyed by kind so "Take Now" pops into "Taken" instead of cutting over.
+    PopSwap(targetState = status::class) { _, swappedIn -> StatusBadgeContent(status, swappedIn, onClick) }
+}
+
+@Composable
+private fun StatusBadgeContent(status: MedicineStatus, swappedIn: Boolean, onClick: () -> Unit) {
     when (status) {
-        is MedicineStatus.Taken -> StatusTag(Icons.Rounded.CheckCircle, "Taken",    Color(0xFF1564ED))
+        is MedicineStatus.Taken -> TakenTag(Color(0xFF1564ED), animateTick = swappedIn)
         is MedicineStatus.Skipped -> StatusTag(Icons.Rounded.Cancel,     "Skipped",  Color(0xFFE65100))
         is MedicineStatus.TakeNow -> {
             Box(
@@ -440,6 +460,25 @@ private fun StatusBadge(status: MedicineStatus, onClick: () -> Unit) {
             }
         }
         is MedicineStatus.Upcoming -> StatusTag(Icons.Rounded.Schedule, "Upcoming", Color(0xFF6A1B9A))
+    }
+}
+
+/** "Taken" with a filled circle; the tick draws itself in when the dose was just marked. */
+@Composable
+private fun TakenTag(color: Color, animateTick: Boolean) {
+    var drawn by remember { mutableStateOf(!animateTick) }
+    LaunchedEffect(Unit) { drawn = true }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .background(color.copy(.1f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Box(Modifier.size(14.dp).background(color, CircleShape), contentAlignment = Alignment.Center) {
+            AnimatedCheckMark(checked = drawn, modifier = Modifier.size(12.dp), strokeWidth = 1.6.dp)
+        }
+        Spacer(Modifier.width(5.dp))
+        Text("Taken", color = color, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
     }
 }
 

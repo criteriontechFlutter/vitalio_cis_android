@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -262,7 +264,7 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Button(
+                    HapticButton(
                         onClick = {
                             viewModel.verifyOtp(uhid = mobile, otp = otpValue)
                         },

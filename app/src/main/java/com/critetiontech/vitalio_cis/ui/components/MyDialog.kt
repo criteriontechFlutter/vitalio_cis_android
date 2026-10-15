@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,13 +35,13 @@ import androidx.compose.ui.tooling.preview.Preview
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            HapticTextButton(onClick = onConfirm) {
                 Text(confirmText)
             }
         },
         dismissButton = {
             dismissText?.let {
-                TextButton(onClick = { onDismiss?.invoke() }) {
+                HapticTextButton(onClick = { onDismiss?.invoke() }) {
                     Text(it)
                 }
             }
