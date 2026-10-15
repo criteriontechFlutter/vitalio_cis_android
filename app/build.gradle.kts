@@ -14,8 +14,8 @@ android {
         applicationId = "com.critetiontech.ctvitalio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31
-        versionName = "2.0.24"
+        versionCode = 32
+        versionName = "2.0.25"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -71,8 +71,8 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.androidx.contentpager)
     testImplementation(libs.junit)
-    testImplementation("org.mockito:mockito-core:5.24.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     androidTestImplementation(libs.androidx.junit)
@@ -90,47 +90,50 @@ dependencies {
 //    added dip
 
     // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation(libs.retrofit)
 
     // Gson Converter
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation(libs.converter.gson)
 
     // OkHttp
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
 
     // OkHttp Logging
-    implementation("com.squareup.okhttp3:logging-interceptor:5.5.0")
+    implementation(libs.logging.interceptor)
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+    implementation(libs.kotlinx.coroutines.android)
 
     // ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
-    implementation("androidx.hilt:hilt-navigation-compose:1.4.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.hilt.navigation.compose)
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.10.2")
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
 
     // Hilt kept as runtime-only; annotation processing requires a compatible AGP/Kotlin combination.
     // Currently blocked by Kotlin 2.1.0 + AGP 8.11.0 javapoet incompatibility in Hilt 2.55.
     // Uncomment annotation processor when a compatible version is available.
     implementation("com.google.dagger:hilt-android:2.60.1")
 
-    implementation("androidx.navigation:navigation-compose:2.10.2")
+    implementation(libs.navigation.compose)
 
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
-    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+    implementation(libs.accompanist.permissions)
 
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("com.vanniktech:android-image-cropper:4.7.0")
-    implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.android.image.cropper)
+    implementation(libs.androidx.appcompat)
 
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-crashlytics:20.1.1")
     implementation("com.google.firebase:firebase-analytics:23.2.0")
 
     // Android Health Connect — pulls data from Wear OS / Samsung Health / Google Fit
-    implementation("androidx.health.connect:connect-client:1.1.0")
+    implementation(libs.androidx.connect.client)
+
+    // Retries medicine "taken" logs from alarms when offline
+    implementation(libs.androidx.work.runtime)
  }

@@ -1,5 +1,10 @@
   package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+import com.critetiontech.ctvitalio.ui.feedback.bounceClick
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ClipData
@@ -23,6 +28,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.critetiontech.ctvitalio.ui.components.AppDatePickerDialog
+import com.critetiontech.ctvitalio.ui.components.AppTimePickerDialog
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,11 +88,13 @@ fun AddLabResultsScreen(
     val testTypeList = listOf("Investigation", "Radiology", "Imaging", "Lab")
     var expanded     by remember { mutableStateOf(false) }
     var testType     by remember { mutableStateOf("Investigation") }
-    var date         by remember { mutableStateOf("") }
+    var date         by remember { mutableStateOf(LocalDateTime.now().format(LabDateTimeFormat)) }
     var testName     by remember { mutableStateOf("") }
     var findings     by remember { mutableStateOf("") }
     var selectedFile by remember { mutableStateOf<File?>(null) }
     var cameraUri    by remember { mutableStateOf<Uri?>(null) }
+    // Which card the attached image came from, so only that one shows the tick.
+    var fromCamera   by remember { mutableStateOf(false) }
 
     // ── Crop launcher ────────────────────────────────────
     val cropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
@@ -120,7 +134,7 @@ fun AddLabResultsScreen(
     )
 
     val cameraLauncher = rememberLauncherForActivityResult(TakePictureWithPermission()) { success ->
-        if (success && cameraUri != null) startCrop(cameraUri!!)
+        if (success && cameraUri != null) { fromCamera = true; startCrop(cameraUri!!) }
     }
 
     val cameraPermLauncher = rememberLauncherForActivityResult(
@@ -135,7 +149,7 @@ fun AddLabResultsScreen(
 
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { uri -> uri?.let { startCrop(it) } }
+    ) { uri -> uri?.let { fromCamera = false; startCrop(it) } }
 
     // ── UI ───────────────────────────────────────────────
     Box(modifier = Modifier.fillMaxSize()) {
@@ -161,9 +175,7 @@ fun AddLabResultsScreen(
                         value = testType,
                         onValueChange = {},
                         readOnly = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { expanded = true },
+                        modifier = Modifier.fillMaxWidth(),
                         trailingIcon = {
                             Icon(
                                 Icons.Default.KeyboardArrowDown,
@@ -171,8 +183,15 @@ fun AddLabResultsScreen(
                                 tint = colors.textGreyColor
                             )
                         },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = labFieldColors(colors)
+                    )
+                    // The read-only text field consumes taps itself, so a transparent layer opens the menu.
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { expanded = true }
                     )
                     DropdownMenu(
                         expanded = expanded,
@@ -198,7 +217,7 @@ fun AddLabResultsScreen(
                     onValueChange = { testName = it },
                     placeholder = { Text("e.g. LFT, CBC, Blood Sugar", color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = labFieldColors(colors)
                 )
 
@@ -207,16 +226,10 @@ fun AddLabResultsScreen(
                 // Date
                 LabFormLabel("Date & Time", colors)
                 Spacer(Modifier.height(6.dp))
-                OutlinedTextField(
+                LabDateTimeField(
                     value = date,
                     onValueChange = { date = it },
-                    placeholder = { Text("YYYY-MM-DD  HH:mm", color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = colors.primaryBlueColor)
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = labFieldColors(colors)
+                    colors = colors,
                 )
 
                 Spacer(Modifier.height(14.dp))
@@ -231,7 +244,7 @@ fun AddLabResultsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(110.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = labFieldColors(colors)
                 )
 
@@ -246,8 +259,9 @@ fun AddLabResultsScreen(
                         title = "Camera",
                         subtitle = "Capture photo",
                         icon = Icons.Default.CameraAlt,
-                        isSelected = false,
+                        isSelected = selectedFile != null && fromCamera,
                         colors = colors,
+                        accent = CameraAccent,
                         modifier = Modifier.weight(1f)
                     ) { cameraPermLauncher.launch(Manifest.permission.CAMERA) }
 
@@ -255,8 +269,9 @@ fun AddLabResultsScreen(
                         title = "Gallery",
                         subtitle = "Choose image",
                         icon = Icons.Default.Photo,
-                        isSelected = selectedFile != null,
+                        isSelected = selectedFile != null && !fromCamera,
                         colors = colors,
+                        accent = GalleryAccent,
                         modifier = Modifier.weight(1f)
                     ) { galleryLauncher.launch("image/*") }
                 }
@@ -266,9 +281,9 @@ fun AddLabResultsScreen(
                     Spacer(Modifier.height(16.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             AsyncImage(
@@ -301,7 +316,7 @@ fun AddLabResultsScreen(
                                     Text(file.name, style = AppTextStyles.style14BCB(), maxLines = 1)
                                     Text("${file.length() / 1024} KB", style = AppTextStyles.style12GCN())
                                 }
-                                IconButton(onClick = { selectedFile = null }) {
+                                HapticIconButton(onClick = { selectedFile = null }) {
                                     Icon(
                                         Icons.Default.Close,
                                         contentDescription = "Remove",
@@ -317,13 +332,13 @@ fun AddLabResultsScreen(
                 Spacer(Modifier.height(32.dp))
 
                 // Analyze button
-                Button(
+                HapticButton(
                     onClick = {
                         selectedFile?.let { file ->
                             viewModel.aiReport(
                                 file = file,
                                 category = testType,
-                                dateTime = date.ifEmpty { "2026-01-01 00:00" },
+                                dateTime = date.ifEmpty { LocalDateTime.now().format(LabDateTimeFormat) },
                                 subCategory = testName.ifEmpty { "General" },
                                 remark = findings.ifEmpty { "-" }
                             )
@@ -333,7 +348,7 @@ fun AddLabResultsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colors.primaryBlueColor,
                         disabledContainerColor = colors.borderGreyLightColor
@@ -588,8 +603,9 @@ fun LabFormLabel(text: String, colors: MyColorScheme) {
 
 @Composable
 fun labFieldColors(colors: MyColorScheme) = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor   = colors.primaryBlueColor,
-    unfocusedBorderColor = colors.borderGreyLightColor,
+    // Plain white fields; a soft blue ring only while typing.
+    focusedBorderColor   = colors.primaryBlueColor.copy(alpha = 0.35f),
+    unfocusedBorderColor = Color.Transparent,
     focusedContainerColor   = colors.dashboardContainerColor,
     unfocusedContainerColor = colors.dashboardContainerColor,
     focusedTextColor   = colors.textDarkColor,
@@ -597,6 +613,82 @@ fun labFieldColors(colors: MyColorScheme) = OutlinedTextFieldDefaults.colors(
     cursorColor        = colors.primaryBlueColor
 )
 
+/** What the upload API expects for a report's date. */
+val LabDateTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+private val LabDateTimeDisplay: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy · hh:mm a", Locale.getDefault())
+
+/**
+ * Read-only date & time field: tapping it opens a calendar, then a clock. [value] is in
+ * [LabDateTimeFormat]; the field shows it in a friendlier form. Future dates are disabled
+ * since a report can't come from tomorrow.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LabDateTimeField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    colors: MyColorScheme,
+) {
+    val current = remember(value) {
+        try { LocalDateTime.parse(value, LabDateTimeFormat) } catch (e: Exception) { null }
+    }
+    var showDate by remember { mutableStateOf(false) }
+    var pickedDate by remember { mutableStateOf<LocalDate?>(null) }
+
+    Box {
+        OutlinedTextField(
+            value = current?.format(LabDateTimeDisplay) ?: value,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text("Select date & time", color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                Icon(Icons.Default.DateRange, contentDescription = "Pick date", tint = colors.primaryBlueColor)
+            },
+            shape = RoundedCornerShape(16.dp),
+            colors = labFieldColors(colors)
+        )
+        // The read-only text field consumes taps itself, so a transparent layer opens the picker.
+        Box(
+            Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable { showDate = true }
+        )
+    }
+
+    if (showDate) {
+        AppDatePickerDialog(
+            initial = current?.toLocalDate() ?: LocalDate.now(),
+            onDismiss = { showDate = false },
+            onConfirm = { pickedDate = it; showDate = false },
+            confirmText = "Next",
+            // A report can't come from the future.
+            isSelectable = { !it.isAfter(LocalDate.now()) },
+        )
+    }
+
+    pickedDate?.let { day ->
+        AppTimePickerDialog(
+            initialHour = current?.hour ?: LocalTime.now().hour,
+            initialMinute = current?.minute ?: LocalTime.now().minute,
+            onDismiss = { pickedDate = null },
+            onConfirm = { h, m ->
+                onValueChange(day.atTime(h, m).format(LabDateTimeFormat))
+                pickedDate = null
+            },
+        )
+    }
+}
+
+/** Light purple for camera capture, light green for picking from the gallery. */
+val CameraAccent = Color(0xFF7C3AED)
+val GalleryAccent = Color(0xFF16A34A)
+
+/**
+ * A tinted, borderless source card (camera / gallery). [accent] colours the card, icon and
+ * title; [isSelected] adds a tick in the corner when the attached file came from this source.
+ */
 @Composable
 fun UploadOptionCard(
     title: String,
@@ -605,53 +697,48 @@ fun UploadOptionCard(
     isSelected: Boolean,
     colors: MyColorScheme,
     modifier: Modifier = Modifier,
+    accent: Color = colors.primaryBlueColor,
     onClick: () -> Unit,
 ) {
-    val borderColor = if (isSelected) colors.primaryBlueColor else colors.borderGreyLightColor
-    val bgColor     = if (isSelected) colors.primaryBlueColor.copy(alpha = 0.07f) else colors.dashboardContainerColor
-
-    Column(
+    val shape = RoundedCornerShape(20.dp)
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(bgColor)
-            .border(
-                width = 1.5.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(14.dp)
-            )
-            .clickable { onClick() }
-            .padding(vertical = 18.dp, horizontal = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .clip(shape)
+            .background(accent.copy(alpha = if (isSelected) 0.16f else 0.09f))
+            .bounceClick(onClick = onClick),
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(
-                    if (isSelected) colors.primaryBlueColor.copy(alpha = 0.15f)
-                    else colors.dashboardBackgroundColor
-                ),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .padding(vertical = 20.dp, horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = if (isSelected) colors.primaryBlueColor else colors.textGreyColor,
-                modifier = Modifier.size(24.dp)
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(26.dp))
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(title, style = AppTextStyles.style14BCB(), color = accent)
+            Spacer(Modifier.height(3.dp))
+            Text(
+                subtitle,
+                style = AppTextStyles.style12GCN(),
+                textAlign = TextAlign.Center
             )
         }
-        Spacer(Modifier.height(10.dp))
-        Text(
-            title,
-            style = AppTextStyles.style14BCB(),
-            color = if (isSelected) colors.primaryBlueColor else colors.textDarkColor
-        )
-        Spacer(Modifier.height(3.dp))
-        Text(
-            subtitle,
-            style = AppTextStyles.style12GCN(),
-            textAlign = TextAlign.Center
-        )
+        if (isSelected) {
+            Icon(
+                Icons.Default.CheckCircle,
+                contentDescription = "Selected",
+                tint = accent,
+                modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).size(20.dp)
+            )
+        }
     }
 }
 

@@ -47,6 +47,10 @@ class SymptomTrackerViewModel : ViewModel() {
     private val _popBackEvent = MutableSharedFlow<Unit>()
     val popBackEvent: SharedFlow<Unit> = _popBackEvent
 
+    // Fired when the "Do you still have…?" walkthrough has been saved.
+    private val _trackerCompletedEvent = MutableSharedFlow<Unit>()
+    val trackerCompletedEvent: SharedFlow<Unit> = _trackerCompletedEvent
+
     fun updateSelectedSymptoms() { _selectedSymptoms.value = emptyList() }
     fun clearSearchResults() { _searchedSymptomList.value = emptyList() }
     fun addSymptom(symptom: SymptomItem) { 
@@ -70,8 +74,12 @@ class SymptomTrackerViewModel : ViewModel() {
         }
     }
 
-    fun insertSymptoms() {
-        if (_selectedSymptoms.value.isEmpty()) { viewModelScope.launch { _popBackEvent.emit(Unit) }; return }
+    fun insertSymptoms(fromTracker: Boolean = false) {
+        if (_addLoading.value) return
+        if (_selectedSymptoms.value.isEmpty()) {
+            viewModelScope.launch { if (fromTracker) _trackerCompletedEvent.emit(Unit) else _popBackEvent.emit(Unit) }
+            return
+        }
         viewModelScope.launch {
             _addLoading.value = true
             val patient = prefs.getPatient() ?: run { _addLoading.value = false; return@launch }
@@ -95,11 +103,24 @@ class SymptomTrackerViewModel : ViewModel() {
             when (val r = deps.insertSymptoms()(body)) {
                 is DomainResult.Success -> {
                     _selectedSymptoms.value = emptyList()
-                    getSymptoms()
-                    getProblemsWithIcon()
-                    _popBackEvent.emit(Unit)
+                    if (fromTracker) {
+                        // The symptoms screen loads fresh data itself; refetching here would
+                        // flash the tracker's spinner and race the navigation.
+                        _trackerCompletedEvent.emit(Unit)
+                    } else {
+                        getSymptoms()
+                        getProblemsWithIcon()
+                        _popBackEvent.emit(Unit)
+                    }
                 }
-                is DomainResult.Error -> Log.e("SymptomTrackerVM", r.exception.message.orEmpty())
+                is DomainResult.Error -> {
+                    Log.e("SymptomTrackerVM", r.exception.message.orEmpty())
+                    android.widget.Toast.makeText(
+                        com.critetiontech.ctvitalio.utils.MyApplication.appContext,
+                        "Couldn't update symptoms. Please try again.",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
             _addLoading.value = false
         }

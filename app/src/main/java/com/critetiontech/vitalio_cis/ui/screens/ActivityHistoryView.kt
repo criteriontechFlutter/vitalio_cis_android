@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,7 +61,9 @@ fun ActivityHistoryScreen(viewModel: ActivityViewModel = viewModel()) {
                 contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
             ) {
                 items(recentList.size, key = { index -> "${recentList[index].serverId}_$index" }) { index ->
-                    ActivityHistoryCard(recentList[index])
+                    AnimatedEnter(index = index) {
+                        ActivityHistoryCard(recentList[index])
+                    }
                 }
             }
         }

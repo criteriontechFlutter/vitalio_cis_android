@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
+
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -168,7 +170,7 @@ fun BookingConfirmationScreen(
                     verticalAlignment = Alignment.Top,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Checkbox(
+                    HapticCheckbox(
                         checked = checked,
                         onCheckedChange = { checked = it },
                         modifier = Modifier.size(20.dp)

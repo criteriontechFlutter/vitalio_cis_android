@@ -140,7 +140,9 @@ fun MyAppTheme(
 
     CompositionLocalProvider(
         LocalThemeViewModel provides themeViewModel,
-        LocalMyColorScheme provides colors
+        LocalMyColorScheme provides colors,
+        // Ripple + tap haptic for every Modifier.clickable in the app.
+        androidx.compose.foundation.LocalIndication provides com.critetiontech.ctvitalio.ui.feedback.HapticIndication,
     ) {
         content()
     }

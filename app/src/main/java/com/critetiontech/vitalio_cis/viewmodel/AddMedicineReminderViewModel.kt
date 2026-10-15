@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +12,8 @@ import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.InsertMedicineRequest
 import com.critetiontech.ctvitalio.model.SearchMedicineItem
+import com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler
+import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -189,12 +193,16 @@ class AddMedicineReminderViewModel : ViewModel() {
                 is DomainResult.Success -> {
                     if (r.data.status == 1) {
                         _insertSuccess.value = true
+                        Haptics.success()
+                        MedicineReminderScheduler.requestSync(MyApplication.appContext)
                     } else {
                         _errorMessage.value = r.data.responseValue ?: r.data.message
+                        Haptics.error()
                     }
                 }
                 is DomainResult.Error -> {
                     _errorMessage.value = r.exception.message ?: "Unknown error"
+                    Haptics.error()
                     Log.e("AddMedicineVM", r.exception.message.orEmpty())
                 }
             }

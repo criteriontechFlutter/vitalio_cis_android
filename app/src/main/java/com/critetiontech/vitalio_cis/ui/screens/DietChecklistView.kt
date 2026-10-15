@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -159,7 +161,7 @@ fun DietCard(medicine: Diet) {
             }
 
             if (medicine.isTaken) {
-                Button(
+                HapticButton(
                     onClick = {},
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2962FF)

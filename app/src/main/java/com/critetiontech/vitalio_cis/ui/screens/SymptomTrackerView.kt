@@ -65,8 +65,13 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
         viewModel.getSymptoms()
     }
 
+    // All questions answered and saved → refreshed symptoms list, replacing the tracker.
     LaunchedEffect(Unit) {
-        viewModel.popBackEvent.collect { navController.popBackStack() }
+        viewModel.trackerCompletedEvent.collect {
+            navController.navigate(Routes.SYMPTOMS) {
+                popUpTo(Routes.SYMPTOMSTRACKER) { inclusive = true }
+            }
+        }
     }
 
     val symptomList by viewModel.symptomTrackerList.collectAsState()
@@ -168,7 +173,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {
-                            viewModel.insertSymptoms()
+                            viewModel.insertSymptoms(fromTracker = true)
                         }
                     }
                 )
@@ -183,7 +188,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {
-                            viewModel.insertSymptoms()
+                            viewModel.insertSymptoms(fromTracker = true)
                         }
                     }
                 )

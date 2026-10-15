@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
@@ -702,7 +704,7 @@ private fun SmartRingPairing(viewModel: SmartRingViewModel) {
         )
         Spacer(Modifier.height(24.dp))
 
-        Button(
+        HapticButton(
             onClick = { viewModel.startOAuthFlow(context) },
             enabled = !isLoading,
             modifier = Modifier

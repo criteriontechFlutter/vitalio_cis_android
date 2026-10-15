@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.*
@@ -1331,7 +1333,7 @@ fun BpRangeIndicator(
 
         Spacer(Modifier.height(16.dp))
 
-        Button(
+        HapticButton(
             onClick = { if (!isLoading) onUpdate() },
             enabled = selectedColour.isNotEmpty() && !isLoading,
             modifier = Modifier.fillMaxWidth().height(52.dp),

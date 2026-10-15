@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,8 +65,11 @@ fun FAQScreen() {
             Spacer(modifier = Modifier.height(12.dp))
 
             // 🔹 FAQ List
-            faqList.forEach {
-                FAQItemView(it)
+            faqList.forEachIndexed { i, faq ->
+                AnimatedEnter(index = i) {
+                    FAQItemView(faq)
+            
+                }
             }
         }
     }

@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -161,7 +165,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                             )
                             Spacer(Modifier.height(12.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                prescriptions.forEach { MedicineCard(it, colors.dashboardContainerColor) }
+                                prescriptions.forEachIndexed { i, rx -> AnimatedEnter(index = i) { MedicineCard(rx, colors.dashboardContainerColor) } }
                             }
                         }
                     }
@@ -1105,7 +1109,7 @@ private fun PrescriptionErrorState(message: String, bgColor: Color, onRetry: () 
                 lineHeight = 20.sp
             )
             Spacer(Modifier.height(20.dp))
-            Button(
+            HapticButton(
                 onClick = onRetry,
                 colors = ButtonDefaults.buttonColors(containerColor = Blue),
                 shape = RoundedCornerShape(12.dp)
@@ -1151,7 +1155,7 @@ private fun PrescriptionEmptyState(bgColor: Color, onRefresh: () -> Unit) {
                 color = TextLight
             )
             Spacer(Modifier.height(20.dp))
-            Button(
+            HapticButton(
                 onClick = onRefresh,
                 colors = ButtonDefaults.buttonColors(containerColor = Blue),
                 shape = RoundedCornerShape(12.dp)

@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
+
+import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
+
 import android.net.Uri
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -278,25 +282,28 @@ fun FindDoctorsScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // -------------------- Doctor Grid --------------------
-        when {
-            isLoading && filteredDoctors.isEmpty() -> DoctorGridShimmer()
-            !isLoading && filteredDoctors.isEmpty() -> {
+        ContentStateCrossfade(
+            state = contentStateOf(loading = isLoading, empty = filteredDoctors.isEmpty()),
+            loading = {
+                DoctorGridShimmer()
+            },
+            empty = {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No doctors found", color = Color.Gray)
                 }
-            }
-            else -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    gridItems(filteredDoctors) { doctor ->
-                        DoctorCard(doctor, doctorProfiles[doctor.assignedUserId])
-                    }
+            },
+        ) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                gridItems(filteredDoctors) { doctor ->
+                    DoctorCard(doctor, doctorProfiles[doctor.assignedUserId])
                 }
             }
+
         }
     }
 }

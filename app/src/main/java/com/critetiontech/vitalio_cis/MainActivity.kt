@@ -1,5 +1,6 @@
 package com.critetiontech.ctvitalio
 
+import com.critetiontech.ctvitalio.ui.feedback.AppNavTransitions
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -117,7 +118,11 @@ class MainActivity : ComponentActivity() {
                         NavHost(
                             navController = navController,
                             startDestination = if (PrefsManager(context).getPatient()?.uhId?.isNotEmpty()
-                                    ?: false) Routes.DASHBOARD else Routes.LOGIN
+                                    ?: false) Routes.DASHBOARD else Routes.LOGIN,
+                            enterTransition = AppNavTransitions.enter,
+                            exitTransition = AppNavTransitions.exit,
+                            popEnterTransition = AppNavTransitions.popEnter,
+                            popExitTransition = AppNavTransitions.popExit,
                         ) {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
                             composable(Routes.LOGIN) { LoginScreen() }
@@ -283,6 +288,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.DIGITAL_TWIN) { com.critetiontech.ctvitalio.ui.screens.DigitalTwinScreen() }
                             composable(Routes.HEALTH_ORBIT) { com.critetiontech.ctvitalio.ui.screens.HealthOrbitScreen() }
                             composable(Routes.EDITPROFILE) { com.critetiontech.ctvitalio.ui.screens.EditProfileScreen() }
+                            composable(Routes.MEDICINE_REMINDER_SETTINGS) { com.critetiontech.ctvitalio.ui.screens.MedicineReminderSettingsScreen() }
                         }
                     }
                 }

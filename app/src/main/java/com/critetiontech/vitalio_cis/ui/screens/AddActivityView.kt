@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -96,7 +99,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray.copy(alpha = 0.6f)) },
             trailingIcon = {
                 if (viewModel.searchText.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.onSearchChange("") }) {
+                    HapticIconButton(onClick = { viewModel.onSearchChange("") }) {
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.Gray.copy(alpha = 0.6f))
                     }
                 }
@@ -290,7 +293,7 @@ fun ActivityBottomSheet(
             Spacer(Modifier.height(24.dp))
 
             // ── Save button ──
-            Button(
+            HapticButton(
                 onClick = onSave,
                 enabled = !isSaving,
                 shape = RoundedCornerShape(12.dp),

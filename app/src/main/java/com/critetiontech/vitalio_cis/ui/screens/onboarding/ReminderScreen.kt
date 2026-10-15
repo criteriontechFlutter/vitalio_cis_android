@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -28,7 +30,7 @@ fun ReminderScreen( ) {
         AlertDialog(
             onDismissRequest = { show = false },
             confirmButton = {
-                TextButton(onClick = {
+                HapticTextButton(onClick = {
                     time = "${timeState.hour}:${timeState.minute}"
                     show = false
                 }) { Text("OK") }

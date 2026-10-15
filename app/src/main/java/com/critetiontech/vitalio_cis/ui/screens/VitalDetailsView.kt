@@ -1,5 +1,12 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
+
+import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -12,6 +19,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Air
+import androidx.compose.material.icons.outlined.Bloodtype
+import androidx.compose.material.icons.outlined.DeviceThermostat
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Height
+import androidx.compose.material.icons.outlined.MonitorHeart
+import androidx.compose.material.icons.outlined.MonitorWeight
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -101,6 +118,11 @@ private fun VitalListShimmer() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Value colours: normal / borderline / abnormal.
+private val VitalNormal     = Color(0xFF1F5BE0)
+private val VitalBorderline = Color(0xFFE0A100)
+private val VitalAbnormal   = Color(0xFFE5172F)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
@@ -121,14 +143,14 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
     CommonAppBar(
         title = "Vitals",
         actions = {
-            IconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
+            HapticIconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Analytics,
                     contentDescription = "Health Orbit",
                     tint = colors.textDarkColor
                 )
             }
-            IconButton(onClick = { showInfoDialog = true }) {
+            HapticIconButton(onClick = { showInfoDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Info,
                     contentDescription = "Color info",
@@ -148,46 +170,47 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
             val vitals  by viewModel.vitalList.collectAsState()
             val loading by viewModel.loading.collectAsState()
 
-            when {
-                loading && vitals.isEmpty() -> VitalListShimmer()
-
-                !loading && vitals.isEmpty() -> {
+            ContentStateCrossfade(
+                state = contentStateOf(loading = loading, empty = vitals.isEmpty()),
+                loading = {
+                    VitalListShimmer()
+                },
+                empty = {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text("No vitals recorded yet", color = Color(0xFF9E9E9E))
                     }
+                },
+            ) {
+                val bpSys = vitals.find { it.vitalName.equals("BP_Sys", true) }
+                val bpDia = vitals.find { it.vitalName.equals("BP_Dias", true) }
+
+                if (bpSys != null && bpDia != null) {
+                    VitalCard(
+                        title    = "Blood Pressure",
+                        value    = "${bpSys.vitalValue.toInt()}/${bpDia.vitalValue.toInt()}",
+                        unit     = "mmHg",
+                        color    = getBpColor(bpSys.vitalValue, bpDia.vitalValue),
+                        time     = formatTimeAgo(bpSys.vitalDateTime),
+                        vitalIds = "${bpSys.vitalID},${bpDia.vitalID}"
+                    )
                 }
 
-                else -> {
-                    val bpSys = vitals.find { it.vitalName.equals("BP_Sys", true) }
-                    val bpDia = vitals.find { it.vitalName.equals("BP_Dias", true) }
-
-                    if (bpSys != null && bpDia != null) {
+                vitals
+                    .filter { it.vitalName != "BP_Sys" && it.vitalName != "BP_Dias" }
+                    .forEach { vital ->
                         VitalCard(
-                            title    = "Blood Pressure",
-                            value    = "${bpSys.vitalValue.toInt()}/${bpDia.vitalValue.toInt()}",
-                            unit     = "mmHg",
-                            color    = getBpColor(bpSys.vitalValue, bpDia.vitalValue),
-                            time     = formatTimeAgo(bpSys.vitalDateTime),
-                            vitalIds = "${bpSys.vitalID},${bpDia.vitalID}"
+                            title    = getVitalDisplayName(vital.vitalName),
+                            value    = formatValue(vital.vitalValue),
+                            unit     = vital.unit.trim().removePrefix("/"),
+                            color    = getVitalValueColor(vital.vitalName, vital.vitalValue),
+                            time     = formatTimeAgo(vital.vitalDateTime),
+                            vitalIds = "${vital.vitalID}"
                         )
                     }
 
-                    vitals
-                        .filter { it.vitalName != "BP_Sys" && it.vitalName != "BP_Dias" }
-                        .forEach { vital ->
-                            VitalCard(
-                                title    = getVitalDisplayName(vital.vitalName),
-                                value    = formatValue(vital.vitalValue),
-                                unit     = vital.unit.replace("/", ""),
-                                color    = getVitalValueColor(vital.vitalName, vital.vitalValue),
-                                time     = formatTimeAgo(vital.vitalDateTime),
-                                vitalIds = "${vital.vitalID}"
-                            )
-                        }
-                }
             }
         }
     }
@@ -198,15 +221,15 @@ fun VitalColorInfoDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Got it") }
+            HapticTextButton(onClick = onDismiss) { Text("Got it") }
         },
         title = { Text("Vital Color Guide", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                ColorLegendRow(Color(0xFF4CAF50), "Normal", "Values within healthy range")
-                ColorLegendRow(Color(0xFFFF9800), "Borderline", "Slightly outside normal range")
-                ColorLegendRow(Color(0xFFF44336), "Abnormal", "Requires attention")
+                ColorLegendRow(VitalNormal, "Normal", "Values within healthy range")
+                ColorLegendRow(VitalBorderline, "Borderline", "Slightly outside normal range")
+                ColorLegendRow(VitalAbnormal, "Abnormal", "Requires attention")
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -271,46 +294,46 @@ fun getVitalDisplayName(vitalName: String): String = when (vitalName.lowercase()
 
 fun getVitalValueColor(vitalName: String, value: Double): Color {
     return when (vitalName.lowercase()) {
-        "pulse" -> when {
-            value in 60.0..100.0 -> Color(0xFF4CAF50)
-            value in 50.0..110.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
+        "pulse", "heartrate", "heart rate" -> when {
+            value in 60.0..100.0 -> VitalNormal
+            value in 50.0..110.0 -> VitalBorderline
+            else -> VitalAbnormal
         }
         "temperature" -> {
             val tempC = if (value > 45) (value - 32) * 5 / 9 else value
             when {
-                tempC in 36.1..37.2 -> Color(0xFF4CAF50)
-                tempC in 35.0..38.0 -> Color(0xFFFF9800)
-                else -> Color(0xFFF44336)
+                tempC in 36.1..37.2 -> VitalNormal
+                tempC in 35.0..38.0 -> VitalBorderline
+                else -> VitalAbnormal
             }
         }
         "spo2", "oxygen saturation" -> when {
-            value >= 95.0 -> Color(0xFF4CAF50)
-            value >= 90.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
+            value >= 95.0 -> VitalNormal
+            value >= 90.0 -> VitalBorderline
+            else -> VitalAbnormal
         }
-        "respiratory rate", "rr" -> when {
-            value in 12.0..20.0 -> Color(0xFF4CAF50)
-            value in 10.0..24.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
+        "respiratory rate", "resprate", "rr" -> when {
+            value in 12.0..20.0 -> VitalNormal
+            value in 10.0..24.0 -> VitalBorderline
+            else -> VitalAbnormal
         }
         "blood glucose", "glucose", "fbs", "rbs" -> when {
-            value in 70.0..140.0 -> Color(0xFF4CAF50)
-            value in 50.0..200.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
+            value in 70.0..140.0 -> VitalNormal
+            value in 50.0..200.0 -> VitalBorderline
+            else -> VitalAbnormal
         }
-        "weight", "height" -> Color(0xFF2962FF)
-        else -> Color(0xFF4CAF50)
+        "weight", "height" -> VitalNormal
+        else -> VitalNormal
     }
 }
 
 fun getBpColor(sys: Double, dia: Double): Color {
     return when {
-        sys < 90 || dia < 60 -> Color(0xFFF44336)
-        sys <= 120 && dia <= 80 -> Color(0xFF4CAF50)
-        sys <= 130 && dia <= 80 -> Color(0xFFFF9800)
-        sys <= 140 || dia <= 90 -> Color(0xFFFF9800)
-        else -> Color(0xFFF44336)
+        sys < 90 || dia < 60 -> VitalAbnormal
+        sys <= 120 && dia <= 80 -> VitalNormal
+        sys <= 130 && dia <= 80 -> VitalBorderline
+        sys <= 140 || dia <= 90 -> VitalBorderline
+        else -> VitalAbnormal
     }
 }
 
@@ -325,83 +348,80 @@ fun VitalCard(
 ) {
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
-    Card(
+    val shape = RoundedCornerShape(14.dp)
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp)
+            .padding(bottom = 10.dp)
+            .clip(shape)
+            .background(colors.dashboardContainerColor)
             .clickable {
                 val encodedName = Uri.encode(title)
                 navController.navigate("${Routes.VITALHISTORY}?vitalIds=$vitalIds&vitalName=$encodedName")
-            },
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+            }
+            .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 10.dp)
     ) {
-
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-
-            Column(
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = vitalIcon(title),
+                contentDescription = null,
+                tint = Color(0xFF8A93A3),
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = title,
+                style = AppTextStyles.style14BCN().copy(fontSize = 15.sp, fontWeight = FontWeight.Medium),
                 modifier = Modifier.weight(1f)
-            ) {
+            )
+            Text(
+                "Add Vital",
+                style = AppTextStyles.style12GCN().copy(fontSize = 11.sp, color = colors.textGreyColor),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable { navController.navigate(Routes.CONNECTION + "/" + title + "/" + unit.replace("/", "")) }
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            )
+        }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+        Spacer(Modifier.height(2.dp))
 
-                    Text(
-                        text = title,
-                        style = AppTextStyles.style16BCB())
-
-
-
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(verticalAlignment = Alignment.Bottom) {
-
-                    Text(
-                        value,
-                        color = color,
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    Text(
-                        unit,
-                        style = AppTextStyles.style12GCN())
-
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                value,
+                color = color,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 28.sp
+            )
+            if (unit.isNotBlank()) {
+                Spacer(Modifier.width(4.dp))
                 Text(
-                    time,
-                    style = AppTextStyles.style12GCN().copy(fontSize = 11.sp))
-
+                    unit,
+                    style = AppTextStyles.style12GCN().copy(fontSize = 13.sp),
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
             }
-
-            Column   {
-                Text(
-                    "Add Vital",
-                            style = AppTextStyles.style12PCN(),
-                    modifier = Modifier.clickable {
-                        navController.navigate(Routes.CONNECTION+"/"+title.toString()+"/"+unit.toString())
-                    })
-
-//                MiniGraph(color)
-            }
+            Spacer(Modifier.weight(1f))
+            Text(
+                time,
+                style = AppTextStyles.style12GCN().copy(fontSize = 10.sp, color = colors.textDarkColor.copy(alpha = 0.7f)),
+                modifier = Modifier.padding(bottom = 3.dp)
+            )
         }
     }
+}
+
+private fun vitalIcon(title: String): ImageVector = when {
+    title.contains("pressure", true) -> Icons.Outlined.Speed
+    title.contains("pulse", true) || title.contains("heart", true) -> Icons.Outlined.MonitorHeart
+    title.contains("spo2", true) || title.contains("oxygen", true) -> Icons.Outlined.WaterDrop
+    title.contains("temp", true) -> Icons.Outlined.DeviceThermostat
+    title.contains("resp", true) -> Icons.Outlined.Air
+    title.contains("glucose", true) || title.contains("rbs", true) || title.contains("sugar", true) -> Icons.Outlined.Bloodtype
+    title.contains("weight", true) -> Icons.Outlined.MonitorWeight
+    title.contains("height", true) -> Icons.Outlined.Height
+    else -> Icons.Outlined.FavoriteBorder
 }
 
 

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -207,7 +209,7 @@ fun FluidDetailsScreen() {
 
 
 
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("registrationCompleted")
             },
