@@ -163,9 +163,9 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
                 CommonButton(
                     text = "Yes",
-                    textStyle = AppTextStyles.style14BCB(),
+                    textStyle = AppTextStyles.style14BCB(color = Color.White),
                     modifier = Modifier.weight(1f),
-                    containerColor = colors.btnGreyColor,
+                    containerColor = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) Color(0xFF3A4654) else colors.btnGreyColor,
                     isLoading = addLoading && currentIndex == questions.lastIndex,
                     enabled = !addLoading,
                     onClick = {

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.material.icons.rounded.ErrorOutline
+
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
@@ -69,15 +71,13 @@ fun InteractionCheckerScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
 
     if (errorMessage != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.clearError() },
-            title = { Text("Error") },
-            text = { Text(errorMessage!!) },
-            confirmButton = {
-                HapticTextButton(onClick = { viewModel.clearError() }) {
-                    Text("OK")
-                }
-            }
+        com.critetiontech.ctvitalio.ui.components.AppDialog(
+            title = "Something went wrong",
+            message = errorMessage,
+            icon = androidx.compose.material.icons.Icons.Rounded.ErrorOutline,
+            iconTint = com.critetiontech.ctvitalio.ui.components.DialogDangerColor,
+            confirmText = "OK",
+            onDismiss = { viewModel.clearError() },
         )
     }
 

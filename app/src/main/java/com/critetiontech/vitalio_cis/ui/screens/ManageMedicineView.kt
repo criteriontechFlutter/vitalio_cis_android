@@ -86,13 +86,13 @@ import kotlin.math.cos
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
 private val Blue500       = Color(0xFF2F7BF5)
-private val BlueLight     = Color(0xFFE6EFFF)
+private val BlueLight: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Blue500, Color(0xFFE6EFFF))
 private val Green500      = Color(0xFF2DBE7E)
 private val TextSecondary = Color(0xFF8A90A0)
 private val TextMuted     = Color(0xFFC0C5D0)
-private val DividerColor  = Color(0xFFEEF0F5)
-private val CardWhite     = Color(0xFFFFFFFF)
-private val TextPrimary   = Color(0xFF1A1D23)
+private val DividerColor: Color @Composable get() = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFEEF0F5)
+private val CardWhite: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.dashboardContainerColor
+private val TextPrimary: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.textDarkColor
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -194,21 +194,11 @@ fun MonthPickerSheet(
     var pickedMonth by remember { mutableIntStateOf(selectedMonthIndex) }
     var pickedYear  by remember { mutableIntStateOf(selectedYear) }
 
-    ModalBottomSheet(
-        onDismissRequest    = onDismiss,
-        sheetState          = sheetState,
-        containerColor      = CardWhite,
-        shape               = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        dragHandle          = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .width(40.dp)
-                    .height(4.dp)
-                    .clip(CircleShape)
-                    .background(TextMuted)
-            )
-        },
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState       = sheetState,
+        title            = "Select month",
+        icon             = Icons.Rounded.CalendarMonth,
     ) {
         Column(
             modifier            = Modifier
@@ -638,9 +628,10 @@ private fun DayPill(
             .clickable(onClick = onClick),
     ) {
         if (isSelected) {
+            val ringTrack = BlueLight
             Canvas(Modifier.matchParentSize().padding(2.dp)) {
                 val stroke = 3.dp.toPx()
-                drawCircle(BlueLight, style = Stroke(stroke))
+                drawCircle(ringTrack, style = Stroke(stroke))
                 drawArc(
                     color      = Blue500,
                     startAngle = -90f,
@@ -868,26 +859,20 @@ fun ManageMedicationsScreen(
         mutableStateOf(!settings.setupPromptShown && !AlarmSetup.isComplete(context))
     }
     if (showAlarmSetup) {
-        AlertDialog(
-            onDismissRequest = {
+        com.critetiontech.ctvitalio.ui.components.AppDialog(
+            title = "Set up medicine alarms",
+            message = "Allow a few permissions so your medicine alarm rings on time and opens full screen, even while you're using your phone.",
+            icon = Icons.Rounded.Alarm,
+            confirmText = "Set up",
+            dismissText = "Later",
+            onDismiss = {
                 ReminderSettings(context).setupPromptShown = true
                 showAlarmSetup = false
             },
-            icon = { Icon(Icons.Rounded.Alarm, null, tint = Blue500) },
-            title = { Text("Set up medicine alarms") },
-            text = { Text("Allow a few permissions so your medicine alarm rings on time and opens full screen, even while you're using your phone.") },
-            confirmButton = {
-                HapticTextButton(onClick = {
-                    ReminderSettings(context).setupPromptShown = true
-                    showAlarmSetup = false
-                    navController.navigate(Routes.MEDICINE_REMINDER_SETTINGS)
-                }) { Text("Set up", color = Blue500, fontWeight = FontWeight.SemiBold) }
-            },
-            dismissButton = {
-                HapticTextButton(onClick = {
-                    ReminderSettings(context).setupPromptShown = true
-                    showAlarmSetup = false
-                }) { Text("Later", color = TextSecondary) }
+            onConfirm = {
+                ReminderSettings(context).setupPromptShown = true
+                showAlarmSetup = false
+                navController.navigate(Routes.MEDICINE_REMINDER_SETTINGS)
             },
         )
     }

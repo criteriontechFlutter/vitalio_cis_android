@@ -23,11 +23,21 @@ class AppointmentViewModel : ViewModel() {
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
 
+    private val _historyLoading = MutableStateFlow(false)
+    val historyLoading: StateFlow<Boolean> = _historyLoading
+
     private val _upcoming = MutableStateFlow<List<UpcomingAppointmentItem>>(emptyList())
     val upcoming: StateFlow<List<UpcomingAppointmentItem>> = _upcoming
 
     private val _history = MutableStateFlow<List<AppointmentHistoryItem>>(emptyList())
     val history: StateFlow<List<AppointmentHistoryItem>> = _history
+
+    /** Set when a list couldn't be loaded and there's nothing to show, so the screen can offer a retry. */
+    private val _upcomingError = MutableStateFlow(false)
+    val upcomingError: StateFlow<Boolean> = _upcomingError
+
+    private val _historyError = MutableStateFlow(false)
+    val historyError: StateFlow<Boolean> = _historyError
 
     init {
         // Auto-refetch whenever network comes back online after being offline
@@ -45,24 +55,35 @@ class AppointmentViewModel : ViewModel() {
     fun fetchAll() {
         viewModelScope.launch {
             _loading.value = true
-            val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
+            _historyLoading.value = true
+            val patient = prefs.getPatient() ?: run {
+                _loading.value = false; _historyLoading.value = false
+                _upcomingError.value = true; _historyError.value = true
+                return@launch
+            }
             val pid = patient.pid.toString()
             val clientId = patient.clientId.toString()
 
-            // Fetch upcoming first — this is the default tab, loading ends here
-            when (val r = fetchUpcomingUseCase(pid, clientId)) {
-                is DomainResult.Success -> _upcoming.value = r.data
-                is DomainResult.Error -> Log.e("AppointmentVM", "upcoming: ${r.exception.message}")
-            }
-            _loading.value = false
-
-            // History loads in background — won't block the shimmer/UI
+            // History loads alongside — it also carries the real appointment dates the upcoming list lacks.
             launch {
                 when (val r = fetchHistoryUseCase(pid, clientId)) {
-                    is DomainResult.Success -> _history.value = r.data
-                    is DomainResult.Error -> Log.e("AppointmentVM", "history: ${r.exception.message}")
+                    is DomainResult.Success -> { _history.value = r.data; _historyError.value = false }
+                    is DomainResult.Error -> {
+                        _historyError.value = _history.value.isEmpty()
+                        Log.e("AppointmentVM", "history: ${r.exception.message}")
+                    }
+                }
+                _historyLoading.value = false
+            }
+
+            when (val r = fetchUpcomingUseCase(pid, clientId)) {
+                is DomainResult.Success -> { _upcoming.value = r.data; _upcomingError.value = false }
+                is DomainResult.Error -> {
+                    _upcomingError.value = _upcoming.value.isEmpty()
+                    Log.e("AppointmentVM", "upcoming: ${r.exception.message}")
                 }
             }
+            _loading.value = false
         }
     }
 }

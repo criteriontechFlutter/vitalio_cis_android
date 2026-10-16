@@ -164,12 +164,11 @@ fun HeightScreen() {
 
     if (showBottomSheet) {
 
-        ModalBottomSheet(
+        com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
             onDismissRequest = {
                 showBottomSheet = false
             },
             sheetState = sheetState,
-            containerColor = Color.White
         ) {
 
             HeightPickerBottomSheet(

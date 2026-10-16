@@ -8,12 +8,19 @@ import com.critetiontech.ctvitalio.model.ShiftData
 import com.critetiontech.ctvitalio.model.UpcomingAppointmentItem
 import com.critetiontech.ctvitalio.model.Department
 
+/** A booking that didn't go through; [message] is ready to show the patient. */
+class BookingException(message: String) : Exception(message)
+
 interface DoctorRepository {
     suspend fun fetchDoctors(clientId: String, departmentId: String = "0"): DomainResult<List<Doctor>>
     suspend fun fetchDepartments(clientId: String): DomainResult<List<Department>>
     suspend fun fetchDoctorProfile(clientId: String, doctorId: String): DomainResult<DoctorDetails?>
     suspend fun fetchAvailableSlots(doctorId: String, scheduleDate: String, clientId: String): DomainResult<List<ShiftData>>
-    suspend fun bookAppointment(params: Map<String, Any>): DomainResult<Unit>
+    /**
+     * Books the appointment; succeeds with its visit number (e.g. "VNO2604500640") when the server sends one.
+     * Fails with [BookingException] carrying a patient-facing reason (server refusal, no internet, …).
+     */
+    suspend fun bookAppointment(params: Map<String, Any>): DomainResult<String?>
     suspend fun fetchUpcomingAppointments(pid: String, clientId: String): DomainResult<List<UpcomingAppointmentItem>>
     suspend fun fetchAppointmentHistory(pid: String, clientId: String, userId: String): DomainResult<List<AppointmentHistoryItem>>
     

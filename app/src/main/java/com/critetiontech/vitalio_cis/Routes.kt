@@ -33,6 +33,7 @@ object Routes {
     const val INTERACTIONCHECKER  = "InteractionCheckerScreen"
     const val INTERACTIONINSTRUCTION = "InteractionInstructionScreen"
     const val DIETCHECKLIST  = "DietChecklistScreen"
+    const val NUTRIENTS = "NutrientSearchScreen"
     const val PRESCRIPTION  = "PrescriptionScreen"
     const val FLUIDDATAINPUT  = "FluidDataInputScreen"
     const val FLUIDOUTPUTHISTORY  = "FluidOutputHistoryScreen"

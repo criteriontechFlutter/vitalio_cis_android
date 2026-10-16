@@ -172,7 +172,8 @@ fun MedicineReminderScreen(
                 },
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colors.dashboardBackgroundColor)
+                    .background(colors.dashboardBackgroundColor),
+                refreshingText = "Updating your medicines…",
             ) {
                 ContentStateCrossfade(
                     state = contentStateOf(loading = loading, empty = periods.isEmpty()),
@@ -325,44 +326,21 @@ fun MedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel) {
     var showConfirm by remember { mutableStateOf(false) }
 
     if (showConfirm) {
-        AlertDialog(
-            onDismissRequest = { showConfirm = false },
-            icon = {
-                Icon(
-                    Icons.Rounded.Medication, null,
-                    tint = colors.primaryBlueColor,
-                    modifier = Modifier.size(32.dp)
-                )
-            },
-            title = { Text("Take Medicine", fontWeight = FontWeight.Bold) },
-            text = {
-                Text(
-                    "Are you sure you want to mark ${item.medicineName.trim()} as taken?",
-                    style = AppTextStyles.style14BCN(),
-                    color = colors.textGreyColor
-                )
-            },
-            confirmButton = {
-                HapticButton(
-                    onClick = { showConfirm = false; viewModel.markIntake(item.id, item.scheduledDateTime) },
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor),
-                    shape = RoundedCornerShape(10.dp)
-                ) { Text("Yes, Take") }
-            },
-            dismissButton = {
-                HapticTextButton(onClick = { showConfirm = false }) {
-                    Text("Cancel", color = colors.textGreyColor)
-                }
-            },
-            containerColor = colors.dashboardContainerColor,
-            shape = RoundedCornerShape(20.dp)
+        com.critetiontech.ctvitalio.ui.components.AppDialog(
+            title = "Mark as taken?",
+            message = "${item.medicineName.trim()}${timeFmt.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()} will be recorded as taken now.",
+            icon = Icons.Rounded.Medication,
+            confirmText = "Yes, taken",
+            dismissText = "Cancel",
+            onDismiss = { showConfirm = false },
+            onConfirm = { showConfirm = false; viewModel.markIntake(item.id, item.scheduledDateTime) },
         )
     }
 
     Surface(
         color = colors.dashboardContainerColor,
         shape = RoundedCornerShape(20.dp),
-        shadowElevation = 1.dp,
+        shadowElevation = 0.dp,
         tonalElevation = 0.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -532,7 +510,7 @@ private fun MedicinePeriodShimmer() {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
                     color = colors.dashboardContainerColor,
-                    shadowElevation = 1.dp,
+                    shadowElevation = 0.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(16.dp)) {

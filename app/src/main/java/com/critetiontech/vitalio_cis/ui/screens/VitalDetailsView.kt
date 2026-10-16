@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.material.icons.rounded.Palette
+
 import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
 
 import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
@@ -123,6 +125,17 @@ private val VitalNormal     = Color(0xFF1F5BE0)
 private val VitalBorderline = Color(0xFFE0A100)
 private val VitalAbnormal   = Color(0xFFE5172F)
 
+/**
+ * How a reading compares with its reference range. [None] is for measurements that have no
+ * normal/abnormal range on their own (height, weight) or vitals we don't know.
+ */
+enum class VitalStatus(val label: String, val color: Color) {
+    Normal("NORMAL", VitalNormal),
+    Borderline("BORDERLINE", VitalBorderline),
+    Abnormal("ABNORMAL", VitalAbnormal),
+    None("", VitalNormal),
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
@@ -191,7 +204,7 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
                     VitalCard(
                         title    = "Blood Pressure",
                         value    = "${bpSys.vitalValue.toInt()}/${bpDia.vitalValue.toInt()}",
-                        unit     = "mmHg",
+                        unit     = displayUnit(bpSys.unit),
                         color    = getBpColor(bpSys.vitalValue, bpDia.vitalValue),
                         time     = formatTimeAgo(bpSys.vitalDateTime),
                         vitalIds = "${bpSys.vitalID},${bpDia.vitalID}"
@@ -204,7 +217,7 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
                         VitalCard(
                             title    = getVitalDisplayName(vital.vitalName),
                             value    = formatValue(vital.vitalValue),
-                            unit     = vital.unit.trim().removePrefix("/"),
+                            unit     = displayUnit(vital.unit),
                             color    = getVitalValueColor(vital.vitalName, vital.vitalValue),
                             time     = formatTimeAgo(vital.vitalDateTime),
                             vitalIds = "${vital.vitalID}"
@@ -218,43 +231,44 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
 
 @Composable
 fun VitalColorInfoDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            HapticTextButton(onClick = onDismiss) { Text("Got it") }
-        },
-        title = { Text("Vital Color Guide", fontWeight = FontWeight.Bold) },
-        text = {
+    val colors = LocalMyColorScheme.current
+    com.critetiontech.ctvitalio.ui.components.AppDialog(
+        title = "Vital Color Guide",
+        message = "What the colours on your readings mean.",
+        icon = Icons.Rounded.Palette,
+        confirmText = "Got it",
+        onDismiss = onDismiss,
+    ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
                 ColorLegendRow(VitalNormal, "Normal", "Values within healthy range")
                 ColorLegendRow(VitalBorderline, "Borderline", "Slightly outside normal range")
                 ColorLegendRow(VitalAbnormal, "Abnormal", "Requires attention")
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = colors.borderGreyLightColor.copy(alpha = 0.4f))
 
-                Text("Normal Ranges", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                Text("Normal Ranges", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = colors.textDarkColor)
 
                 val ranges = listOf(
-                    "Blood Pressure" to "Sys 90–120 / Dia 60–80 mmHg",
-                    "Pulse" to "60–100 bpm",
-                    "Temperature" to "36.1–37.2 °C / 97–99 °F",
-                    "SpO2" to "≥ 95%",
-                    "Respiratory Rate" to "12–20 breaths/min",
-                    "Blood Glucose" to "70–140 mg/dL"
+                    "Blood Pressure" to "90–120 / 60–80 mmHg",
+                    "Pulse / Heart Rate" to "60–100 /min",
+                    "Temperature" to "97–99 °F (36.1–37.2 °C)",
+                    "SpO2" to "95–100 %",
+                    "Respiratory Rate" to "12–20 /min",
+                    "Blood Glucose (random)" to "70–140 mg/dL",
+                    "Height / Weight" to "Tracked over time"
                 )
                 ranges.forEach { (name, range) ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(name, fontSize = 12.sp, color = Color(0xFF555555))
-                        Text(range, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text(name, fontSize = 12.sp, color = colors.textGreyColor)
+                        Text(range, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = colors.textDarkColor)
                     }
                 }
             }
-        }
-    )
+    }
 }
 
 @Composable
@@ -268,9 +282,19 @@ fun ColorLegendRow(color: Color, label: String, description: String) {
         Spacer(modifier = Modifier.width(10.dp))
         Column {
             Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
-            Text(description, fontSize = 11.sp, color = Color(0xFF777777))
+            Text(description, fontSize = 11.sp, color = LocalMyColorScheme.current.textGreyColor)
         }
     }
+}
+
+/**
+ * The backend's unit as shown to people. It sends temperature as both "°F" and "F", so a bare
+ * "F"/"C" gets its degree sign; everything else is shown exactly as sent.
+ */
+fun displayUnit(raw: String): String = when (val u = raw.trim()) {
+    "F", "f" -> "°F"
+    "C", "c" -> "°C"
+    else -> u
 }
 
 fun formatValue(value: Double): String {
@@ -289,53 +313,66 @@ fun getVitalDisplayName(vitalName: String): String = when (vitalName.lowercase()
     "weight" -> "Weight"
     "height" -> "Height"
     "rbs" -> "Blood Glucose"
+    "fbs" -> "Fasting Blood Glucose"
     else -> vitalName
 }
 
-fun getVitalValueColor(vitalName: String, value: Double): Color {
-    return when (vitalName.lowercase()) {
-        "pulse", "heartrate", "heart rate" -> when {
-            value in 60.0..100.0 -> VitalNormal
-            value in 50.0..110.0 -> VitalBorderline
-            else -> VitalAbnormal
-        }
-        "temperature" -> {
-            val tempC = if (value > 45) (value - 32) * 5 / 9 else value
-            when {
-                tempC in 36.1..37.2 -> VitalNormal
-                tempC in 35.0..38.0 -> VitalBorderline
-                else -> VitalAbnormal
-            }
-        }
-        "spo2", "oxygen saturation" -> when {
-            value >= 95.0 -> VitalNormal
-            value >= 90.0 -> VitalBorderline
-            else -> VitalAbnormal
-        }
-        "respiratory rate", "resprate", "rr" -> when {
-            value in 12.0..20.0 -> VitalNormal
-            value in 10.0..24.0 -> VitalBorderline
-            else -> VitalAbnormal
-        }
-        "blood glucose", "glucose", "fbs", "rbs" -> when {
-            value in 70.0..140.0 -> VitalNormal
-            value in 50.0..200.0 -> VitalBorderline
-            else -> VitalAbnormal
-        }
-        "weight", "height" -> VitalNormal
-        else -> VitalNormal
+/** Adult reference ranges; [vitalName] is the backend name ("Pulse", "RBS", …) or its display name. */
+fun vitalStatus(vitalName: String, value: Double): VitalStatus = when (vitalName.lowercase().trim()) {
+    // Resting rate: bradycardia < 60, tachycardia > 100.
+    "pulse", "heartrate", "heart rate" -> when {
+        value in 60.0..100.0 -> VitalStatus.Normal
+        value in 50.0..110.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
     }
+    // Backend sends °F; values ≤ 45 are taken as °C.
+    "temperature" -> {
+        val tempC = if (value > 45) (value - 32) * 5 / 9 else value
+        when {
+            tempC in 36.1..37.2 -> VitalStatus.Normal
+            tempC >= 35.0 && tempC < 38.0 -> VitalStatus.Borderline   // mild hypothermia / low-grade fever
+            else -> VitalStatus.Abnormal                                // hypothermia < 35 °C, fever ≥ 38 °C
+        }
+    }
+    "spo2", "oxygen saturation" -> when {
+        value >= 95.0 -> VitalStatus.Normal
+        value >= 90.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal                                     // hypoxaemia
+    }
+    "respiratory rate", "resprate", "rr" -> when {
+        value in 12.0..20.0 -> VitalStatus.Normal
+        value in 10.0..24.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
+    }
+    // Random blood sugar: < 54 is level-2 hypoglycaemia, ≥ 200 is in the diabetic range.
+    "blood glucose", "glucose", "rbs" -> when {
+        value in 70.0..140.0 -> VitalStatus.Normal
+        value >= 54.0 && value < 200.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
+    }
+    // Fasting: 70–99 normal, 100–125 prediabetes, ≥ 126 diabetes.
+    "fbs" -> when {
+        value in 70.0..99.0 -> VitalStatus.Normal
+        value >= 54.0 && value < 126.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
+    }
+    else -> VitalStatus.None
 }
 
-fun getBpColor(sys: Double, dia: Double): Color {
-    return when {
-        sys < 90 || dia < 60 -> VitalAbnormal
-        sys <= 120 && dia <= 80 -> VitalNormal
-        sys <= 130 && dia <= 80 -> VitalBorderline
-        sys <= 140 || dia <= 90 -> VitalBorderline
-        else -> VitalAbnormal
-    }
+/**
+ * Normal ≤ 120/80; elevated or stage-1 hypertension up to 139/89 is borderline; ≥ 140 or ≥ 90
+ * (stage 2) and hypotension (< 90 or < 60) are abnormal.
+ */
+fun bpStatus(sys: Double, dia: Double): VitalStatus = when {
+    sys < 90 || dia < 60 -> VitalStatus.Abnormal
+    sys >= 140 || dia >= 90 -> VitalStatus.Abnormal
+    sys <= 120 && dia <= 80 -> VitalStatus.Normal
+    else -> VitalStatus.Borderline
 }
+
+fun getVitalValueColor(vitalName: String, value: Double): Color = vitalStatus(vitalName, value).color
+
+fun getBpColor(sys: Double, dia: Double): Color = bpStatus(sys, dia).color
 
 @Composable
 fun VitalCard(
@@ -357,7 +394,7 @@ fun VitalCard(
             .background(colors.dashboardContainerColor)
             .clickable {
                 val encodedName = Uri.encode(title)
-                navController.navigate("${Routes.VITALHISTORY}?vitalIds=$vitalIds&vitalName=$encodedName")
+                navController.navigate("${Routes.VITALHISTORY}?vitalIds=$vitalIds&vitalName=$encodedName&unit=${Uri.encode(unit)}")
             }
             .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 10.dp)
     ) {
@@ -374,14 +411,16 @@ fun VitalCard(
                 style = AppTextStyles.style14BCN().copy(fontSize = 15.sp, fontWeight = FontWeight.Medium),
                 modifier = Modifier.weight(1f)
             )
-            Text(
-                "Add Vital",
-                style = AppTextStyles.style12GCN().copy(fontSize = 11.sp, color = colors.textGreyColor),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable { navController.navigate(Routes.CONNECTION + "/" + title + "/" + unit.replace("/", "")) }
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-            )
+            if (canAddVitalManually(title)) {
+                Text(
+                    "Add Vital",
+                    style = AppTextStyles.style12GCN().copy(fontSize = 11.sp, color = colors.textGreyColor),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { navController.navigate(Routes.CONNECTION + "/" + Uri.encode(title) + "/" + Uri.encode(unit)) }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
+            }
         }
 
         Spacer(Modifier.height(2.dp))

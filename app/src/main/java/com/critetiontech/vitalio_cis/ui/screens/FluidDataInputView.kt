@@ -776,7 +776,9 @@ fun SlideableWaterGlass(
 
 @Composable
 private fun fluidShimmerBrush(): Brush {
-    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val shimmerColors = if (com.critetiontech.ctvitalio.ui.theme.isAppDark)
+        listOf(Color(0xFF2A3138), Color(0xFF3A434D), Color(0xFF2A3138))
+    else listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
     val transition = rememberInfiniteTransition(label = "fluidShimmer")
     val translateX by transition.animateFloat(
         initialValue = -600f, targetValue = 600f,

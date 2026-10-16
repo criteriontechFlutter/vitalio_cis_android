@@ -43,10 +43,23 @@ class VitalRepositoryImpl @Inject constructor(
         val response = ApiHelper().callApi(context, endpoints.addVital, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
-        if (response.isSuccessful) DomainResult.Success(Unit)
-        else DomainResult.Error(Exception("API Error: ${response.code()}"))
+        // The server may answer 200 or 500 with {"status":0,"responseValue":"<reason>"} when it refuses.
+        val raw = if (response.isSuccessful) response.body()?.string() else response.errorBody()?.string()
+        val body = runCatching { org.json.JSONObject(raw.orEmpty()) }.getOrNull()
+        val status = body?.opt("status")?.toString()?.toIntOrNull()
+        val generic = setOf("", "null", "failure", "failed", "error", "success")
+        val reason = (body?.opt("responseValue") as? String)?.trim()?.takeIf { it.lowercase() !in generic }
+            ?: body?.optString("message")?.trim()?.takeIf { it.lowercase() !in generic }
+        when {
+            response.isSuccessful && (status == null || status == 1) -> DomainResult.Success(Unit)
+            response.code() == 504 && raw.orEmpty().startsWith("No Connection") ->
+                DomainResult.Error(Exception("No internet connection. Check your network and try again."))
+            raw.orEmpty().startsWith("Exception:") ->
+                DomainResult.Error(Exception("Couldn't reach the server. Check your connection and try again."))
+            else -> DomainResult.Error(Exception(reason ?: "Couldn't save the vital right now. Please try again."))
+        }
     } catch (e: Exception) {
-        DomainResult.Error(e)
+        DomainResult.Error(Exception("Couldn't reach the server. Check your connection and try again."))
     }
 
     override suspend fun fetchVitalAnalytics(params: Map<String, Any>): DomainResult<List<VitalGraphEntry>> = try {
