@@ -216,15 +216,24 @@ fun ChronicDiseaseScreen() {
         ) {
 
             Card(
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White
                 )
             ) {
 
                 Column(
-                    modifier = Modifier.padding(14.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)
                 ) {
+
+                    Text(
+                        text = "Select Disease",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF202529)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     /// SEARCH
 

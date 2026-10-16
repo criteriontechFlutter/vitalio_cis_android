@@ -514,7 +514,7 @@ private fun VitalTile(item: UltrahumanLastVitalItem, colors: MyColorScheme, modi
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AllVitalsSheet(vitals: List<UltrahumanLastVitalItem>, colors: MyColorScheme, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = colors.dashboardContainerColor) {
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(onDismissRequest = onDismiss, title = "All Recorded Vitals", icon = Icons.Default.MonitorHeart) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -522,7 +522,6 @@ private fun AllVitalsSheet(vitals: List<UltrahumanLastVitalItem>, colors: MyColo
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 24.dp)
         ) {
-            Text("All Recorded Vitals", style = AppTextStyles.style16BCB(), modifier = Modifier.padding(bottom = 12.dp))
             vitals.forEach { item ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -547,7 +546,7 @@ private fun AllVitalsSheet(vitals: List<UltrahumanLastVitalItem>, colors: MyColo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SleepStagesInfoSheet(stages: List<SleepStageItem>, colors: MyColorScheme, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = colors.dashboardContainerColor) {
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(onDismissRequest = onDismiss, title = "Understanding Sleep Stages", icon = Icons.Default.Bedtime) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -556,7 +555,6 @@ private fun SleepStagesInfoSheet(stages: List<SleepStageItem>, colors: MyColorSc
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Understanding Sleep Stages", style = AppTextStyles.style18BCB())
             Text(
                 "Your smart ring monitors biometric shifts including heart rate, HRV, and skin temperature to classify your sleep into four distinct stages:",
                 style = AppTextStyles.style14GCN()

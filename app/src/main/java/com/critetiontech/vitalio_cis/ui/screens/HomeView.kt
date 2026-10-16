@@ -1,5 +1,6 @@
 package com.example.vitalio_cis.ui.screens
 
+import com.critetiontech.ctvitalio.ui.screens.displayUnit
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
@@ -249,8 +250,8 @@ fun DashboardScreen(
                         val items = listOf(
                             Triple(R.drawable.home, "Home", 0),
                             Triple(R.drawable.activity, "Activity", 1),
-                            Triple(R.drawable.ring, "Ring", 2),
-                            Triple(R.drawable.chat, "Chat", 3)
+                            Triple(R.drawable.ring, "Ring", 2)
+                            // Chat is hidden until its screen is built.
                         )
                         items.forEach { (iconRes, label, index) ->
                             NavigationRailItem(
@@ -259,10 +260,10 @@ fun DashboardScreen(
                                 icon = { Icon(painterResource(id = iconRes), contentDescription = label) },
                                 label = { Text(label) },
                                 colors = NavigationRailItemDefaults.colors(
-                                    selectedIconColor = Color.Blue,
-                                    selectedTextColor = Color.Blue,
-                                    unselectedIconColor = Color.Gray,
-                                    unselectedTextColor = Color.Gray,
+                                    selectedIconColor = colors.primaryBlueColor,
+                                    selectedTextColor = colors.primaryBlueColor,
+                                    unselectedIconColor = colors.textGreyColor,
+                                    unselectedTextColor = colors.textGreyColor,
                                     indicatorColor = Color.Transparent
                                 )
                             )
@@ -913,8 +914,8 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
         val items = listOf(
             Triple(R.drawable.home,stringResource(R.string.home), 0),
             Triple(R.drawable.activity, stringResource(R.string.activity), 1),
-            Triple(R.drawable.ring, stringResource(R.string.ring), 2),
-            Triple(R.drawable.chat, stringResource(R.string.chat), 3)
+            Triple(R.drawable.ring, stringResource(R.string.ring), 2)
+            // Chat is hidden until its screen is built.
         )
 
         items.forEach { (iconRes, label, index) ->
@@ -927,10 +928,10 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
                 icon = { Icon(painterResource(id = iconRes), contentDescription = label) },
                 label = { Text(label) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.Blue,
-                    selectedTextColor = Color.Blue,
-                    unselectedIconColor = Color.Gray,
-                    unselectedTextColor = Color.Gray,
+                    selectedIconColor = colors.primaryBlueColor,
+                    selectedTextColor = colors.primaryBlueColor,
+                    unselectedIconColor = colors.textGreyColor,
+                    unselectedTextColor = colors.textGreyColor,
                     indicatorColor = Color.Transparent
                 )
             )
@@ -1067,7 +1068,7 @@ fun mergeVitals(vitals: List<Vital>): List<Vital> {
         otherVitals.add(
             Vital(
                 vitalName = "BP",
-                unit = "mmHg",
+                unit = bpSys.unit.trim(),
                 vitalDateTime = bpSys.vitalDateTime,
                 displayValue = "${bpSys.vitalValue.toInt()}/${bpDias.vitalValue.toInt()}"
             )
@@ -1249,7 +1250,7 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                         modifier = Modifier
                             .size(48.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFFEAF2FF)),
+                            .background(com.critetiontech.ctvitalio.ui.theme.softTint(colors.primaryBlueColor, Color(0xFFEAF2FF))),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
@@ -1264,12 +1265,12 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = vital.vitalName,
-                            style = AppTextStyles.style14BCB().copy(color = Color(0xFF1E293B), fontWeight = FontWeight.Bold)
+                            style = AppTextStyles.style14BCB().copy(color = colors.textDarkColor, fontWeight = FontWeight.Bold)
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = getTimeAgo(vital.vitalDateTime),
-                            style = AppTextStyles.style12GCN().copy(color = Color(0xFF64748B))
+                            style = AppTextStyles.style12GCN().copy(color = colors.textGreyColor)
                         )
                     }
 
@@ -1282,13 +1283,13 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
                                 text = displayVal,
-                                style = AppTextStyles.style24BCB().copy(fontSize = 24.sp, color = Color(0xFF1E293B), fontWeight = FontWeight.Bold),
+                                style = AppTextStyles.style24BCB().copy(fontSize = 24.sp, color = colors.textDarkColor, fontWeight = FontWeight.Bold),
                                 modifier = Modifier.alignByBaseline()
                             )
                             Spacer(Modifier.width(2.dp))
                             Text(
-                                text = vital.unit,
-                                style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B)),
+                                text = displayUnit(vital.unit),
+                                style = AppTextStyles.style12BCN().copy(color = colors.textGreyColor),
                                 modifier = Modifier.alignByBaseline()
                             )
                         }
@@ -1304,13 +1305,13 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                         ) {
                             Text(
                                 text = "Update",
-                                style = AppTextStyles.style12BCN().copy(color = Color(0xFF64748B))
+                                style = AppTextStyles.style12BCN().copy(color = colors.textGreyColor)
                             )
                             Spacer(Modifier.width(4.dp))
                             Icon(
                                 Icons.Default.Refresh,
                                 contentDescription = "Refresh",
-                                tint = Color(0xFF64748B),
+                                tint = colors.textGreyColor,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
@@ -1687,20 +1688,17 @@ fun AppointmentCard(appointment: UpcomingAppointment, modifier: Modifier = Modif
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
+                // Photo when the server has one, else the doctor's initials.
+                com.critetiontech.ctvitalio.ui.screens.DoctorPhoto(
+                    name = appointment.doctorName.trim(),
+                    url = com.critetiontech.ctvitalio.ui.screens.doctorPhotoUrl(appointment.profileImage),
+                    initialsSize = 18.sp,
                     modifier = Modifier
                         .size(52.dp)
+                        .border(2.dp, Color.White.copy(alpha = 0.35f), CircleShape)
+                        .padding(2.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                )
                 Spacer(Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -1735,8 +1733,11 @@ fun AppointmentCard(appointment: UpcomingAppointment, modifier: Modifier = Modif
             Spacer(Modifier.height(14.dp))
 
             AppointmentRow(Icons.Default.DateRange, formatAppointmentDate(appointment.appointmentDate))
-            Spacer(Modifier.height(6.dp))
-            AppointmentRow(Icons.Default.Schedule, formatSlotTime(appointment.slotTime))
+            // Token (shift) bookings have no slot time.
+            if (appointment.slotTime.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
+                AppointmentRow(Icons.Default.Schedule, formatSlotTime(appointment.slotTime))
+            }
             if (appointment.clinicName.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 AppointmentRow(Icons.Default.LocationOn, appointment.clinicName)

@@ -27,15 +27,17 @@ fun ReminderScreen( ) {
     var time by remember { mutableStateOf("Select Time") }
 
     if (show) {
-        AlertDialog(
-            onDismissRequest = { show = false },
-            confirmButton = {
-                HapticTextButton(onClick = {
-                    time = "${timeState.hour}:${timeState.minute}"
-                    show = false
-                }) { Text("OK") }
+        com.critetiontech.ctvitalio.ui.components.AppTimePickerDialog(
+            initialHour = timeState.hour,
+            initialMinute = timeState.minute,
+            onDismiss = { show = false },
+            onConfirm = { h, m ->
+                timeState.hour = h
+                timeState.minute = m
+                time = "%d:%02d".format(h, m)
+                show = false
             },
-            text = { TimePicker(state = timeState) }
+            title = "Reminder time",
         )
     }
 

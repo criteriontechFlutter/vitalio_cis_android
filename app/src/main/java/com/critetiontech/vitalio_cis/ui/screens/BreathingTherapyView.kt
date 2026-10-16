@@ -50,7 +50,7 @@ fun BreathingTherapyScreen() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0xFFF0FDF4), Color(0xFFE0F2FE)))),
+                .background(Brush.verticalGradient(if (com.critetiontech.ctvitalio.ui.theme.isAppDark) listOf(colors.dashboardBackgroundColor, Color(0xFF10233A)) else listOf(Color(0xFFF0FDF4), Color(0xFFE0F2FE)))),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(30.dp))
@@ -59,14 +59,14 @@ fun BreathingTherapyScreen() {
                 text = "Digital Biofeedback",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF0F172A),
+                color = colors.textDarkColor,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
             Text(
                 text = "Activate your parasympathetic nervous system to quickly lower stress and blood pressure.",
                 fontSize = 15.sp,
-                color = Color(0xFF475569),
+                color = colors.textGreyColor,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
             )
@@ -193,7 +193,7 @@ fun BreathingBiofeedbackVisualizer(modifier: Modifier = Modifier) {
         // Repetition Counter Badge
         Surface(
             shape = CircleShape,
-            color = Color(0xFFDBEAFE), // Light blue background
+            color = com.critetiontech.ctvitalio.ui.theme.softTint(Color(0xFF3B82F6), Color(0xFFDBEAFE)),
             modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
         ) {
             Row(
@@ -203,13 +203,13 @@ fun BreathingBiofeedbackVisualizer(modifier: Modifier = Modifier) {
                 Icon(
                     Icons.Default.Favorite, 
                     contentDescription = null, 
-                    tint = Color(0xFF1E40AF), 
+                    tint = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) Color(0xFF93C5FD) else Color(0xFF1E40AF),
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "Breaths Completed: $repetitions",
-                    color = Color(0xFF1E40AF),
+                    color = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) Color(0xFF93C5FD) else Color(0xFF1E40AF),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -255,7 +255,7 @@ fun BreathingBiofeedbackVisualizer(modifier: Modifier = Modifier) {
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
-            color = Color(0xFF1E293B),
+            color = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.textDarkColor,
             modifier = Modifier.padding(bottom = 60.dp)
         )
     }

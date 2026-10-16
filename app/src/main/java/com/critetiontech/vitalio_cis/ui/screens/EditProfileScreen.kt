@@ -292,6 +292,7 @@ fun EditProfileScreen(
     // ── Image Bottom Sheet ──
     if (showImageSheet) {
         ImagePickerBottomSheet(
+            onDismiss = { showImageSheet = false },
             onCameraClick = {
                 showImageSheet = false
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==

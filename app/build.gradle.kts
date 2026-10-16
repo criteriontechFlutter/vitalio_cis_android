@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,6 +20,15 @@ android {
         versionName = "2.0.25"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // NutriAnalyser keys come from local.properties (not committed):
+        // NUTRI_APP_ID=... and NUTRI_APP_SECRET=...
+        val localProps = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        fun quoted(key: String) = "\"" + localProps.getProperty(key, "").replace("\"", "\\\"") + "\""
+        buildConfigField("String", "NUTRI_APP_ID", quoted("NUTRI_APP_ID"))
+        buildConfigField("String", "NUTRI_APP_SECRET", quoted("NUTRI_APP_SECRET"))
     }
 
     buildTypes {

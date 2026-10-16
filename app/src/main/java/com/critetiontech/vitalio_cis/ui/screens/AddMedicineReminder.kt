@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.foundation.layout.aspectRatio
+
 import com.critetiontech.ctvitalio.ui.components.AppDatePickerDialog
 import com.critetiontech.ctvitalio.ui.components.AppTimePickerDialog
 import java.time.LocalDate
@@ -529,33 +531,43 @@ fun MonthlyDateSelectorSection(viewModel: AddMedicineReminderViewModel) {
 @Composable
 fun MultiDateCalendarDialog(selectedDates: List<Int>, onDatesChanged: (List<Int>) -> Unit, onDismiss: () -> Unit) {
     var local by remember { mutableStateOf(selectedDates.toMutableList()) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Dates", fontWeight = FontWeight.Bold) },
-        text = {
-            LazyColumn {
-                itemsIndexed((1..31).toList()) { _, day ->
+    val colors = LocalMyColorScheme.current
+    com.critetiontech.ctvitalio.ui.components.AppDialog(
+        title = "Select Dates",
+        message = "Days of the month to take this medicine.",
+        icon = Icons.Rounded.CalendarMonth,
+        confirmText = if (local.isEmpty()) "Done" else "Done (${local.size})",
+        dismissText = "Cancel",
+        onDismiss = onDismiss,
+        onConfirm = { onDatesChanged(local.sorted()); onDismiss() },
+    ) {
+        (1..31).chunked(7).forEach { week ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                week.forEach { day ->
                     val isSelected = local.contains(day)
-                    Row(
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(CircleShape)
+                            .background(if (isSelected) colors.primaryBlueColor else colors.dashboardBackgroundColor)
                             .clickable {
-                                local = if (isSelected) local.also { it.remove(day) }
-                                else local.also { it.add(day) }
-                            }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                                local = (if (isSelected) local - day else local + day).toMutableList()
+                            },
                     ) {
-                        HapticCheckbox(checked = isSelected, onCheckedChange = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Day $day")
+                        Text(
+                            "$day",
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) Color.White else colors.textDarkColor,
+                        )
                     }
                 }
+                repeat(7 - week.size) { Spacer(Modifier.weight(1f)) }
             }
-        },
-        confirmButton = { HapticTextButton(onClick = { onDatesChanged(local.sorted()); onDismiss() }) { Text("Done") } },
-        dismissButton = { HapticTextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
+        }
+    }
 }
 
 // ── Time Slots Section ────────────────────────────────────────────────────────
@@ -760,23 +772,19 @@ fun AddAllergyBottomSheet(
     var details by remember { mutableStateOf("") }
     var selectedSeverity by remember { mutableStateOf("Mild") }
 
-    ModalBottomSheet(
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        containerColor = Color.White
+        title = "Add Allergy",
+        subtitle = "Medicines or foods that cause a reaction",
+        icon = Icons.Rounded.HealthAndSafety,
+        iconTint = Color(0xFFE5484D),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 16.dp)
         ) {
-            Text(
-                text = "Add Allergy",
-                style = com.critetiontech.ctvitalio.utils.AppTextStyles.style16BCN(),
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Substance Type dropdown
             Text("Substance Type", style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())

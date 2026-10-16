@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -50,13 +51,25 @@ import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 
-/** How far content slides down when the pull reaches the refresh threshold. */
-val PullStretchHeight = 88.dp
+/**
+ * How far content slides down when the pull reaches the refresh threshold. Tall enough for the
+ * waving care-team illustration above the label.
+ */
+val PullStretchHeight = 200.dp
+
+/** The art every pull-to-refresh shows above its label. */
+val DefaultRefreshIllustration: @Composable () -> Unit = {
+    com.critetiontech.ctvitalio.ui.components.DoctorsWaveAnimation(
+        Modifier.height(130.dp).aspectRatio(405f / 240f)
+    )
+}
 
 /** How far the pull has moved the content, for screens that lay out [PullStretchHeader] themselves. */
 @OptIn(ExperimentalMaterial3Api::class)
-fun PullToRefreshState.stretchOffsetPx(density: androidx.compose.ui.unit.Density): Float =
-    with(density) { (PullStretchHeight * distanceFraction.coerceIn(0f, 1.6f)).toPx() }
+fun PullToRefreshState.stretchOffsetPx(
+    density: androidx.compose.ui.unit.Density,
+    stretchHeight: Dp = PullStretchHeight,
+): Float = with(density) { (stretchHeight * distanceFraction.coerceIn(0f, 1.6f)).toPx() }
 
 /**
  * Haptics for a pull-to-refresh: a tick when the pull crosses "release to refresh" and a
@@ -90,6 +103,8 @@ private fun isRefreshingNow(state: PullToRefreshState) = state.isAnimating
  *
  * @param behindStatusBar draw the colored area up through the status bar, for screens without
  * an app bar (the dashboard). Leave false under a top app bar.
+ * @param illustration optional art shown above the label (it plays while pulling and
+ * refreshing); give a taller [stretchHeight] to make room for it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,6 +116,8 @@ fun StretchPullRefreshBox(
     behindStatusBar: Boolean = false,
     state: PullToRefreshState = rememberPullToRefreshState(),
     refreshingText: String = "Updating your health data…",
+    stretchHeight: Dp = PullStretchHeight,
+    illustration: (@Composable () -> Unit)? = DefaultRefreshIllustration,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val density = LocalDensity.current
@@ -113,10 +130,17 @@ fun StretchPullRefreshBox(
             onRefresh = onRefresh,
         )
     ) {
-        Box(Modifier.graphicsLayer { translationY = state.stretchOffsetPx(density) }) {
+        Box(Modifier.graphicsLayer { translationY = state.stretchOffsetPx(density, stretchHeight) }) {
             content()
         }
-        PullStretchHeader(state = state, isRefreshing = isRefreshing, behindStatusBar = behindStatusBar, refreshingText = refreshingText)
+        PullStretchHeader(
+            state = state,
+            isRefreshing = isRefreshing,
+            behindStatusBar = behindStatusBar,
+            refreshingText = refreshingText,
+            stretchHeight = stretchHeight,
+            illustration = illustration,
+        )
     }
 }
 
@@ -132,6 +156,8 @@ fun PullStretchHeader(
     color: Color = LocalMyColorScheme.current.primaryBlueColor,
     behindStatusBar: Boolean = false,
     refreshingText: String = "Updating your health data…",
+    stretchHeight: Dp = PullStretchHeight,
+    illustration: (@Composable () -> Unit)? = DefaultRefreshIllustration,
 ) {
     val fraction = state.distanceFraction.coerceIn(0f, 1.6f)
     if (fraction <= 0f && !isRefreshing) return
@@ -157,12 +183,25 @@ fun PullStretchHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(topInset + PullStretchHeight * fraction)
+            .height(topInset + stretchHeight * fraction)
             .graphicsLayer { alpha = (fraction * 3f).coerceIn(0f, 1f) }
             .clip(RoundedCornerShape(bottomStart = corner, bottomEnd = corner))
             .background(Brush.verticalGradient(listOf(color, color.copy(alpha = 0.85f).compositeOver(Color(0xFF0B3FA8))))),
         contentAlignment = Alignment.BottomCenter,
     ) {
+        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (illustration != null) {
+            Box(
+                Modifier
+                    .padding(bottom = 4.dp)
+                    .graphicsLayer {
+                        alpha = ((fraction - 0.2f) / 0.5f).coerceIn(0f, 1f)
+                        val scale = 0.7f + 0.3f * fraction.coerceAtMost(1f)
+                        scaleX = scale; scaleY = scale
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+                    }
+            ) { illustration() }
+        }
         Row(
             modifier = Modifier
                 .padding(bottom = 14.dp)
@@ -193,6 +232,7 @@ fun PullStretchHeader(
             }
             Spacer(Modifier.width(10.dp))
             Text(text = label, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        }
         }
     }
 }

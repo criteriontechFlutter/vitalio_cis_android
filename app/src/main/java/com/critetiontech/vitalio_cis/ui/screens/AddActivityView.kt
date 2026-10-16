@@ -205,11 +205,9 @@ fun ActivityBottomSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
 
-    ModalBottomSheet(
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = colors.dashboardBackgroundColor,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             // ── Header with icon + duration badge ──
@@ -316,8 +314,8 @@ private fun TimePickerCard(text: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(colors.dashboardContainerColor)
-            .border(1.dp, Color.Gray.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
+            .background(colors.dashboardBackgroundColor)
+            .border(1.dp, colors.borderGreyLightColor.copy(alpha = 0.35f), RoundedCornerShape(14.dp))
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically

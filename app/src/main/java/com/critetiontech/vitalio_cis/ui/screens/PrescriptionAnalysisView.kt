@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.material.icons.rounded.LockClock
+
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticOutlinedButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
@@ -71,16 +73,18 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
     val allSelected  = insertable.isNotEmpty() && insertable.all { it.localId in selectedIds }
 
     if (showSessionAlert) {
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissSessionAlert() },
-            title = { Text("Session Expired") },
-            text = { Text("Patient profile or session data is missing. Please log in again or reselect your profile.") },
-            confirmButton = {
-                HapticTextButton(onClick = {
-                    viewModel.dismissSessionAlert()
-                    navController.popBackStack()
-                }) { Text("OK") }
-            }
+        com.critetiontech.ctvitalio.ui.components.AppDialog(
+            title = "Session expired",
+            message = "Patient profile or session data is missing. Please log in again or reselect your profile.",
+            icon = androidx.compose.material.icons.Icons.Rounded.LockClock,
+            iconTint = com.critetiontech.ctvitalio.ui.theme.AppColors.Secondary,
+            confirmText = "OK",
+            dismissible = false,
+            onDismiss = { viewModel.dismissSessionAlert() },
+            onConfirm = {
+                viewModel.dismissSessionAlert()
+                navController.popBackStack()
+            },
         )
     }
 
