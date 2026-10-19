@@ -16,8 +16,8 @@ android {
         applicationId = "com.critetiontech.ctvitalio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 32
-        versionName = "2.0.25"
+        versionCode = 33
+        versionName = "2.0.26"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -31,14 +31,41 @@ android {
         buildConfigField("String", "NUTRI_APP_SECRET", quoted("NUTRI_APP_SECRET"))
     }
 
+    // Release signing reads the upload keystore from local.properties (never commit it):
+    //   RELEASE_STORE_FILE=/abs/path/upload-keystore.jks
+    //   RELEASE_STORE_PASSWORD=...
+    //   RELEASE_KEY_ALIAS=...
+    //   RELEASE_KEY_PASSWORD=...
+    // Until those are set the build falls back to the debug key, which is what
+    // Play currently has registered as the upload key.
+    val signingProps = Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    }
+    val releaseStoreFile = signingProps.getProperty("RELEASE_STORE_FILE")?.let { file(it) }
+
+    signingConfigs {
+        if (releaseStoreFile != null && releaseStoreFile.exists()) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = signingProps.getProperty("RELEASE_STORE_PASSWORD")
+                keyAlias = signingProps.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = signingProps.getProperty("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug").also {
+                    logger.warn("⚠ Release build is signed with the DEBUG key — set RELEASE_* in local.properties")
+                }
         }
     }
     compileOptions {

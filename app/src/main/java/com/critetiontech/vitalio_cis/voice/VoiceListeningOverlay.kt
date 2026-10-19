@@ -200,6 +200,7 @@ fun VoiceListeningOverlay(
                 anomalyAlerts        = anomalyAlerts,
                 multiTurnPrompt      = multiTurnPrompt,
                 vitalTrends          = vitalTrends,
+                statusMessage        = statusMessage,
                 onStop               = onStop,
                 onCancel             = onCancel,
                 onSaveAll            = onSaveAll,
@@ -384,6 +385,7 @@ private fun UnifiedVoiceConfirmationFullScreen(
     anomalyAlerts: List<VitalAlert> = emptyList(),
     multiTurnPrompt: String = "",
     vitalTrends: Map<String, VitalTrend> = emptyMap(),
+    statusMessage: String = "",
     onStop: () -> Unit,
     onCancel: () -> Unit,
     onSaveAll: () -> Unit,
@@ -481,6 +483,24 @@ private fun UnifiedVoiceConfirmationFullScreen(
                 modifier             = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
 
+            // ── Save problem (e.g. offline) — the items below are still unsaved ──
+            if (statusMessage.isNotEmpty() && !isListening && !isExtractingData && !isSavingData) {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 12.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFFEF4444).copy(alpha = 0.10f))
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Warning, null, tint = Color(0xFFDC2626), modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Text(statusMessage, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFFB91C1C))
+                }
+            }
+
             // ── Scrollable content ────────────────────────────────────────────
             Column(
                 modifier = Modifier
@@ -489,35 +509,6 @@ private fun UnifiedVoiceConfirmationFullScreen(
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 120.dp)
             ) {
-                // AI extracting indicator card
-                if (isExtractingData) {
-                    Card(
-                        shape  = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(2.dp),
-                        modifier  = Modifier.fillMaxWidth()
-                    ) {
-                        Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier.size(36.dp).clip(CircleShape).background(Color(0xFF9333EA).copy(alpha = 0.18f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color(0xFF9333EA))
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Analyzing Speech with AI...", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                Text(
-                                    if (processingTranscript.isEmpty()) "Extracting readings..." else "\"$processingTranscript\"",
-                                    fontSize = 12.sp, color = Color.Gray, maxLines = 1
-                                )
-                            }
-                            Icon(Icons.Default.AutoAwesome, null, tint = Color(0xFF9333EA))
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                }
-
                 // Anomaly alerts — shown BEFORE vitals so user sees warnings first
                 if (anomalyAlerts.isNotEmpty()) {
                     AnomalyAlertsSection(alerts = anomalyAlerts)

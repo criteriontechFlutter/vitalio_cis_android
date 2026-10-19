@@ -126,14 +126,12 @@ class PrefsManager(context: Context) {
 
 
     fun saveDeviceToken(deviceToken: String) {
-        Log.d("TAG", "saveDeviceToken: "+deviceToken.toString())
         sharedPref.edit {
             putString(KEY_DEVICE_TOKEN,deviceToken)
         }
     }
 
     fun getDeviceToken(): String? {
-        Log.d("TAG", "saveDeviceToken: "+sharedPref.getString(KEY_DEVICE_TOKEN, null))
         return sharedPref.getString(KEY_DEVICE_TOKEN, null)
 
     }
@@ -196,24 +194,17 @@ class PrefsManager(context: Context) {
         if (!apiResult.isNullOrEmpty()) {
             if (shouldSave) {
                 save(key, apiResult)
-                println("✅ API result saved to cache: $apiResult")
-                Log.d("CACHE", "✅ API result saved to cache: $apiResult")
             }
-
-            println("🔥 Returning API result: $apiResult")
-            Log.d("CACHE", "🔥 Returning API result: $apiResult")
 
             apiResult  // ✅ Directly return API result
         } else {
             val localData = get(key, String::class.java)
-            println("ℹ️ API empty, fallback to cache: $localData")
-            Log.d("CACHE", "ℹ️ API empty, fallback to cache: $localData")
+            Log.d("CACHE", "API empty, fallback to cache for $key")
             localData
         }
     } catch (e: Exception) {
         val localData = get(key, String::class.java)
-        println("❌ API failed, fallback to cache: $localData, error: ${e.message}")
-        Log.d("CACHE", "❌ API failed, fallback to cache: $localData, error: ${e.message}")
+        Log.d("CACHE", "API failed, fallback to cache for $key: ${e.message}")
         localData
     }
 
