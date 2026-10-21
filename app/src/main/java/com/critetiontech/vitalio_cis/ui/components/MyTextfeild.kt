@@ -39,21 +39,28 @@ fun MyTextField(
     fixedHeight: Int = 50
 ) {
 
-    val themeViewModel: ThemeViewModel = viewModel()
-    val themeColors by themeViewModel.colorScheme.collectAsState()
+    val themeColors = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current
 
+    // Typed text in the theme's text colour; the border turns blue while typing.
     val dynamicColors = colors ?: OutlinedTextFieldDefaults.colors(
         cursorColor = themeColors.primaryBlueColor,
         focusedBorderColor = if (isError)
             Color.Red
         else
-            themeColors.btnWhiteColor,
+            themeColors.primaryBlueColor,
 
         unfocusedBorderColor = themeColors.borderGreyLightColor,
         disabledBorderColor = themeColors.borderGreyLightColor,
-        focusedTextColor = themeColors.borderGreyLightColor,
-        unfocusedTextColor = themeColors.borderGreyLightColor,
-        disabledTextColor = themeColors.borderGreyLightColor
+        focusedTextColor = themeColors.textDarkColor,
+        unfocusedTextColor = themeColors.textDarkColor,
+        disabledTextColor = themeColors.textGreyColor,
+        focusedContainerColor = themeColors.dashboardContainerColor,
+        unfocusedContainerColor = themeColors.dashboardContainerColor,
+        disabledContainerColor = themeColors.dashboardContainerColor,
+        focusedLeadingIconColor = themeColors.textGreyColor,
+        unfocusedLeadingIconColor = themeColors.textGreyColor,
+        focusedTrailingIconColor = themeColors.textGreyColor,
+        unfocusedTrailingIconColor = themeColors.textGreyColor,
     )
 
     Column(modifier = modifier) {

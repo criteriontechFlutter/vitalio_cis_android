@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -190,10 +192,12 @@ class ActivityViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     Log.d("ActivityVM", "insertActivity success")
                     _saveSuccess.value = true
+                    Haptics.success()
                     // Refresh recent list
                     fetchPatientActivity()
                 } else {
                     Log.e("ActivityVM", "insertActivity failed: ${response.code()}")
+                    Haptics.error()
                 }
             } catch (e: Exception) {
                 Log.e("ActivityVM", "insertActivity error: ${e.message}")

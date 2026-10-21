@@ -1,5 +1,6 @@
 package com.critetiontech.ctvitalio
 
+import com.critetiontech.ctvitalio.ui.feedback.AppNavTransitions
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -32,6 +33,7 @@ import com.critetiontech.ctvitalio.ui.screens.BookingDetailsScreen
 import com.critetiontech.ctvitalio.ui.screens.ConnectWatchScreen
 import com.critetiontech.ctvitalio.ui.screens.ConnectionScreen
 import com.critetiontech.ctvitalio.ui.screens.HealthConnectSyncScreen
+import com.critetiontech.ctvitalio.ui.screens.OmronDeviceScreen
  import com.critetiontech.ctvitalio.ui.screens.DietChecklistScreen
 import com.critetiontech.ctvitalio.ui.screens.DoctorDetailsScreen
 import com.critetiontech.ctvitalio.ui.screens.DrawerScreen
@@ -93,8 +95,20 @@ import com.critetiontech.ctvitalio.ui.adaptive.AdaptiveLayoutProvider
 import com.critetiontech.ctvitalio.voice.VoiceNavigationManager
 import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.google.gson.Gson
+import androidx.lifecycle.lifecycleScope
+import com.critetiontech.ctvitalio.healthconnect.WearableSync
+import kotlinx.coroutines.launch
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.runtime.getValue
 
 class MainActivity : ComponentActivity() {
+
+    override fun onResume() {
+        super.onResume()
+        // Pull new readings from the user's watch/health apps (throttled inside)
+        lifecycleScope.launch { WearableSync.syncIfDue(applicationContext) }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -117,7 +131,11 @@ class MainActivity : ComponentActivity() {
                         NavHost(
                             navController = navController,
                             startDestination = if (PrefsManager(context).getPatient()?.uhId?.isNotEmpty()
-                                    ?: false) Routes.DASHBOARD else Routes.LOGIN
+                                    ?: false) Routes.DASHBOARD else Routes.LOGIN,
+                            enterTransition = AppNavTransitions.enter,
+                            exitTransition = AppNavTransitions.exit,
+                            popEnterTransition = AppNavTransitions.popEnter,
+                            popExitTransition = AppNavTransitions.popExit,
                         ) {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
                             composable(Routes.LOGIN) { LoginScreen() }
@@ -126,20 +144,23 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.INTERACTIONCHECKER) { InteractionCheckerScreen(viewModel = interactionViewModel) }
                             composable(Routes.INTERACTIONINSTRUCTION) { InteractionInstructionView(viewModel = interactionViewModel) }
                             composable(Routes.DIETCHECKLIST) { DietChecklistScreen() }
+                            composable(Routes.NUTRIENTS) { com.critetiontech.ctvitalio.ui.screens.NutrientSearchScreen() }
                             composable(Routes.PRESCRIPTION) { PrescriptionScreen() }
                             composable(Routes.FLUIDDATAINPUT) { FluidDataInputScreen() }
                             composable(Routes.FLUIDOUTPUTHISTORY) { FluidOutputHistoryScreen() }
                             composable(Routes.FLUIDINPUTHISTORY) { FluidInputHistoryScreen() }
                             composable(
-                                route = "${Routes.VITALHISTORY}?vitalIds={vitalIds}&vitalName={vitalName}",
+                                route = "${Routes.VITALHISTORY}?vitalIds={vitalIds}&vitalName={vitalName}&unit={unit}",
                                 arguments = listOf(
                                     navArgument("vitalIds") { type = NavType.StringType; defaultValue = "" },
-                                    navArgument("vitalName") { type = NavType.StringType; defaultValue = "Vital" }
+                                    navArgument("vitalName") { type = NavType.StringType; defaultValue = "Vital" },
+                                    navArgument("unit") { type = NavType.StringType; defaultValue = "" }
                                 )
                             ) { backStackEntry ->
                                 val vitalIds = backStackEntry.arguments?.getString("vitalIds") ?: ""
                                 val vitalName = backStackEntry.arguments?.getString("vitalName") ?: "Vital"
-                                VitalHistoryScreen(vitalIds = vitalIds, vitalName = vitalName)
+                                val unit = backStackEntry.arguments?.getString("unit") ?: ""
+                                VitalHistoryScreen(vitalIds = vitalIds, vitalName = vitalName, unit = unit)
                             }
                             composable(
                                 Routes.ADDLABRESULTS
@@ -262,6 +283,9 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
                             composable(Routes.RESEARCHARTICLES) { ResearchArticlesScreen() }
                             composable(Routes.HEALTHCONNECTSYNC) { HealthConnectSyncScreen() }
+                            composable(Routes.OMRON_DEVICE + "/{model}") { backStackEntry ->
+                                OmronDeviceScreen(modelCode = backStackEntry.arguments?.getString("model").orEmpty())
+                            }
                             composable("welcome") { WelcomeScreen( ) }
                             composable("gender") { GenderScreen( ) }
                             composable("dob") { DobScreen( ) }
@@ -283,6 +307,23 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.DIGITAL_TWIN) { com.critetiontech.ctvitalio.ui.screens.DigitalTwinScreen() }
                             composable(Routes.HEALTH_ORBIT) { com.critetiontech.ctvitalio.ui.screens.HealthOrbitScreen() }
                             composable(Routes.EDITPROFILE) { com.critetiontech.ctvitalio.ui.screens.EditProfileScreen() }
+                            composable(Routes.MEDICINE_REMINDER_SETTINGS) { com.critetiontech.ctvitalio.ui.screens.MedicineReminderSettingsScreen() }
+                        }
+
+                        // Status/navigation bar icons that stay readable on every page: dark icons
+                        // on the light theme, light icons on the dark theme and on the blue
+                        // login/OTP header. Home sets its own (it changes while pulling down).
+                        val backStack by navController.currentBackStackEntryAsState()
+                        val route = backStack?.destination?.route
+                        val darkTheme = com.critetiontech.ctvitalio.ui.theme.isAppDark
+                        val view = androidx.compose.ui.platform.LocalView.current
+                        androidx.compose.runtime.LaunchedEffect(route, darkTheme) {
+                            if (route == null || route == Routes.DASHBOARD) return@LaunchedEffect
+                            val blueHeader = route == Routes.LOGIN || route == Routes.OTP
+                            androidx.core.view.WindowCompat.getInsetsController(window, view).apply {
+                                isAppearanceLightStatusBars = !darkTheme && !blueHeader
+                                isAppearanceLightNavigationBars = !darkTheme
+                            }
                         }
                     }
                 }

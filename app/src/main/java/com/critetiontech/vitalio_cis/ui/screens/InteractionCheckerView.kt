@@ -1,5 +1,11 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.material.icons.rounded.ErrorOutline
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -65,15 +71,13 @@ fun InteractionCheckerScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
 
     if (errorMessage != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.clearError() },
-            title = { Text("Error") },
-            text = { Text(errorMessage!!) },
-            confirmButton = {
-                TextButton(onClick = { viewModel.clearError() }) {
-                    Text("OK")
-                }
-            }
+        com.critetiontech.ctvitalio.ui.components.AppDialog(
+            title = "Something went wrong",
+            message = errorMessage,
+            icon = androidx.compose.material.icons.Icons.Rounded.ErrorOutline,
+            iconTint = com.critetiontech.ctvitalio.ui.components.DialogDangerColor,
+            confirmText = "OK",
+            onDismiss = { viewModel.clearError() },
         )
     }
 
@@ -113,7 +117,7 @@ fun InteractionCheckerScreen(
                             if (isLoading) {
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                             } else if (searchText.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.updateSearchText("") }) {
+                                HapticIconButton(onClick = { viewModel.updateSearchText("") }) {
                                     Icon(Icons.Default.Close, contentDescription = "Clear")
                                 }
                             }
@@ -169,7 +173,7 @@ fun InteractionCheckerScreen(
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(drug.activeIngredients, fontSize = 13.sp, color = Color.Gray)
                                         }
-                                        IconButton(onClick = { viewModel.removeDrug(drug) }) {
+                                        HapticIconButton(onClick = { viewModel.removeDrug(drug) }) {
                                             Icon(Icons.Default.RemoveCircle, contentDescription = "Remove", tint = Color.Gray.copy(alpha = 0.4f), modifier = Modifier.size(24.dp))
                                         }
                                     }
@@ -222,7 +226,7 @@ fun InteractionCheckerScreen(
                     }
                 }
 
-                Button(
+                HapticButton(
                     onClick = {
                         viewModel.fetchDrugInteractions { success ->
                             if (success) {

@@ -5,6 +5,7 @@ import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
 import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.BookingException
 import com.critetiontech.ctvitalio.domain.repository.DoctorRepository
 import com.critetiontech.ctvitalio.model.AppointmentHistoryItem
 import com.critetiontech.ctvitalio.model.AppointmentHistoryResponse
@@ -34,7 +35,7 @@ class DoctorRepositoryImpl @Inject constructor(
         if (departmentId != "0" && departmentId.isNotEmpty()) {
             params["departmentId"] = departmentId
         }
-        val json = prefs.getData(key = endpoints.fetchDoctorsAvalability, shouldSave = true) {
+        val json = prefs.getData(key = "${endpoints.fetchDoctorsAvalability}_${clientId}_$departmentId", shouldSave = true) {
             val response = ApiHelper().callApi(context, endpoints.fetchDoctorsAvalability, showNoConnectionToast = false) { url ->
                 ApiClients.module4082.dynamicGet(url = url, params = params)
             }
@@ -63,7 +64,7 @@ class DoctorRepositoryImpl @Inject constructor(
 
     override suspend fun fetchDoctorProfile(clientId: String, doctorId: String): DomainResult<DoctorDetails?> = try {
         val params = mapOf("clientID" to clientId, "doctorId" to doctorId)
-        val json = prefs.getData(key = endpoints.getDoctorProfile, shouldSave = true) {
+        val json = prefs.getData(key = "${endpoints.getDoctorProfile}_${clientId}_$doctorId", shouldSave = true) {
             val response = ApiHelper().callApi(context, endpoints.getDoctorProfile, showNoConnectionToast = false) { url ->
                 ApiClients.module4084.dynamicGet(url = url, params = params as Map<String, @JvmSuppressWildcards Any>)
             }
@@ -75,22 +76,60 @@ class DoctorRepositoryImpl @Inject constructor(
 
     override suspend fun fetchAvailableSlots(doctorId: String, scheduleDate: String, clientId: String): DomainResult<List<ShiftData>> = try {
         val params = mapOf("doctorId" to doctorId, "scheduleDate" to scheduleDate, "userId" to "1362", "clientID" to clientId)
-        val json = prefs.getData(key = endpoints.fetchAvailableSlots, shouldSave = true) {
-            val response = ApiHelper().callApi(context, endpoints.fetchAvailableSlots, showNoConnectionToast = false) { url ->
-                ApiClients.module4082.dynamicGet(url = url, params = params)
-            }
-            if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
+        // Availability changes by the minute, so never fall back to a cached copy (it could be
+        // another doctor's or day's slots). The server answers 400 "No record found" for a day
+        // without slots.
+        val response = ApiHelper().callApi(context, endpoints.fetchAvailableSlots, showNoConnectionToast = false) { url ->
+            ApiClients.module4082.dynamicGet(url = url, params = params)
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, ShiftResponse::class.java).responseValue else emptyList()
+        val json = when {
+            response.isSuccessful -> response.body()?.string()
+            response.code() == 400 || response.code() == 404 -> null
+            else -> throw Exception("API Error: ${response.code()}")
+        }
+        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, ShiftResponse::class.java).responseValue.orEmpty() else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun bookAppointment(params: Map<String, Any>): DomainResult<Unit> = try {
+    override suspend fun bookAppointment(params: Map<String, Any>): DomainResult<String?> = try {
         val response = ApiHelper().callApi(context, endpoints.bookAppointment, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = params)
         }
-        if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
-    } catch (e: Exception) { DomainResult.Error(e) }
+        // Success: {"status":1,"responseValue":[{"visitNo":"VNO…", …}]}.
+        // Refusal (sent as HTTP 500 or 200): {"status":0,"message":"failure","responseValue":"This appointment is already booked."}.
+        val raw = if (response.isSuccessful) response.body()?.string() else response.errorBody()?.string()
+        val body = runCatching { org.json.JSONObject(raw.orEmpty()) }.getOrNull()
+        val status = body?.opt("status")?.toString()?.toIntOrNull()
+        when {
+            // A body we can't read, or one without a status, still counts as booked.
+            response.isSuccessful && (status == null || status == 1) -> {
+                val visitNo = body?.optJSONArray("responseValue")?.optJSONObject(0)
+                    ?.optString("visitNo")?.takeIf { it.isNotBlank() && it != "null" }
+                DomainResult.Success(visitNo)
+            }
+            // ApiHelper's offline answer.
+            response.code() == 504 && raw.orEmpty().startsWith("No Connection") ->
+                DomainResult.Error(BookingException("No internet connection. Check your network and try again."))
+            // ApiHelper's answer when the request itself failed (timeout, DNS, …).
+            raw.orEmpty().startsWith("Exception:") ->
+                DomainResult.Error(BookingException("Couldn't reach the server. Check your connection and try again."))
+            else -> DomainResult.Error(BookingException(bookingRefusalMessage(body, response.code())))
+        }
+    } catch (e: Exception) { DomainResult.Error(BookingException("Couldn't reach the server. Check your connection and try again.")) }
+
+    /** The server's reason for refusing a booking, or a plain fallback for the patient. */
+    private fun bookingRefusalMessage(body: org.json.JSONObject?, code: Int): String {
+        val generic = setOf("", "null", "failure", "failed", "error", "success")
+        val reason = (body?.opt("responseValue") as? String)?.trim()?.takeIf { it.lowercase() !in generic }
+            ?: body?.optString("message")?.trim()?.takeIf { it.lowercase() !in generic }
+        return when {
+            reason == null && code >= 500 -> "The clinic's server is having trouble right now. Please try again in a few minutes."
+            reason == null -> "This appointment couldn't be booked. Please try a different time."
+            reason.contains("already booked", ignoreCase = true) ->
+                "$reason If you already have an appointment with this doctor on this day, you'll find it in My Appointments; otherwise please pick another time."
+            else -> reason
+        }
+    }
 
     override suspend fun fetchUpcomingAppointments(pid: String, clientId: String): DomainResult<List<UpcomingAppointmentItem>> = try {
         val params = mapOf("pid" to pid, "ClientId" to clientId)

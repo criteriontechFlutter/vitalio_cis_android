@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -113,7 +115,7 @@ fun MemberItem(member: Member) {
             }
 
             // ✅ Export Icon (Clickable)
-            IconButton(
+            HapticIconButton(
                 onClick = {
                     println("Export clicked: ${member.name}")
                 }

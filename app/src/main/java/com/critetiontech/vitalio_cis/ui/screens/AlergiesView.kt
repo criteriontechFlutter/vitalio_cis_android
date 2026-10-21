@@ -1,5 +1,10 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -101,7 +106,7 @@ fun AllergiesScreen(
                     Snackbar(
                         modifier = Modifier.padding(vertical = 8.dp),
                         action = {
-                            TextButton(onClick = { viewModel.clearError() }) {
+                            HapticTextButton(onClick = { viewModel.clearError() }) {
                                 Text("Dismiss", color = Color.White)
                             }
                         }
@@ -213,13 +218,15 @@ fun AllergyGroupCard(allergies: List<Allergy>) {
     ) {
         Column {
             allergies.forEachIndexed { index, allergy ->
-                AllergyItem(allergy = allergy)
-                if (index < allergies.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = Color(0xFFF0F1F5),
-                        thickness = 1.dp
-                    )
+                AnimatedEnter(index = index) {
+                    AllergyItem(allergy = allergy)
+                    if (index < allergies.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = Color(0xFFF0F1F5),
+                            thickness = 1.dp
+                        )
+                    }
                 }
             }
         }
@@ -243,7 +250,7 @@ fun AllergyItem(allergy: Allergy) {
         }
         SeverityBadge(severity = allergy.severity)
         Spacer(modifier = Modifier.width(8.dp))
-        IconButton(
+        HapticIconButton(
             onClick = {},
             modifier = Modifier.size(24.dp)
         ) {
@@ -286,7 +293,7 @@ fun AddAllergiesBar(onClick: () -> Unit) {
                 .fillMaxWidth()
                 .padding(vertical = 18.dp)
         ) {
-            TextButton(onClick = onClick) {
+            HapticTextButton(onClick = onClick) {
                 Text(text = "+ Add Allergies", style = AppTextStyles.style16GCN())
             }
         }

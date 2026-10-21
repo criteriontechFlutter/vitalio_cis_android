@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding.components
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -44,7 +46,7 @@ fun OnboardingLayout(
 
         Column(modifier = Modifier.weight(1f), content = content)
 
-        Button(
+        HapticButton(
             onClick = onNext,
             enabled = enabled,
             modifier = Modifier

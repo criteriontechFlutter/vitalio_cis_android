@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -71,12 +73,22 @@ class AllergyViewModel : ViewModel() {
             val patient = prefs.getPatient() ?: run { _addLoading.value = false; return@launch }
             val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val allergyEntry = listOf(mapOf("detailID" to 0, "detailsDate" to now, "details" to details.ifBlank { "Patient reports allergy to $substanceName." }, "substanceName" to substanceName, "allergy" to severity, "reaction" to reaction))
-            val body = mapOf("uhId" to patient.uhId, "jsonAllergies" to Gson().toJson(allergyEntry), "userId" to 0, "clientId" to patient.clientId, "isFromPatient" to true, "typeAllergy" to typeAllergy)
+            val pdmId = if (typeAllergy == "FoodAllergy") 7 else 8
+
+            val body = mapOf(
+                "uhId" to patient.uhId,
+                "jsonAllergies" to Gson().toJson(allergyEntry),
+                "userId" to 0,
+                "clientId" to patient.clientId,
+                "isFromPatient" to true,
+                "typeAllergy" to typeAllergy,
+                "pdmId" to pdmId
+            )
             Log.d("TAG", "addAllergy: $body")
 
             when (val r = addAllergyUseCase(body)) {
-                is DomainResult.Success -> { _addSuccess.value = true; fetchAllergies() }
-                is DomainResult.Error -> { _errorMessage.value = "Failed to add allergy."; Log.e("AllergyVM", r.exception.message.orEmpty()) }
+                is DomainResult.Success -> { _addSuccess.value = true; Haptics.success(); fetchAllergies() }
+                is DomainResult.Error -> { _errorMessage.value = "Failed to add allergy."; Haptics.error(); Log.e("AllergyVM", r.exception.message.orEmpty()) }
             }
             _addLoading.value = false
         }
