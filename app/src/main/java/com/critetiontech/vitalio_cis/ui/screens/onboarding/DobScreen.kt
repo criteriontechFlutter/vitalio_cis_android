@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -142,7 +144,7 @@ fun DobScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Button(
+        HapticButton(
             onClick = { navController.navigate("blood")
 
                 viewModel.updatePer(0.2f)},

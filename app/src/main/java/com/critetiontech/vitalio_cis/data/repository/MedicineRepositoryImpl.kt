@@ -68,7 +68,7 @@ class MedicineRepositoryImpl @Inject constructor(
             val body = response.body()?.string()
             if (!body.isNullOrEmpty()) {
                 val parsed = Gson().fromJson(body, MedicineIntakeByDateResponse::class.java)
-                if (parsed.status == 1) DomainResult.Success(Pair(parsed.responseValue.loggedMedicines, parsed.responseValue.allMedicines))
+                if (parsed.status == 1) DomainResult.Success(Pair(parsed.responseValue?.loggedMedicines.orEmpty(), parsed.responseValue?.allMedicines.orEmpty()))
                 else DomainResult.Success(Pair(emptyList(), emptyList()))
             } else DomainResult.Success(Pair(emptyList(), emptyList()))
         } else DomainResult.Error(Exception("API Error: ${response.code()}"))

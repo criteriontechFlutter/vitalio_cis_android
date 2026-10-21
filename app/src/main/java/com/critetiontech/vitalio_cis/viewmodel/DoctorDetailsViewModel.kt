@@ -1,11 +1,14 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.domain.repository.BookingException
 import com.critetiontech.ctvitalio.model.ConsentItem
 import com.critetiontech.ctvitalio.model.DoctorDetails
 import com.critetiontech.ctvitalio.model.DoctorSchedule
@@ -28,6 +31,26 @@ class DoctorDetailsViewModel : ViewModel() {
 
     private val _bookingSuccess = MutableStateFlow(false)
     val bookingSuccess: StateFlow<Boolean> = _bookingSuccess
+
+    /** True when the doctor's profile couldn't be loaded, so the screen can offer a retry. */
+    private val _profileError = MutableStateFlow(false)
+    val profileError: StateFlow<Boolean> = _profileError
+
+    /** Message when slots couldn't be loaded (as opposed to the day simply having none). */
+    private val _slotsError = MutableStateFlow<String?>(null)
+    val slotsError: StateFlow<String?> = _slotsError
+
+    /** True while the next token number for the picked shift is loading. */
+    private val _tokenLoading = MutableStateFlow(false)
+    val tokenLoading: StateFlow<Boolean> = _tokenLoading
+
+    /** Message when the token number couldn't be fetched. */
+    private val _tokenError = MutableStateFlow<String?>(null)
+    val tokenError: StateFlow<String?> = _tokenError
+
+    /** Visit number of the appointment just booked, if the server sent one. */
+    private val _visitNo = MutableStateFlow<String?>(null)
+    val visitNo: StateFlow<String?> = _visitNo
 
     private val _bookingError = MutableStateFlow<String?>(null)
     val bookingError: StateFlow<String?> = _bookingError
@@ -93,6 +116,10 @@ class DoctorDetailsViewModel : ViewModel() {
 
     private val _shiftConfig = MutableStateFlow<com.critetiontech.ctvitalio.model.Doctor?>(null)
 
+    /** Minutes per appointment from the doctor's shift setup; 0 until it loads. */
+    private val _slotSize = MutableStateFlow(0)
+    val slotSize: StateFlow<Int> = _slotSize
+
     fun checkShiftType(doctorId: String) {
         viewModelScope.launch {
             val patient = prefs.getPatient() ?: return@launch
@@ -100,6 +127,7 @@ class DoctorDetailsViewModel : ViewModel() {
                 is DomainResult.Success -> {
                     val config = r.data
                     _shiftConfig.value = config
+                    _slotSize.value = config?.appointmentSlotSize ?: 0
                     val isSlot = config?.bookingType?.equals("Slot Wise", ignoreCase = true) != false
                     _isSlotBased.value = isSlot
                     // If we already have a selected date, extract shifts for its day
@@ -156,10 +184,20 @@ class DoctorDetailsViewModel : ViewModel() {
         val id = doctorId.ifEmpty { _doctorId.value.orEmpty() }
         viewModelScope.launch {
             _loading.value = true
-            val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
+            _profileError.value = false
+            val patient = prefs.getPatient() ?: run { _loading.value = false; _profileError.value = true; return@launch }
             when (val r = deps.fetchDoctorProfile()(patient.clientId.toString(), id)) {
-                is DomainResult.Success -> _doctor.value = r.data
-                is DomainResult.Error -> Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
+                is DomainResult.Success -> {
+                    // The server pads some names ("Dr Ahmad ").
+                    _doctor.value = r.data?.let { it.copy(name = it.name.trim()) }
+                    _profileError.value = r.data == null
+                    // Book under the doctor's own department.
+                    r.data?.departmentId?.takeIf { it != 0 }?.let { _departmentId.value = it.toString() }
+                }
+                is DomainResult.Error -> {
+                    _profileError.value = _doctor.value == null
+                    Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
+                }
             }
             _loading.value = false
         }
@@ -169,11 +207,15 @@ class DoctorDetailsViewModel : ViewModel() {
     fun fetchAvailableSlots(scheduleDate: String, doctorId: String = _doctorId.value.orEmpty()) {
         val id = doctorId.ifEmpty { _doctorId.value.orEmpty() }
         viewModelScope.launch {
-            _slotList.value = emptyList(); _loading.value = true
+            _slotList.value = emptyList(); _slotsError.value = null; _loading.value = true
             val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
             when (val r = deps.fetchAvailableSlots()(id, scheduleDate, patient.clientId.toString())) {
-                is DomainResult.Success -> _slotList.value = r.data
-                is DomainResult.Error -> Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
+                // Ignore an answer for a date the patient has since moved away from.
+                is DomainResult.Success -> if (_slotDate.value == scheduleDate) _slotList.value = r.data
+                is DomainResult.Error -> {
+                    if (_slotDate.value == scheduleDate) _slotsError.value = "Couldn't load the available slots. Check your connection and try again."
+                    Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
+                }
             }
             _loading.value = false
         }
@@ -196,12 +238,26 @@ class DoctorDetailsViewModel : ViewModel() {
     fun fetchLatestToken(scheduleDate: String, shiftId: String, doctorId: String = _doctorId.value.orEmpty()) {
         val id = doctorId.ifEmpty { _doctorId.value.orEmpty() }
         val depId = _departmentId.value.orEmpty().ifEmpty { "0" }
+        // Drop the previous shift's number right away so it never shows against the new shift.
+        _latestToken.value = null
+        _tokenError.value = null
+        _tokenLoading.value = true
         viewModelScope.launch {
-            val patient = prefs.getPatient() ?: return@launch
-            when (val r = deps.doctorRepository.getLatestToken(id, scheduleDate, shiftId, depId, patient.clientId.toString())) {
-                is DomainResult.Success -> _latestToken.value = r.data.firstOrNull()
-                is DomainResult.Error -> _latestToken.value = null
+            val patient = prefs.getPatient() ?: run { _tokenLoading.value = false; return@launch }
+            val r = deps.doctorRepository.getLatestToken(id, scheduleDate, shiftId, depId, patient.clientId.toString())
+            // Only the latest pick counts if the patient tapped another shift meanwhile.
+            if (_shiftId.value != shiftId || _slotDate.value != scheduleDate) return@launch
+            when (r) {
+                is DomainResult.Success -> {
+                    _latestToken.value = r.data.firstOrNull()
+                    if (_latestToken.value == null) _tokenError.value = "No token is available for this shift. Try another shift or day."
+                }
+                is DomainResult.Error -> {
+                    _tokenError.value = "Couldn't get your token number. Tap the shift to try again."
+                    Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
+                }
             }
+            _tokenLoading.value = false
         }
     }
 
@@ -215,13 +271,17 @@ class DoctorDetailsViewModel : ViewModel() {
         }
     }
 
-    fun bookAppointment(did: String, shiftId: Int, sTime: String, appointmentDate: String, queueNo: Int? = null) {
+    /** [consentGiven]: the patient ticked the prescription-sharing consent; only then is it recorded. */
+    fun bookAppointment(did: String, shiftId: Int, sTime: String, appointmentDate: String, queueNo: Int? = null, consentGiven: Boolean = false) {
         viewModelScope.launch {
             _bookingLoading.value = true; _bookingError.value = null
-            val patient = prefs.getPatient() ?: run { _bookingLoading.value = false; return@launch }
+            val patient = prefs.getPatient() ?: run {
+                _bookingError.value = "Your session has expired. Please log in again to book."
+                _bookingLoading.value = false
+                return@launch
+            }
             
-            // Check if consent is required
-            if (_consentList.value.isNotEmpty()) {
+            if (consentGiven && _consentList.value.isNotEmpty()) {
                 val consentParams = mapOf(
                     "patientId" to patient.pid,
                     "consentMasterId" to _consentList.value.first().id,
@@ -240,16 +300,18 @@ class DoctorDetailsViewModel : ViewModel() {
                 "appointmentDate" to appointmentDate
             )
             
-            if (_isSlotBased.value) {
-                params["slotTime"] = sTime
-            } else {
-                params["slotTime"] = sTime // For token, it passes shiftTimeFrom
-                queueNo?.let { params["queueNo"] = it }
-            }
+            // Slot bookings send the slot; token bookings send the shift start plus their queue number.
+            params["slotTime"] = sTime
+            queueNo?.let { params["queueNo"] = it }
 
             when (val r = deps.bookAppointment()(params)) {
-                is DomainResult.Success -> _bookingSuccess.value = true
-                is DomainResult.Error -> { _bookingError.value = "Booking failed."; Log.e("DoctorDetailsVM", r.exception.message.orEmpty()) }
+                is DomainResult.Success -> { _visitNo.value = r.data; _bookingSuccess.value = true; Haptics.success() }
+                is DomainResult.Error -> {
+                    _bookingError.value = (r.exception as? BookingException)?.message
+                        ?: "Couldn't book the appointment. Please try again."
+                    Haptics.error()
+                    Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
+                }
             }
             _bookingLoading.value = false
         }

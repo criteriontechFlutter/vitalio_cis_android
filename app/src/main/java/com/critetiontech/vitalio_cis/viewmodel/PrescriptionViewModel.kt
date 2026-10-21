@@ -172,7 +172,7 @@ class PrescriptionViewModel : ViewModel() {
                 } else {
                     val errBody = response.body()?.string() ?: ""
                     _errorMessage.value = "Server error ${response.code()}. $errBody"
-                    Log.e("PrescriptionVM", "Error ${response.code()}: $errBody")
+                    Log.e("PrescriptionVM", "Error ${response.code()}")
                 }
             } catch (e: Exception) {
                 _errorMessage.value = e.localizedMessage ?: "Something went wrong"

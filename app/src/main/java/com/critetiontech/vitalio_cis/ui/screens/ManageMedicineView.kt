@@ -1,10 +1,28 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
+
+import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
+
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.*
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -17,19 +35,32 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -38,9 +69,14 @@ import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.model.AllMedicine
 import com.critetiontech.ctvitalio.model.LoggedMedicine
+import com.critetiontech.ctvitalio.reminder.AlarmSetup
+import com.critetiontech.ctvitalio.reminder.ReminderSettings
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.viewmodel.ManageMedicationViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import kotlin.math.PI
@@ -49,22 +85,18 @@ import kotlin.math.cos
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
-private val Blue500       = Color(0xFF4A8EF5)
-private val BlueLight     = Color(0xFFEAF1FF)
-private val Green500      = Color(0xFF4ECB8D)
-private val Teal500       = Color(0xFF3DBFA8)
-private val Orange500     = Color(0xFFF5A623)
-private val BgGray        = Color(0xFFF5F7FA)
-private val CardWhite     = Color(0xFFFFFFFF)
-private val TextPrimary   = Color(0xFF1A1D23)
+private val Blue500       = Color(0xFF2F7BF5)
+private val BlueLight: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Blue500, Color(0xFFE6EFFF))
+private val Green500      = Color(0xFF2DBE7E)
 private val TextSecondary = Color(0xFF8A90A0)
 private val TextMuted     = Color(0xFFC0C5D0)
-private val DividerColor  = Color(0xFFEEF0F5)
+private val DividerColor: Color @Composable get() = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFEEF0F5)
+private val CardWhite: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.dashboardContainerColor
+private val TextPrimary: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.textDarkColor
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
-data class CalendarDay(val number: Int, val shortName: String, val style: DayStyle)
-enum class DayStyle { Muted, Green, Teal, Orange, Active }
+data class CalendarDay(val number: Int, val shortName: String)
 
 // ─── Months ───────────────────────────────────────────────────────────────────
 
@@ -83,48 +115,67 @@ private fun generateCalendarDays(year: Int, month: Int): List<CalendarDay> {
     val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
     return (1..daysInMonth).map { day ->
         cal.set(year, month, day)
-        val shortName = DAY_NAMES[cal.get(Calendar.DAY_OF_WEEK) - 1]
-        CalendarDay(day, shortName, DayStyle.Muted)
+        CalendarDay(day, DAY_NAMES[cal.get(Calendar.DAY_OF_WEEK) - 1])
     }
 }
 
+/** 0 = Sunday … 6 = Saturday, for the 1st of the month. */
+private fun firstWeekdayOf(year: Int, month: Int): Int {
+    val cal = Calendar.getInstance()
+    cal.set(year, month, 1)
+    return cal.get(Calendar.DAY_OF_WEEK) - 1
+}
+
+// yyyy-MM-dd, so plain string comparison orders dates correctly.
 private fun formatDate(year: Int, month: Int, day: Int): String {
     val mm = (month + 1).toString().padStart(2, '0')
     val dd = day.toString().padStart(2, '0')
     return "$year-$mm-$dd"
 }
 
-// ─── Pill sizing ──────────────────────────────────────────────────────────────
+// ─── Sizing ───────────────────────────────────────────────────────────────────
 
 private val PILL_SIZE    = 38.dp
 private val PILL_SPACING = 8.dp
+private val ARC_DEPTH    = 20.dp
+private val WEEKDAY_ROW  = 28.dp
+private val GRID_CELL    = 44.dp
 
 // ─── Centre-index helper ──────────────────────────────────────────────────────
 
+private fun centreIndexOf(listState: LazyListState): Int {
+    val info   = listState.layoutInfo
+    val centre = (info.viewportStartOffset + info.viewportEndOffset) / 2f
+    return info.visibleItemsInfo
+        .minByOrNull { abs(it.offset + it.size / 2f - centre) }
+        ?.index ?: listState.firstVisibleItemIndex
+}
+
 @Composable
 private fun rememberCentreIndex(listState: LazyListState): Int =
-    remember(listState) {
-        derivedStateOf {
-            val info   = listState.layoutInfo
-            val centre = (info.viewportStartOffset + info.viewportEndOffset) / 2f
-            info.visibleItemsInfo
-                .minByOrNull { abs(it.offset + it.size / 2f - centre) }
-                ?.index ?: 0
-        }
-    }.value
+    remember(listState) { derivedStateOf { centreIndexOf(listState) } }.value
 
 // ─── U-curve Y offset ─────────────────────────────────────────────────────────
 
-private fun uYOffset(
-    itemIndex:  Int,
-    centreIdx:  Int,
-    arcDepth:   Float,
-    windowHalf: Int = 4,
-): Float {
-    val dist  = abs(itemIndex - centreIdx).toFloat()
-    val t     = (dist / windowHalf).coerceIn(0f, 1f)
-    val curve = ((1.0 - cos(PI * t)) / 2.0).toFloat()
-    return -arcDepth * curve
+private fun uCurve(itemIndex: Int, centreIdx: Int, windowHalf: Int = 4): Float {
+    val t = (abs(itemIndex - centreIdx).toFloat() / windowHalf).coerceIn(0f, 1f)
+    return ((1.0 - cos(PI * t)) / 2.0).toFloat()
+}
+
+// ─── Curved-bottom card shape ────────────────────────────────────────────────
+
+private class CurvedBottomShape(private val depth: Dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val d = with(density) { depth.toPx() }
+        val path = Path().apply {
+            moveTo(0f, 0f)
+            lineTo(size.width, 0f)
+            lineTo(size.width, size.height - d)
+            quadraticTo(size.width / 2f, size.height + d, 0f, size.height - d)
+            close()
+        }
+        return Outline.Generic(path)
+    }
 }
 
 // ─── Month Picker Bottom Sheet ────────────────────────────────────────────────
@@ -143,21 +194,11 @@ fun MonthPickerSheet(
     var pickedMonth by remember { mutableIntStateOf(selectedMonthIndex) }
     var pickedYear  by remember { mutableIntStateOf(selectedYear) }
 
-    ModalBottomSheet(
-        onDismissRequest    = onDismiss,
-        sheetState          = sheetState,
-        containerColor      = CardWhite,
-        shape               = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        dragHandle          = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 4.dp)
-                    .width(40.dp)
-                    .height(4.dp)
-                    .clip(CircleShape)
-                    .background(TextMuted)
-            )
-        },
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState       = sheetState,
+        title            = "Select month",
+        icon             = Icons.Rounded.CalendarMonth,
     ) {
         Column(
             modifier            = Modifier
@@ -173,8 +214,8 @@ fun MonthPickerSheet(
                 horizontalArrangement = Arrangement.Center,
                 modifier              = Modifier.fillMaxWidth(),
             ) {
-                IconButton(onClick = { pickedYear-- }) {
-                    Icon(Icons.Rounded.Add, "Prev year", tint = TextSecondary)
+                HapticIconButton(onClick = { pickedYear-- }) {
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Prev year", tint = TextSecondary)
                 }
                 Text(
                     text       = pickedYear.toString(),
@@ -184,8 +225,8 @@ fun MonthPickerSheet(
                     modifier   = Modifier.width(80.dp),
                     textAlign  = TextAlign.Center,
                 )
-                IconButton(onClick = { pickedYear++ }) {
-                    Icon(Icons.Rounded.Add, "Next year", tint = TextSecondary)
+                HapticIconButton(onClick = { pickedYear++ }) {
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Next year", tint = TextSecondary)
                 }
             }
 
@@ -231,7 +272,7 @@ fun MonthPickerSheet(
 
             Spacer(Modifier.height(8.dp))
 
-            Button(
+            HapticButton(
                 onClick = {
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         onMonthYearSelected(pickedMonth, pickedYear)
@@ -250,6 +291,253 @@ fun MonthPickerSheet(
     }
 }
 
+// ─── Expandable calendar header ──────────────────────────────────────────────
+
+/**
+ * Collapsed: U-curve day strip. Swipe down on the card to drag open the full
+ * month grid (follows the finger, springs to the nearest state on release);
+ * swipe up, tap the handle, or pick a date to collapse.
+ */
+@Composable
+private fun ExpandableCalendarCard(
+    year:          Int,
+    month:         Int,
+    days:          List<CalendarDay>,
+    selectedIdx:   Int,
+    ringProgress:  Float,
+    isFuture:      (Int) -> Boolean,
+    onDaySelected: (Int) -> Unit,
+    onMonthClick:  () -> Unit,
+) {
+    val colors  = LocalMyColorScheme.current
+    val density = LocalDensity.current
+    val scope   = rememberCoroutineScope()
+
+    val weeks        = (firstWeekdayOf(year, month) + days.size + 6) / 7
+    val stripHeight  = PILL_SIZE + ARC_DEPTH
+    val gridHeight   = WEEKDAY_ROW + GRID_CELL * weeks
+    val dragRangePx  = with(density) { (gridHeight - stripHeight).toPx() }.coerceAtLeast(1f)
+
+    var progress by remember { mutableFloatStateOf(0f) }
+    var settleJob by remember { mutableStateOf<Job?>(null) }
+
+    fun settleTo(target: Float, velocity: Float = 0f) {
+        settleJob?.cancel()
+        settleJob = scope.launch {
+            animate(
+                initialValue    = progress,
+                targetValue     = target,
+                initialVelocity = velocity / dragRangePx,
+                animationSpec   = spring(dampingRatio = 0.82f, stiffness = Spring.StiffnessMediumLow),
+            ) { value, _ -> progress = value }
+        }
+    }
+
+    val dragState = rememberDraggableState { delta ->
+        progress = (progress + delta / dragRangePx).coerceIn(0f, 1f)
+    }
+
+    val selected = days.getOrNull(selectedIdx) ?: days.first()
+
+    Surface(
+        color           = colors.dashboardContainerColor,
+        shape           = CurvedBottomShape(18.dp),
+        shadowElevation = 2.dp,
+        modifier        = Modifier
+            .fillMaxWidth()
+            .draggable(
+                state         = dragState,
+                orientation   = Orientation.Vertical,
+                onDragStarted = { settleJob?.cancel() },
+                onDragStopped = { velocity ->
+                    val target = when {
+                        velocity > 600f  -> 1f
+                        velocity < -600f -> 0f
+                        else             -> if (progress > 0.5f) 1f else 0f
+                    }
+                    settleTo(target, velocity)
+                },
+            ),
+    ) {
+        Column(
+            modifier            = Modifier.padding(top = 8.dp, bottom = 26.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // Mon • 15 • Sep ⌄
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(selected.shortName, style = AppTextStyles.style14BCN().copy(fontSize = 16.sp))
+                Spacer(Modifier.width(10.dp))
+                SmallDot()
+                Spacer(Modifier.width(10.dp))
+                AnimatedContent(
+                    targetState  = selected.number,
+                    transitionSpec = {
+                        val dir = if (targetState > initialState) 1 else -1
+                        (slideInVertically { it * dir / 2 } + fadeIn(tween(180))) togetherWith
+                            (slideOutVertically { -it * dir / 2 } + fadeOut(tween(120)))
+                    },
+                    label = "dayNumber",
+                ) { number ->
+                    Text(
+                        text       = number.toString(),
+                        style      = AppTextStyles.style14BCN().copy(fontSize = 34.sp, fontWeight = FontWeight.Medium),
+                        lineHeight = 40.sp,
+                    )
+                }
+                Spacer(Modifier.width(10.dp))
+                SmallDot()
+                Spacer(Modifier.width(6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable(onClick = onMonthClick)
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                ) {
+                    Text(MONTHS[month].take(3), style = AppTextStyles.style14BCN().copy(fontSize = 16.sp))
+                    Spacer(Modifier.width(2.dp))
+                    Icon(
+                        Icons.Rounded.KeyboardArrowDown, "Pick month",
+                        tint     = TextSecondary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            Box(
+                contentAlignment = Alignment.TopCenter,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(lerp(stripHeight, gridHeight, progress))
+                    .clipToBounds(),
+            ) {
+                // Strip stays composed so its scroll position survives expand/collapse.
+                ScrollableUCurveCalendar(
+                    days          = days,
+                    selectedIdx   = selectedIdx,
+                    onDaySelected = onDaySelected,
+                    isFuture      = isFuture,
+                    ringProgress  = ringProgress,
+                    modifier      = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            alpha        = (1f - progress * 2.2f).coerceIn(0f, 1f)
+                            translationY = progress * 24.dp.toPx()
+                        },
+                )
+
+                if (progress > 0f) {
+                    MonthGrid(
+                        year         = year,
+                        month        = month,
+                        days         = days,
+                        selectedIdx  = selectedIdx,
+                        ringProgress = ringProgress,
+                        isFuture     = isFuture,
+                        progress     = progress,
+                        onPick       = { idx ->
+                            onDaySelected(idx)
+                            settleTo(0f)
+                        },
+                        modifier     = Modifier
+                            .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                            .height(gridHeight),
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            // Drag handle — also toggles on tap.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { settleTo(if (progress > 0.5f) 0f else 1f) }
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+            ) {
+                Box(
+                    Modifier
+                        .width(lerp(32.dp, 44.dp, progress))
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(TextMuted)
+                )
+            }
+        }
+    }
+}
+
+// ─── Full month grid ─────────────────────────────────────────────────────────
+
+@Composable
+private fun MonthGrid(
+    year:         Int,
+    month:        Int,
+    days:         List<CalendarDay>,
+    selectedIdx:  Int,
+    ringProgress: Float,
+    isFuture:     (Int) -> Boolean,
+    progress:     Float,
+    onPick:       (Int) -> Unit,
+    modifier:     Modifier = Modifier,
+) {
+    val leading = firstWeekdayOf(year, month)
+    val cells   = List(leading) { null } + days.indices.toList()
+    val rows    = cells.chunked(7)
+
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(WEEKDAY_ROW)
+                .graphicsLayer { alpha = ((progress - 0.2f) / 0.5f).coerceIn(0f, 1f) },
+        ) {
+            DAY_NAMES.forEach { name ->
+                Text(
+                    text      = name.take(1),
+                    style     = AppTextStyles.style12GCN(),
+                    textAlign = TextAlign.Center,
+                    modifier  = Modifier.weight(1f),
+                )
+            }
+        }
+
+        rows.forEachIndexed { r, row ->
+            // Rows cascade in one after another as the card opens.
+            val rowT = ((progress - 0.25f - r * 0.08f) / 0.45f).coerceIn(0f, 1f)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(GRID_CELL)
+                    .graphicsLayer {
+                        alpha        = rowT
+                        translationY = (1f - rowT) * -12.dp.toPx()
+                    },
+            ) {
+                for (c in 0 until 7) {
+                    val idx = row.getOrNull(c)
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1f)) {
+                        if (idx != null) {
+                            DayPill(
+                                day          = days[idx],
+                                isSelected   = idx == selectedIdx,
+                                isFuture     = isFuture(days[idx].number),
+                                ringProgress = ringProgress,
+                                onClick      = { onPick(idx) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ─── Scrollable U-curve calendar ─────────────────────────────────────────────
 
 @Composable
@@ -257,50 +545,54 @@ fun ScrollableUCurveCalendar(
     days:          List<CalendarDay>,
     selectedIdx:   Int,
     onDaySelected: (Int) -> Unit,
-    arcDepth:      Dp = 20.dp,
     modifier:      Modifier = Modifier,
+    isFuture:      (Int) -> Boolean = { false },
+    ringProgress:  Float = 1f,
+    arcDepth:      Dp = ARC_DEPTH,
 ) {
-    val listState    = rememberLazyListState()
-    val snapBehavior = rememberSnapFlingBehavior(listState)
-    val scope        = rememberCoroutineScope()
-    val centreIdx    = rememberCentreIndex(listState)
-    val density      = LocalDensity.current
-    val arcDepthPx   = with(density) { arcDepth.toPx() }
+    BoxWithConstraints(modifier) {
+        // With side padding of (width - pill) / 2, "first visible item" == centred item.
+        val listState    = rememberLazyListState(initialFirstVisibleItemIndex = selectedIdx)
+        val snapBehavior = rememberSnapFlingBehavior(listState)
+        val centreIdx    = rememberCentreIndex(listState)
+        val onSelect     by rememberUpdatedState(onDaySelected)
+        val sidePad      = ((maxWidth - PILL_SIZE) / 2).coerceAtLeast(0.dp)
 
-    LaunchedEffect(centreIdx) { onDaySelected(centreIdx) }
+        // Select whatever the user scrolled to, once the scroll settles.
+        LaunchedEffect(listState) {
+            snapshotFlow { listState.isScrollInProgress }
+                .drop(1)
+                .filter { !it }
+                .collect { onSelect(centreIndexOf(listState)) }
+        }
 
-    LaunchedEffect(Unit) {
-        listState.scrollToItem(index = (selectedIdx - 1).coerceAtLeast(0))
-    }
+        // Follow selection changes made elsewhere (tap, month grid).
+        LaunchedEffect(selectedIdx) {
+            if (centreIndexOf(listState) != selectedIdx) listState.animateScrollToItem(selectedIdx)
+        }
 
-    val screenWidthDp   = LocalConfiguration.current.screenWidthDp.dp
-    val sidePad         = (screenWidthDp - PILL_SIZE) / 2
-    val containerHeight = PILL_SIZE + arcDepth
+        LazyRow(
+            state                 = listState,
+            flingBehavior         = snapBehavior,
+            contentPadding        = PaddingValues(horizontal = sidePad),
+            horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
+            verticalAlignment     = Alignment.Bottom,
+            modifier              = Modifier.height(PILL_SIZE + arcDepth),
+        ) {
+            itemsIndexed(days) { i, day ->
+                val curve by animateFloatAsState(uCurve(i, centreIdx), tween(180), label = "u$i")
 
-    LazyRow(
-        state                 = listState,
-        flingBehavior         = snapBehavior,
-        contentPadding        = PaddingValues(horizontal = sidePad),
-        horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
-        verticalAlignment     = Alignment.Bottom,
-        modifier              = modifier.height(containerHeight),
-    ) {
-        itemsIndexed(days) { i, day ->
-            val rawPx = uYOffset(i, centreIdx, arcDepthPx, windowHalf = 4)
-            val rawDp = with(density) { rawPx.toDp() }
-            val animY by animateDpAsState(rawDp, tween(150), label = "y$i")
-
-            DayPill(
-                day        = day,
-                isSelected = i == selectedIdx,
-                yOffset    = animY,
-                onClick    = {
-                    onDaySelected(i)
-                    scope.launch {
-                        listState.animateScrollToItem((i - 1).coerceAtLeast(0))
-                    }
-                },
-            )
+                DayPill(
+                    day          = day,
+                    isSelected   = i == selectedIdx,
+                    isFuture     = isFuture(day.number),
+                    ringProgress = ringProgress,
+                    onClick      = { onDaySelected(i) },
+                    modifier     = Modifier
+                        .offset(y = -arcDepth * curve)
+                        .graphicsLayer { alpha = 1f - 0.65f * curve },
+                )
+            }
         }
     }
 }
@@ -309,37 +601,50 @@ fun ScrollableUCurveCalendar(
 
 @Composable
 private fun DayPill(
-    day:        CalendarDay,
-    isSelected: Boolean,
-    yOffset:    Dp,
-    onClick:    () -> Unit,
+    day:          CalendarDay,
+    isSelected:   Boolean,
+    isFuture:     Boolean,
+    ringProgress: Float,
+    onClick:      () -> Unit,
+    modifier:     Modifier = Modifier,
 ) {
-    val bg: Color = if (isSelected) Blue500 else Color.Transparent
-    val textColor: Color = when {
-        isSelected                   -> Color.White
-        day.style == DayStyle.Green  -> Green500
-        day.style == DayStyle.Teal   -> Teal500
-        day.style == DayStyle.Orange -> Orange500
-        else                         -> TextMuted
+    val colors = LocalMyColorScheme.current
+    val sweep by animateFloatAsState(
+        targetValue   = if (isSelected) ringProgress.coerceIn(0f, 1f) else 0f,
+        animationSpec = tween(450, easing = FastOutSlowInEasing),
+        label         = "ring",
+    )
+    val textColor = when {
+        isSelected -> Blue500
+        isFuture   -> TextMuted
+        else       -> colors.textDarkColor
     }
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .offset(y = yOffset)
+        modifier = modifier
             .size(PILL_SIZE)
-            .shadow(
-                if (isSelected) 8.dp else 0.dp, CircleShape,
-                ambientColor = Blue500.copy(.4f), spotColor = Blue500.copy(.4f)
-            )
             .clip(CircleShape)
-            .background(bg)
             .clickable(onClick = onClick),
     ) {
+        if (isSelected) {
+            val ringTrack = BlueLight
+            Canvas(Modifier.matchParentSize().padding(2.dp)) {
+                val stroke = 3.dp.toPx()
+                drawCircle(ringTrack, style = Stroke(stroke))
+                drawArc(
+                    color      = Blue500,
+                    startAngle = -90f,
+                    sweepAngle = 360f * sweep,
+                    useCenter  = false,
+                    style      = Stroke(stroke, cap = StrokeCap.Round),
+                )
+            }
+        }
         Text(
             text       = day.number.toString(),
-            fontSize   = if (isSelected) 15.sp else 13.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            fontSize   = if (isSelected) 15.sp else 14.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             color      = textColor,
         )
     }
@@ -361,13 +666,14 @@ fun ManageMedicationsScreen(
     val todayYear  = today.get(Calendar.YEAR)
     val todayMonth = today.get(Calendar.MONTH)
     val todayDay   = today.get(Calendar.DAY_OF_MONTH)
+    val todayKey   = formatDate(todayYear, todayMonth, todayDay)
 
     var selectedMonth   by remember { mutableIntStateOf(todayMonth) }
     var selectedYear    by remember { mutableIntStateOf(todayYear) }
     var showMonthPicker by remember { mutableStateOf(false) }
 
-    val calendarDays by remember(selectedMonth, selectedYear) {
-        derivedStateOf { generateCalendarDays(selectedYear, selectedMonth) }
+    val calendarDays = remember(selectedMonth, selectedYear) {
+        generateCalendarDays(selectedYear, selectedMonth)
     }
 
     val initialIdx = remember(calendarDays, todayDay, todayMonth, todayYear, selectedMonth, selectedYear) {
@@ -384,6 +690,10 @@ fun ManageMedicationsScreen(
     val allMedicines    by viewModel.allMedicines.collectAsState()
     val loading         by viewModel.loading.collectAsState()
 
+    // Share of medications logged on the selected day — drives the ring around it.
+    val ringProgress = if (allMedicines.isEmpty()) 0f
+        else loggedMedicines.distinctBy { it.medicineId }.size.toFloat() / allMedicines.size
+
     LaunchedEffect(selectedIdx, selectedMonth, selectedYear) {
         val date = formatDate(selectedYear, selectedMonth, selected.number)
         viewModel.fetchByDate(context, date)
@@ -392,24 +702,31 @@ fun ManageMedicationsScreen(
     CommonAppBar(
         title = "Manage Medications",
         actions = {
-//            Row(
-//                verticalAlignment = Alignment.CenterVertically,
-//                horizontalArrangement = Arrangement.spacedBy(4.dp),
-//                modifier = Modifier
-//                    .clip(RoundedCornerShape(20.dp))
-//                    .background(colors.btnDarkColor)
-//                    .clickable { }
-//                    .padding(horizontal = 10.dp, vertical = 5.dp),
-//            ) {
-//                Text("Prescription", style = AppTextStyles.style12WCN())
-//                Icon(Icons.Rounded.Add, null, tint = Blue500, modifier = Modifier.size(13.dp))
-//            }
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.dashboardContainerColor)
+                    .clickable { navController.navigate(Routes.PRESCRIPTION) }
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+            ) {
+                Text("Prescription", style = AppTextStyles.style12BCN(color = Blue500).copy(fontWeight = FontWeight.SemiBold))
+                Icon(Icons.AutoMirrored.Outlined.ReceiptLong, null, tint = Blue500, modifier = Modifier.size(16.dp))
+            }
+            HapticIconButton(
+                onClick  = { navController.navigate(Routes.MEDICINE_REMINDER_SETTINGS) },
+                modifier = Modifier.padding(end = 4.dp),
+            ) {
+                Icon(Icons.Rounded.Settings, "Reminder settings", tint = Blue500)
+            }
         }
     ) {
         var isRefreshing by remember { mutableStateOf(false) }
         val coroutineScope = rememberCoroutineScope()
         @OptIn(ExperimentalMaterial3Api::class)
-        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+        com.critetiontech.ctvitalio.ui.feedback.StretchPullRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = {
                 isRefreshing = true
@@ -425,128 +742,96 @@ fun ManageMedicationsScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colors.dashboardBackgroundColor)
-                    .padding(horizontal = 16.dp),
+                    .background(colors.dashboardBackgroundColor),
             ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 88.dp),
+                    .padding(bottom = 96.dp),
             ) {
 
-                // ── White top card ─────────────────────────────────────────────
-                Surface(
-                    color           = colors.dashboardContainerColor,
-                    shape           = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-                    shadowElevation = 2.dp,
-                    modifier        = Modifier.fillMaxWidth(),
-                ) {
-                    Column(
-                        modifier            = Modifier.padding(top = 16.dp, bottom = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                // Fresh strip state per month so it starts centred on the right day.
+                key(selectedYear, selectedMonth) {
+                    ExpandableCalendarCard(
+                        year          = selectedYear,
+                        month         = selectedMonth,
+                        days          = calendarDays,
+                        selectedIdx   = selectedIdx,
+                        ringProgress  = ringProgress,
+                        isFuture      = { day -> formatDate(selectedYear, selectedMonth, day) > todayKey },
+                        onDaySelected = { selectedIdx = it },
+                        onMonthClick  = { showMonthPicker = true },
+                    )
+                }
+
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Spacer(Modifier.height(20.dp))
+
+                    // ── Logged section ─────────────────────────────────────────
+                    SectionLabel("Logged")
+                    Spacer(Modifier.height(10.dp))
+                    ContentStateCrossfade(
+                        state = contentStateOf(loading = loading, empty = loggedMedicines.isEmpty()),
+                        loading = {
+                            LoggedSectionShimmer()
+                        },
+                        empty = {
+                            SectionCard {
+                                                        Text(
+                                                            "No medicines logged for this date",
+                                                            color    = TextSecondary,
+                                                            fontSize = 13.sp,
+                                                            modifier = Modifier.padding(vertical = 16.dp)
+                                                        )
+                                                    }
+                        },
                     ) {
-                        Spacer(Modifier.height(10.dp))
-
-                        Row(
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            Text(selected.shortName, style = AppTextStyles.style14BCN())
-                            Spacer(Modifier.width(8.dp))
-                            SmallDot()
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text       = selected.number.toString(),
-                                style      = AppTextStyles.style14BCN().copy(fontSize = 46.sp),
-                                lineHeight = 46.sp,
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            SmallDot()
-                            Spacer(Modifier.width(8.dp))
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .clickable { showMonthPicker = true }
-                                    .padding(horizontal = 6.dp, vertical = 4.dp),
-                            ) {
-                                Text(MONTHS[selectedMonth].take(3), style = AppTextStyles.style14BCN())
-                                Spacer(Modifier.width(2.dp))
-                                Icon(
-                                    Icons.Rounded.KeyboardArrowDown, "Pick month",
-                                    tint     = TextSecondary,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(4.dp))
-
-                        ScrollableUCurveCalendar(
-                            days          = calendarDays,
-                            selectedIdx   = selectedIdx,
-                            onDaySelected = { selectedIdx = it },
-                            arcDepth      = 20.dp,
-                            modifier      = Modifier.fillMaxWidth(),
-                        )
-
-                        Spacer(Modifier.height(4.dp))
+                        SectionCard {
+                                                    loggedMedicines.forEachIndexed { i, med ->
+                                                        AnimatedEnter(index = i) {
+                                                            LoggedRow(med)
+                                                            if (i < loggedMedicines.lastIndex)
+                                                                HorizontalDivider(color = DividerColor, thickness = 0.5.dp)
+                                                        }
+                                                    }
+                                                }
                     }
-                }
 
-                Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(20.dp))
 
-                // ── Logged section ─────────────────────────────────────────────
-                SectionLabel("Logged")
-                Spacer(Modifier.height(8.dp))
-                when {
-                    loading && loggedMedicines.isEmpty() -> LoggedSectionShimmer()
-                    !loading && loggedMedicines.isEmpty() -> SectionCard {
-                        Text(
-                            "No medicines logged for this date",
-                            color    = TextSecondary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(vertical = 16.dp)
-                        )
-                    }
-                    else -> SectionCard {
-                        loggedMedicines.forEachIndexed { i, med ->
-                            LoggedRow(med)
-                            if (i < loggedMedicines.lastIndex)
-                                HorizontalDivider(color = DividerColor, thickness = 0.5.dp)
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                // ── All Medications section ────────────────────────────────────
-                SectionLabel(
-                    if (loading) "Your Medications"
-                    else "Your Medications (${allMedicines.size.toString().padStart(2, '0')})"
-                )
-                Spacer(Modifier.height(8.dp))
-                when {
-                    loading && allMedicines.isEmpty() -> MedChipsSectionShimmer()
-                    !loading && allMedicines.isEmpty() -> SectionCard {
-                        Text(
-                            "No medications found",
-                            color    = TextSecondary,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(vertical = 16.dp)
-                        )
-                    }
-                    else -> SectionCard {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier
-                                .horizontalScroll(rememberScrollState())
-                                .padding(vertical = 10.dp),
-                        ) {
-                            allMedicines.forEach { MedChip(it) }
-                        }
+                    // ── All Medications section ────────────────────────────────
+                    SectionLabel(
+                        if (loading) "Your Medications"
+                        else "Your Medications (${allMedicines.size.toString().padStart(2, '0')})"
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    ContentStateCrossfade(
+                        state = contentStateOf(loading = loading, empty = allMedicines.isEmpty()),
+                        loading = {
+                            MedChipsSectionShimmer()
+                        },
+                        empty = {
+                            SectionCard {
+                                                        Text(
+                                                            "No medications found",
+                                                            color    = TextSecondary,
+                                                            fontSize = 13.sp,
+                                                            modifier = Modifier.padding(vertical = 16.dp)
+                                                        )
+                                                    }
+                        },
+                    ) {
+                        SectionCard {
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                        modifier = Modifier
+                                                            .horizontalScroll(rememberScrollState())
+                                                            .padding(vertical = 14.dp),
+                                                    ) {
+                                                        allMedicines.forEach { MedChip(it) }
+                                                    }
+                                                }
                     }
                 }
             }
@@ -560,11 +845,36 @@ fun ManageMedicationsScreen(
                 modifier       = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(20.dp)
+                    .size(56.dp)
             ) {
-                Icon(Icons.Rounded.Add, "Add")
+                Icon(Icons.Rounded.Add, "Add", modifier = Modifier.size(28.dp))
             }
             }
         }
+    }
+
+    // One-time nudge: without these permissions alarms ring late or only as a small notification.
+    var showAlarmSetup by remember {
+        val settings = ReminderSettings(context)
+        mutableStateOf(!settings.setupPromptShown && !AlarmSetup.isComplete(context))
+    }
+    if (showAlarmSetup) {
+        com.critetiontech.ctvitalio.ui.components.AppDialog(
+            title = "Set up medicine alarms",
+            message = "Allow a few permissions so your medicine alarm rings on time and opens full screen, even while you're using your phone.",
+            icon = Icons.Rounded.Alarm,
+            confirmText = "Set up",
+            dismissText = "Later",
+            onDismiss = {
+                ReminderSettings(context).setupPromptShown = true
+                showAlarmSetup = false
+            },
+            onConfirm = {
+                ReminderSettings(context).setupPromptShown = true
+                showAlarmSetup = false
+                navController.navigate(Routes.MEDICINE_REMINDER_SETTINGS)
+            },
+        )
     }
 
     if (showMonthPicker) {
@@ -627,15 +937,15 @@ private fun MedChipsSectionShimmer() {
     SectionCard {
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier              = Modifier.padding(vertical = 10.dp),
+            modifier              = Modifier.padding(vertical = 14.dp),
         ) {
             repeat(4) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier            = Modifier.width(70.dp),
+                    modifier            = Modifier.width(76.dp),
                 ) {
-                    Box(modifier = Modifier.size(54.dp).clip(CircleShape).background(brush))
-                    Spacer(Modifier.height(6.dp))
+                    Box(modifier = Modifier.size(52.dp).clip(CircleShape).background(brush))
+                    Spacer(Modifier.height(8.dp))
                     Box(modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(4.dp)).background(brush))
                     Spacer(Modifier.height(4.dp))
                     Box(modifier = Modifier.fillMaxWidth(0.7f).height(10.dp).clip(RoundedCornerShape(4.dp)).background(brush))
@@ -649,7 +959,10 @@ private fun MedChipsSectionShimmer() {
 
 @Composable
 private fun SectionLabel(text: String) {
-    Text(text = text, style = AppTextStyles.style14BCN())
+    Text(
+        text  = text,
+        style = AppTextStyles.style14BCN().copy(fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+    )
 }
 
 @Composable
@@ -668,71 +981,82 @@ private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun StatusTag(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String, color: Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .background(color.copy(.1f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp)
-    ) {
-        Icon(icon, null, tint = color, modifier = Modifier.size(14.dp))
-        Spacer(Modifier.width(5.dp))
-        Text(text, color = color, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-    }
-}
-
-@Composable
 private fun LoggedRow(med: LoggedMedicine) {
+    val raw = med.takenDateTime.orEmpty()
     val timeFormatted = try {
-        val parts = med.takenDateTime.split("T")
+        val parts = raw.split("T")
         if (parts.size == 2) {
             val timeParts = parts[1].split(":")
             val hour = timeParts[0].toInt()
             val min  = timeParts[1]
             val amPm = if (hour < 12) "AM" else "PM"
             val h12  = if (hour % 12 == 0) 12 else hour % 12
-            "$h12:$min $amPm"
-        } else med.takenDateTime
-    } catch (e: Exception) { med.takenDateTime }
+            "${h12.toString().padStart(2, '0')}:$min $amPm"
+        } else raw
+    } catch (e: Exception) { raw }
 
     Row(
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier              = Modifier
+        verticalAlignment = Alignment.CenterVertically,
+        modifier          = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 14.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(med.medicineName.trim(), style = AppTextStyles.style14BCN())
-            Spacer(Modifier.height(2.dp))
             Text(
-                "${med.dosageType} • $timeFormatted",
-                style = AppTextStyles.style12GCN()
+                med.medicineName.orEmpty().trim(),
+                style = AppTextStyles.style14BCN().copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
             )
+            if (timeFormatted.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.Schedule, null, tint = TextSecondary, modifier = Modifier.size(13.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(timeFormatted, style = AppTextStyles.style12GCN())
+                }
+            }
         }
         Spacer(Modifier.width(8.dp))
-        StatusTag(Icons.Rounded.CheckCircle, "Taken", Color(0xFF1564ED))
+        Icon(Icons.Rounded.Check, "Taken", tint = Green500, modifier = Modifier.size(20.dp))
     }
 }
 
 @Composable
 private fun MedChip(med: AllMedicine) {
+    val dosageType = med.dosageType.orEmpty()
+    val isLiquid = dosageType.contains("syrup", true) || dosageType.contains("liquid", true)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier            = Modifier.width(70.dp),
+        modifier            = Modifier.width(76.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(54.dp)
+                .size(52.dp)
                 .clip(CircleShape)
-                .background(BgGray),
+                .background(BlueLight),
         ) {
-            Text("💊", fontSize = 24.sp)
+            Icon(
+                if (isLiquid) Icons.Rounded.LocalDrink else Icons.Rounded.Medication,
+                null,
+                tint     = Blue500,
+                modifier = Modifier.size(26.dp),
+            )
         }
-        Spacer(Modifier.height(6.dp))
-        Text(med.medicineName.trim(), style = AppTextStyles.style12BCN())
-        Text(med.dosageType, style = AppTextStyles.style12GCN())
+        Spacer(Modifier.height(8.dp))
+        Text(
+            med.medicineName.orEmpty().trim(),
+            style     = AppTextStyles.style12BCN().copy(fontWeight = FontWeight.SemiBold),
+            maxLines  = 1,
+            overflow  = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            dosageType,
+            style    = AppTextStyles.style12GCN().copy(fontSize = 11.sp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

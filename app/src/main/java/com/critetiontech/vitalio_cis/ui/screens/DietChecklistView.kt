@@ -1,5 +1,15 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.text.font.FontWeight
+
+import androidx.compose.ui.draw.clip
+
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -38,8 +48,28 @@ fun DietChecklistScreen() {
 
 
     val colors = LocalMyColorScheme.current
+    val navController = com.critetiontech.myapplication.utils.LocalNavController.current
     CommonAppBar(
         title = "Diet Checklist",
+        actions = {
+            // Food search → nutrients (NutriAnalyser).
+            androidx.compose.foundation.layout.Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                    .background(colors.primaryBlueColor.copy(alpha = 0.12f))
+                    .clickable { navController.navigate(com.critetiontech.ctvitalio.Routes.NUTRIENTS) }
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+            ) {
+                Icon(
+                    androidx.compose.material.icons.Icons.Rounded.LocalFireDepartment, contentDescription = null,
+                    tint = colors.primaryBlueColor, modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(4.dp))
+                Text("Nutrients", color = colors.primaryBlueColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+        },
     ) {
         Column(
             modifier = Modifier
@@ -159,7 +189,7 @@ fun DietCard(medicine: Diet) {
             }
 
             if (medicine.isTaken) {
-                Button(
+                HapticButton(
                     onClick = {},
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2962FF)

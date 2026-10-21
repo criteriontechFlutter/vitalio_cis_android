@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +12,9 @@ import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.model.DashboardResponse
 import com.critetiontech.ctvitalio.model.UpcomingAppointment
 import com.critetiontech.ctvitalio.model.Vital
+import com.critetiontech.ctvitalio.reminder.MedicineIntakeEvents
+import com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler
+import com.critetiontech.ctvitalio.reminder.withLocallyTaken
 import com.critetiontech.ctvitalio.utils.MyApplication
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +40,13 @@ class HomeViewModel : ViewModel() {
 
     private val _dailyMedicines = MutableStateFlow<List<com.critetiontech.ctvitalio.model.MedicineItem>>(emptyList())
     val dailyMedicines: StateFlow<List<com.critetiontech.ctvitalio.model.MedicineItem>> = _dailyMedicines
+
+    init {
+        // A dose was logged from a medicine alarm; refresh so the card shows it as taken.
+        viewModelScope.launch {
+            MedicineIntakeEvents.changed.collect { refreshTodayMedicines() }
+        }
+    }
 
     fun fetchDashboard() {
         viewModelScope.launch {
@@ -66,7 +78,9 @@ class HomeViewModel : ViewModel() {
                     val allMeds = medsRes.data.flatMap { it.medicineData }
                         .filter { it.medicineName.isNotBlank() }
                         .sortedBy { it.scheduledDateTime }
+                        .withLocallyTaken(MyApplication.appContext)
                     _dailyMedicines.value = allMeds
+                    MedicineReminderScheduler.requestSync(MyApplication.appContext)
                 }
 
             } catch (e: Exception) {
@@ -80,17 +94,28 @@ class HomeViewModel : ViewModel() {
     val markingMedicines: StateFlow<Set<Int>> = _markingMedicines
 
     fun markMedicineIntake(medicine: com.critetiontech.ctvitalio.model.MedicineItem) {
+        // Ignore repeat taps while this medicine is already being marked.
+        if (medicine.id in _markingMedicines.value) return
+        _markingMedicines.value += medicine.id
         viewModelScope.launch {
-            _markingMedicines.value += medicine.id
             Log.d("HomeViewModel", "🔵 markMedicineIntake called → id=${medicine.id}, scheduledDateTime=${medicine.scheduledDateTime}, medicineName=${medicine.medicineName}")
             try {
                 val result = AppDependencies.markMedicineIntake()(medicine.id, medicine.scheduledDateTime)
                 Log.d("HomeViewModel", "🔵 markMedicineIntake result → $result")
                 if (result is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
-                    // Refetch medicines
-                    fetchDashboardNoCache()
+                    // Show it as taken right away, then sync with the server before clearing
+                    // the loader — otherwise the stale unchecked card flashes back and invites a second tap.
+                    val now = java.time.LocalDateTime.now().withNano(0).toString()
+                    _dailyMedicines.value = _dailyMedicines.value.map {
+                        if (it.id == medicine.id) it.copy(isTaken = true, takenDateTime = now) else it
+                    }
+                    Haptics.success()
+                    refreshTodayMedicines()
+                    // Drop the alarm for the dose that was just taken.
+                    MedicineReminderScheduler.requestSync(MyApplication.appContext)
                 } else if (result is com.critetiontech.ctvitalio.domain.model.DomainResult.Error) {
                     Log.e("HomeViewModel", "🔴 markMedicineIntake API error: ${result.exception.message}", result.exception)
+                    Haptics.error()
                     android.widget.Toast.makeText(MyApplication.appContext, "Failed to mark medicine", android.widget.Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
@@ -98,6 +123,18 @@ class HomeViewModel : ViewModel() {
             } finally {
                 _markingMedicines.value = _markingMedicines.value - medicine.id
             }
+        }
+    }
+
+    private suspend fun refreshTodayMedicines() {
+        val patient = prefs.getPatient() ?: return
+        val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        val medsRes = AppDependencies.fetchMedicineIntake()(patient.pid, currentDate, patient.clientId)
+        if (medsRes is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
+            _dailyMedicines.value = medsRes.data.flatMap { it.medicineData }
+                .filter { it.medicineName.isNotBlank() }
+                .sortedBy { it.scheduledDateTime }
+                .withLocallyTaken(MyApplication.appContext)
         }
     }
 
@@ -123,6 +160,7 @@ class HomeViewModel : ViewModel() {
                     val allMeds = medsRes.data.flatMap { it.medicineData }
                         .filter { it.medicineName.isNotBlank() }
                         .sortedBy { it.scheduledDateTime }
+                        .withLocallyTaken(MyApplication.appContext)
                     _dailyMedicines.value = allMeds
                 }
             } catch (e: Exception) {

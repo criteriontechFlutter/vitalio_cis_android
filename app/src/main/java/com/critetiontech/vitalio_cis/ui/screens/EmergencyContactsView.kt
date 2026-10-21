@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -67,7 +69,7 @@ fun ContactItem(
                 Text(phone,  style = AppTextStyles.style14PCN())
             }
 
-            IconButton(onClick = { /* Call */ }) {
+            HapticIconButton(onClick = { /* Call */ }) {
                 Icon(Icons.Default.Call, contentDescription = null, tint = Color(0xFF2962FF))
             }
 

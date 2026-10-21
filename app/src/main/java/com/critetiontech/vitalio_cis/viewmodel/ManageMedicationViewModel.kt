@@ -50,8 +50,8 @@ class ManageMedicationViewModel @Inject constructor() : ViewModel() {
                     if (!body.isNullOrEmpty()) {
                         val parsed = Gson().fromJson(body, MedicineIntakeByDateResponse::class.java)
                         if (parsed.status == 1) {
-                            _loggedMedicines.value = parsed.responseValue.loggedMedicines
-                            _allMedicines.value = parsed.responseValue.allMedicines
+                            _loggedMedicines.value = parsed.responseValue?.loggedMedicines.orEmpty()
+                            _allMedicines.value = parsed.responseValue?.allMedicines.orEmpty()
                         } else {
                             _loggedMedicines.value = emptyList()
                             _allMedicines.value = emptyList()

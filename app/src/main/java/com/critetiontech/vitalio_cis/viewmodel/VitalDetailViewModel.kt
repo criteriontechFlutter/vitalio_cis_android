@@ -7,6 +7,7 @@ import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.Vital
 import com.critetiontech.ctvitalio.model.VitalGraphEntry
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,6 +27,11 @@ class VitalDetailViewModel : ViewModel() {
 
     private val _addLoading = MutableStateFlow(false)
     val addLoading: StateFlow<Boolean> = _addLoading
+
+    /** Patient-facing reason the last save failed; cleared when a new save starts. */
+    private val _addError = MutableStateFlow<String?>(null)
+    val addError: StateFlow<String?> = _addError
+    fun clearAddError() { _addError.value = null }
 
     private val _vitalList = MutableStateFlow<List<Vital>>(emptyList())
     val vitalList: StateFlow<List<Vital>> = _vitalList
@@ -62,16 +68,25 @@ class VitalDetailViewModel : ViewModel() {
         }
     }
 
-    fun addVital(vmValueBPSys: String = "", vmValueBPDias: String = "", vmValueSPO2: String = "", vmValueRespiratoryRate: String = "", vmValueHeartRate: String = "", vmValuePulse: String = "", vmValueRbs: String = "", vmValueTemperature: String = "", onSuccess: () -> Unit = {}) {
+    fun addVital(vmValueBPSys: String = "", vmValueBPDias: String = "", vmValueSPO2: String = "", vmValueRespiratoryRate: String = "", vmValueHeartRate: String = "", vmValuePulse: String = "", vmValueRbs: String = "", vmValueTemperature: String = "", vmValueWeight: String = "", vmValueHeight: String = "", onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             _addLoading.value = true
-            val patient = prefs.getPatient() ?: run { _addLoading.value = false; return@launch }
+            _addError.value = null
+            val patient = prefs.getPatient() ?: run {
+                _addError.value = "Your session has expired. Please log in again."
+                _addLoading.value = false
+                return@launch
+            }
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            val body = mapOf("vmValueBPSys" to vmValueBPSys, "vmValueBPDias" to vmValueBPDias, "vmValueSPO2" to vmValueSPO2, "vmValueRespiratoryRate" to vmValueRespiratoryRate, "vmValueHeartRate" to vmValueHeartRate, "vmValuePulse" to vmValuePulse, "vmValueRbs" to vmValueRbs, "vmValueTemperature" to vmValueTemperature, "uhid" to patient.uhId, "userId" to patient.pid.toString(), "vitalDate" to currentDate, "vitalTime" to currentTime, "clientId" to patient.clientId.toString(), "isFromPatient" to "true", "isFromMachine" to "0", "positionId" to "0")
+            val body = mapOf("vmValueBPSys" to vmValueBPSys, "vmValueBPDias" to vmValueBPDias, "vmValueSPO2" to vmValueSPO2, "vmValueRespiratoryRate" to vmValueRespiratoryRate, "vmValueHeartRate" to vmValueHeartRate, "vmValuePulse" to vmValuePulse, "vmValueRbs" to vmValueRbs, "vmValueTemperature" to vmValueTemperature, "vmValueWeight" to vmValueWeight, "vmValueHeight" to vmValueHeight, "uhid" to patient.uhId, "userId" to patient.pid.toString(), "vitalDate" to currentDate, "vitalTime" to currentTime, "clientId" to patient.clientId.toString(), "isFromPatient" to "true", "isFromMachine" to "0", "positionId" to "0")
             when (val r = addVitalUseCase(body)) {
-                is DomainResult.Success -> { fetchLastVital(); onSuccess() }
-                is DomainResult.Error -> Log.e("VitalDetailVM", r.exception.message.orEmpty())
+                is DomainResult.Success -> { Haptics.success(); fetchLastVital(); onSuccess() }
+                is DomainResult.Error -> {
+                    _addError.value = r.exception.message ?: "Couldn't save the vital. Please try again."
+                    Haptics.error()
+                    Log.e("VitalDetailVM", r.exception.message.orEmpty())
+                }
             }
             _addLoading.value = false
         }

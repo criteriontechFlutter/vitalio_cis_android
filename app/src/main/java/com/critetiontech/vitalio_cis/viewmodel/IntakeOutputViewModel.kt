@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -96,6 +98,7 @@ class IntakeOutputViewModel : ViewModel() {
                 is DomainResult.Success -> {
                     Log.d("IntakeOutputVM", "addIntake success")
                     _intakeSuccess.value = true
+                    Haptics.success()
                     // Refresh today's intake bar chart data
                     fetchIntake()
                 }
@@ -127,6 +130,7 @@ class IntakeOutputViewModel : ViewModel() {
                 is DomainResult.Success -> {
                     Log.d("IntakeOutputVM", "addOutput success")
                     _outputSuccess.value = true
+                    Haptics.success()
                 }
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }

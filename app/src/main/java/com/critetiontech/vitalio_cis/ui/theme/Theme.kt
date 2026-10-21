@@ -3,6 +3,8 @@ package com.critetiontech.ctvitalio.ui.theme
 import android.app.Application
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -140,8 +142,60 @@ fun MyAppTheme(
 
     CompositionLocalProvider(
         LocalThemeViewModel provides themeViewModel,
-        LocalMyColorScheme provides colors
+        LocalMyColorScheme provides colors,
+        // Ripple + tap haptic for every Modifier.clickable in the app.
+        androidx.compose.foundation.LocalIndication provides com.critetiontech.ctvitalio.ui.feedback.HapticIndication,
     ) {
-        content()
+        // Material parts (Text without a colour, Card, TextField, Switch, menus…) follow the app
+        // theme too, instead of Material's default light purple.
+        androidx.compose.material3.MaterialTheme(colorScheme = materialSchemeFor(colors)) {
+            CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides colors.textDarkColor) {
+                content()
+            }
+        }
     }
 }
+
+private fun materialSchemeFor(c: MyColorScheme): androidx.compose.material3.ColorScheme {
+    val dark = c.dashboardBackgroundColor.luminance() < 0.5f
+    val blue = c.primaryBlueColor
+    val blueTint = blue.copy(alpha = if (dark) 0.25f else 0.12f).compositeOver(c.dashboardContainerColor)
+    val base = if (dark) androidx.compose.material3.darkColorScheme() else androidx.compose.material3.lightColorScheme()
+    return base.copy(
+        primary = blue,
+        onPrimary = Color.White,
+        primaryContainer = blueTint,
+        onPrimaryContainer = if (dark) Color.White else blue,
+        secondary = blue,
+        onSecondary = Color.White,
+        secondaryContainer = blueTint,
+        onSecondaryContainer = if (dark) Color.White else blue,
+        tertiaryContainer = blueTint,
+        onTertiaryContainer = if (dark) Color.White else blue,
+        background = c.dashboardBackgroundColor,
+        onBackground = c.textDarkColor,
+        surface = c.dashboardContainerColor,
+        onSurface = c.textDarkColor,
+        surfaceVariant = c.dashboardBackgroundColor,
+        onSurfaceVariant = c.textGreyColor,
+        surfaceContainerLowest = c.dashboardContainerColor,
+        surfaceContainerLow = c.dashboardContainerColor,
+        surfaceContainer = c.dashboardContainerColor,
+        surfaceContainerHigh = c.dashboardContainerColor,
+        surfaceContainerHighest = c.dashboardContainerColor,
+        inverseSurface = c.textDarkColor,
+        inverseOnSurface = c.dashboardContainerColor,
+        outline = c.borderGreyLightColor,
+        outlineVariant = c.borderGreyLightColor.copy(alpha = 0.5f).compositeOver(c.dashboardContainerColor),
+        error = Color(0xFFE5484D),
+        scrim = Color.Black,
+    )
+}
+
+/** True while the app's dark theme is on. */
+val isAppDark: Boolean
+    @Composable get() = LocalMyColorScheme.current.dashboardBackgroundColor.luminance() < 0.5f
+
+/** A soft tint for chips and badges: the light colour by day, [base] at low alpha at night. */
+@Composable
+fun softTint(base: Color, light: Color): Color = if (isAppDark) base.copy(alpha = 0.18f) else light
