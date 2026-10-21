@@ -33,6 +33,7 @@ import com.critetiontech.ctvitalio.ui.screens.BookingDetailsScreen
 import com.critetiontech.ctvitalio.ui.screens.ConnectWatchScreen
 import com.critetiontech.ctvitalio.ui.screens.ConnectionScreen
 import com.critetiontech.ctvitalio.ui.screens.HealthConnectSyncScreen
+import com.critetiontech.ctvitalio.ui.screens.OmronDeviceScreen
  import com.critetiontech.ctvitalio.ui.screens.DietChecklistScreen
 import com.critetiontech.ctvitalio.ui.screens.DoctorDetailsScreen
 import com.critetiontech.ctvitalio.ui.screens.DrawerScreen
@@ -94,10 +95,20 @@ import com.critetiontech.ctvitalio.ui.adaptive.AdaptiveLayoutProvider
 import com.critetiontech.ctvitalio.voice.VoiceNavigationManager
 import com.example.vitalio_cis.ui.screens.DashboardScreen
 import com.google.gson.Gson
+import androidx.lifecycle.lifecycleScope
+import com.critetiontech.ctvitalio.healthconnect.WearableSync
+import kotlinx.coroutines.launch
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.runtime.getValue
 
 class MainActivity : ComponentActivity() {
+
+    override fun onResume() {
+        super.onResume()
+        // Pull new readings from the user's watch/health apps (throttled inside)
+        lifecycleScope.launch { WearableSync.syncIfDue(applicationContext) }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -272,6 +283,9 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
                             composable(Routes.RESEARCHARTICLES) { ResearchArticlesScreen() }
                             composable(Routes.HEALTHCONNECTSYNC) { HealthConnectSyncScreen() }
+                            composable(Routes.OMRON_DEVICE + "/{model}") { backStackEntry ->
+                                OmronDeviceScreen(modelCode = backStackEntry.arguments?.getString("model").orEmpty())
+                            }
                             composable("welcome") { WelcomeScreen( ) }
                             composable("gender") { GenderScreen( ) }
                             composable("dob") { DobScreen( ) }

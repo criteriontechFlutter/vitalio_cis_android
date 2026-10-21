@@ -6,6 +6,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -13,8 +15,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddCircleOutline
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MonitorHeart
+import androidx.compose.material.icons.rounded.MonitorWeight
+import androidx.compose.material.icons.rounded.Watch
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,6 +45,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.omron.OmronKind
+import com.critetiontech.ctvitalio.omron.OmronManager
+import com.critetiontech.ctvitalio.omron.OmronModels
+import com.critetiontech.ctvitalio.omron.PairedOmronDevice
 import com.critetiontech.ctvitalio.ui.components.RoundBackTopBar
 import com.critetiontech.ctvitalio.ui.feedback.HapticEvent
 import com.critetiontech.ctvitalio.ui.feedback.bounceClick
@@ -50,8 +59,21 @@ import com.critetiontech.myapplication.utils.LocalNavController
 
 data class Device(
     val name: String,
-    val type: String
+    val type: String,
+    /** Omron model number, for devices that can be paired. */
+    val code: String? = null
 )
+
+/** Only the Omron devices that can measure this vital: BP machines for BP/pulse, scales for weight. */
+internal fun omronDevicesFor(vitalName: String): List<Device> {
+    val vital = vitalName.lowercase()
+    val kind = when {
+        listOf("pressure", "bp", "pulse", "heart").any { it in vital } -> OmronKind.BP
+        "weight" in vital -> OmronKind.SCALE
+        else -> return emptyList()
+    }
+    return OmronModels.ALL.filter { it.kind == kind }.map { Device("Omron ${it.code}", it.label, it.code) }
+}
 
 /* ================= INPUT RULES ================= */
 
@@ -224,6 +246,8 @@ private fun fieldError(field: VitalField, text: String): String? {
     return null
 }
 
+private const val SHOW_NEW_DEVICE = false
+
 /** Remembers the unit each patient prefers per vital (e.g. °C for temperature). */
 private const val UNIT_PREFS = "vital_entry_units"
 
@@ -235,27 +259,43 @@ fun ConnectionScreen(
     unitName: String,
     viewModel: VitalDetailViewModel = viewModel()
 ) {
-    val devices = listOf(
-        Device("Omron Automatic BP Monitor (HEM-7120)", "BP Machine"),
-        Device("Yonker BP Cuff YK-BPW1", "BP Machine"),
-        Device("Omron HEM 6161", "BP Machine")
-    )
+    val devices = remember(vitalName) { omronDevicesFor(vitalName) }
 
     val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
     var showDialog by remember { mutableStateOf(false) }
 
+    // Re-read paired Omron devices whenever the screen comes back (e.g. after pairing)
+    val context = LocalContext.current
+    var paired by remember { mutableStateOf(emptyMap<String?, PairedOmronDevice>()) }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                paired = OmronManager.pairedDevices(context).associateBy { it.code }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     Column(Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
         RoundBackTopBar(
             title = "Connection",
-            actions = { NewDevicePill { navController.navigate(Routes.HEALTHCONNECTSYNC) } },
+            // New Device is hidden for now; wearables are reached from the row below the devices
+            actions = { if (SHOW_NEW_DEVICE) NewDevicePill { navController.navigate(Routes.HEALTHCONNECTSYNC) } },
         )
 
         Column(
-            Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 4.dp),
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            devices.forEach { DeviceRow(it) }
+            devices.forEach { device ->
+                DeviceRow(device, status = paired[device.code]?.let { pairedStatus(it) }) {
+                    device.code?.let { navController.navigate("${Routes.OMRON_DEVICE}/$it") }
+                }
+            }
+            WearablesRow { navController.navigate(Routes.HEALTHCONNECTSYNC) }
         }
 
         Text(
@@ -302,8 +342,9 @@ private fun NewDevicePill(onClick: () -> Unit) {
     }
 }
 
+/** Opens Wearable Sync (Galaxy Watch, Fitbit, Garmin… via Health Connect). */
 @Composable
-private fun DeviceRow(device: Device) {
+private fun WearablesRow(onClick: () -> Unit) {
     val colors = LocalMyColorScheme.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -311,21 +352,55 @@ private fun DeviceRow(device: Device) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(colors.dashboardContainerColor)
+            .bounceClick(onClick = onClick)
             .padding(12.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(46.dp).clip(RoundedCornerShape(10.dp)).background(colors.primaryBlueColor.copy(alpha = 0.08f)),
         ) {
-            Icon(Icons.Rounded.MonitorHeart, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(26.dp))
+            Icon(Icons.Rounded.Watch, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(26.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Smartwatch & Health Apps", color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Galaxy Watch, Fitbit, Garmin & more", color = colors.textGreyColor, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(22.dp))
+    }
+}
+
+@Composable
+private fun DeviceRow(device: Device, status: String?, onClick: () -> Unit) {
+    val colors = LocalMyColorScheme.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.dashboardContainerColor)
+            .bounceClick(onClick = onClick)
+            .padding(12.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(46.dp).clip(RoundedCornerShape(10.dp)).background(colors.primaryBlueColor.copy(alpha = 0.08f)),
+        ) {
+            val isScale = "Scale" in device.type || "Body" in device.type
+            Icon(if (isScale) Icons.Rounded.MonitorWeight else Icons.Rounded.MonitorHeart, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(26.dp))
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(device.name, color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(device.type, color = colors.textGreyColor, fontSize = 12.sp)
+            Text(status ?: device.type, color = if (status != null) Color(0xFF2E7D32) else colors.textGreyColor, fontSize = 12.sp)
         }
+        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(22.dp))
     }
 }
+
+private fun pairedStatus(device: PairedOmronDevice): String =
+    if (device.lastSyncAt == 0L) "Paired · not synced yet"
+    else "Paired · synced " + android.text.format.DateUtils.getRelativeTimeSpanString(device.lastSyncAt)
 
 /* ================= DIALOG ================= */
 

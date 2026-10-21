@@ -58,6 +58,7 @@ object Routes {
     const val UPLOADPRESCRIPTION  = "UploadPrescriptionScreen"
     const val PRESCRIPTIONANALYSIS  = "PrescriptionAnalysisScreen"
     const val HEALTHCONNECTSYNC = "HealthConnectSyncScreen"
+    const val OMRON_DEVICE = "OmronDeviceScreen"
     const val BREATHING_THERAPY = "BreathingTherapyScreen"
     const val EDITPROFILE = "EditProfileScreen"
     const val MEDICINE_REMINDER_SETTINGS = "MedicineReminderSettingsScreen"
