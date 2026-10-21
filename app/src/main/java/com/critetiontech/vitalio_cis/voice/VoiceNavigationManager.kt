@@ -11,23 +11,30 @@ import android.util.Base64
 import android.util.Log
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.utils.Patient
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -37,13 +44,16 @@ import java.util.concurrent.TimeUnit
 //  VoiceNavigationManager  (singleton)  — v2.0 Advanced
 //  Android equivalent of the iOS VoiceNavigationManager.
 //
-//  Session flow:
+//  Session flow (logging only — the whole utterance is analysed once, at the end):
 //   1. startListening() → loads session context → connects WebSocket → starts AudioRecord at 16kHz
 //   2. Audio is chunked into 512 Float32 samples → Base64 → sent over WebSocket
-//   3. Backend responds with {original_text, translation} or legacy {text}
-//   4. If translation is a navigation command → handleCommand()
-//   5. Multi-turn dialog intercepts incomplete vitals (e.g. "record BP") → guided Q&A
-//   6. Otherwise send translation to EchoAI → extract vitals + symptoms + fluids + medicines
+//   3. Backend streams per-segment partial/final {original_text, translation}; segments are
+//      accumulated so nothing said earlier is lost
+//   4. VAD (adaptive mic energy + live transcript activity) ends the turn after a pause,
+//      or the user taps stop; trailing finals/translations are awaited briefly
+//   5. The full transcript is parsed on-device at once (card shown instantly), then sent to
+//      EchoAI once → vitals + symptoms + fluids + medicines; the AI result refines the card
+//      (an open multi-turn question, e.g. "Systolic value?", consumes the reply instead)
 //   7. Unit normalization (°C→°F, lbs→kg, mmol→mg/dL) applied automatically
 //   8. Anomaly detection runs before save → CRITICAL alerts shown to user
 //   9. Show UnifiedConfirmationCard with trend deltas from last session
@@ -55,22 +65,6 @@ private const val TAG = "VoiceNavManager"
 
 // WebSocket URL for the dictation backend (matching the iOS config)
 private const val DICTATION_WS_BASE = "ws://food.shopright.ai:3479/ws"
-
-// Data indicators to prevent treating health data dictation as navigation commands
-private val DATA_INDICATORS = listOf(
-    "ml", "bpm", "mmhg", "drank", "drink", "had", "passed", "output", "intake",
-    "record", "log", "piya", "paani", "glass", "cup", "fever", "pain", "headache",
-    "cough", "pressure", "rate", "pulse", "spo2", "sugar", "rbs", "temperature", "weight"
-)
-
-// Navigation command keywords (mirrors iOS containsNavigationCommand)
-private val NAV_KEYWORDS = listOf(
-    "home", "dashboard", "vital", "fluid", "water", "medicine", "pill",
-    "report", "symptom", "appointment", "doctor", "article", "research",
-    "activity", "back", "profile", "dark mode", "appearance",
-    "reminder", "lab", "diet", "allergy", "faq", "feedback",
-    "emergency", "shared", "observer", "family"
-)
 
 object VoiceNavigationManager {
 
@@ -135,6 +129,7 @@ object VoiceNavigationManager {
     private var audioJob: Job? = null
     private var aiExtractionJob: Job? = null
     private var aiDebounceJob: Job? = null
+    private var contextJob: Job? = null
     private var webSocket: WebSocket? = null
 
     // Thread-safe flags — accessed from Main, IO, and Default dispatchers
@@ -158,21 +153,60 @@ object VoiceNavigationManager {
     // Audio: 512 Float32 samples per packet → 2048 bytes → Base64
     private const val SAMPLE_RATE    = 16000
     private const val PACKET_SAMPLES = 512
-    // ArrayDeque for O(1) removeFirst() — was mutableListOf which caused O(n²) jitter
-    private val floatBuffer = ArrayDeque<Float>(PACKET_SAMPLES * 8)
+    // Primitive packet buffer — the old ArrayDeque<Float> boxed every sample (16k allocations/sec)
+    private val packetBuffer = FloatArray(PACKET_SAMPLES)
+    private var packetFill = 0
 
+    // Shares VoiceHttp's connection pool with the Echo AI calls
     private val httpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
+        VoiceHttp.client.newBuilder()
             .readTimeout(0, TimeUnit.MILLISECONDS) // keep alive for WS
             .build()
     }
 
     private val prefs by lazy { AppDependencies.prefs }
 
-    // VAD (Voice Activity Detection) state
-    private var lastSpeechTime = 0L
-    private var hasSpoken = false
+    // VAD (Voice Activity Detection) state — written from the audio and WebSocket threads
+    @Volatile private var lastSpeechTime = 0L
+    @Volatile private var hasSpoken = false
+    private var noiseFloor = 0.01f
+    private var loudFrames = 0
+
+    private const val VAD_MIN_THRESHOLD     = 0.012f  // RMS floor so silence never counts as speech
+    private const val VAD_NOISE_MULTIPLIER  = 3f      // speech must be this much louder than room noise
+    private const val VAD_SPEECH_FRAMES     = 3       // ~96ms of loud audio before we call it speech (ignores clicks)
+    // Pause that ends the turn once the user has spoken: short once the backend has closed the
+    // segment (sentence finished), longer while a segment is still open (pause mid-sentence).
+    private const val VAD_END_SILENCE_MS      = 1_300L
+    private const val VAD_END_SILENCE_OPEN_MS = 2_200L
+    private const val VAD_NO_SPEECH_MS      = 8_000L  // give up if nothing is said at all
+    private const val MAX_SESSION_MS        = 120_000L
+    private const val TRAILING_RESULT_WAIT_MS = 2_000L
+    private const val CONTEXT_WAIT_MS         = 1_500L  // max wait for today's medicines at analysis time
+
+    // Transcript accumulated across the backend's per-segment messages, in arrival order.
+    // English speech arrives as final originals only; Hindi arrives as an original followed
+    // by a separate translation that stands in for the Hindi segments before it.
+    // glueNext: the backend cut this segment mid-word, so the next one joins without a space
+    private class Segment(
+        val text: String,
+        val needsTranslation: Boolean,
+        var translated: Boolean = false,
+        val glueNext: Boolean = false
+    )
+    private val segments = mutableListOf<Segment>()
+    @Volatile private var currentPartial = ""
+    // Raw (untrimmed) partials, newest first — they show where the backend cut each final
+    private val recentPartials = ArrayDeque<String>(3)
+    private val transcriptLock = Any()
+
+    private val isFinalizing = java.util.concurrent.atomic.AtomicBoolean(false)
+    // Bumped whenever a turn starts or ends, so a slow start can tell it was cancelled meanwhile
+    @Volatile private var sessionToken = 0
+
+    /** Shown on the listening screen when a turn produced nothing to log. */
+    private val _statusMessage = MutableStateFlow("")
+    val statusMessage: StateFlow<String> = _statusMessage.asStateFlow()
 
 
     // ── PUBLIC API ────────────────────────────────────────────────────────────
@@ -206,101 +240,143 @@ object VoiceNavigationManager {
         Log.d(TAG, "Session config set: ${config?.auditLabel ?: "Patient mode"}")
     }
 
-    fun startListening(onNavigationCommand: (String) -> Unit) {
+    /**
+     * Starts a dictation turn. Calling it while listening ends the turn (and analyses it).
+     * Pending items from earlier turns are kept, so "Speak again" adds to the same log.
+     * [onNavigationCommand] is kept for API compatibility; the assistant now only logs data.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun startListening(onNavigationCommand: (String) -> Unit = {}) {
+        if (isFinalizing.get() || _isExtractingData.value || _isSavingData.value) return
         // compareAndSet(false, true) atomically returns true only for the FIRST caller
         if (_isListening.value || !isStarting.compareAndSet(false, true)) {
             stopListening()
             return
         }
 
+        val patient = prefs.getPatient()
+        if (patient == null) {
+            // Never stream under a placeholder id — the readings would land on someone else's record
+            isStarting.set(false)
+            _statusMessage.value        = "Please log in again to use voice logging."
+            _showListeningOverlay.value = true
+            return
+        }
+
         _transcript.value           = ""
         _processingTranscript.value = ""
-        _multiTurnPrompt.value      = ""
-        _anomalyAlerts.value        = emptyList()
+        _statusMessage.value        = ""
         lastOriginalText            = ""
         lastTranslation             = ""
         lastProcessedAIText         = ""
-        floatBuffer.clear()
+        resetTranscriptBuffers()
+        packetFill                  = 0
         wsReconnectAttempts         = 0   // Fresh reconnect budget for every session
 
         lastSpeechTime = System.currentTimeMillis()
         hasSpoken = false
 
         _showListeningOverlay.value = true
+        val token = ++sessionToken
 
-        // Reset multi-turn dialog for fresh session
-        MultiTurnConversationManager.reset()
+        // Keep an open guided question alive so this turn can answer it
+        if (!MultiTurnConversationManager.isActive) {
+            MultiTurnConversationManager.reset()
+            _multiTurnPrompt.value = ""
+        }
 
         // Start session analytics
-        val patient = prefs.getPatient()
         VoiceSessionAnalytics.startSession(
-            patientId = patient?.pid?.toString() ?: "unknown",
+            patientId = patient.pid.toString(),
             nurseMode = _sessionConfig.value?.isNurseMode == true
         )
 
+        // Context (last vitals + scheduled medicines) is only needed once the turn is
+        // analysed, so load it alongside instead of making the user wait for the mic.
+        contextJob = scope.launch { loadSessionContext() }
+
         scope.launch {
-            // Load session context (last vitals + scheduled medicines) in background
-            loadSessionContext()
-
             try {
-                connectWebSocket(onNavigationCommand)
+                if (token != sessionToken) return@launch   // stopped before we got going
+                connectWebSocket()
+                if (token != sessionToken) { closeWebSocket(); return@launch }
 
-                // ✅ Reset VAD timer RIGHT BEFORE audio capture starts.
-                // loadSessionContext() is a network call and may take several seconds.
-                // If lastSpeechTime was set before that call (line ~226), the initial
-                // 10-second silence timeout fires immediately — causing the loop to exit
-                // before the user even speaks. Reset here so the 10s clock starts fresh.
+                // Reset the VAD clock right before capture: loadSessionContext() is a network
+                // call and can take seconds, which would otherwise eat the no-speech timeout.
                 lastSpeechTime = System.currentTimeMillis()
                 hasSpoken = false
 
+                // Flip the flag before the audio loop starts so it doesn't exit immediately
+                withContext(Dispatchers.Main) { _isListening.value = true }
                 startAudioCapture()
-
-                withContext(Dispatchers.Main) {
-                    _isListening.value = true
-                }
                 isStarting.set(false)
 
             } catch (e: Exception) {
                 Log.e(TAG, "startListening error: ${e.message}")
                 isStarting.set(false)
-                stopListening()
+                finishSession(analyze = false)
+                withContext(Dispatchers.Main) {
+                    // Say why instead of silently closing the overlay
+                    _statusMessage.value = "Couldn't start the microphone. Tap Speak again to retry."
+                }
             }
         }
     }
 
-    fun stopListening() {
-        // Flush any pending AI text before shutting down (mirrors iOS)
-        val aiText = if (lastTranslation.isNotEmpty()) lastTranslation else lastOriginalText
-        val cleanedAI = aiText.trim()
-        if (cleanedAI.isNotEmpty() && cleanedAI != lastProcessedAIText && !containsNavigationCommand(cleanedAI.lowercase())) {
-            aiDebounceJob?.cancel()
-            triggerAIExtraction(cleanedAI)
-        }
-
-        cleanup()
-        scope.launch(Dispatchers.Main) {
-            _isListening.value = false
-            // Keep overlay open if reviewing confirmation card OR if actively extracting data
-            if (!_showConfirmationCard.value && !_isExtractingData.value) {
-                _showListeningOverlay.value = false
-            }
-        }
-    }
+    /** Ends the current turn (user tap or VAD) and analyses everything said in it. */
+    fun stopListening() = finishSession(analyze = true)
 
     fun cancelPendingData() {
         aiExtractionJob?.cancel()
         aiDebounceJob?.cancel()
+        finishSession(analyze = false)
         _pendingData.value              = null
         _showConfirmationCard.value     = false
         _showListeningOverlay.value     = false
         _transcript.value               = ""
         _processingTranscript.value     = ""
         _multiTurnPrompt.value          = ""
+        _statusMessage.value            = ""
         _anomalyAlerts.value            = emptyList()
         _isExtractingData.value         = false
         MultiTurnConversationManager.reset()
         VoiceSessionAnalytics.endSession(cancelled = true)
-        stopListening()
+    }
+
+    /**
+     * Stops capture, waits briefly for the backend's trailing final/translation, closes the
+     * socket and — when [analyze] — runs a single AI pass over the full transcript.
+     */
+    private fun finishSession(analyze: Boolean) {
+        if (!isFinalizing.compareAndSet(false, true)) return
+        val wasActive = _isListening.value || isStarting.get()
+        sessionToken++
+        _isListening.value = false
+        stopAudioCapture()
+
+        scope.launch {
+            try {
+                if (analyze && wasActive) {
+                    withContext(Dispatchers.Main) {
+                        _isExtractingData.value     = true
+                        _processingTranscript.value = _transcript.value
+                    }
+                    // A little silence helps the backend close the last segment
+                    sendTrailingSilence()
+                    val deadline = System.currentTimeMillis() + TRAILING_RESULT_WAIT_MS
+                    while (System.currentTimeMillis() < deadline && awaitingTrailingResults()) delay(100)
+                }
+                closeWebSocket()
+                isStarting.set(false)
+
+                if (analyze && wasActive) {
+                    aiExtractionJob = scope.launch { analyzeTurn() }
+                    aiExtractionJob?.join()
+                }
+            } finally {
+                isFinalizing.set(false)
+            }
+        }
     }
 
     // ── REMOVE ITEM FUNCTIONS ─────────────────────────────────────────────────
@@ -353,93 +429,71 @@ object VoiceNavigationManager {
 
     // ── SAVE ALL ──────────────────────────────────────────────────────────────
 
+    /** What one save achieved; [failed] holds the items that stay on the card for a retry. */
+    private class SaveOutcome(
+        val summary: String? = null,
+        val savedCount: Int = 0,
+        val failed: VoiceExtractedData = VoiceExtractedData()
+    )
+
     fun confirmAndSaveAllPendingData() {
-        var data = _pendingData.value ?: return
+        val data = _pendingData.value ?: return
         if (_isSavingData.value) return
+        val patient = prefs.getPatient()
+        if (patient == null) {
+            _statusMessage.value = "Please log in again to save these readings."
+            return
+        }
         _isSavingData.value = true
+        _statusMessage.value = ""
 
         scope.launch {
-            val summaries   = mutableListOf<String>()
-            var savedCount  = 0
-            var failedCount = 0
-
-            // 0. Apply unit normalization to vitals before saving
-            val lastText = if (lastTranslation.isNotEmpty()) lastTranslation else lastOriginalText
-            val normalizedVitals = data.vitals?.let {
-                VitalUnitNormalizer.normalizeAll(it, lastText)
-            }
+            // Unit normalization (°C→°F, lbs→kg, mmol→mg/dL) applies to what is sent only; failed
+            // items keep their original values so a retry doesn't convert them twice.
+            val normalizedVitals = data.vitals?.let { VitalUnitNormalizer.normalizeAll(it, lastProcessedAIText) }
             if (normalizedVitals != null && normalizedVitals != data.vitals) {
                 Log.d(TAG, "Unit normalization applied to vitals")
-                data = data.copy(vitals = normalizedVitals)
             }
 
-            // 1. Save vitals
-            data.vitals?.takeIf { it.isNotEmpty() }?.let { vitals ->
-                try {
-                    summaries.add(saveVitals(vitals))
-                    savedCount += vitals.size
-                } catch (e: Exception) {
-                    Log.e(TAG, "Save vitals error: ${e.message}")
-                    failedCount++
-                }
+            // Independent endpoints → save everything in parallel
+            val outcomes = coroutineScope {
+                listOfNotNull(
+                    data.vitals?.takeIf { it.isNotEmpty() }?.let { original ->
+                        async { saveVitals(patient, normalizedVitals ?: original, original) }
+                    },
+                    data.symptoms?.takeIf { it.isNotEmpty() }?.let { async { saveSymptoms(patient, it) } },
+                    data.fluidIntakes?.takeIf { it.isNotEmpty() }?.let { async { saveFluidIntakes(patient, it) } },
+                    data.fluidOutput?.let { async { saveFluidOutput(patient, it) } },
+                    data.medicines?.takeIf { it.isNotEmpty() }?.let { async { saveMedicines(it) } }
+                ).awaitAll()
             }
 
-            // 2. Save symptoms
-            data.symptoms?.takeIf { it.isNotEmpty() }?.let { symptoms ->
-                try {
-                    summaries.add(saveSymptoms(symptoms))
-                    savedCount += symptoms.size
-                } catch (e: Exception) {
-                    Log.e(TAG, "Save symptoms error: ${e.message}")
-                    failedCount++
-                }
-            }
+            val summaries = outcomes.mapNotNull { it.summary }
+            val failed    = outcomes.fold(VoiceExtractedData()) { acc, o -> acc.merge(o.failed) }
+            VoiceSessionAnalytics.onItemSaved(outcomes.sumOf { it.savedCount })
+            if (!failed.isEmpty) VoiceSessionAnalytics.onItemFailed(failed.itemCount)
 
-            // 3. Save fluid intakes
-            data.fluidIntakes?.takeIf { it.isNotEmpty() }?.let { intakes ->
-                try {
-                    summaries.add(saveFluidIntakes(intakes))
-                    savedCount += intakes.size
-                } catch (e: Exception) {
-                    Log.e(TAG, "Save fluid intakes error: ${e.message}")
-                    failedCount++
-                }
-            }
-
-            // 4. Save fluid output
-            data.fluidOutput?.let { output ->
-                try {
-                    summaries.add(saveFluidOutput(output))
-                    savedCount++
-                } catch (e: Exception) {
-                    Log.e(TAG, "Save fluid output error: ${e.message}")
-                    failedCount++
-                }
-            }
-
-            // 5. Save medicines
-            data.medicines?.takeIf { it.isNotEmpty() }?.let { medicines ->
-                try {
-                    summaries.add(saveMedicines(medicines))
-                    savedCount += medicines.size
-                } catch (e: Exception) {
-                    Log.e(TAG, "Save medicines error: ${e.message}")
-                    failedCount++
-                }
-            }
-
-            // 6. Update analytics
-            VoiceSessionAnalytics.onItemSaved(savedCount)
-            if (failedCount > 0) VoiceSessionAnalytics.onItemFailed(failedCount)
-            VoiceSessionAnalytics.endSession(cancelled = false)
-
-            val summary = if (summaries.isEmpty()) "Data saved successfully" else summaries.joinToString(" | ")
-
-            // 7. TTS confirmation — speak what was saved
+            // TTS confirmation — speak what was saved
             if (_ttsEnabled.value && ttsReady && summaries.isNotEmpty()) {
                 val nursePrefix = _sessionConfig.value?.let { " for ${it.recordingForPatientName}" } ?: ""
                 speakTts("Recorded$nursePrefix: ${summaries.joinToString(", ")}")
             }
+
+            if (!failed.isEmpty) {
+                // Nothing is silently dropped: whatever didn't save stays on the card for a retry
+                withContext(Dispatchers.Main) {
+                    _isSavingData.value = false
+                    showPending(failed)
+                    _statusMessage.value = if (summaries.isEmpty())
+                        "Couldn't save. Check your internet and tap Save All to retry."
+                    else
+                        "${summaries.joinToString(" | ")}. The rest couldn't be saved — tap Save All to retry."
+                }
+                return@launch
+            }
+
+            VoiceSessionAnalytics.endSession(cancelled = false)
+            val summary = if (summaries.isEmpty()) "Data saved successfully" else summaries.joinToString(" | ")
 
             withContext(Dispatchers.Main) {
                 _isSavingData.value         = false
@@ -450,7 +504,9 @@ object VoiceNavigationManager {
                 _transcript.value           = summary
 
                 delay(2000)
-                stopListening()
+                finishSession(analyze = false)
+                _showListeningOverlay.value = false
+                _transcript.value           = ""
             }
         }
     }
@@ -462,69 +518,163 @@ object VoiceNavigationManager {
 
     // ── AI EXTRACTION ─────────────────────────────────────────────────────────
 
-    private fun triggerAIExtraction(text: String) {
-        val cleaned = text.trim()
-        if (cleaned.length < 2 || !cleaned.any { it.isLetter() }) return
-        if (cleaned == lastProcessedAIText) return
-        lastProcessedAIText = cleaned
+    /** Runs once per turn with everything the user said. */
+    private suspend fun analyzeTurn() {
+        val text = pickTextForAnalysis()
+        Log.d(TAG, "Turn ended. Analysing: \"$text\"")
 
-        // Synchronously set state so stopListening() knows we are extracting
-        _processingTranscript.value = cleaned
-        _isExtractingData.value     = true
-
-        // Track analytics
-        VoiceSessionAnalytics.onTranscriptReceived(cleaned)
-
-        aiExtractionJob?.cancel()
-        aiExtractionJob = scope.launch {
-            val aiStart = VoiceSessionAnalytics.onAiCallStart()
-            try {
-                Log.d(TAG, "Sending to Echo AI: $cleaned")
-                val extracted = EchoAIService.parseSpeechToEntities(cleaned)
-                VoiceSessionAnalytics.onAiCallSuccess(aiStart, extracted.let {
-                    (it.vitals?.size ?: 0) + (it.symptoms?.size ?: 0) +
-                    (it.fluidIntakes?.size ?: 0) + (if (it.fluidOutput != null) 1 else 0) +
-                    (it.medicines?.size ?: 0)
-                })
-
-                withContext(Dispatchers.Main) {
-                    _isExtractingData.value = false
-                    if (!extracted.isEmpty) {
-                        val existing = _pendingData.value
-                        val merged   = existing?.merge(extracted) ?: extracted
-                        _pendingData.value          = merged
-
-                        // Run anomaly detection on new vitals
-                        merged.vitals?.let { vitals ->
-                            val alerts = VitalAnomalyChecker.check(vitals)
-                            _anomalyAlerts.value = alerts
-                            if (alerts.isNotEmpty()) {
-                                VoiceSessionAnalytics.onAnomalyDetected(alerts)
-                                Log.w(TAG, "Anomalies: ${alerts.map { it.vitalLabel }}")
-                            }
-                            // Compute trends against last session vitals
-                            if (sessionContext.lastVitals.isNotEmpty()) {
-                                _vitalTrends.value = computeTrends(vitals, sessionContext.lastVitals)
-                            }
-                        }
-
-                        _showConfirmationCard.value = true
-                    } else if (!_isListening.value) {
-                        // AI found nothing and we stopped listening → close overlay
-                        _showListeningOverlay.value = false
-                    }
+        if (text.length < 2 || !text.any { it.isLetter() }) {
+            withContext(Dispatchers.Main) {
+                _isExtractingData.value = false
+                if (_pendingData.value == null) {
+                    _statusMessage.value = "Didn't catch that. Tap Speak again and say your readings."
                 }
-            } catch (e: Exception) {
-                VoiceSessionAnalytics.onAiCallFail(aiStart)
-                withContext(Dispatchers.Main) {
-                    _isExtractingData.value = false
-                    if (!_isListening.value && !_showConfirmationCard.value) {
-                        _showListeningOverlay.value = false
-                    }
+            }
+            return
+        }
+
+        // An open guided question ("Systolic value?") takes this reply first
+        if (MultiTurnConversationManager.isActive) {
+            val (prompt, extracted) = MultiTurnConversationManager.processReply(text)
+            withContext(Dispatchers.Main) {
+                _isExtractingData.value = false
+                if (extracted != null && !extracted.isEmpty) {
+                    _multiTurnPrompt.value = ""
+                    mergePending(extracted)
+                } else if (prompt != null) {
+                    _multiTurnPrompt.value = prompt
                 }
-                Log.e(TAG, "EchoAI extraction error: ${e.message}")
+            }
+            return
+        }
+
+        lastProcessedAIText = text
+        withContext(Dispatchers.Main) { _processingTranscript.value = text }
+        VoiceSessionAnalytics.onTranscriptReceived(text)
+
+        // 1. Instant on-device pass: the card shows the readings while the AI is still working.
+        //    Uses whatever medicines the context has loaded so far — it doesn't wait for them.
+        val local = EchoAIService.parseLocally(text, sessionContext.scheduledMedicines)
+        val (basePending, shownLocal) = withContext(Dispatchers.Main) {
+            val base  = _pendingData.value
+            val shown = if (local.isEmpty) null else (base?.merge(local) ?: local).also { showPending(it) }
+            base to shown
+        }
+
+        // Today's medicines come from the context loaded at turn start — no extra API call here
+        withTimeoutOrNull(CONTEXT_WAIT_MS) { contextJob?.join() }
+        val pendingMeds = sessionContext.scheduledMedicines
+
+        // 2. Echo AI pass — rules fill its gaps, and it times out to the on-device result
+        val aiStart = VoiceSessionAnalytics.onAiCallStart()
+        val extracted = try {
+            EchoAIService.parseSpeechToEntities(text, pendingMeds).also { result ->
+                VoiceSessionAnalytics.onAiCallSuccess(aiStart, result.itemCount)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            VoiceSessionAnalytics.onAiCallFail(aiStart)
+            Log.e(TAG, "EchoAI extraction error: ${e.message}")
+            local
+        }
+
+        withContext(Dispatchers.Main) {
+            _isExtractingData.value = false
+            if (!extracted.isEmpty) {
+                val current = _pendingData.value
+                val next = when {
+                    shownLocal == null     -> current?.merge(extracted) ?: extracted
+                    // Card untouched since the quick pass: the AI result replaces it
+                    current === shownLocal -> basePending?.merge(extracted) ?: extracted
+                    // The user removed items meanwhile: keep their edits, add only what the AI found new
+                    else -> (current ?: VoiceExtractedData()).merge(extracted.without(local))
+                }
+                if (!next.isEmpty) showPending(next)
+                return@withContext
+            }
+            // Nothing extracted: maybe an intent without values ("record my BP")
+            val prompt = MultiTurnConversationManager.detectAndStart(text)
+            when {
+                prompt != null -> _multiTurnPrompt.value = prompt
+                _pendingData.value == null ->
+                    _statusMessage.value = "No health readings found in what you said. Tap Speak again to try."
             }
         }
+    }
+
+    private fun mergePending(extracted: VoiceExtractedData) =
+        showPending(_pendingData.value?.merge(extracted) ?: extracted)
+
+    /** Puts [data] on the confirmation card and refreshes its alerts and trends. */
+    private fun showPending(data: VoiceExtractedData) {
+        _pendingData.value   = data
+        _statusMessage.value = ""
+
+        val vitals = data.vitals.orEmpty()
+        val alerts = if (vitals.isEmpty()) emptyList() else VitalAnomalyChecker.check(vitals)
+        if (alerts.isNotEmpty() && alerts != _anomalyAlerts.value) {
+            VoiceSessionAnalytics.onAnomalyDetected(alerts)
+            Log.w(TAG, "Anomalies: ${alerts.map { it.vitalLabel }}")
+        }
+        _anomalyAlerts.value = alerts
+        _vitalTrends.value = if (vitals.isNotEmpty() && sessionContext.lastVitals.isNotEmpty())
+            computeTrends(vitals, sessionContext.lastVitals) else emptyMap()
+        _showConfirmationCard.value = true
+    }
+
+    // ── TRANSCRIPT ASSEMBLY ───────────────────────────────────────────────────
+
+    private fun resetTranscriptBuffers() = synchronized(transcriptLock) {
+        segments.clear()
+        currentPartial = ""
+        recentPartials.clear()
+    }
+
+    private fun isDevanagari(text: String) = text.any { it in '\u0900'..'\u097F' }
+
+    /** What the user sees: everything they said, in their own words. */
+    private fun fullOriginalText(): String = synchronized(transcriptLock) {
+        TranscriptStitcher.join(
+            segments.filter { it.needsTranslation || !it.translated }.map { it.text to it.glueNext } +
+                (currentPartial to false)
+        )
+    }
+
+    /**
+     * What the AI gets: English segments as spoken, Hindi segments replaced by their
+     * translation once it arrives (or kept in Hindi if it never does).
+     */
+    private fun textForAnalysis(): String = synchronized(transcriptLock) {
+        TranscriptStitcher.join(
+            segments.map { seg ->
+                // A mixed segment ("I have fever, मेरा सर घूम रहा है") is translated only for its
+                // Hindi part, so keep the English words alongside the translation.
+                if (seg.needsTranslation && seg.translated) latinPart(seg.text) to false
+                else seg.text to seg.glueNext
+            } + (currentPartial to false)
+        )
+    }
+
+    private fun latinPart(text: String): String =
+        text.split(Regex("\\s+"))
+            .filterNot { isDevanagari(it) }
+            .joinToString(" ")
+            .trim()
+            .trimEnd(',', '।', '.')
+            .takeIf { part -> part.any { it.isLetterOrDigit() } }
+            ?.let { "$it," }
+            .orEmpty()
+
+    /** Still waiting on the backend if a segment is open or a Hindi segment awaits translation. */
+    private fun awaitingTrailingResults(): Boolean = synchronized(transcriptLock) {
+        currentPartial.isNotBlank() || segments.any { it.needsTranslation && !it.translated }
+    }
+
+    private fun pickTextForAnalysis(): String {
+        lastOriginalText = fullOriginalText()
+        lastTranslation  = textForAnalysis()
+        return lastTranslation
     }
 
     // ── WEBSOCKET ─────────────────────────────────────────────────────────────
@@ -538,7 +688,7 @@ object VoiceNavigationManager {
      * hitting the recursive inference problem caused by calling a suspend fun
      * from inside an anonymous WebSocketListener object literal.
      */
-    private fun scheduleReconnect(onNavigationCommand: (String) -> Unit): Unit {
+    private fun scheduleReconnect(): Unit {
         wsReconnectAttempts++
         VoiceSessionAnalytics.onWsReconnect()
         val delayMs: Long = 500L * (1 shl (wsReconnectAttempts - 1))   // 500, 1000, 2000, 4000, 8000 ms
@@ -546,16 +696,18 @@ object VoiceNavigationManager {
         scope.launch(Dispatchers.IO) {
             delay(delayMs)
             if (_isListening.value) {
-                try { connectWebSocket(onNavigationCommand) }
+                try { connectWebSocket() }
                 catch (e: Exception) { Log.e(TAG, "Reconnect failed: ${e.message}") }
             }
         }
     }
 
-    private suspend fun connectWebSocket(onNavigationCommand: (String) -> Unit): Unit =
+    private suspend fun connectWebSocket(): Unit =
         withContext(Dispatchers.IO) {
-            val patient  = prefs.getPatient()
-            val userId   = patient?.pid?.toString() ?: "625"
+
+            // No placeholder id: audio must never be attributed to another account
+            val patient  = prefs.getPatient() ?: throw IllegalStateException("No logged-in patient")
+            val userId   = patient.pid.toString()
             val language = "hindi_v2/drpdvoiceagent"
             val dept     = "GENERAL_MEDICINE"
 
@@ -571,18 +723,18 @@ object VoiceNavigationManager {
                 }
 
                 override fun onMessage(ws: WebSocket, text: String) {
-                    handleWebSocketMessage(text, onNavigationCommand)
+                    handleWebSocketMessage(text)
                 }
 
                 override fun onMessage(ws: WebSocket, bytes: ByteString) {
-                    handleWebSocketMessage(bytes.utf8(), onNavigationCommand)
+                    handleWebSocketMessage(bytes.utf8())
                 }
 
                 override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
                     Log.e(TAG, "WebSocket failure (attempt $wsReconnectAttempts): ${t.message}")
                     if (_isListening.value && wsReconnectAttempts < WS_MAX_RECONNECT) {
                         // Call named helper — avoids recursive type-inference inside anonymous object
-                        scheduleReconnect(onNavigationCommand)
+                        scheduleReconnect()
                     }
                 }
 
@@ -593,85 +745,70 @@ object VoiceNavigationManager {
         }
 
 
-    private fun handleWebSocketMessage(raw: String, onNavigationCommand: (String) -> Unit) {
+    /**
+     * Collects streamed transcript segments. Nothing is analysed here — that happens once
+     * when the turn ends — so the user can keep talking for as long as they like.
+     */
+    private fun handleWebSocketMessage(raw: String) {
         Log.d(TAG, "WS RAW: $raw")
-        var originalText: String? = null
-        var translation: String?  = null
-        var isFinalSegment        = false
-
-        try {
-            val json = org.json.JSONObject(raw)
-            if (json.optString("type") == "final") isFinalSegment = true
-            originalText = json.optString("original_text").trim().takeIf { it.isNotEmpty() }
-            translation  = json.optString("translation").trim().takeIf { it.isNotEmpty() }
-
-            // Legacy fallback
-            if (originalText == null && translation == null) {
-                originalText = json.optString("text").trim().takeIf { it.isNotEmpty() }
+        val json = try { org.json.JSONObject(raw) } catch (e: Exception) {
+            if (!raw.startsWith("{") && raw.isNotBlank()) {
+                synchronized(transcriptLock) { currentPartial = raw.trim() }
+                markSpeechActivity()
+                publishTranscript()
             }
-        } catch (e: Exception) {
-            if (!raw.startsWith("{")) originalText = raw.trim().takeIf { it.isNotEmpty() }
+            return
         }
 
-        scope.launch(Dispatchers.Main) {
-            originalText?.let { lastOriginalText = it; _transcript.value = it }
-            translation?.let  { lastTranslation  = it }
+        val type        = json.optString("type")
+        val rawOriginal = json.optString("original_text")
+            .ifEmpty { json.optString("text") }                 // legacy payload
+        val original    = rawOriginal.trim()
+        val translation = json.optString("translation").trim()
 
-            val uiText = if (lastOriginalText.isNotEmpty()) lastOriginalText else lastTranslation
-            val aiText = if (lastTranslation.isNotEmpty())  lastTranslation  else lastOriginalText
-
-            if (uiText.isEmpty() && aiText.isEmpty()) return@launch
-
-            val loweredUI = uiText.lowercase()
-            val loweredAI = aiText.lowercase()
-
-            // 1. Navigation command detection
-            if (containsNavigationCommand(loweredUI) || containsNavigationCommand(loweredAI)) {
-                val cmdText = if (containsNavigationCommand(loweredUI)) loweredUI else loweredAI
-                val route   = resolveNavigationRoute(cmdText)
-                if (route != null) {
-                    onNavigationCommand(route)
-                    stopListening()
-                }
-                return@launch
-            }
-
-            // 2. Multi-turn conversation check — if user gave an intent without values
-            if (MultiTurnConversationManager.isActive) {
-                // Feed reply to active dialog
-                val (prompt, extracted) = MultiTurnConversationManager.processReply(aiText)
-                if (prompt != null) _multiTurnPrompt.value = prompt
-                if (extracted != null && !extracted.isEmpty) {
-                    _multiTurnPrompt.value = ""
-                    val existing = _pendingData.value
-                    _pendingData.value         = existing?.merge(extracted) ?: extracted
-                    _showConfirmationCard.value = true
-                }
-                return@launch
-            } else {
-                // Check if this text is an intent-only statement (e.g. "record BP")
-                val intentPrompt = MultiTurnConversationManager.detectAndStart(aiText)
-                if (intentPrompt != null) {
-                    _multiTurnPrompt.value = intentPrompt
-                    _transcript.value = intentPrompt
-                    return@launch
-                }
-            }
-
-            // 3. EchoAI entity extraction – immediate on final, debounced 1s on partial
-            if (aiText.isNotEmpty()) {
-                if (isFinalSegment) {
-                    aiDebounceJob?.cancel()
-                    triggerAIExtraction(aiText)
-                } else {
-                    aiDebounceJob?.cancel()
-                    aiDebounceJob = scope.launch {
-                        delay(1_000)
-                        triggerAIExtraction(aiText)
+        var spokenNow = false
+        synchronized(transcriptLock) {
+            when (type) {
+                "final" -> {
+                    if (original.isNotEmpty()) {
+                        val glue = TranscriptStitcher.continuesWithoutSpace(original, recentPartials.toList())
+                        segments += Segment(original, needsTranslation = isDevanagari(original), glueNext = glue)
+                        currentPartial = ""
+                        spokenNow = true
+                    }
+                    if (translation.isNotEmpty()) {
+                        // Stands in for every Hindi segment not yet translated
+                        segments.filter { it.needsTranslation && !it.translated }.forEach { it.translated = true }
+                        segments += Segment(translation, needsTranslation = false, translated = true)
                     }
                 }
+                "partial", "" -> if (original.isNotEmpty() && original != currentPartial) {
+                    currentPartial = original
+                    recentPartials.addFirst(rawOriginal)
+                    if (recentPartials.size > 3) recentPartials.removeLast()
+                    spokenNow = true
+                }
+                else -> return   // session_started etc.
             }
         }
+        if (original.isNotEmpty() || translation.isNotEmpty()) {
+            // Only new speech extends the turn. A repeated partial or a translation arrives after
+            // the user stopped, and must not push the end-of-turn timer back.
+            if (spokenNow) markSpeechActivity() else if (_isListening.value) hasSpoken = true
+            publishTranscript()
+        }
+    }
+
+    /** Text from the backend proves the user is speaking even if the mic level looks low. */
+    private fun markSpeechActivity() {
+        if (!_isListening.value) return
+        lastSpeechTime = System.currentTimeMillis()
+        hasSpoken = true
+    }
+
+    private fun publishTranscript() {
+        val text = fullOriginalText()
+        scope.launch(Dispatchers.Main) { _transcript.value = text }
     }
 
     // ── AUDIO CAPTURE ─────────────────────────────────────────────────────────
@@ -693,6 +830,11 @@ object VoiceNavigationManager {
             AudioFormat.ENCODING_PCM_16BIT,
             bufSize
         )
+        if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+            audioRecord?.release()
+            audioRecord = null
+            throw IllegalStateException("Microphone unavailable")
+        }
 
         // Attempt to explicitly enable hardware Noise Suppressor
         try {
@@ -709,64 +851,107 @@ object VoiceNavigationManager {
         audioRecord?.startRecording()
 
         audioJob = scope.launch(Dispatchers.IO) {
-            val shortBuf = ShortArray(PACKET_SAMPLES)
-            while (_isListening.value || isStarting.get()) {
+            val shortBuf  = ShortArray(PACKET_SAMPLES)
+            val startedAt = System.currentTimeMillis()
+            noiseFloor = 0.01f
+            loudFrames = 0
+            while (_isListening.value) {
                 val read = audioRecord?.read(shortBuf, 0, shortBuf.size) ?: break
-                if (read <= 0) continue
-
-                // ── Local Energy-Based VAD ──
-                var energySum = 0.0f
-                val floats = FloatArray(read) { 
-                    val f = shortBuf[it] / 32768.0f 
-                    energySum += f * f
-                    f 
+                if (read < 0) {
+                    // Mic taken by a call / another recorder: end the turn instead of spinning forever
+                    Log.e(TAG, "AudioRecord.read error $read — ending turn")
+                    val spoke = hasSpoken
+                    scope.launch(Dispatchers.Main) {
+                        if (spoke) {
+                            stopListening()
+                        } else {
+                            finishSession(analyze = false)
+                            _statusMessage.value = "Microphone is busy in another app. Close it and tap Speak again."
+                        }
+                    }
+                    break
                 }
-                
-                val rms = kotlin.math.sqrt(energySum / read)
                 val now = System.currentTimeMillis()
 
-                // Raised threshold to 0.035f to ignore fan/AC background noise
-                if (rms > 0.035f) {
-                    lastSpeechTime = now
-                    hasSpoken = true
-                } else {
-                    val silenceDuration = now - lastSpeechTime
-                    val timeoutLimit = if (hasSpoken) 3000L else 10000L // 3s stop after speech, 10s stop initially
-                    if (silenceDuration > timeoutLimit) {
-                        Log.d(TAG, "VAD detected silence for ${silenceDuration}ms. Auto-stopping.")
-                        scope.launch(Dispatchers.Main) { stopListening() }
-                        break // exit audio loop
+                if (read > 0) {
+                    // ── Adaptive energy VAD + packetising, with no per-sample allocation ──
+                    var energySum = 0.0f
+                    for (i in 0 until read) {
+                        val f = shortBuf[i] / 32768.0f
+                        energySum += f * f
+                        packetBuffer[packetFill++] = f
+                        if (packetFill == PACKET_SAMPLES) {
+                            sendPacket(packetBuffer)
+                            packetFill = 0
+                        }
+                    }
+                    val rms = kotlin.math.sqrt(energySum / read)
+
+                    val threshold = maxOf(VAD_MIN_THRESHOLD, noiseFloor * VAD_NOISE_MULTIPLIER)
+                    if (rms > threshold) {
+                        loudFrames++
+                        if (loudFrames >= VAD_SPEECH_FRAMES) {
+                            lastSpeechTime = now
+                            hasSpoken = true
+                        }
+                    } else {
+                        loudFrames = 0
+                        // Track room noise only while quiet, so speech doesn't raise the bar
+                        noiseFloor = noiseFloor * 0.95f + rms * 0.05f
                     }
                 }
 
-                floatBuffer.addAll(floats.toList())
-
-                // Send 512-sample packets using O(1) ArrayDeque.removeFirst()
-                while (floatBuffer.size >= PACKET_SAMPLES) {
-                    val packet = FloatArray(PACKET_SAMPLES) { floatBuffer.removeFirst() }
-
-                    val bytes = ByteArray(PACKET_SAMPLES * 4)
-                    packet.forEachIndexed { i, f ->
-                        val bits = java.lang.Float.floatToRawIntBits(f)
-                        bytes[i * 4 + 0] = (bits and 0xFF).toByte()
-                        bytes[i * 4 + 1] = ((bits shr 8) and 0xFF).toByte()
-                        bytes[i * 4 + 2] = ((bits shr 16) and 0xFF).toByte()
-                        bytes[i * 4 + 3] = ((bits shr 24) and 0xFF).toByte()
-                    }
-
-                    val b64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
-                    val msg = """{"type":"audio","data":"$b64"}"""
-                    // Guard against null WebSocket during reconnect window
-                    webSocket?.send(msg)
+                val silence = now - lastSpeechTime
+                val limit = when {
+                    !hasSpoken               -> VAD_NO_SPEECH_MS
+                    currentPartial.isBlank() -> VAD_END_SILENCE_MS
+                    else                     -> VAD_END_SILENCE_OPEN_MS
+                }
+                if (silence > limit || now - startedAt > MAX_SESSION_MS) {
+                    Log.d(TAG, "VAD: ${silence}ms silence (spoken=$hasSpoken). Ending turn.")
+                    scope.launch(Dispatchers.Main) { stopListening() }
+                    break
                 }
             }
         }
     }
 
+    private fun sendPacket(packet: FloatArray) {
+        // Float32 little-endian, same wire format as before
+        val bytes = ByteBuffer.allocate(packet.size * 4).order(ByteOrder.LITTLE_ENDIAN)
+        bytes.asFloatBuffer().put(packet)
+        val b64 = Base64.encodeToString(bytes.array(), Base64.NO_WRAP)
+        // Guard against null WebSocket during reconnect window
+        webSocket?.send("""{"type":"audio","data":"$b64"}""")
+    }
+
+    /** ~0.6s of silence so the backend's endpointing closes the last open segment. */
+    private fun sendTrailingSilence() {
+        val silent = FloatArray(PACKET_SAMPLES)
+        repeat(20) { sendPacket(silent) }
+    }
+
     // ── SAVE HELPERS ──────────────────────────────────────────────────────────
 
-    private suspend fun saveVitals(vitals: Map<String, String>): String {
-        val patient     = prefs.getPatient() ?: return "Vitals saved"
+    /** True only for a successful API result; an exception counts as a failure. */
+    private suspend fun succeeded(call: suspend () -> DomainResult<*>): Boolean =
+        try {
+            when (val result = call()) {
+                is DomainResult.Success -> true
+                is DomainResult.Error   -> { Log.e(TAG, "Save failed: ${result.exception.message}"); false }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Save error: ${e.message}")
+            false
+        }
+
+    /**
+     * Saves [vitals] (already unit-normalized). On failure the card gets [original] back,
+     * so a retry doesn't normalize twice.
+     */
+    private suspend fun saveVitals(patient: Patient, vitals: Map<String, String>, original: Map<String, String>): SaveOutcome {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val currentTime = SimpleDateFormat("HH:mm",      Locale.getDefault()).format(Date())
 
@@ -792,14 +977,13 @@ object VoiceNavigationManager {
             put("isFromMachine", "0")
             put("positionId",    "0")
         }
-        return when (AppDependencies.addVital()(body)) {
-            is DomainResult.Success -> formatVitalSummary(vitals)
-            is DomainResult.Error   -> "Error saving vitals"
-        }
+        return if (succeeded { AppDependencies.addVital()(body) })
+            SaveOutcome(formatVitalSummary(vitals), vitals.size)
+        else
+            SaveOutcome(failed = VoiceExtractedData(vitals = original))
     }
 
-    private suspend fun saveSymptoms(symptoms: List<VoiceSymptomItem>): String {
-        val patient = prefs.getPatient() ?: return "Symptoms saved"
+    private suspend fun saveSymptoms(patient: Patient, symptoms: List<VoiceSymptomItem>): SaveOutcome {
         // ✅ Use ISO date format matching SymptomTrackerViewModel (was "yyyy-MM-dd HH:mm:ss.SSS")
         val now = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O)
             java.time.LocalDateTime.now()
@@ -828,43 +1012,50 @@ object VoiceNavigationManager {
             "type"          to "Symptoms",
             "isFromPatient" to true
         )
-        return when (AppDependencies.insertSymptoms()(body)) {
-            is DomainResult.Success -> formatSymptomSummary(symptoms)
-            is DomainResult.Error   -> "Error saving symptoms"
-        }
+        return if (succeeded { AppDependencies.insertSymptoms()(body) })
+            SaveOutcome(formatSymptomSummary(symptoms), symptoms.size)
+        else
+            SaveOutcome(failed = VoiceExtractedData(symptoms = symptoms))
     }
 
-    private suspend fun saveFluidIntakes(intakes: List<VoiceFluidIntakeItem>): String {
-        val patient  = prefs.getPatient() ?: return "Fluid intake saved"
+    private suspend fun saveFluidIntakes(patient: Patient, intakes: List<VoiceFluidIntakeItem>): SaveOutcome {
         val foodDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             java.time.Instant.now().toString()
         else
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
 
-        val savedNames = mutableListOf<String>()
-        for (intake in intakes) {
-            val body = mapOf<String, Any>(
-                "FoodDate"      to foodDate,
-                "FoodQuantity"  to intake.quantity.toString(),
-                "UserID"        to patient.pid,
-                "foodId"        to intake.foodId.toString(),
-                "clientId"      to patient.clientId,
-                "FoodUnitId"    to 27,
-                "uhid"          to patient.uhId,
-                "isGiven"       to 1,
-                "entryType"     to "N",
-                "isFromPatient" to 1
-            )
-            when (AppDependencies.addIntake()(body)) {
-                is DomainResult.Success -> savedNames.add("${intake.name} ${intake.quantity}ml")
-                is DomainResult.Error   -> Log.e(TAG, "Error saving intake: ${intake.name}")
-            }
+        // One call per drink, all in parallel
+        val ok = coroutineScope {
+            intakes.map { intake ->
+                async {
+                    val body = mapOf<String, Any>(
+                        "FoodDate"      to foodDate,
+                        "FoodQuantity"  to intake.quantity.toString(),
+                        "UserID"        to patient.pid,
+                        "foodId"        to intake.foodId.toString(),
+                        "clientId"      to patient.clientId,
+                        "FoodUnitId"    to 27,
+                        "uhid"          to patient.uhId,
+                        "isGiven"       to 1,
+                        "entryType"     to "N",
+                        "isFromPatient" to 1
+                    )
+                    succeeded { AppDependencies.addIntake()(body) }
+                }
+            }.awaitAll()
         }
-        return if (savedNames.isEmpty()) "Fluid intake saved" else "Logged Intake: ${savedNames.joinToString(", ")}"
+        val saved  = intakes.filterIndexed { i, _ -> ok[i] }
+        val failed = intakes.filterIndexed { i, _ -> !ok[i] }
+        failed.forEach { Log.e(TAG, "Error saving intake: ${it.name}") }
+        return SaveOutcome(
+            summary    = saved.takeIf { it.isNotEmpty() }
+                ?.let { list -> "Logged Intake: ${list.joinToString(", ") { "${it.name} ${it.quantity}ml" }}" },
+            savedCount = saved.size,
+            failed     = VoiceExtractedData(fluidIntakes = failed.takeIf { it.isNotEmpty() })
+        )
     }
 
-    private suspend fun saveFluidOutput(output: VoiceFluidOutputItem): String {
-        val patient    = prefs.getPatient() ?: return "Fluid output saved"
+    private suspend fun saveFluidOutput(patient: Patient, output: VoiceFluidOutputItem): SaveOutcome {
         val outputDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         else
@@ -880,21 +1071,26 @@ object VoiceNavigationManager {
             "clientId"     to patient.clientId,
             "uhid"         to patient.uhId
         )
-        return when (AppDependencies.addOutput()(body)) {
-            is DomainResult.Success -> "Logged Output: ${output.quantity}ml (${output.colourName})"
-            is DomainResult.Error   -> "Error saving fluid output"
-        }
+        return if (succeeded { AppDependencies.addOutput()(body) })
+            SaveOutcome("Logged Output: ${output.quantity}ml (${output.colourName})", 1)
+        else
+            SaveOutcome(failed = VoiceExtractedData(fluidOutput = output))
     }
 
-    private suspend fun saveMedicines(medicines: List<VoiceMedicineItem>): String {
-        val savedNames = mutableListOf<String>()
-        for (med in medicines) {
-            when (AppDependencies.markMedicineIntake()(med.medicineId, med.scheduledDateTime)) {
-                is DomainResult.Success -> savedNames.add(med.medicineName)
-                is DomainResult.Error   -> Log.e(TAG, "Error marking medicine: ${med.medicineName}")
-            }
+    private suspend fun saveMedicines(medicines: List<VoiceMedicineItem>): SaveOutcome {
+        val ok = coroutineScope {
+            medicines.map { med ->
+                async { succeeded { AppDependencies.markMedicineIntake()(med.medicineId, med.scheduledDateTime) } }
+            }.awaitAll()
         }
-        return if (savedNames.isEmpty()) "Medication recorded" else "Taken: ${savedNames.joinToString(", ")}"
+        val saved  = medicines.filterIndexed { i, _ -> ok[i] }
+        val failed = medicines.filterIndexed { i, _ -> !ok[i] }
+        failed.forEach { Log.e(TAG, "Error marking medicine: ${it.medicineName}") }
+        return SaveOutcome(
+            summary    = saved.takeIf { it.isNotEmpty() }?.let { list -> "Taken: ${list.joinToString(", ") { it.medicineName }}" },
+            savedCount = saved.size,
+            failed     = VoiceExtractedData(medicines = failed.takeIf { it.isNotEmpty() })
+        )
     }
 
     // ── FORMAT HELPERS ────────────────────────────────────────────────────────
@@ -917,47 +1113,6 @@ object VoiceNavigationManager {
     private fun formatSymptomSummary(symptoms: List<VoiceSymptomItem>): String {
         val names = symptoms.map { it.details }
         return if (names.isEmpty()) "Symptoms saved" else "Logged: ${names.joinToString(", ")}"
-    }
-
-    // ── NAVIGATION ────────────────────────────────────────────────────────────
-
-    private fun containsNavigationCommand(text: String): Boolean {
-        // If text has digits or data-context words, it's NOT a navigation command
-        val hasDataIndicator = DATA_INDICATORS.any { text.contains(it) }
-        val hasDigits        = text.any { it.isDigit() }
-        if (hasDigits || hasDataIndicator) return false
-        return NAV_KEYWORDS.any { text.contains(it) }
-    }
-
-    private fun resolveNavigationRoute(cmd: String): String? {
-        return when {
-            cmd.contains("home") || cmd.contains("dashboard")     -> "dashboard"
-            cmd.contains("vital")                                  -> "vitals"
-            cmd.contains("fluid output") || cmd.contains("urine") -> "FluidOutputHistoryScreen"
-            cmd.contains("fluid") || cmd.contains("water")        -> "FluidDataInputScreen"
-            cmd.contains("medicine") || cmd.contains("pill")      -> "medicine"
-            cmd.contains("report")                                 -> "labReports"
-            cmd.contains("symptom")                                -> "symptomsTracker"
-            cmd.contains("appointment") || cmd.contains("doctor") -> "findDoctor"
-            cmd.contains("article") || cmd.contains("research")   -> "ResearchArticlesScreen"
-            cmd.contains("profile")                                -> "MedicalProfileScreen"
-            cmd.contains("faq")                                    -> "FAQScreen"
-            cmd.contains("feedback")                               -> "FeedbackScreen"
-            cmd.contains("reminder")                               -> "RemindersScreen"
-            cmd.contains("diet")                                   -> "DietChecklistScreen"
-            cmd.contains("allergy")                                -> "AllergiesScreen"
-            cmd.contains("emergency")                              -> "EmergencyContactsScreen"
-            cmd.contains("shared")                                 -> "SharedAccountScreen"
-            cmd.contains("family")                                 -> "FamilyHealthScreen"
-            cmd.contains("prescription")                           -> "PrescriptionScreen"
-            cmd.contains("observer")                               -> "MyObserversScreen"
-            cmd.contains("interaction")                            -> "InteractionCheckerScreen"
-            cmd.contains("ai report") || cmd.contains("smart report") -> "AiReportScreen"
-            cmd.contains("upload") || cmd.contains("lab result")  -> "AddLabResultsScreen"
-            cmd.contains("watch")                                  -> "ConnectWatchScreen"
-            cmd.contains("drawer") || cmd.contains("menu")        -> "drawer"
-            else -> null
-        }
     }
 
     // ── SESSION CONTEXT LOADER ────────────────────────────────────────────────
@@ -1057,25 +1212,24 @@ object VoiceNavigationManager {
 
     // ── CLEANUP ───────────────────────────────────────────────────────────────
 
-    private fun cleanup() {
-        // isCleaning guard: ensures stop()+release() on AudioRecord is never called twice.
-        // Double-call causes IllegalStateException (AudioRecord in wrong state).
-        if (!isCleaning.compareAndSet(false, true)) {
-            Log.d(TAG, "cleanup() skipped — already cleaning up")
-            return
-        }
+    private fun stopAudioCapture() {
+        // isCleaning guard: stop()+release() on AudioRecord must never run twice
+        // (IllegalStateException when it is already released).
+        if (!isCleaning.compareAndSet(false, true)) return
         try {
-            audioJob?.cancel();   audioJob = null
-            audioRecord?.stop()
+            audioJob?.cancel(); audioJob = null
+            try { audioRecord?.stop() } catch (e: IllegalStateException) { Log.w(TAG, "AudioRecord stop: ${e.message}") }
             audioRecord?.release()
             audioRecord = null
-            webSocket?.close(1000, "Done")
-            webSocket  = null
-            floatBuffer.clear()
-            isStarting.set(false)
+            packetFill = 0
         } finally {
-            isCleaning.set(false)  // Reset so next session can clean up properly
+            isCleaning.set(false)
         }
+    }
+
+    private fun closeWebSocket() {
+        webSocket?.close(1000, "Done")
+        webSocket = null
     }
 
     /** Call once when the app is destroyed — releases TTS engine resources */

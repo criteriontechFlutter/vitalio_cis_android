@@ -1,5 +1,11 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.foundation.lazy.itemsIndexed
+
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 
 
 import androidx.compose.foundation.background
@@ -81,25 +87,27 @@ fun RemindersScreen() {
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            items(list) { item ->
+            itemsIndexed(list) { i, item ->
+                AnimatedEnter(index = i) {
 
-                when (item) {
+                    when (item) {
 
-                    is TodayItem.Medicine -> {
-                        MedicineItem(
-                            item = item,
-                            onComplete = {
-                                list = list.map {
-                                    if (it is TodayItem.Medicine && it.id == item.id)
-                                        it.copy(isCompleted = true)
-                                    else it
+                        is TodayItem.Medicine -> {
+                            MedicineItem(
+                                item = item,
+                                onComplete = {
+                                    list = list.map {
+                                        if (it is TodayItem.Medicine && it.id == item.id)
+                                            it.copy(isCompleted = true)
+                                        else it
+                                    }
                                 }
-                            }
-                        )
-                    }
+                            )
+                        }
 
-                    is TodayItem.Vital -> {
-                        VitalItem(item)
+                        is TodayItem.Vital -> {
+                            VitalItem(item)
+                        }
                     }
                 }
             }
@@ -172,7 +180,7 @@ fun MedicineItem(
                     Icon(Icons.Default.Check, null, tint = Color.White)
                 }
             } else {
-                IconButton(onClick = onComplete) {
+                HapticIconButton(onClick = onComplete) {
                     Icon(Icons.Default.MoreVert, null)
                 }
             }

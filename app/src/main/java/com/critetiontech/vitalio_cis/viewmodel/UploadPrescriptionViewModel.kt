@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -169,9 +171,11 @@ class UploadPrescriptionViewModel : ViewModel() {
             val successCount = results.count { it }
             if (successCount > 0) {
                 _medicinesSavedSuccessfully.value = true
+                Haptics.success()
                 val manualNote = if (unmappedCount > 0) " ($unmappedCount require manual addition)" else ""
                 _toastEvent.emit("$successCount ${if (successCount == 1) "medicine" else "medicines"} added to reminders!$manualNote")
             } else {
+                Haptics.error()
                 _toastEvent.emit("Failed to add medicines. Please try again.")
             }
         }

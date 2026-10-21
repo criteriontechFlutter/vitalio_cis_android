@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -214,9 +216,11 @@ class EditProfileViewModel : ViewModel() {
                         )
                     }
                     _updateSuccess.value = true
+                    Haptics.success()
                 }
                 is DomainResult.Error -> {
                     _errorMessage.value = r.exception.message ?: "Update failed"
+                    Haptics.error()
                     Log.e("EditProfileVM", r.exception.message.orEmpty())
                 }
             }

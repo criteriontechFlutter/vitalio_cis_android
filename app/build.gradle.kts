@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -14,20 +16,58 @@ android {
         applicationId = "com.critetiontech.ctvitalio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31
-        versionName = "2.0.24"
+        versionCode = 33
+        versionName = "2.0.26"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // NutriAnalyser keys come from local.properties (not committed):
+        // NUTRI_APP_ID=... and NUTRI_APP_SECRET=...
+        val localProps = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        fun quoted(key: String) = "\"" + localProps.getProperty(key, "").replace("\"", "\\\"") + "\""
+        buildConfigField("String", "NUTRI_APP_ID", quoted("NUTRI_APP_ID"))
+        buildConfigField("String", "NUTRI_APP_SECRET", quoted("NUTRI_APP_SECRET"))
+        // OMRON Connectivity Library partner key: OMRON_PARTNER_KEY=...
+        buildConfigField("String", "OMRON_PARTNER_KEY", quoted("OMRON_PARTNER_KEY"))
+    }
+
+    // Release signing reads the upload keystore from local.properties (never commit it):
+    //   RELEASE_STORE_FILE=/abs/path/upload-keystore.jks
+    //   RELEASE_STORE_PASSWORD=...
+    //   RELEASE_KEY_ALIAS=...
+    //   RELEASE_KEY_PASSWORD=...
+    // Until those are set the build falls back to the debug key, which is what
+    // Play currently has registered as the upload key.
+    val signingProps = Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    }
+    val releaseStoreFile = signingProps.getProperty("RELEASE_STORE_FILE")?.let { file(it) }
+
+    signingConfigs {
+        if (releaseStoreFile != null && releaseStoreFile.exists()) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = signingProps.getProperty("RELEASE_STORE_PASSWORD")
+                keyAlias = signingProps.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = signingProps.getProperty("RELEASE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug").also {
+                    logger.warn("⚠ Release build is signed with the DEBUG key — set RELEASE_* in local.properties")
+                }
         }
     }
     compileOptions {
@@ -71,8 +111,8 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.androidx.contentpager)
     testImplementation(libs.junit)
-    testImplementation("org.mockito:mockito-core:5.24.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     androidTestImplementation(libs.androidx.junit)
@@ -90,47 +130,52 @@ dependencies {
 //    added dip
 
     // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation(libs.retrofit)
 
     // Gson Converter
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation(libs.converter.gson)
 
     // OkHttp
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
 
     // OkHttp Logging
-    implementation("com.squareup.okhttp3:logging-interceptor:5.5.0")
+    implementation(libs.logging.interceptor)
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+    implementation(libs.kotlinx.coroutines.android)
 
     // ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
-    implementation("androidx.hilt:hilt-navigation-compose:1.4.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.hilt.navigation.compose)
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.10.2")
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
 
     // Hilt kept as runtime-only; annotation processing requires a compatible AGP/Kotlin combination.
     // Currently blocked by Kotlin 2.1.0 + AGP 8.11.0 javapoet incompatibility in Hilt 2.55.
     // Uncomment annotation processor when a compatible version is available.
     implementation("com.google.dagger:hilt-android:2.60.1")
 
-    implementation("androidx.navigation:navigation-compose:2.10.2")
+    implementation(libs.navigation.compose)
 
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
-    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+    implementation(libs.accompanist.permissions)
 
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("com.vanniktech:android-image-cropper:4.7.0")
-    implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.android.image.cropper)
+    implementation(libs.androidx.appcompat)
 
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-crashlytics:20.1.1")
     implementation("com.google.firebase:firebase-analytics:23.2.0")
 
     // Android Health Connect — pulls data from Wear OS / Samsung Health / Google Fit
-    implementation("androidx.health.connect:connect-client:1.1.0")
+    implementation(libs.androidx.connect.client)
+    // OMRON Connectivity Library 3.5.2 (partner SDK) — Bluetooth BP monitors and scales
+    implementation(files("libs/omronconnectivitylibrary.aar"))
+
+    // Retries medicine "taken" logs from alarms when offline
+    implementation(libs.androidx.work.runtime)
  }

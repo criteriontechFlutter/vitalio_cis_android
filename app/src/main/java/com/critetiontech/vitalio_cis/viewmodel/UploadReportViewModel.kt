@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -88,7 +90,7 @@ class UploadReportViewModel : ViewModel() {
             _loading.value = true
             val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
             when (val r = deps.uploadMedia()(patient.uhId, patient.clientId.toString(), pendingCategory, pendingDateTime, pendingSubCategory, pendingRemark, file)) {
-                is DomainResult.Success -> _uploadSuccess.value = true
+                is DomainResult.Success -> { _uploadSuccess.value = true; Haptics.success() }
                 is DomainResult.Error -> Log.e("UploadReportVM", r.exception.message.orEmpty())
             }
             _loading.value = false

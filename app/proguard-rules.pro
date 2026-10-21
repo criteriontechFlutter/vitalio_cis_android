@@ -19,3 +19,41 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# ---------------------------------------------------------------------------
+# Vitalio rules
+# ---------------------------------------------------------------------------
+
+# Readable crash stack traces in Crashlytics (upload mapping.txt is automatic).
+-keepattributes SourceFile,LineNumberTable,Signature,InnerClasses,EnclosingMethod,*Annotation*
+-renamesourcefileattribute SourceFile
+
+# Gson models are spread across many packages (model/, domain/model/, reminder/,
+# viewmodel/, ring/ ...) and are parsed by reflection, so field names must survive.
+# Keep all app classes for now; narrow this to the model classes once they are
+# consolidated, to also get obfuscation of app code.
+-keep class com.critetiontech.ctvitalio.** { *; }
+-keep class com.example.vitalio_cis.** { *; }
+-keep class com.critetiontech.myapplication.** { *; }
+# OMRON Connectivity Library (uses reflection/JNI internally)
+-keep class com.omronhealthcare.** { *; }
+-keep class jp.co.omron.** { *; }
+-dontwarn com.omronhealthcare.**
+-dontwarn jp.co.omron.**
+
+# Gson generic type capture (TypeToken<List<...>>)
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Strip debug/verbose/info logs and println from release builds so no
+# patient data (API bodies, tokens) ends up in logcat.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
+-assumenosideeffects class kotlin.io.ConsoleKt {
+    public static void println(...);
+}

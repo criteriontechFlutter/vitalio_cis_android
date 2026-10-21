@@ -15,6 +15,8 @@ import java.io.IOException
  * Does NOT retry:
  *  - 4xx client errors (bad request, unauthorized, not found — retrying won't help)
  *  - 2xx/3xx (already successful)
+ *  - POST/PATCH/DELETE: the server may already have acted on the first attempt (e.g. booked an
+ *    appointment and then failed), so replaying it could do the action twice.
  *
  * Backoff: 1 s → 2 s → 4 s (capped at 8 s)
  */
@@ -22,6 +24,7 @@ class RetryInterceptor(private val maxRetries: Int = 3) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        if (request.method !in IDEMPOTENT_METHODS) return chain.proceed(request)
         var attempt = 0
         var lastException: IOException? = null
         var lastResponse: Response? = null
@@ -53,5 +56,9 @@ class RetryInterceptor(private val maxRetries: Int = 3) : Interceptor {
         return lastResponse
             ?: throw lastException
             ?: IOException("RetryInterceptor: max retries ($maxRetries) exhausted for ${request.url}")
+    }
+
+    private companion object {
+        val IDEMPOTENT_METHODS = setOf("GET", "HEAD", "OPTIONS", "PUT")
     }
 }

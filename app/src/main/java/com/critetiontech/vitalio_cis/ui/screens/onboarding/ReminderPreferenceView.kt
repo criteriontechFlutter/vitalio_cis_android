@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -145,7 +147,7 @@ fun ReminderPreferenceScreen() {
         /// BUTTON
         /// =========================
 
-        Button(
+        HapticButton(
             onClick = {
 
                 navController.navigate("fluidDetails")

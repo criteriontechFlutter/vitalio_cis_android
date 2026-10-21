@@ -65,8 +65,13 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
         viewModel.getSymptoms()
     }
 
+    // All questions answered and saved → refreshed symptoms list, replacing the tracker.
     LaunchedEffect(Unit) {
-        viewModel.popBackEvent.collect { navController.popBackStack() }
+        viewModel.trackerCompletedEvent.collect {
+            navController.navigate(Routes.SYMPTOMS) {
+                popUpTo(Routes.SYMPTOMSTRACKER) { inclusive = true }
+            }
+        }
     }
 
     val symptomList by viewModel.symptomTrackerList.collectAsState()
@@ -158,9 +163,9 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
 
                 CommonButton(
                     text = "Yes",
-                    textStyle = AppTextStyles.style14BCB(),
+                    textStyle = AppTextStyles.style14BCB(color = Color.White),
                     modifier = Modifier.weight(1f),
-                    containerColor = colors.btnGreyColor,
+                    containerColor = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) Color(0xFF3A4654) else colors.btnGreyColor,
                     isLoading = addLoading && currentIndex == questions.lastIndex,
                     enabled = !addLoading,
                     onClick = {
@@ -168,7 +173,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {
-                            viewModel.insertSymptoms()
+                            viewModel.insertSymptoms(fromTracker = true)
                         }
                     }
                 )
@@ -183,7 +188,7 @@ fun SymptomTrackerScreen(viewModel: SymptomTrackerViewModel = viewModel()) {
                         if (currentIndex < questions.lastIndex) {
                             currentIndex++
                         } else {
-                            viewModel.insertSymptoms()
+                            viewModel.insertSymptoms(fromTracker = true)
                         }
                     }
                 )

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,7 +34,7 @@ fun MyButton(
 ) {
     val colors by themeViewModel.colorScheme.collectAsState()
 
-    Button(
+    HapticButton(
         onClick =  onClick,
         modifier = modifier,
         shape = shape,

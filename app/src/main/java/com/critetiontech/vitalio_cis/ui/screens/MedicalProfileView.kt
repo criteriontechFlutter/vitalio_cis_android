@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -83,7 +85,7 @@ fun MedicalProfileScreen() {
             Spacer(modifier = Modifier.weight(1f))
 
             /// 🔹 BUTTON
-            Button(
+            HapticButton(
                 onClick = {},
                 modifier = Modifier
                     .fillMaxWidth()

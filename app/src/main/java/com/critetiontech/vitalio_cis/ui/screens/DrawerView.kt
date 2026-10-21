@@ -1,5 +1,20 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.bounceClick
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.font.FontWeight
+
+import androidx.compose.material.icons.automirrored.rounded.Logout
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticEvent
+import com.critetiontech.ctvitalio.ui.feedback.HapticSwitch
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+import com.critetiontech.ctvitalio.ui.feedback.rememberHaptics
+import androidx.compose.material.icons.filled.Vibration
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,28 +98,23 @@ fun DrawerScreen() {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog = false
-                        PrefsManager(context).clearAll()
-                        navController.navigate(Routes.LOGIN) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                ) {
-                    Text("Logout", color = Color.Red)
+        com.critetiontech.ctvitalio.ui.components.AppDialog(
+            title = "Log out?",
+            message = "You'll need to sign in again to see your vitals, appointments and reports. Medicine reminders on this phone will stop.",
+            icon = androidx.compose.material.icons.Icons.AutoMirrored.Rounded.Logout,
+            destructive = true,
+            confirmText = "Log out",
+            dismissText = "Cancel",
+            onDismiss = { showLogoutDialog = false },
+            onConfirm = {
+                showLogoutDialog = false
+                PrefsManager(context).clearAll()
+                // Patient is gone, so this cancels every medicine alarm.
+                com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler.requestSync(context)
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(0) { inclusive = true }
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
-                }
-            }
         )
     }
 
@@ -112,7 +122,7 @@ fun DrawerScreen() {
         title = " ",
         actions = {
             Box {
-                IconButton(onClick = { expanded = true }) {
+                HapticIconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = null
@@ -177,6 +187,8 @@ fun DrawerScreen() {
                     Spacer(modifier = Modifier.height(12.dp))
                     ThemeSwitchItem()
                     Spacer(modifier = Modifier.height(12.dp))
+                    HapticsSwitchItem()
+                    Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
                         listOf(
                             "FAQ" to "4",
@@ -236,6 +248,8 @@ fun DrawerScreen() {
 //            )
             Spacer(modifier = Modifier.height(12.dp))
             ThemeSwitchItem()
+            Spacer(modifier = Modifier.height(12.dp))
+            HapticsSwitchItem()
 
             Spacer(modifier = Modifier.height(12.dp))
             MenuCard(
@@ -252,13 +266,47 @@ fun DrawerScreen() {
 
 @Composable
 fun ThemeSwitchItem() {
-
     val themeViewModel = LocalThemeViewModel.current
-    val colors = LocalMyColorScheme.current
-
     val selectedTheme by themeViewModel.selectedTheme.collectAsState()
 
-    val isDarkMode = selectedTheme == AppTheme.DARK
+    SettingSwitchRow(
+        icon = Icons.Default.DarkMode,
+        title = "Dark Mode",
+        checked = selectedTheme == AppTheme.DARK,
+        onCheckedChange = { themeViewModel.toggleTheme() },
+    )
+}
+
+@Composable
+fun HapticsSwitchItem() {
+    val context = LocalContext.current
+    val haptic = rememberHaptics()
+    var enabled by remember { mutableStateOf(Haptics.isEnabled(context)) }
+
+    SettingSwitchRow(
+        icon = Icons.Default.Vibration,
+        title = "Haptic feedback",
+        subtitle = "Gentle vibration on taps and actions",
+        checked = enabled,
+        onCheckedChange = { on ->
+            Haptics.setEnabled(context, on)
+            enabled = on
+            // The switch's own tap haptic ran while haptics were still off; confirm turning on.
+            if (on) haptic(HapticEvent.Toggle)
+        },
+    )
+}
+
+/** A settings card with an icon, title, optional subtitle and a switch, as used in the drawer. */
+@Composable
+fun SettingSwitchRow(
+    icon: ImageVector,
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    subtitle: String? = null,
+) {
+    val colors = LocalMyColorScheme.current
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -269,51 +317,36 @@ fun ThemeSwitchItem() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // 🌙 ICON + TEXT
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Icon(
-                    imageVector = Icons.Default.DarkMode,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = colors.textGreyColor,
                     modifier = Modifier.size(18.dp)
                 )
-
                 Spacer(modifier = Modifier.width(10.dp))
-
-                Text(
-                    text = "Dark Mode",
-                    color = colors.textDarkColor,
-                    fontSize = 16.sp
-                )
+                Column {
+                    Text(text = title, color = colors.textDarkColor, fontSize = 16.sp)
+                    if (subtitle != null) {
+                        Text(text = subtitle, color = colors.textGreyColor, fontSize = 12.sp)
+                    }
+                }
             }
 
-            // 🔥 SWITCH
-            Switch(
+            HapticSwitch(
                 colors = SwitchDefaults.colors(
-
                     checkedThumbColor = Color.White,
-
                     checkedTrackColor = colors.primaryBlueColor,
-
                     uncheckedThumbColor = Color.White,
-
                     uncheckedTrackColor = Color.LightGray
                 ),
-
-                checked = isDarkMode,
-
-                onCheckedChange = {
-
-                    themeViewModel.toggleTheme()
-                }
+                checked = checked,
+                onCheckedChange = onCheckedChange
             )
         }
     }
@@ -322,24 +355,96 @@ fun ThemeSwitchItem() {
 
 
 @Composable
-fun ProfileCard() {
+fun ProfileCard(
+    photoViewModel: com.critetiontech.ctvitalio.viewmodel.EditProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
 
     val context = LocalContext.current
-    val patient = remember { PrefsManager(context).getPatient() }
+    val colors = LocalMyColorScheme.current
+    var patient by remember { mutableStateOf(PrefsManager(context).getPatient()) }
     val fullName = remember(patient) {
         listOfNotNull(patient?.firstName, patient?.lastName?.takeIf { it.isNotBlank() })
             .joinToString(" ")
             .ifEmpty { "—" }
     }
     val mobileDisplay = remember(patient) {
-        if (patient != null) {
-            val prefix = patient.countryCallingCode.takeIf { it.isNotBlank() }?.let { "+$it " } ?: ""
-            "$prefix${patient.mobileNo}".trim().ifEmpty { "—" }
-        } else "—"
+        patient?.let { p ->
+            val prefix = p.countryCallingCode.takeIf { it.isNotBlank() }?.let { "+$it " } ?: ""
+            "$prefix${p.mobileNo}".trim().ifEmpty { "—" }
+        } ?: "—"
     }
     val uhid = remember(patient) { patient?.uhId?.ifEmpty { null } }
 
     var showSheet by rememberSaveable { mutableStateOf(false) }
+
+    // ── Photo change: same upload as Edit Profile, keeping every other field as saved ──
+    val uploading by photoViewModel.loading.collectAsState()
+    val uploaded by photoViewModel.updateSuccess.collectAsState()
+    val uploadError by photoViewModel.errorMessage.collectAsState()
+    var previewUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var cameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+
+    fun upload(uri: android.net.Uri) {
+        val p = PrefsManager(context).getPatient() ?: run {
+            android.widget.Toast.makeText(context, "Session expired. Please log in again.", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        val file = runCatching { FileUtils.getFile(context, uri) }.getOrNull()
+        if (file == null || !file.exists()) {
+            android.widget.Toast.makeText(context, "Couldn't read that image. Please try another one.", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        previewUri = uri
+        photoViewModel.updateProfile(
+            firstName = p.firstName,
+            lastName = p.lastName.orEmpty(),
+            dob = p.dob.substringBefore('T'),
+            mobileNo = p.mobileNo,
+            emailId = p.emailAddress.orEmpty(),
+            address = p.address.orEmpty(),
+            zip = p.zip.orEmpty(),
+            imageFile = file,
+            bloodGroupId = p.bloodGroupId,
+            countryId = p.countryId,
+            stateId = p.stateId,
+            cityId = p.cityId,
+        )
+    }
+
+    LaunchedEffect(uploaded) {
+        if (uploaded) {
+            patient = PrefsManager(context).getPatient()
+            android.widget.Toast.makeText(context, "Profile photo updated", android.widget.Toast.LENGTH_SHORT).show()
+            photoViewModel.resetSuccess()
+        }
+    }
+    LaunchedEffect(uploadError) {
+        uploadError?.let {
+            previewUri = null
+            android.widget.Toast.makeText(context, "Photo not updated: $it", android.widget.Toast.LENGTH_LONG).show()
+            photoViewModel.resetError()
+        }
+    }
+
+    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let(::upload) }
+    val cameraLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        TakePictureWithPermission()
+    ) { ok -> if (ok) cameraUri?.let(::upload) }
+
+    fun launchCamera() {
+        val uri = createImageUri(context)
+        cameraUri = uri
+        cameraLauncher.launch(uri)
+    }
+
+    val cameraPermLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) launchCamera()
+        else android.widget.Toast.makeText(context, "Camera permission is required to take a photo", android.widget.Toast.LENGTH_SHORT).show()
+    }
 
     Column(
         modifier = Modifier
@@ -354,7 +459,7 @@ fun ProfileCard() {
 
             /// 🔹 Profile Image
             AsyncImage(
-                model = PrefsManager(context).getPatient()?.imageUrl
+                model = previewUri ?: patient?.imageUrl
                     ?.takeIf { it.isNotBlank() },
 
                 placeholder = painterResource(R.drawable.img),
@@ -369,23 +474,35 @@ fun ProfileCard() {
                     .clip(CircleShape)
             )
 
+            if (uploading) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(90.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.45f))
+                ) {
+                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                }
+            }
+
             /// 🔹 Edit Icon
             Box(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
+                    .background(colors.primaryBlueColor)
+                    .border(2.dp, colors.dashboardBackgroundColor, CircleShape)
                     .align(Alignment.BottomEnd)
-                    .clickable {
-                        showSheet = false
+                    .clickable(enabled = !uploading) {
                         showSheet = true
                     },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit",
-                    tint = Color.Black,
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = "Change photo",
+                    tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -412,13 +529,21 @@ fun ProfileCard() {
 
     /// 🔥 BottomSheet (OUTSIDE UI)
     if (showSheet) {
+        // The API can replace the photo but not delete it, so there's no Remove here.
         ImagePickerBottomSheet(
+            onDismiss = { showSheet = false },
             onCameraClick = {
+                showSheet = false
+                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) ==
+                    android.content.pm.PackageManager.PERMISSION_GRANTED
+                ) launchCamera()
+                else cameraPermLauncher.launch(android.Manifest.permission.CAMERA)
             },
             onUploadClick = {
+                showSheet = false
+                galleryLauncher.launch("image/*")
             },
-            onRemoveClick = {
-            },
+            onRemoveClick = null,
         )
     }
 }
@@ -629,37 +754,27 @@ fun MenuRow(
 fun ImagePickerBottomSheet(
     onCameraClick: () -> Unit,
     onUploadClick: () -> Unit,
-    onRemoveClick: () -> Unit
+    onRemoveClick: (() -> Unit)?,
+    onDismiss: () -> Unit = {},
 ) {
-
-    ModalBottomSheet(
-        onDismissRequest = {},
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        containerColor = Color.White
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
+        onDismissRequest = onDismiss,
+        title = "Profile photo",
+        subtitle = "Take a new photo or choose one from your gallery",
+        icon = Icons.Default.CameraAlt,
     ) {
-
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 20.dp)
+                .padding(top = 4.dp, bottom = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-
-            /// 🔹 OPTIONS ROW
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-
-                BottomItem("Take Photo", Icons.Default.CameraAlt, onCameraClick)
-                BottomItem("Upload Image", Icons.Default.Upload, onUploadClick)
-                BottomItem("Remove", Icons.Default.Delete, onRemoveClick)
+            BottomItem("Take Photo", Icons.Default.CameraAlt, onCameraClick, Modifier.weight(1f))
+            BottomItem("Upload Image", Icons.Default.Upload, onUploadClick, Modifier.weight(1f))
+            if (onRemoveClick != null) {
+                BottomItem("Remove", Icons.Default.Delete, onRemoveClick, Modifier.weight(1f), tint = com.critetiontech.ctvitalio.ui.components.DialogDangerColor)
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -668,25 +783,29 @@ fun ImagePickerBottomSheet(
 fun BottomItem(
     text: String,
     icon: ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tint: Color? = null,
 ) {
-
+    val colors = LocalMyColorScheme.current
+    val accent = tint ?: colors.primaryBlueColor
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.dashboardBackgroundColor)
+            .bounceClick { onClick() }
+            .padding(vertical = 16.dp)
     ) {
-
         Box(
             modifier = Modifier
-                .size(60.dp)
-                .background(Color(0xFFF2F4F7), CircleShape),
+                .size(48.dp)
+                .background(accent.copy(alpha = 0.12f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = null, tint = Color.Black)
+            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(22.dp))
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(text, fontSize = 12.sp)
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(text, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (tint != null) accent else colors.textDarkColor)
     }
 }

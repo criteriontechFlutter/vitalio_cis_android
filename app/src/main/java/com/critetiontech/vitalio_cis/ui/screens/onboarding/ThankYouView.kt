@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -233,7 +235,7 @@ fun ThankYouView() {
         /// BUTTON
         /// =========================
 
-        Button(
+        HapticButton(
             onClick = {
 
                 navController.navigate("reminderPreference")

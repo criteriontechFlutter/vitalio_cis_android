@@ -1,4 +1,6 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -186,7 +188,7 @@ fun ChronicDiseaseScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("familyHistory")
             },
@@ -214,15 +216,24 @@ fun ChronicDiseaseScreen() {
         ) {
 
             Card(
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White
                 )
             ) {
 
                 Column(
-                    modifier = Modifier.padding(14.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)
                 ) {
+
+                    Text(
+                        text = "Select Disease",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF202529)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     /// SEARCH
 

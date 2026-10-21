@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -25,15 +27,17 @@ fun ReminderScreen( ) {
     var time by remember { mutableStateOf("Select Time") }
 
     if (show) {
-        AlertDialog(
-            onDismissRequest = { show = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    time = "${timeState.hour}:${timeState.minute}"
-                    show = false
-                }) { Text("OK") }
+        com.critetiontech.ctvitalio.ui.components.AppTimePickerDialog(
+            initialHour = timeState.hour,
+            initialMinute = timeState.minute,
+            onDismiss = { show = false },
+            onConfirm = { h, m ->
+                timeState.hour = h
+                timeState.minute = m
+                time = "%d:%02d".format(h, m)
+                show = false
             },
-            text = { TimePicker(state = timeState) }
+            title = "Reminder time",
         )
     }
 
