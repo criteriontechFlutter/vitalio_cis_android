@@ -1,11 +1,14 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import android.provider.Settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.utils.MyApplication
+import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +30,17 @@ class OTPViewModel : ViewModel() {
 
     fun verifyOtp(uhid: String, otp: String) {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            val deviceToken = if (task.isSuccessful) task.result else ""
+            val prefs = PrefsManager(MyApplication.appContext)
+            val fcmToken = if (task.isSuccessful) task.result else {
+                Log.w("OTPViewModel", "FCM token fetch failed", task.exception)
+                null
+            }
+            if (!fcmToken.isNullOrBlank()) prefs.saveDeviceToken(fcmToken)
+            // Server rejects an empty deviceToken, so fall back to the cached token, then ANDROID_ID
+            val deviceToken = fcmToken?.takeIf { it.isNotBlank() }
+                ?: prefs.getDeviceToken()?.takeIf { it.isNotBlank() }
+                ?: Settings.Secure.getString(MyApplication.appContext.contentResolver, Settings.Secure.ANDROID_ID)
+                ?: "unknown"
             viewModelScope.launch {
                 _loading.value = true
                 _errorMessage.value = null

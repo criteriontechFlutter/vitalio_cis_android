@@ -34,6 +34,11 @@
 -keep class com.critetiontech.ctvitalio.** { *; }
 -keep class com.example.vitalio_cis.** { *; }
 -keep class com.critetiontech.myapplication.** { *; }
+# OMRON Connectivity Library (uses reflection/JNI internally)
+-keep class com.omronhealthcare.** { *; }
+-keep class jp.co.omron.** { *; }
+-dontwarn com.omronhealthcare.**
+-dontwarn jp.co.omron.**
 
 # Gson generic type capture (TypeToken<List<...>>)
 -keep class com.google.gson.reflect.TypeToken { *; }

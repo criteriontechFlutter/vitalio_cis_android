@@ -339,10 +339,10 @@ composable(Routes.PRESCRIPTIONS) { PrescriptionScreen() }
 
 | Base URL | Client | Used for |
 |---|---|---|
-| `vitaliocis.vitalio.care:4082` | `ApiClients.module4082` | Most patient APIs (vitals, auth, allergies, doctors) |
-| `vitaliocis.vitalio.care:5084` | `ApiClients.module4084` | Doctor profile APIs |
-| `vitaliocis.vitalio.care:4096` | `ApiClients.module4094` | Fluid intake APIs |
-| `vitaliocis.vitalio.care:44374` | `ApiClients.module44374` | — |
+| `cis.vitalio.care:4082` | `ApiClients.module4082` | Most patient APIs (vitals, auth, allergies, doctors) |
+| `cis.vitalio.care:4084` | `ApiClients.module4084` | Doctor profile APIs |
+| `cis.vitalio.care:4096` | `ApiClients.module4094` | Fluid intake APIs |
+| `cis.vitalio.care:44374` | `ApiClients.module44374` | — |
 | `52.172.134.222:205/api/v1.0/` | `ApiClients.digidoctor_BaseURL` | Symptom/problem icon APIs |
 
 ---

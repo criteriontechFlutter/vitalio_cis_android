@@ -29,6 +29,8 @@ android {
         fun quoted(key: String) = "\"" + localProps.getProperty(key, "").replace("\"", "\\\"") + "\""
         buildConfigField("String", "NUTRI_APP_ID", quoted("NUTRI_APP_ID"))
         buildConfigField("String", "NUTRI_APP_SECRET", quoted("NUTRI_APP_SECRET"))
+        // OMRON Connectivity Library partner key: OMRON_PARTNER_KEY=...
+        buildConfigField("String", "OMRON_PARTNER_KEY", quoted("OMRON_PARTNER_KEY"))
     }
 
     // Release signing reads the upload keystore from local.properties (never commit it):
@@ -171,6 +173,8 @@ dependencies {
 
     // Android Health Connect — pulls data from Wear OS / Samsung Health / Google Fit
     implementation(libs.androidx.connect.client)
+    // OMRON Connectivity Library 3.5.2 (partner SDK) — Bluetooth BP monitors and scales
+    implementation(files("libs/omronconnectivitylibrary.aar"))
 
     // Retries medicine "taken" logs from alarms when offline
     implementation(libs.androidx.work.runtime)
