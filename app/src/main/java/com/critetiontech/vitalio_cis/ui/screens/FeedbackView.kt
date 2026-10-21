@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,7 +27,7 @@ fun FeedbackScreen() {
     var feedback by remember { mutableStateOf("") }
     var selectedRating by remember { mutableIntStateOf(3) }
     var expanded by remember { mutableStateOf(false) }
-    var selectedModule by remember { mutableStateOf("Select Module") }
+    var selectedModule by remember { mutableStateOf("") }
 
     val modules = listOf("App UI", "Performance", "Bugs", "Other")
 
@@ -95,7 +97,7 @@ fun FeedbackScreen() {
                 MyTextField(
                     value = selectedModule,
                     onValueChange = { selectedModule = it },
-                    placeholderText = "Enter Email",
+                    placeholderText = "Select Module",
                     trailingIcon = {
                         Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
                     },
@@ -132,7 +134,7 @@ fun FeedbackScreen() {
             MyTextField(
                 value = feedback,
                 onValueChange = { feedback = it },
-                placeholderText = "Enter Email",
+                placeholderText = "Tell us what you liked or what we can do better",
                 fixedHeight = 120
             )
 
@@ -140,7 +142,7 @@ fun FeedbackScreen() {
 
 
             // 🔹 Button
-            Button(
+            HapticButton(
                 onClick = { /* Submit */ },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,7 +150,7 @@ fun FeedbackScreen() {
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor)
             ) {
-                Text("Save & Track Symptoms")
+                Text("Submit Feedback")
             }
         }
     }

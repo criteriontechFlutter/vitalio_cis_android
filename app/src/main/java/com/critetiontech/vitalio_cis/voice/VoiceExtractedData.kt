@@ -53,6 +53,24 @@ data class VoiceExtractedData(
                 && fluidOutput == null
                 && (medicines?.isEmpty() != false)
 
+    val itemCount: Int
+        get() = (vitals?.size ?: 0) + (symptoms?.size ?: 0) + (fluidIntakes?.size ?: 0) +
+                (if (fluidOutput != null) 1 else 0) + (medicines?.size ?: 0)
+
+    /** Items in this that are new or changed compared to [other] (used to add AI-only findings). */
+    fun without(other: VoiceExtractedData): VoiceExtractedData {
+        val otherSymptoms = other.symptoms.orEmpty().map { it.details.lowercase().trim() }.toSet()
+        val otherIntakes  = other.fluidIntakes.orEmpty().associate { it.foodId to it.quantity }
+        val otherMeds     = other.medicines.orEmpty().map { it.id }.toSet()
+        return VoiceExtractedData(
+            vitals       = vitals?.filter { (k, v) -> other.vitals?.get(k) != v }?.takeIf { it.isNotEmpty() },
+            symptoms     = symptoms?.filter { it.details.lowercase().trim() !in otherSymptoms }?.takeIf { it.isNotEmpty() },
+            fluidIntakes = fluidIntakes?.filter { otherIntakes[it.foodId] != it.quantity }?.takeIf { it.isNotEmpty() },
+            fluidOutput  = fluidOutput?.takeIf { it.quantity != other.fluidOutput?.quantity },
+            medicines    = medicines?.filter { it.id !in otherMeds }?.takeIf { it.isNotEmpty() }
+        )
+    }
+
     /** Merges newly extracted data into a copy of this object (mirrors iOS merge logic). */
     fun merge(with: VoiceExtractedData): VoiceExtractedData {
         // 1. Merge vitals – new values overwrite existing keys

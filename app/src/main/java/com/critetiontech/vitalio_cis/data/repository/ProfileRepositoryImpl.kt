@@ -165,7 +165,7 @@ class ProfileRepositoryImpl(
     // ── Location: States (API call to port 4119) ──────────────────────────
     override suspend fun getStates(countryId: Int): List<LocationItem> = try {
         val response = ApiClients.module4119.dynamicGet(
-            url = "https://vitaliocis.vitalio.care:4119/api/StateMaster/GetStateMasterByCountryId",
+            url = "https://cis.vitalio.care:4119/api/StateMaster/GetStateMasterByCountryId",
             headers = emptyMap(),
             params = mapOf("id" to countryId.toString(), "clientId" to "176")
         )
@@ -188,7 +188,7 @@ class ProfileRepositoryImpl(
     // ── Location: Cities (API call to port 4119) ──────────────────────────
     override suspend fun getCities(stateId: Int): List<LocationItem> = try {
         val response = ApiClients.module4119.dynamicGet(
-            url = "https://vitaliocis.vitalio.care:4119/api/CityMaster/GetCityMasterByStateId",
+            url = "https://cis.vitalio.care:4119/api/CityMaster/GetCityMasterByStateId",
             headers = emptyMap(),
             params = mapOf("id" to stateId.toString(), "clientId" to "176")
         )
@@ -212,6 +212,6 @@ class ProfileRepositoryImpl(
     private fun ensureFullUrl(path: String): String {
         if (path.startsWith("http")) return path
         val clean = path.trimStart('/')
-        return "https://vitaliocis.vitalio.care:4082/$clean"
+        return "https://cis.vitalio.care:4082/$clean"
     }
 }

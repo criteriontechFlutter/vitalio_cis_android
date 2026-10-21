@@ -16,11 +16,11 @@ import java.util.concurrent.TimeUnit
 object RetrofitInstance {
 
     // Base URLs
-    const val BASE_5082 = "https://vitaliocis.vitalio.care:4082/"
-    const val BASE_5084 = "https://vitaliocis.vitalio.care:4084/"
-    const val BASE_4096 = "https://vitaliocis.vitalio.care:4096/"
-    const val BASE_44374 = "https://vitaliocis.vitalio.care:44374/"
-    const val BASE_4090 = "https://vitaliocis.vitalio.care:4090/"
+    const val BASE_5082 = "https://cis.vitalio.care:4082/"
+    const val BASE_5084 = "https://cis.vitalio.care:4084/"
+    const val BASE_4096 = "https://cis.vitalio.care:4096/"
+    const val BASE_44374 = "https://cis.vitalio.care:44374/"
+    const val BASE_4090 = "https://cis.vitalio.care:4090/"
     const val Digi_doctor_BaseURL = "http://52.172.134.222:205/api/v1.0/"
 
     private const val DEFAULT_BASE_URL = BASE_5082

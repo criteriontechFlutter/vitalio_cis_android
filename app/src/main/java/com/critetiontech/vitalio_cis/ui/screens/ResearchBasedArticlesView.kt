@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.material.icons.rounded.Search
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,10 +45,14 @@ fun ResearchArticlesScreen() {
                 style = AppTextStyles.style14BCN().copy(fontSize = 22.sp))
 
             Spacer(Modifier.height(16.dp))
-            CommonTextField(
-                value =  " ",
-                onValueChange = {     },
-                hint = "Search..."
+            val search = androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf("") }
+            com.critetiontech.ctvitalio.ui.components.MyTextField(
+                value = search.value,
+                onValueChange = { search.value = it },
+                placeholderText = "Search articles...",
+                leadingIcon = {
+                    androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Search, contentDescription = null)
+                },
             )
             // 🔍 Search
 

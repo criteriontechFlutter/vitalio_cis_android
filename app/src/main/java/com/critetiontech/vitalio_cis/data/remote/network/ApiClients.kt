@@ -14,5 +14,5 @@ object ApiClients {
     val module4090 = RetrofitInstance.createApiService(includeAuthHeader = true, baseUrl = BASE_4090)
     val module44374 = RetrofitInstance.createApiService(includeAuthHeader = true, baseUrl = BASE_44374)
     val digidoctor_BaseURL = RetrofitInstance.createApiService(includeAuthHeader = true, baseUrl = Digi_doctor_BaseURL)
-    val module4119 = RetrofitInstance.createApiService(includeAuthHeader = true, baseUrl = "https://vitaliocis.vitalio.care:4119/")
+    val module4119 = RetrofitInstance.createApiService(includeAuthHeader = true, baseUrl = "https://cis.vitalio.care:4119/")
 }

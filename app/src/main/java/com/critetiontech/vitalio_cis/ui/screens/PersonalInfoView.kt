@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -134,7 +136,7 @@ fun PersonalInfoScreen() {
             }
 
             // Bottom button → navigate to Edit Profile
-            Button(
+            HapticButton(
                 onClick = { navController.navigate(com.critetiontech.ctvitalio.Routes.EDITPROFILE) },
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1557FF)),

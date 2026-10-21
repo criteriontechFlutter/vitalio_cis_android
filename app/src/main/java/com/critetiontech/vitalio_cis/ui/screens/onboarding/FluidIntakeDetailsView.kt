@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -297,7 +299,7 @@ fun FluidIntakeDetailsScreen() {
         /// BUTTON
         /// =========================
 
-        Button(
+        HapticButton(
             onClick = {
 
             },

@@ -1,7 +1,17 @@
 package com.critetiontech.ctvitalio.ui.screens
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import androidx.compose.foundation.layout.aspectRatio
+
+import com.critetiontech.ctvitalio.ui.components.AppDatePickerDialog
+import com.critetiontech.ctvitalio.ui.components.AppTimePickerDialog
+import java.time.LocalDate
+import java.time.ZoneId
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.fadeIn
@@ -90,7 +100,7 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                             Icon(Icons.Default.Warning, null, tint = Orange500, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(10.dp))
                             Text(err, style = AppTextStyles.style14BCN().copy(color = Color(0xFF795548)), modifier = Modifier.weight(1f))
-                            IconButton(onClick = { viewModel.clearError() }, modifier = Modifier.size(24.dp)) {
+                            HapticIconButton(onClick = { viewModel.clearError() }, modifier = Modifier.size(24.dp)) {
                                 Icon(Icons.Default.Close, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
                             }
                         }
@@ -132,11 +142,8 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                             onValueChange = { viewModel.instructions = it },
                             placeholder = { Text("e.g., Take 30 mins after meal with warm water", fontSize = 13.sp) },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = Color.Gray.copy(0.3f),
-                                focusedBorderColor = Blue500
-                            )
+                            shape = RoundedCornerShape(14.dp),
+                            colors = medicineFieldColors(Blue500)
                         )
                     }
 
@@ -144,8 +151,7 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                 }
 
                 // Sticky footer CTA
-                HorizontalDivider(color = Color.Gray.copy(0.15f))
-                Button(
+                HapticButton(
                     onClick = { viewModel.insertMedicineReminder() },
                     enabled = !isInserting,
                     modifier = Modifier
@@ -197,6 +203,17 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
 
 // ── Form Card Container ───────────────────────────────────────────────────────
 
+/** Fields inside the white form cards: tinted fill, no outline, soft [accent] ring while typing. */
+@Composable
+fun medicineFieldColors(accent: Color) = LocalMyColorScheme.current.let { colors ->
+    OutlinedTextFieldDefaults.colors(
+        unfocusedBorderColor = Color.Transparent,
+        focusedBorderColor = accent.copy(alpha = 0.35f),
+        unfocusedContainerColor = colors.dashboardBackgroundColor,
+        focusedContainerColor = colors.dashboardBackgroundColor,
+    )
+}
+
 @Composable
 fun MedicineFormCard(
     title: String,
@@ -207,8 +224,7 @@ fun MedicineFormCard(
     val colors = LocalMyColorScheme.current
     Surface(
         color = colors.dashboardContainerColor,
-        shape = RoundedCornerShape(18.dp),
-        shadowElevation = 1.dp,
+        shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -252,7 +268,7 @@ fun MedicineSearchSection(viewModel: AddMedicineReminderViewModel) {
                 Text("${selected.medicineName} • ${selected.dosageFormName} ${selected.doseStrength.toInt()} ${selected.unitName}",
                     fontSize = 12.sp, color = Color.Gray, maxLines = 1)
             }
-            IconButton(onClick = { viewModel.clearMedicineSelection() }) {
+            HapticIconButton(onClick = { viewModel.clearMedicineSelection() }) {
                 Icon(Icons.Default.Cancel, null, tint = Color.Gray, modifier = Modifier.size(20.dp))
             }
         }
@@ -265,17 +281,14 @@ fun MedicineSearchSection(viewModel: AddMedicineReminderViewModel) {
             leadingIcon = { Icon(Icons.Default.Search, null, tint = Color.Gray) },
             trailingIcon = {
                 if (viewModel.medicineName.isNotEmpty() && !viewModel.isSearching) {
-                    IconButton(onClick = { viewModel.onMedicineNameChange("") }) {
+                    HapticIconButton(onClick = { viewModel.onMedicineNameChange("") }) {
                         Icon(Icons.Default.Cancel, null, tint = Color.Gray, modifier = Modifier.size(18.dp))
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color.Gray.copy(0.3f),
-                focusedBorderColor = Blue500
-            )
+            shape = RoundedCornerShape(14.dp),
+            colors = medicineFieldColors(Blue500)
         )
 
         // Search results dropdown
@@ -372,11 +385,8 @@ fun FrequencySection(viewModel: AddMedicineReminderViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color.Gray.copy(0.3f),
-                focusedBorderColor = Purple500
-            )
+            shape = RoundedCornerShape(14.dp),
+            colors = medicineFieldColors(Purple500)
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             items.forEach { item ->
@@ -402,7 +412,7 @@ fun FrequencyStepperSection(viewModel: AddMedicineReminderViewModel) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Gray.copy(0.08f), RoundedCornerShape(12.dp))
+            .background(LocalMyColorScheme.current.dashboardBackgroundColor, RoundedCornerShape(14.dp))
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -411,7 +421,7 @@ fun FrequencyStepperSection(viewModel: AddMedicineReminderViewModel) {
             Text("Every ${viewModel.frequencyValue} days", fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
+            HapticIconButton(
                 onClick = { if (viewModel.frequencyValue > 2) viewModel.frequencyValue-- },
                 enabled = viewModel.frequencyValue > 2,
                 modifier = Modifier.size(36.dp)
@@ -431,7 +441,7 @@ fun FrequencyStepperSection(viewModel: AddMedicineReminderViewModel) {
                 modifier = Modifier.width(28.dp),
                 textAlign = TextAlign.Center
             )
-            IconButton(onClick = { viewModel.frequencyValue++ }, modifier = Modifier.size(36.dp)) {
+            HapticIconButton(onClick = { viewModel.frequencyValue++ }, modifier = Modifier.size(36.dp)) {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -495,7 +505,7 @@ fun MonthlyDateSelectorSection(viewModel: AddMedicineReminderViewModel) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.Gray.copy(0.08f), RoundedCornerShape(12.dp))
+                .background(LocalMyColorScheme.current.dashboardBackgroundColor, RoundedCornerShape(14.dp))
                 .clickable { showCalendar = true }
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -521,41 +531,51 @@ fun MonthlyDateSelectorSection(viewModel: AddMedicineReminderViewModel) {
 @Composable
 fun MultiDateCalendarDialog(selectedDates: List<Int>, onDatesChanged: (List<Int>) -> Unit, onDismiss: () -> Unit) {
     var local by remember { mutableStateOf(selectedDates.toMutableList()) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Select Dates", fontWeight = FontWeight.Bold) },
-        text = {
-            LazyColumn {
-                itemsIndexed((1..31).toList()) { _, day ->
+    val colors = LocalMyColorScheme.current
+    com.critetiontech.ctvitalio.ui.components.AppDialog(
+        title = "Select Dates",
+        message = "Days of the month to take this medicine.",
+        icon = Icons.Rounded.CalendarMonth,
+        confirmText = if (local.isEmpty()) "Done" else "Done (${local.size})",
+        dismissText = "Cancel",
+        onDismiss = onDismiss,
+        onConfirm = { onDatesChanged(local.sorted()); onDismiss() },
+    ) {
+        (1..31).chunked(7).forEach { week ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                week.forEach { day ->
                     val isSelected = local.contains(day)
-                    Row(
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(CircleShape)
+                            .background(if (isSelected) colors.primaryBlueColor else colors.dashboardBackgroundColor)
                             .clickable {
-                                local = if (isSelected) local.also { it.remove(day) }
-                                else local.also { it.add(day) }
-                            }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                                local = (if (isSelected) local - day else local + day).toMutableList()
+                            },
                     ) {
-                        Checkbox(checked = isSelected, onCheckedChange = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Day $day")
+                        Text(
+                            "$day",
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) Color.White else colors.textDarkColor,
+                        )
                     }
                 }
+                repeat(7 - week.size) { Spacer(Modifier.weight(1f)) }
             }
-        },
-        confirmButton = { TextButton(onClick = { onDatesChanged(local.sorted()); onDismiss() }) { Text("Done") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
+        }
+    }
 }
 
 // ── Time Slots Section ────────────────────────────────────────────────────────
 
 @Composable
 fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
-    val context = LocalContext.current
     val timeFmt = remember { SimpleDateFormat("hh:mm a", Locale.US) }
+    var editingSlot by remember { mutableStateOf<Int?>(null) }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         viewModel.timeSlots.forEachIndexed { index, slot ->
@@ -563,15 +583,8 @@ fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .background(Color.Gray.copy(0.08f), RoundedCornerShape(12.dp))
-                        .clickable {
-                            val cal = Calendar.getInstance().also { it.time = slot.time }
-                            TimePickerDialog(context, { _, h, m ->
-                                cal.set(Calendar.HOUR_OF_DAY, h)
-                                cal.set(Calendar.MINUTE, m)
-                                viewModel.updateSlotTime(index, cal.time)
-                            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show()
-                        }
+                        .background(LocalMyColorScheme.current.dashboardBackgroundColor, RoundedCornerShape(14.dp))
+                        .clickable { editingSlot = index }
                         .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -587,7 +600,7 @@ fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
                     Icon(Icons.Rounded.Edit, null, tint = Color.Gray, modifier = Modifier.size(14.dp))
                 }
                 if (viewModel.timeSlots.size > 1 && index > 0) {
-                    IconButton(
+                    HapticIconButton(
                         onClick = { viewModel.removeTimeSlot(index) },
                         modifier = Modifier
                             .size(40.dp)
@@ -599,11 +612,27 @@ fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
                 }
             }
         }
-        TextButton(onClick = { viewModel.addTimeSlot() }) {
+        HapticTextButton(onClick = { viewModel.addTimeSlot() }) {
             Icon(Icons.Default.AddCircle, null, tint = Blue500, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text("Add Another Time Slot", color = Blue500, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
         }
+    }
+
+    editingSlot?.let { index ->
+        val cal = Calendar.getInstance().also { it.time = viewModel.timeSlots[index].time }
+        AppTimePickerDialog(
+            initialHour = cal.get(Calendar.HOUR_OF_DAY),
+            initialMinute = cal.get(Calendar.MINUTE),
+            title = "Dose time",
+            onDismiss = { editingSlot = null },
+            onConfirm = { h, m ->
+                cal.set(Calendar.HOUR_OF_DAY, h)
+                cal.set(Calendar.MINUTE, m)
+                viewModel.updateSlotTime(index, cal.time)
+                editingSlot = null
+            },
+        )
     }
 }
 
@@ -611,38 +640,57 @@ fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
 
 @Composable
 fun DateRangeSection(viewModel: AddMedicineReminderViewModel) {
-    val context = LocalContext.current
+    // Which tile's calendar is open: "start", "end" or none.
+    var editing by remember { mutableStateOf<String?>(null) }
+
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         DateTile(
             title = "Start Date",
             formattedDate = viewModel.startDateFormatted,
             modifier = Modifier.weight(1f)
-        ) {
-            val cal = Calendar.getInstance().also { it.time = viewModel.startDate }
-            DatePickerDialog(context, { _, y, m, d ->
-                cal.set(y, m, d)
-                viewModel.startDate = cal.time
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
-        }
+        ) { editing = "start" }
         DateTile(
             title = "End Date",
             formattedDate = viewModel.endDateFormatted,
             modifier = Modifier.weight(1f)
-        ) {
-            val cal = Calendar.getInstance().also { it.time = viewModel.endDate }
-            DatePickerDialog(context, { _, y, m, d ->
-                cal.set(y, m, d)
-                viewModel.endDate = cal.time
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
-        }
+        ) { editing = "end" }
+    }
+
+    val startDay = viewModel.startDate.toLocalDate()
+    when (editing) {
+        "start" -> AppDatePickerDialog(
+            initial = startDay,
+            onDismiss = { editing = null },
+            onConfirm = { day ->
+                viewModel.startDate = viewModel.startDate.withDay(day)
+                // Keep the range valid: an end before the new start moves up to it.
+                if (viewModel.endDate.toLocalDate().isBefore(day)) viewModel.endDate = viewModel.endDate.withDay(day)
+                editing = null
+            },
+        )
+        "end" -> AppDatePickerDialog(
+            initial = viewModel.endDate.toLocalDate(),
+            onDismiss = { editing = null },
+            onConfirm = { day -> viewModel.endDate = viewModel.endDate.withDay(day); editing = null },
+            isSelectable = { !it.isBefore(startDay) },
+        )
     }
 }
+
+private fun Date.toLocalDate(): LocalDate = toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+
+/** Same time of day, moved to [day]. */
+private fun Date.withDay(day: LocalDate): Date =
+    Calendar.getInstance().also {
+        it.time = this
+        it.set(day.year, day.monthValue - 1, day.dayOfMonth)
+    }.time
 
 @Composable
 fun DateTile(title: String, formattedDate: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
         modifier = modifier
-            .background(Color.Gray.copy(0.08f), RoundedCornerShape(12.dp))
+            .background(LocalMyColorScheme.current.dashboardBackgroundColor, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
@@ -688,7 +736,7 @@ fun MedicineSuccessSheet(onAddMore: () -> Unit, onDone: () -> Unit) {
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(20.dp))
-            Button(
+            HapticButton(
                 onClick = onAddMore,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -699,7 +747,7 @@ fun MedicineSuccessSheet(onAddMore: () -> Unit, onDone: () -> Unit) {
                 Text("Add Another Medicine", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
             Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
+            HapticTextButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
                 Text("Done", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
         }
@@ -724,23 +772,19 @@ fun AddAllergyBottomSheet(
     var details by remember { mutableStateOf("") }
     var selectedSeverity by remember { mutableStateOf("Mild") }
 
-    ModalBottomSheet(
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        containerColor = Color.White
+        title = "Add Allergy",
+        subtitle = "Medicines or foods that cause a reaction",
+        icon = Icons.Rounded.HealthAndSafety,
+        iconTint = Color(0xFFE5484D),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 16.dp)
         ) {
-            Text(
-                text = "Add Allergy",
-                style = com.critetiontech.ctvitalio.utils.AppTextStyles.style16BCN(),
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Substance Type dropdown
             Text("Substance Type", style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())

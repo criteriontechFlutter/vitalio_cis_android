@@ -54,7 +54,7 @@ class ApiHelper {
                 val errorBodyString = response.errorBody()?.string()
                     ?: bodyString
                     ?: "Server error ${response.code()}"
-                Log.e("ApiHelper", "Server error ${response.code()}: $errorBodyString")
+                Log.e("ApiHelper", "Server error ${response.code()} for $endpoint")
                 return@withContext Response.error(
                     response.code(),
                     errorBodyString.toResponseBody(null)

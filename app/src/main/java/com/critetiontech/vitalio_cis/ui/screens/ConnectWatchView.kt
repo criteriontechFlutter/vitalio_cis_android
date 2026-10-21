@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 
 
 import androidx.compose.foundation.background
@@ -94,7 +96,7 @@ fun WatchItem(
                     style = AppTextStyles.style12GCN())
             }
 
-            TextButton(onClick = onRemove) {
+            HapticTextButton(onClick = onRemove) {
                 Text(
                     text = "Remove",
                     style = AppTextStyles.style14GCN().copy(color = Color.Red))

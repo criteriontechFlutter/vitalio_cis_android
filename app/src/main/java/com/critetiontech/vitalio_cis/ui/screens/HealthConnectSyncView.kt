@@ -1,17 +1,17 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticOutlinedButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,7 +24,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -35,38 +34,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.*
-import androidx.health.connect.client.request.ReadRecordsRequest
-import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.healthconnect.VitalMetric
+import com.critetiontech.ctvitalio.healthconnect.VitalReading
+import com.critetiontech.ctvitalio.healthconnect.WearableData
+import com.critetiontech.ctvitalio.healthconnect.WearableReader
+import com.critetiontech.ctvitalio.healthconnect.WearableSnapshot
+import com.critetiontech.ctvitalio.healthconnect.WearableSync
+import com.critetiontech.ctvitalio.healthconnect.Workout
 import com.critetiontech.ctvitalio.utils.AppTextStyles
-import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
+import java.time.Duration
 import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.Date
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-// ─── Data Models ──────────────────────────────────────────────────────────────
-
-data class HealthMetric(
-    val id: String,
-    val name: String,
-    val icon: ImageVector,
-    val iconTint: Color,
-    val value: String = "--",
-    val unit: String = "",
-    val isSelected: Boolean = false,
-    val isSynced: Boolean = false
-)
 
 enum class SyncState { IDLE, SYNCING, SUCCESS, ERROR, NOT_INSTALLED, UPDATE_REQUIRED, PERMISSIONS_DENIED }
 
@@ -74,8 +64,7 @@ enum class SyncState { IDLE, SYNCING, SUCCESS, ERROR, NOT_INSTALLED, UPDATE_REQU
 
 class HealthConnectViewModel : ViewModel() {
 
-    private val prefs = AppDependencies.prefs
-    private val addVitalUseCase = AppDependencies.addVital()
+    private val context = MyApplication.appContext
 
     private val _syncState = MutableStateFlow(SyncState.IDLE)
     val syncState: StateFlow<SyncState> = _syncState
@@ -86,27 +75,26 @@ class HealthConnectViewModel : ViewModel() {
     private val _availabilityMessage = MutableStateFlow("Checking Health Connect…")
     val availabilityMessage: StateFlow<String> = _availabilityMessage
 
-    private val _metrics = MutableStateFlow(defaultMetrics())
-    val metrics: StateFlow<List<HealthMetric>> = _metrics
+    private val _snapshot = MutableStateFlow<WearableSnapshot?>(null)
+    val snapshot: StateFlow<WearableSnapshot?> = _snapshot
 
-    private val _syncedCount = MutableStateFlow(0)
-    val syncedCount: StateFlow<Int> = _syncedCount
+    /** Vitals and workouts saved to the server in the last sync. */
+    private val _savedCount = MutableStateFlow(0 to 0)
+    val savedCount: StateFlow<Pair<Int, Int>> = _savedCount
 
-    private val _deniedPermissions = MutableStateFlow<Set<String>>(emptySet())
-    val deniedPermissions: StateFlow<Set<String>> = _deniedPermissions
+    private val _missingPermissions = MutableStateFlow<Set<String>>(emptySet())
+    val missingPermissions: StateFlow<Set<String>> = _missingPermissions
 
-    fun setPermissionsDenied(required: Set<String>, granted: Set<String>) {
-        _deniedPermissions.value = required - granted
-        _syncState.value = SyncState.PERMISSIONS_DENIED
-    }
+    private val _autoSync = MutableStateFlow(WearableSync.isAutoSyncEnabled(context))
+    val autoSync: StateFlow<Boolean> = _autoSync
+
+    private val _backgroundSync = MutableStateFlow(false)
+    val backgroundSync: StateFlow<Boolean> = _backgroundSync
 
     fun checkAvailability(sdkStatus: Int) {
         Log.d("HealthConnect", "SDK status = $sdkStatus")
         when (sdkStatus) {
-            HealthConnectClient.SDK_AVAILABLE -> {
-                _availabilityMessage.value = "Health Connect is available ✓"
-                if (_syncState.value != SyncState.IDLE) _syncState.value = SyncState.IDLE
-            }
+            HealthConnectClient.SDK_AVAILABLE -> _availabilityMessage.value = "Health Connect is available ✓"
             HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
                 _availabilityMessage.value = "Health Connect needs an update"
                 _syncState.value = SyncState.UPDATE_REQUIRED
@@ -118,171 +106,62 @@ class HealthConnectViewModel : ViewModel() {
         }
     }
 
-    fun toggleMetric(id: String) {
-        _metrics.value = _metrics.value.map {
-            if (it.id == id) it.copy(isSelected = !it.isSelected) else it
+    /** Re-reads granted permissions and shows the current wearable data without saving it. */
+    fun refresh(client: HealthConnectClient) {
+        viewModelScope.launch {
+            val granted = runCatching { client.permissionController.getGrantedPermissions() }.getOrDefault(emptySet())
+            _missingPermissions.value = WearableData.READ_PERMISSIONS - granted
+            _backgroundSync.value = WearableSync.canReadInBackground(client)
+            if (granted.none { it in WearableData.READ_PERMISSIONS }) return@launch
+            _snapshot.value = WearableReader(client).read(granted)
         }
     }
 
-    fun selectAll() { _metrics.value = _metrics.value.map { it.copy(isSelected = true) } }
-    fun deselectAll() { _metrics.value = _metrics.value.map { it.copy(isSelected = false) } }
+    fun onPermissionsResult(client: HealthConnectClient, granted: Set<String>) {
+        if (granted.none { it in WearableData.READ_PERMISSIONS }) {
+            _missingPermissions.value = WearableData.READ_PERMISSIONS - granted
+            _syncState.value = SyncState.PERMISSIONS_DENIED
+        } else {
+            syncNow(client)
+        }
+    }
 
-    fun syncSelectedMetrics(client: HealthConnectClient) {
+    fun syncNow(client: HealthConnectClient) {
         viewModelScope.launch {
             _syncState.value = SyncState.SYNCING
-            _syncedCount.value = 0
-            Log.d("HealthConnect", "Starting sync…")
-
-            val selected = _metrics.value.filter { it.isSelected }
-            if (selected.isEmpty()) {
-                _syncState.value = SyncState.ERROR
-                _errorMessage.value = "Please select at least one metric to sync."
-                return@launch
-            }
-
-            val patient = prefs.getPatient()
-            if (patient == null) {
-                _syncState.value = SyncState.ERROR
-                _errorMessage.value = "User session not found. Please log in again."
-                return@launch
-            }
-
-            try {
-                val now = Instant.now()
-                val since = now.minus(7, ChronoUnit.DAYS)   // Widen to 7 days for easier testing
-                val filter = TimeRangeFilter.between(since, now)
-
-                var bpSys = ""; var bpDia = ""; var heartRate = ""
-                var spo2 = ""; var respRate = ""; var bodyTemp = ""; var glucose = ""
-                var count = 0
-
-                selected.forEach { metric ->
-                    try {
-                        when (metric.id) {
-                            "heart_rate" -> {
-                                val records = client.readRecords(ReadRecordsRequest(HeartRateRecord::class, filter)).records
-                                Log.d("HealthConnect", "HeartRate records = ${records.size}")
-                                records.lastOrNull()?.samples?.lastOrNull()?.let {
-                                    heartRate = it.beatsPerMinute.toString()
-                                    updateMetricValue(metric.id, heartRate, "bpm"); count++
-                                }
-                            }
-                            "blood_pressure" -> {
-                                val records = client.readRecords(ReadRecordsRequest(BloodPressureRecord::class, filter)).records
-                                Log.d("HealthConnect", "BloodPressure records = ${records.size}")
-                                records.lastOrNull()?.let {
-                                    bpSys = it.systolic.inMillimetersOfMercury.toInt().toString()
-                                    bpDia = it.diastolic.inMillimetersOfMercury.toInt().toString()
-                                    updateMetricValue(metric.id, "$bpSys/$bpDia", "mmHg"); count++
-                                }
-                            }
-                            "spo2" -> {
-                                val records = client.readRecords(ReadRecordsRequest(OxygenSaturationRecord::class, filter)).records
-                                Log.d("HealthConnect", "SpO2 records = ${records.size}")
-                                records.lastOrNull()?.let {
-                                    spo2 = it.percentage.value.toInt().toString()
-                                    updateMetricValue(metric.id, spo2, "%"); count++
-                                }
-                            }
-                            "respiratory_rate" -> {
-                                val records = client.readRecords(ReadRecordsRequest(RespiratoryRateRecord::class, filter)).records
-                                Log.d("HealthConnect", "RespRate records = ${records.size}")
-                                records.lastOrNull()?.let {
-                                    respRate = it.rate.toInt().toString()
-                                    updateMetricValue(metric.id, respRate, "br/min"); count++
-                                }
-                            }
-                            "body_temperature" -> {
-                                val records = client.readRecords(ReadRecordsRequest(BodyTemperatureRecord::class, filter)).records
-                                Log.d("HealthConnect", "BodyTemp records = ${records.size}")
-                                records.lastOrNull()?.let {
-                                    bodyTemp = String.format("%.1f", it.temperature.inCelsius)
-                                    updateMetricValue(metric.id, bodyTemp, "°C"); count++
-                                }
-                            }
-                            "blood_glucose" -> {
-                                val records = client.readRecords(ReadRecordsRequest(BloodGlucoseRecord::class, filter)).records
-                                Log.d("HealthConnect", "BloodGlucose records = ${records.size}")
-                                records.lastOrNull()?.let {
-                                    glucose = it.level.inMilligramsPerDeciliter.toInt().toString()
-                                    updateMetricValue(metric.id, glucose, "mg/dL"); count++
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.w("HealthConnect", "Skip ${metric.id}: ${e.message}")
-                    }
-                }
-
-                Log.d("HealthConnect", "Synced $count vitals, posting to server…")
-
-                if (count > 0) {
-                    val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                    val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                    addVitalUseCase(
-                        mapOf(
-                            "vmValueBPSys" to bpSys, "vmValueBPDias" to bpDia,
-                            "vmValueSPO2" to spo2, "vmValueRespiratoryRate" to respRate,
-                            "vmValueHeartRate" to heartRate, "vmValuePulse" to heartRate,
-                            "vmValueRbs" to glucose, "vmValueTemperature" to bodyTemp,
-                            "uhid" to patient.uhId, "userId" to patient.pid.toString(),
-                            "vitalDate" to currentDate, "vitalTime" to currentTime,
-                            "clientId" to patient.clientId.toString(),
-                            "isFromPatient" to "true", "isFromMachine" to "0", "positionId" to "0"
-                        )
-                    )
-                }
-
-                _syncedCount.value = count
-                _syncState.value = if (count > 0) SyncState.SUCCESS else {
-                    _errorMessage.value = "No health data found in the last 7 days.\nTip: Open Health Connect → Browse → add a measurement, then sync again."
+            val granted = runCatching { client.permissionController.getGrantedPermissions() }.getOrDefault(emptySet())
+            _missingPermissions.value = WearableData.READ_PERMISSIONS - granted
+            val result = WearableSync.sync(context, client)
+            _snapshot.value = result.snapshot
+            _savedCount.value = result.vitalsSaved to result.workoutsSaved
+            val snapshot = result.snapshot
+            val nothingRead = snapshot.vitals.isEmpty() && snapshot.workouts.isEmpty() &&
+                    snapshot.daily == com.critetiontech.ctvitalio.healthconnect.DailySummary()
+            _syncState.value = when {
+                result.error != null -> { _errorMessage.value = result.error; SyncState.ERROR }
+                nothingRead -> {
+                    _errorMessage.value = snapshot.readErrors.firstOrNull()?.let { "Couldn't read from Health Connect: $it" }
+                        ?: "No data found from your watch or health apps yet.\nMake sure your watch app (e.g. Samsung Health) is set to sync with Health Connect."
                     SyncState.ERROR
                 }
-
-            } catch (e: Exception) {
-                Log.e("HealthConnect", "Sync failed: ${e.message}", e)
-                _syncState.value = SyncState.ERROR
-                _errorMessage.value = "${e.javaClass.simpleName}: ${e.message}"
+                else -> SyncState.SUCCESS
             }
         }
     }
 
-    private fun updateMetricValue(id: String, value: String, unit: String) {
-        _metrics.value = _metrics.value.map {
-            if (it.id == id) it.copy(value = value, unit = unit, isSynced = true) else it
-        }
+    fun setAutoSync(enabled: Boolean) {
+        WearableSync.setAutoSync(context, enabled)
+        _autoSync.value = enabled
     }
 
     fun resetState() {
         _syncState.value = SyncState.IDLE
         _errorMessage.value = ""
-        _metrics.value = _metrics.value.map { it.copy(isSynced = false, value = "--") }
-    }
-
-    companion object {
-        fun defaultMetrics() = listOf(
-            HealthMetric("heart_rate",       "Heart Rate",       Icons.Filled.Favorite,     Color(0xFFE53935)),
-            HealthMetric("blood_pressure",   "Blood Pressure",   Icons.Filled.MonitorHeart, Color(0xFF1565C0)),
-            HealthMetric("spo2",             "SpO₂",             Icons.Filled.Air,           Color(0xFF00897B)),
-            HealthMetric("respiratory_rate", "Respiratory Rate", Icons.Filled.Waves,         Color(0xFF6A1B9A)),
-            HealthMetric("body_temperature", "Body Temperature", Icons.Filled.Thermostat,    Color(0xFFE65100)),
-            HealthMetric("blood_glucose",    "Blood Glucose",    Icons.Filled.WaterDrop,     Color(0xFF2E7D32))
-        )
-
-        val REQUIRED_PERMISSIONS = setOf(
-            HealthPermission.getReadPermission(HeartRateRecord::class),
-            HealthPermission.getReadPermission(BloodPressureRecord::class),
-            HealthPermission.getReadPermission(OxygenSaturationRecord::class),
-            HealthPermission.getReadPermission(RespiratoryRateRecord::class),
-            HealthPermission.getReadPermission(BodyTemperatureRecord::class),
-            HealthPermission.getReadPermission(BloodGlucoseRecord::class)
-        )
     }
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthConnectSyncScreen(
     viewModel: HealthConnectViewModel = viewModel()
@@ -290,45 +169,60 @@ fun HealthConnectSyncScreen(
     val context = LocalContext.current
     val colors = LocalMyColorScheme.current
 
-    val syncState      by viewModel.syncState.collectAsState()
-    val metrics        by viewModel.metrics.collectAsState()
-    val syncedCount    by viewModel.syncedCount.collectAsState()
-    val errorMessage   by viewModel.errorMessage.collectAsState()
-    val availMsg       by viewModel.availabilityMessage.collectAsState()
-    val deniedPerms    by viewModel.deniedPermissions.collectAsState()
+    val syncState    by viewModel.syncState.collectAsState()
+    val snapshot     by viewModel.snapshot.collectAsState()
+    val savedCount   by viewModel.savedCount.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val availMsg     by viewModel.availabilityMessage.collectAsState()
+    val missing      by viewModel.missingPermissions.collectAsState()
+    val autoSync     by viewModel.autoSync.collectAsState()
+    val background   by viewModel.backgroundSync.collectAsState()
 
     // ── Detect Health Connect SDK status ───────────────────────────────
     val sdkStatus = remember {
         try { HealthConnectClient.getSdkStatus(context) }
         catch (e: Exception) { Log.e("HealthConnect", "getSdkStatus error: ${e.message}"); -1 }
     }
-
-    val healthConnectClient = remember {
-        if (sdkStatus == HealthConnectClient.SDK_AVAILABLE)
-            try { HealthConnectClient.getOrCreate(context) } catch (e: Exception) { null }
-        else null
-    }
+    val healthConnectClient = remember { WearableSync.clientOrNull(context) }
 
     LaunchedEffect(sdkStatus) {
-        Log.d("HealthConnect", "LaunchedEffect sdkStatus=$sdkStatus client=$healthConnectClient")
         viewModel.checkAvailability(sdkStatus)
+        healthConnectClient?.let { viewModel.refresh(it) }
     }
 
-    // ── Permission launcher ────────────────────────────────────────────
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
     ) { granted ->
         Log.d("HealthConnect", "Permissions result — granted: $granted")
-        Log.d("HealthConnect", "Required: ${HealthConnectViewModel.REQUIRED_PERMISSIONS}")
-        if (granted.containsAll(HealthConnectViewModel.REQUIRED_PERMISSIONS)) {
-            healthConnectClient?.let { viewModel.syncSelectedMetrics(it) }
-        } else {
-            // Show the denied card with re-grant option instead of a simple Toast
-            viewModel.setPermissionsDenied(HealthConnectViewModel.REQUIRED_PERMISSIONS, granted)
+        healthConnectClient?.let { viewModel.onPermissionsResult(it, granted) }
+    }
+    val backgroundLauncher = rememberLauncherForActivityResult(
+        contract = PermissionController.createRequestPermissionResultContract()
+    ) { healthConnectClient?.let { viewModel.refresh(it) } }
+
+    val requestPermissions = { permissionLauncher.launch(WearableData.READ_PERMISSIONS) }
+    val openHealthConnectSettings = {
+        try {
+            context.startActivity(Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: Exception) {
+            context.startActivity(
+                Intent("android.settings.APPLICATION_DETAILS_SETTINGS")
+                    .setData(Uri.fromParts("package", "com.google.android.apps.healthdata", null))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
+    val openPlayStore = {
+        val uri = Uri.parse("market://details?id=com.google.android.apps.healthdata")
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+        } catch (e: Exception) {
+            val webUri = Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata")
+            context.startActivity(Intent(Intent.ACTION_VIEW, webUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
         }
     }
 
-    CommonAppBar(title = "Health Connect Sync") {
+    CommonAppBar(title = "Wearable Sync") {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -355,9 +249,9 @@ fun HealthConnectSyncScreen(
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
-                        Text("Wear OS & Health Apps", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("Any Watch or Health App", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         Text(
-                            "Sync vitals from your wearable\nand health apps automatically",
+                            "Samsung Galaxy Watch, Fitbit, Pixel, Garmin,\nMi, Noise, boAt & more — via Health Connect",
                             fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f), lineHeight = 18.sp
                         )
                     }
@@ -365,172 +259,93 @@ fun HealthConnectSyncScreen(
             }
 
             // ── SDK status chip ──────────────────────────────────────
+            val unavailable = syncState == SyncState.NOT_INSTALLED || syncState == SyncState.UPDATE_REQUIRED
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        when (syncState) {
-                            SyncState.NOT_INSTALLED, SyncState.UPDATE_REQUIRED -> Color(0xFFFFF3E0)
-                            else -> Color(0xFFE8F5E9)
-                        }
-                    )
+                    .background(if (unavailable) Color(0xFFFFF3E0) else Color(0xFFE8F5E9))
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = when (syncState) {
-                        SyncState.NOT_INSTALLED, SyncState.UPDATE_REQUIRED -> Icons.Filled.Warning
-                        else -> Icons.Filled.CheckCircle
-                    },
+                    imageVector = if (unavailable) Icons.Filled.Warning else Icons.Filled.CheckCircle,
                     contentDescription = null,
-                    tint = when (syncState) {
-                        SyncState.NOT_INSTALLED, SyncState.UPDATE_REQUIRED -> Color(0xFFE65100)
-                        else -> Color(0xFF4CAF50)
-                    },
+                    tint = if (unavailable) Color(0xFFE65100) else Color(0xFF4CAF50),
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(availMsg, fontSize = 12.sp, fontWeight = FontWeight.Medium,
-                    color = if (syncState == SyncState.NOT_INSTALLED || syncState == SyncState.UPDATE_REQUIRED)
-                        Color(0xFFE65100) else Color(0xFF2E7D32)
-                )
+                    color = if (unavailable) Color(0xFFE65100) else Color(0xFF2E7D32))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ── NOT INSTALLED ────────────────────────────────────────
-            if (syncState == SyncState.NOT_INSTALLED) {
-                NotInstalledCard {
-                    val uri = Uri.parse("market://details?id=com.google.android.apps.healthdata")
-                    try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
-                    } catch (e: Exception) {
-                        val webUri = Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata")
-                        context.startActivity(Intent(Intent.ACTION_VIEW, webUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
-                    }
+            when {
+                syncState == SyncState.NOT_INSTALLED -> {
+                    NotInstalledCard(openPlayStore)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HowToConnectCard()
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                HowToTestCard()
-            }
+                syncState == SyncState.UPDATE_REQUIRED -> UpdateRequiredCard(openPlayStore)
+                else -> {
+                    snapshot?.sources?.takeIf { it.isNotEmpty() }?.let { SourcesRow(it) }
 
-            // ── UPDATE REQUIRED ──────────────────────────────────────
-            else if (syncState == SyncState.UPDATE_REQUIRED) {
-                UpdateRequiredCard {
-                    val uri = Uri.parse("market://details?id=com.google.android.apps.healthdata")
-                    try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
-                    } catch (e: Exception) {
-                        val webUri = Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata")
-                        context.startActivity(Intent(Intent.ACTION_VIEW, webUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
-                    }
-                }
-            }
-
-            // ── AVAILABLE — show metrics ─────────────────────────────
-            else {
-                // Select all / none row
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Select Metrics to Sync", style = AppTextStyles.style14BCB())
-                    Row {
-                        TextButton(onClick = { viewModel.selectAll() }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
-                            Text("All", fontSize = 12.sp, color = Color(0xFF1565C0))
+                    AutoSyncCard(
+                        enabled = autoSync,
+                        background = background,
+                        onToggle = { on ->
+                            viewModel.setAutoSync(on)
+                            if (on && !background) backgroundLauncher.launch(setOf(WearableData.BACKGROUND_PERMISSION))
                         }
-                        TextButton(onClick = { viewModel.deselectAll() }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
-                            Text("None", fontSize = 12.sp, color = Color(0xFF9E9E9E))
+                    )
+
+                    snapshot?.let { data ->
+                        if (data.vitals.isNotEmpty()) {
+                            SectionTitle("Vitals", "Saved to your health record")
+                            data.vitals.forEach { VitalCard(it, WearableSync.isSaved(context, it)) }
+                        }
+                        TodayCard(data)
+                        if (data.workouts.isNotEmpty()) {
+                            SectionTitle("Today's Workouts", null)
+                            data.workouts.forEach { WorkoutCard(it, WearableSync.isSaved(context, it)) }
                         }
                     }
-                }
 
-                // Metric cards
-                metrics.forEach { metric ->
-                    HealthMetricCard(
-                        metric = metric,
-                        isBusy = syncState == SyncState.SYNCING,
-                        onToggle = { viewModel.toggleMetric(metric.id) }
-                    )
-                }
+                    if (missing.isNotEmpty() && missing.size < WearableData.READ_PERMISSIONS.size && syncState != SyncState.PERMISSIONS_DENIED) {
+                        MissingPermissionsNote(missing.size, onAllow = requestPermissions)
+                    }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                // Info chip
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                        .clip(RoundedCornerShape(10.dp)).background(Color(0xFFE3F2FD)).padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Filled.Info, null, tint = Color(0xFF1565C0), modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Reads the last 7 days of data from any app connected to Health Connect (Wear OS, Samsung Health, Google Fit, etc.)",
-                        fontSize = 11.sp, color = Color(0xFF1565C0), lineHeight = 16.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Action area
-                when (syncState) {
-                    SyncState.SUCCESS  -> SuccessBanner(syncedCount) { viewModel.resetState() }
-                    SyncState.ERROR    -> ErrorBanner(errorMessage) { viewModel.resetState() }
-                    SyncState.SYNCING  -> SyncingIndicator()
-                    SyncState.PERMISSIONS_DENIED -> PermissionsDeniedCard(
-                        deniedPermissions = deniedPerms,
-                        onRequestAgain = {
-                            permissionLauncher.launch(HealthConnectViewModel.REQUIRED_PERMISSIONS)
-                        },
-                        onOpenSettings = {
-                            // Open the Health Connect app's app-info page in Android Settings
-                            // (Health Connect permissions are managed there on Android 14+)
-                            try {
-                                val intent = Intent("android.settings.APPLICATION_DETAILS_SETTINGS").apply {
-                                    data = Uri.fromParts("package", "com.google.android.apps.healthdata", null)
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    when (syncState) {
+                        SyncState.SUCCESS -> SuccessBanner(savedCount.first, savedCount.second) { viewModel.resetState() }
+                        SyncState.ERROR -> ErrorBanner(errorMessage) { viewModel.resetState() }
+                        SyncState.SYNCING -> SyncingIndicator()
+                        SyncState.PERMISSIONS_DENIED -> PermissionsDeniedCard(
+                            deniedPermissions = missing,
+                            onRequestAgain = requestPermissions,
+                            onOpenSettings = openHealthConnectSettings
+                        )
+                        else -> SyncButton(
+                            label = if (snapshot == null) "Connect & Sync" else "Sync Now",
+                            onClick = {
+                                val client = healthConnectClient
+                                if (client == null) {
+                                    Toast.makeText(context, "Health Connect is not available on this device.", Toast.LENGTH_LONG).show()
+                                    return@SyncButton
                                 }
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                // Fallback: open Health Connect directly
-                                context.packageManager
-                                    .getLaunchIntentForPackage("com.google.android.apps.healthdata")
-                                    ?.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-                                    ?.let { context.startActivity(it) }
+                                if (missing.size == WearableData.READ_PERMISSIONS.size) requestPermissions()
+                                else viewModel.syncNow(client)
                             }
-                        }
-                    )
-                    else -> SyncButton(
-                        enabled = metrics.any { it.isSelected },
-                        onClick = {
-                            val client = healthConnectClient
-                            if (client == null) {
-                                Toast.makeText(context, "Health Connect is not available on this device.", Toast.LENGTH_LONG).show()
-                                return@SyncButton
-                            }
-                            viewModel.viewModelScope.launch {
-                                try {
-                                    val granted = client.permissionController.getGrantedPermissions()
-                                    Log.d("HealthConnect", "Already granted: $granted")
-                                    if (granted.containsAll(HealthConnectViewModel.REQUIRED_PERMISSIONS)) {
-                                        viewModel.syncSelectedMetrics(client)
-                                    } else {
-                                        permissionLauncher.launch(HealthConnectViewModel.REQUIRED_PERMISSIONS)
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("HealthConnect", "Permission check error: ${e.message}", e)
-                                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
-                    )
-                }
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                HowToTestCard()
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HowToConnectCard()
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
         }
     }
@@ -538,41 +353,111 @@ fun HealthConnectSyncScreen(
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+private val timeFormat = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.getDefault())
+
+private fun Instant.display(): String {
+    val local = atZone(ZoneId.systemDefault())
+    return if (local.toLocalDate() == LocalDate.now()) "Today, " + local.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()))
+    else local.format(timeFormat)
+}
+
+private fun VitalMetric.icon(): Pair<ImageVector, Color> = when (this) {
+    VitalMetric.HEART_RATE       -> Icons.Filled.Favorite to Color(0xFFE53935)
+    VitalMetric.BLOOD_PRESSURE   -> Icons.Filled.MonitorHeart to Color(0xFF1565C0)
+    VitalMetric.SPO2             -> Icons.Filled.Air to Color(0xFF00897B)
+    VitalMetric.RESPIRATORY_RATE -> Icons.Filled.Waves to Color(0xFF6A1B9A)
+    VitalMetric.BODY_TEMPERATURE -> Icons.Filled.Thermostat to Color(0xFFE65100)
+    VitalMetric.BLOOD_GLUCOSE    -> Icons.Filled.WaterDrop to Color(0xFF2E7D32)
+    VitalMetric.WEIGHT           -> Icons.Filled.MonitorWeight to Color(0xFF5D4037)
+    VitalMetric.HEIGHT           -> Icons.Filled.Height to Color(0xFF455A64)
+}
+
 @Composable
-private fun HealthMetricCard(metric: HealthMetric, isBusy: Boolean, onToggle: () -> Unit) {
+private fun SectionTitle(title: String, subtitle: String?) {
+    Column(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 4.dp)) {
+        Text(title, style = AppTextStyles.style14BCB())
+        subtitle?.let { Text(it, style = AppTextStyles.style12GCN()) }
+    }
+}
+
+@Composable
+private fun SourcesRow(sources: Set<String>) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("Data from:", fontSize = 12.sp, color = Color(0xFF546788))
+        sources.sorted().forEach { source ->
+            Row(
+                modifier = Modifier.clip(RoundedCornerShape(50)).background(Color(0xFFE3F2FD))
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Watch, null, tint = Color(0xFF1565C0), modifier = Modifier.size(12.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(source, fontSize = 11.sp, color = Color(0xFF1565C0), fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AutoSyncCard(enabled: Boolean, background: Boolean, onToggle: (Boolean) -> Unit) {
     val colors = LocalMyColorScheme.current
-    val scale by animateFloatAsState(
-        targetValue = if (metric.isSelected) 1f else 0.98f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "cardScale"
-    )
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp)
-            .scale(scale).clickable(enabled = !isBusy) { onToggle() },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (metric.isSelected) metric.iconTint.copy(alpha = 0.07f) else colors.dashboardContainerColor
-        ),
-        border = if (metric.isSelected) BorderStroke(1.5.dp, metric.iconTint.copy(alpha = 0.35f)) else null
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
     ) {
         Row(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier.size(44.dp).clip(CircleShape).background(metric.iconTint.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) { Icon(metric.icon, null, tint = metric.iconTint, modifier = Modifier.size(22.dp)) }
+            Icon(Icons.Filled.Autorenew, null, tint = Color(0xFF1565C0), modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(metric.name, style = AppTextStyles.style14BCB())
-                AnimatedVisibility(visible = metric.isSynced && metric.value != "--") {
-                    Text("${metric.value} ${metric.unit}", fontSize = 12.sp, color = metric.iconTint, fontWeight = FontWeight.SemiBold)
-                }
-                if (!metric.isSynced) Text("Last 7 days", style = AppTextStyles.style12GCN())
+                Text("Auto Sync", style = AppTextStyles.style14BCB())
+                Text(
+                    when {
+                        !enabled -> "Sync only when you tap Sync Now"
+                        background -> "Every hour in the background and whenever you open the app"
+                        else -> "Whenever you open the app (background sync isn't supported on this phone)"
+                    },
+                    style = AppTextStyles.style12GCN()
+                )
             }
-            if (metric.isSynced) {
-                Icon(Icons.Filled.CheckCircle, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(22.dp))
-            } else {
-                Checkbox(
-                    checked = metric.isSelected, onCheckedChange = { if (!isBusy) onToggle() },
-                    colors = CheckboxDefaults.colors(checkedColor = metric.iconTint, uncheckedColor = Color(0xFFBBBBBB))
+            Switch(checked = enabled, onCheckedChange = onToggle)
+        }
+    }
+}
+
+@Composable
+private fun VitalCard(reading: VitalReading, saved: Boolean) {
+    val colors = LocalMyColorScheme.current
+    val (icon, tint) = reading.metric.icon()
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(42.dp).clip(CircleShape).background(tint.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) { Icon(icon, null, tint = tint, modifier = Modifier.size(22.dp)) }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(reading.metric.label, style = AppTextStyles.style14BCB())
+                Text("${reading.time.display()} · ${reading.source}", style = AppTextStyles.style12GCN())
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("${reading.value} ${reading.metric.unit}", fontSize = 15.sp, color = tint, fontWeight = FontWeight.Bold)
+                Text(
+                    when {
+                        !reading.metric.savedToServer -> "App only"
+                        saved -> "Saved"
+                        else -> "Not synced"
+                    },
+                    fontSize = 11.sp,
+                    color = if (saved) Color(0xFF4CAF50) else Color(0xFF9E9E9E)
                 )
             }
         }
@@ -580,16 +465,104 @@ private fun HealthMetricCard(metric: HealthMetric, isBusy: Boolean, onToggle: ()
 }
 
 @Composable
-private fun SyncButton(enabled: Boolean, onClick: () -> Unit) {
-    Button(
-        onClick = onClick, enabled = enabled,
+private fun TodayCard(data: WearableSnapshot) {
+    val d = data.daily
+    val tiles = listOfNotNull(
+        d.steps?.let { Triple(Icons.Filled.DirectionsWalk, "Steps", "%,d".format(it)) },
+        d.distanceKm?.let { Triple(Icons.Filled.Straighten, "Distance", String.format(Locale.US, "%.2f km", it)) },
+        d.activeKcal?.let { Triple(Icons.Filled.LocalFireDepartment, "Active Calories", "${it.toInt()} kcal") },
+        d.totalKcal?.let { Triple(Icons.Filled.Whatshot, "Total Calories", "${it.toInt()} kcal") },
+        d.sleep?.takeIf { !it.isZero }?.let { Triple(Icons.Filled.Bedtime, "Sleep", "${it.toHours()}h ${it.toMinutes() % 60}m") },
+        d.restingHeartRate?.let { Triple(Icons.Filled.FavoriteBorder, "Resting HR", "$it bpm") },
+        d.hrvMs?.let { Triple(Icons.Filled.Timeline, "HRV", "${it.toInt()} ms") }
+    )
+    if (tiles.isEmpty()) return
+    SectionTitle("Today", "Shown here only — not saved to your record yet")
+    Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        tiles.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { (icon, label, value) -> StatTile(icon, label, value, Modifier.weight(1f)) }
+                if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatTile(icon: ImageVector, label: String, value: String, modifier: Modifier) {
+    val colors = LocalMyColorScheme.current
+    Column(
+        modifier = modifier.clip(RoundedCornerShape(14.dp)).background(colors.dashboardContainerColor).padding(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, tint = Color(0xFF1565C0), modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(label, style = AppTextStyles.style12GCN())
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
+    }
+}
+
+@Composable
+private fun WorkoutCard(workout: Workout, saved: Boolean) {
+    val colors = LocalMyColorScheme.current
+    val minutes = Duration.between(workout.start, workout.end).toMinutes()
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(42.dp).clip(CircleShape).background(Color(0xFFFF7043).copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) { Icon(Icons.Filled.FitnessCenter, null, tint = Color(0xFFFF7043), modifier = Modifier.size(22.dp)) }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(workout.name, style = AppTextStyles.style14BCB())
+                Text("${workout.start.display()} · $minutes min · ${workout.source}", style = AppTextStyles.style12GCN())
+            }
+            Text(
+                when {
+                    saved -> "Saved"
+                    workout.activityName == null -> "Not supported"
+                    else -> "Not synced"
+                },
+                fontSize = 11.sp,
+                color = if (saved) Color(0xFF4CAF50) else Color(0xFF9E9E9E)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MissingPermissionsNote(count: Int, onAllow: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(10.dp)).background(Color(0xFFFFF8E1)).padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Filled.Info, null, tint = Color(0xFFE65100), modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("$count data type(s) not allowed yet", fontSize = 12.sp, color = Color(0xFFE65100), modifier = Modifier.weight(1f))
+        HapticTextButton(onClick = onAllow, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
+            Text("Allow", fontSize = 12.sp, color = Color(0xFF1565C0), fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun SyncButton(label: String, onClick: () -> Unit) {
+    HapticButton(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(54.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0), disabledContainerColor = Color(0xFFBBDEFB))
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
     ) {
         Icon(Icons.Filled.Sync, null, tint = Color.White, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(8.dp))
-        Text("Sync from Health Connect", color = Color.White, fontWeight = FontWeight.SemiBold)
+        Text(label, color = Color.White, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -608,7 +581,7 @@ private fun SyncingIndicator() {
 }
 
 @Composable
-private fun SuccessBanner(count: Int, onSyncAgain: () -> Unit) {
+private fun SuccessBanner(vitals: Int, workouts: Int, onDone: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(16.dp)).background(Color(0xFFE8F5E9)).padding(20.dp),
@@ -616,12 +589,22 @@ private fun SuccessBanner(count: Int, onSyncAgain: () -> Unit) {
     ) {
         Icon(Icons.Filled.CheckCircle, null, tint = Color(0xFF4CAF50), modifier = Modifier.size(44.dp))
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Successfully Synced!", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF2E7D32))
-        Text("$count vital(s) pulled from your wearable and saved.", fontSize = 13.sp, color = Color(0xFF546788), textAlign = TextAlign.Center)
+        Text(
+            if (vitals + workouts == 0) "Already Up to Date" else "Successfully Synced!",
+            fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF2E7D32)
+        )
+        Text(
+            if (vitals + workouts == 0) "No new readings since the last sync."
+            else listOfNotNull(
+                "$vitals vital(s)".takeIf { vitals > 0 },
+                "$workouts workout(s)".takeIf { workouts > 0 }
+            ).joinToString(" and ") + " saved to your health record.",
+            fontSize = 13.sp, color = Color(0xFF546788), textAlign = TextAlign.Center
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        OutlinedButton(onClick = onSyncAgain, shape = RoundedCornerShape(12.dp),
+        HapticOutlinedButton(onClick = onDone, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF2E7D32))
-        ) { Text("Sync Again") }
+        ) { Text("Done") }
     }
 }
 
@@ -637,7 +620,7 @@ private fun ErrorBanner(message: String, onRetry: () -> Unit) {
         Text("Sync Failed", fontWeight = FontWeight.Bold, color = Color(0xFFC62828))
         Text(message, fontSize = 12.sp, color = Color(0xFF546788), textAlign = TextAlign.Center, lineHeight = 17.sp)
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedButton(onClick = onRetry, shape = RoundedCornerShape(12.dp),
+        HapticOutlinedButton(onClick = onRetry, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC62828))
         ) { Text("Retry") }
     }
@@ -651,17 +634,6 @@ private fun PermissionsDeniedCard(
     onRequestAgain: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
-    // Human-readable names for the permission strings
-    fun permissionLabel(perm: String): String = when {
-        perm.contains("HeartRate",       true) -> "Heart Rate"
-        perm.contains("BloodPressure",   true) -> "Blood Pressure"
-        perm.contains("OxygenSaturation",true) -> "SpO₂ / Oxygen Saturation"
-        perm.contains("RespiratoryRate", true) -> "Respiratory Rate"
-        perm.contains("BodyTemperature", true) -> "Body Temperature"
-        perm.contains("BloodGlucose",    true) -> "Blood Glucose"
-        else -> perm.substringAfterLast(".")
-    }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -671,26 +643,13 @@ private fun PermissionsDeniedCard(
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            Icons.Filled.LockOpen,
-            contentDescription = null,
-            tint = Color(0xFFE65100),
-            modifier = Modifier.size(48.dp)
-        )
+        Icon(Icons.Filled.LockOpen, contentDescription = null, tint = Color(0xFFE65100), modifier = Modifier.size(48.dp))
         Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            "Health Permissions Denied",
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp,
-            color = Color(0xFFE65100)
-        )
+        Text("Health Permissions Denied", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFE65100))
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "The following permissions were not granted. Health Connect permissions can always be re-granted — tap \"Allow Again\" below.",
-            fontSize = 12.sp,
-            color = Color(0xFF546788),
-            textAlign = TextAlign.Center,
-            lineHeight = 17.sp
+            "Allow at least one data type so Vitalio can read it from your watch. Health Connect permissions can always be re-granted — tap \"Allow Again\" below.",
+            fontSize = 12.sp, color = Color(0xFF546788), textAlign = TextAlign.Center, lineHeight = 17.sp
         )
 
         if (deniedPermissions.isNotEmpty()) {
@@ -703,26 +662,12 @@ private fun PermissionsDeniedCard(
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    "Missing permissions:",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF333333)
-                )
-                deniedPermissions.forEach { perm ->
+                Text("Missing permissions:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF333333))
+                deniedPermissions.sorted().forEach { perm ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Filled.Cancel,
-                            contentDescription = null,
-                            tint = Color(0xFFC62828),
-                            modifier = Modifier.size(14.dp)
-                        )
+                        Icon(Icons.Filled.Cancel, contentDescription = null, tint = Color(0xFFC62828), modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            permissionLabel(perm),
-                            fontSize = 12.sp,
-                            color = Color(0xFF555555)
-                        )
+                        Text(WearableData.permissionLabel(perm), fontSize = 12.sp, color = Color(0xFF555555))
                     }
                 }
             }
@@ -730,8 +675,7 @@ private fun PermissionsDeniedCard(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Primary — re-request permissions (works every time with Health Connect)
-        Button(
+        HapticButton(
             onClick = onRequestAgain,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
@@ -744,8 +688,7 @@ private fun PermissionsDeniedCard(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Secondary — open Health Connect settings manually
-        OutlinedButton(
+        HapticOutlinedButton(
             onClick = onOpenSettings,
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
@@ -760,10 +703,7 @@ private fun PermissionsDeniedCard(
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             "💡 In Health Connect settings: go to \"App permissions\" → \"Vitalio\" → enable all toggles",
-            fontSize = 11.sp,
-            color = Color(0xFF777777),
-            textAlign = TextAlign.Center,
-            lineHeight = 16.sp
+            fontSize = 11.sp, color = Color(0xFF777777), textAlign = TextAlign.Center, lineHeight = 16.sp
         )
     }
 }
@@ -780,11 +720,11 @@ private fun NotInstalledCard(onInstall: () -> Unit) {
         Text("Health Connect Not Installed", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFFE65100))
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            "Google Health Connect is required to sync vitals from Wear OS, Samsung Health, Google Fit, and other wearable apps.\n\nIt is built into Android 14+. On Android 9–13 it needs to be installed separately.",
+            "Google Health Connect is required to sync vitals from Galaxy Watch, Fitbit, Wear OS and other wearable apps.\n\nIt is built into Android 14+. On Android 9–13 it needs to be installed separately.",
             fontSize = 13.sp, color = Color(0xFF546788), textAlign = TextAlign.Center, lineHeight = 19.sp
         )
         Spacer(modifier = Modifier.height(20.dp))
-        Button(onClick = onInstall, shape = RoundedCornerShape(12.dp),
+        HapticButton(onClick = onInstall, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
         ) {
             Icon(Icons.Filled.Download, null, tint = Color.White, modifier = Modifier.size(18.dp))
@@ -806,33 +746,33 @@ private fun UpdateRequiredCard(onUpdate: () -> Unit) {
         Text("Health Connect Needs Update", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFFE65100))
         Text("Please update Health Connect in Play Store to continue.", fontSize = 13.sp, color = Color(0xFF546788), textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onUpdate, shape = RoundedCornerShape(12.dp),
+        HapticButton(onClick = onUpdate, shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
         ) { Text("Update Health Connect", color = Color.White) }
     }
 }
 
-// ── How-to-test guide card ────────────────────────────────────────────────────
+// ── How-to-connect guide card ─────────────────────────────────────────────────
 
 @Composable
-private fun HowToTestCard() {
+private fun HowToConnectCard() {
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(16.dp)).background(Color(0xFFF3F4F6)).padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Science, null, tint = Color(0xFF1565C0), modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Watch, null, tint = Color(0xFF1565C0), modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("How to Test Without a Watch", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF1565C0))
+            Text("How to Connect Your Watch", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF1565C0))
         }
         Spacer(modifier = Modifier.height(10.dp))
-        TestStep("1", "Install \"Health Connect\" from Play Store (or update on Android 14+)")
-        TestStep("2", "Open Health Connect app → Browse → pick any metric (e.g. Heart rate)")
-        TestStep("3", "Tap \"+\" → Add entry → enter a value → Save")
-        TestStep("4", "Come back here → select that metric → tap Sync")
+        TestStep("1", "Pair your watch with its app (Samsung Health, Fitbit, Garmin Connect, Mi Fitness, NoiseFit…)")
+        TestStep("2", "In that app, turn on Health Connect sync — e.g. Samsung Health → Settings → Health Connect")
+        TestStep("3", "Come back here → tap Sync Now and allow the data types")
+        TestStep("4", "Turn on Auto Sync to keep your record updated automatically")
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "💡 Tip: Apps like Google Fit, Samsung Health, Polar Beat, or any Wear OS watch automatically write data to Health Connect in the background.",
+            "💡 Your watch app must write to Health Connect. Most popular watch apps support it; check the app's settings if no data shows up.",
             fontSize = 11.sp, color = Color(0xFF546788), lineHeight = 16.sp
         )
     }

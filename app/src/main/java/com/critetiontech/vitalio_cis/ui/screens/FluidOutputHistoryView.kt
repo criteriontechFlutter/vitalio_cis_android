@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -384,7 +386,7 @@ fun outputDateRow(
                 verticalAlignment = Alignment.CenterVertically
     ) {
 
-        IconButton(
+        HapticIconButton(
             onClick = { onPrevious() },
             colors = IconButtonDefaults.iconButtonColors(
                 contentColor = colors.btnDarkColor
@@ -394,7 +396,7 @@ fun outputDateRow(
         }
 
         Text(text, style = AppTextStyles.style14GCN())
-        IconButton(
+        HapticIconButton(
             onClick = { onNext() },
             colors = IconButtonDefaults.iconButtonColors(
                 contentColor = colors.btnDarkColor

@@ -1,5 +1,14 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.material.icons.rounded.Palette
+
+import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
+
+import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
+
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -12,6 +21,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Air
+import androidx.compose.material.icons.outlined.Bloodtype
+import androidx.compose.material.icons.outlined.DeviceThermostat
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Height
+import androidx.compose.material.icons.outlined.MonitorHeart
+import androidx.compose.material.icons.outlined.MonitorWeight
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -101,6 +120,22 @@ private fun VitalListShimmer() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Value colours: normal / borderline / abnormal.
+private val VitalNormal     = Color(0xFF1F5BE0)
+private val VitalBorderline = Color(0xFFE0A100)
+private val VitalAbnormal   = Color(0xFFE5172F)
+
+/**
+ * How a reading compares with its reference range. [None] is for measurements that have no
+ * normal/abnormal range on their own (height, weight) or vitals we don't know.
+ */
+enum class VitalStatus(val label: String, val color: Color) {
+    Normal("NORMAL", VitalNormal),
+    Borderline("BORDERLINE", VitalBorderline),
+    Abnormal("ABNORMAL", VitalAbnormal),
+    None("", VitalNormal),
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
@@ -121,14 +156,14 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
     CommonAppBar(
         title = "Vitals",
         actions = {
-            IconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
+            HapticIconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Analytics,
                     contentDescription = "Health Orbit",
                     tint = colors.textDarkColor
                 )
             }
-            IconButton(onClick = { showInfoDialog = true }) {
+            HapticIconButton(onClick = { showInfoDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Info,
                     contentDescription = "Color info",
@@ -148,46 +183,47 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
             val vitals  by viewModel.vitalList.collectAsState()
             val loading by viewModel.loading.collectAsState()
 
-            when {
-                loading && vitals.isEmpty() -> VitalListShimmer()
-
-                !loading && vitals.isEmpty() -> {
+            ContentStateCrossfade(
+                state = contentStateOf(loading = loading, empty = vitals.isEmpty()),
+                loading = {
+                    VitalListShimmer()
+                },
+                empty = {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text("No vitals recorded yet", color = Color(0xFF9E9E9E))
                     }
+                },
+            ) {
+                val bpSys = vitals.find { it.vitalName.equals("BP_Sys", true) }
+                val bpDia = vitals.find { it.vitalName.equals("BP_Dias", true) }
+
+                if (bpSys != null && bpDia != null) {
+                    VitalCard(
+                        title    = "Blood Pressure",
+                        value    = "${bpSys.vitalValue.toInt()}/${bpDia.vitalValue.toInt()}",
+                        unit     = displayUnit(bpSys.unit),
+                        color    = getBpColor(bpSys.vitalValue, bpDia.vitalValue),
+                        time     = formatTimeAgo(bpSys.vitalDateTime),
+                        vitalIds = "${bpSys.vitalID},${bpDia.vitalID}"
+                    )
                 }
 
-                else -> {
-                    val bpSys = vitals.find { it.vitalName.equals("BP_Sys", true) }
-                    val bpDia = vitals.find { it.vitalName.equals("BP_Dias", true) }
-
-                    if (bpSys != null && bpDia != null) {
+                vitals
+                    .filter { it.vitalName != "BP_Sys" && it.vitalName != "BP_Dias" }
+                    .forEach { vital ->
                         VitalCard(
-                            title    = "Blood Pressure",
-                            value    = "${bpSys.vitalValue.toInt()}/${bpDia.vitalValue.toInt()}",
-                            unit     = "mmHg",
-                            color    = getBpColor(bpSys.vitalValue, bpDia.vitalValue),
-                            time     = formatTimeAgo(bpSys.vitalDateTime),
-                            vitalIds = "${bpSys.vitalID},${bpDia.vitalID}"
+                            title    = getVitalDisplayName(vital.vitalName),
+                            value    = formatValue(vital.vitalValue),
+                            unit     = displayUnit(vital.unit),
+                            color    = getVitalValueColor(vital.vitalName, vital.vitalValue),
+                            time     = formatTimeAgo(vital.vitalDateTime),
+                            vitalIds = "${vital.vitalID}"
                         )
                     }
 
-                    vitals
-                        .filter { it.vitalName != "BP_Sys" && it.vitalName != "BP_Dias" }
-                        .forEach { vital ->
-                            VitalCard(
-                                title    = getVitalDisplayName(vital.vitalName),
-                                value    = formatValue(vital.vitalValue),
-                                unit     = vital.unit.replace("/", ""),
-                                color    = getVitalValueColor(vital.vitalName, vital.vitalValue),
-                                time     = formatTimeAgo(vital.vitalDateTime),
-                                vitalIds = "${vital.vitalID}"
-                            )
-                        }
-                }
             }
         }
     }
@@ -195,43 +231,44 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
 
 @Composable
 fun VitalColorInfoDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Got it") }
-        },
-        title = { Text("Vital Color Guide", fontWeight = FontWeight.Bold) },
-        text = {
+    val colors = LocalMyColorScheme.current
+    com.critetiontech.ctvitalio.ui.components.AppDialog(
+        title = "Vital Color Guide",
+        message = "What the colours on your readings mean.",
+        icon = Icons.Rounded.Palette,
+        confirmText = "Got it",
+        onDismiss = onDismiss,
+    ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                ColorLegendRow(Color(0xFF4CAF50), "Normal", "Values within healthy range")
-                ColorLegendRow(Color(0xFFFF9800), "Borderline", "Slightly outside normal range")
-                ColorLegendRow(Color(0xFFF44336), "Abnormal", "Requires attention")
+                ColorLegendRow(VitalNormal, "Normal", "Values within healthy range")
+                ColorLegendRow(VitalBorderline, "Borderline", "Slightly outside normal range")
+                ColorLegendRow(VitalAbnormal, "Abnormal", "Requires attention")
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = colors.borderGreyLightColor.copy(alpha = 0.4f))
 
-                Text("Normal Ranges", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                Text("Normal Ranges", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = colors.textDarkColor)
 
                 val ranges = listOf(
-                    "Blood Pressure" to "Sys 90–120 / Dia 60–80 mmHg",
-                    "Pulse" to "60–100 bpm",
-                    "Temperature" to "36.1–37.2 °C / 97–99 °F",
-                    "SpO2" to "≥ 95%",
-                    "Respiratory Rate" to "12–20 breaths/min",
-                    "Blood Glucose" to "70–140 mg/dL"
+                    "Blood Pressure" to "90–120 / 60–80 mmHg",
+                    "Pulse / Heart Rate" to "60–100 /min",
+                    "Temperature" to "97–99 °F (36.1–37.2 °C)",
+                    "SpO2" to "95–100 %",
+                    "Respiratory Rate" to "12–20 /min",
+                    "Blood Glucose (random)" to "70–140 mg/dL",
+                    "Height / Weight" to "Tracked over time"
                 )
                 ranges.forEach { (name, range) ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(name, fontSize = 12.sp, color = Color(0xFF555555))
-                        Text(range, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text(name, fontSize = 12.sp, color = colors.textGreyColor)
+                        Text(range, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = colors.textDarkColor)
                     }
                 }
             }
-        }
-    )
+    }
 }
 
 @Composable
@@ -245,9 +282,19 @@ fun ColorLegendRow(color: Color, label: String, description: String) {
         Spacer(modifier = Modifier.width(10.dp))
         Column {
             Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
-            Text(description, fontSize = 11.sp, color = Color(0xFF777777))
+            Text(description, fontSize = 11.sp, color = LocalMyColorScheme.current.textGreyColor)
         }
     }
+}
+
+/**
+ * The backend's unit as shown to people. It sends temperature as both "°F" and "F", so a bare
+ * "F"/"C" gets its degree sign; everything else is shown exactly as sent.
+ */
+fun displayUnit(raw: String): String = when (val u = raw.trim()) {
+    "F", "f" -> "°F"
+    "C", "c" -> "°C"
+    else -> u
 }
 
 fun formatValue(value: Double): String {
@@ -266,53 +313,66 @@ fun getVitalDisplayName(vitalName: String): String = when (vitalName.lowercase()
     "weight" -> "Weight"
     "height" -> "Height"
     "rbs" -> "Blood Glucose"
+    "fbs" -> "Fasting Blood Glucose"
     else -> vitalName
 }
 
-fun getVitalValueColor(vitalName: String, value: Double): Color {
-    return when (vitalName.lowercase()) {
-        "pulse" -> when {
-            value in 60.0..100.0 -> Color(0xFF4CAF50)
-            value in 50.0..110.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
-        }
-        "temperature" -> {
-            val tempC = if (value > 45) (value - 32) * 5 / 9 else value
-            when {
-                tempC in 36.1..37.2 -> Color(0xFF4CAF50)
-                tempC in 35.0..38.0 -> Color(0xFFFF9800)
-                else -> Color(0xFFF44336)
-            }
-        }
-        "spo2", "oxygen saturation" -> when {
-            value >= 95.0 -> Color(0xFF4CAF50)
-            value >= 90.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
-        }
-        "respiratory rate", "rr" -> when {
-            value in 12.0..20.0 -> Color(0xFF4CAF50)
-            value in 10.0..24.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
-        }
-        "blood glucose", "glucose", "fbs", "rbs" -> when {
-            value in 70.0..140.0 -> Color(0xFF4CAF50)
-            value in 50.0..200.0 -> Color(0xFFFF9800)
-            else -> Color(0xFFF44336)
-        }
-        "weight", "height" -> Color(0xFF2962FF)
-        else -> Color(0xFF4CAF50)
+/** Adult reference ranges; [vitalName] is the backend name ("Pulse", "RBS", …) or its display name. */
+fun vitalStatus(vitalName: String, value: Double): VitalStatus = when (vitalName.lowercase().trim()) {
+    // Resting rate: bradycardia < 60, tachycardia > 100.
+    "pulse", "heartrate", "heart rate" -> when {
+        value in 60.0..100.0 -> VitalStatus.Normal
+        value in 50.0..110.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
     }
+    // Backend sends °F; values ≤ 45 are taken as °C.
+    "temperature" -> {
+        val tempC = if (value > 45) (value - 32) * 5 / 9 else value
+        when {
+            tempC in 36.1..37.2 -> VitalStatus.Normal
+            tempC >= 35.0 && tempC < 38.0 -> VitalStatus.Borderline   // mild hypothermia / low-grade fever
+            else -> VitalStatus.Abnormal                                // hypothermia < 35 °C, fever ≥ 38 °C
+        }
+    }
+    "spo2", "oxygen saturation" -> when {
+        value >= 95.0 -> VitalStatus.Normal
+        value >= 90.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal                                     // hypoxaemia
+    }
+    "respiratory rate", "resprate", "rr" -> when {
+        value in 12.0..20.0 -> VitalStatus.Normal
+        value in 10.0..24.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
+    }
+    // Random blood sugar: < 54 is level-2 hypoglycaemia, ≥ 200 is in the diabetic range.
+    "blood glucose", "glucose", "rbs" -> when {
+        value in 70.0..140.0 -> VitalStatus.Normal
+        value >= 54.0 && value < 200.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
+    }
+    // Fasting: 70–99 normal, 100–125 prediabetes, ≥ 126 diabetes.
+    "fbs" -> when {
+        value in 70.0..99.0 -> VitalStatus.Normal
+        value >= 54.0 && value < 126.0 -> VitalStatus.Borderline
+        else -> VitalStatus.Abnormal
+    }
+    else -> VitalStatus.None
 }
 
-fun getBpColor(sys: Double, dia: Double): Color {
-    return when {
-        sys < 90 || dia < 60 -> Color(0xFFF44336)
-        sys <= 120 && dia <= 80 -> Color(0xFF4CAF50)
-        sys <= 130 && dia <= 80 -> Color(0xFFFF9800)
-        sys <= 140 || dia <= 90 -> Color(0xFFFF9800)
-        else -> Color(0xFFF44336)
-    }
+/**
+ * Normal ≤ 120/80; elevated or stage-1 hypertension up to 139/89 is borderline; ≥ 140 or ≥ 90
+ * (stage 2) and hypotension (< 90 or < 60) are abnormal.
+ */
+fun bpStatus(sys: Double, dia: Double): VitalStatus = when {
+    sys < 90 || dia < 60 -> VitalStatus.Abnormal
+    sys >= 140 || dia >= 90 -> VitalStatus.Abnormal
+    sys <= 120 && dia <= 80 -> VitalStatus.Normal
+    else -> VitalStatus.Borderline
 }
+
+fun getVitalValueColor(vitalName: String, value: Double): Color = vitalStatus(vitalName, value).color
+
+fun getBpColor(sys: Double, dia: Double): Color = bpStatus(sys, dia).color
 
 @Composable
 fun VitalCard(
@@ -325,83 +385,82 @@ fun VitalCard(
 ) {
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
-    Card(
+    val shape = RoundedCornerShape(14.dp)
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp)
+            .padding(bottom = 10.dp)
+            .clip(shape)
+            .background(colors.dashboardContainerColor)
             .clickable {
                 val encodedName = Uri.encode(title)
-                navController.navigate("${Routes.VITALHISTORY}?vitalIds=$vitalIds&vitalName=$encodedName")
-            },
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
-    ) {
-
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-
-                    Text(
-                        text = title,
-                        style = AppTextStyles.style16BCB())
-
-
-
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(verticalAlignment = Alignment.Bottom) {
-
-                    Text(
-                        value,
-                        color = color,
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    Text(
-                        unit,
-                        style = AppTextStyles.style12GCN())
-
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    time,
-                    style = AppTextStyles.style12GCN().copy(fontSize = 11.sp))
-
+                navController.navigate("${Routes.VITALHISTORY}?vitalIds=$vitalIds&vitalName=$encodedName&unit=${Uri.encode(unit)}")
             }
-
-            Column   {
+            .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 10.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = vitalIcon(title),
+                contentDescription = null,
+                tint = Color(0xFF8A93A3),
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = title,
+                style = AppTextStyles.style14BCN().copy(fontSize = 15.sp, fontWeight = FontWeight.Medium),
+                modifier = Modifier.weight(1f)
+            )
+            if (canAddVitalManually(title)) {
                 Text(
                     "Add Vital",
-                            style = AppTextStyles.style12PCN(),
-                    modifier = Modifier.clickable {
-                        navController.navigate(Routes.CONNECTION+"/"+title.toString()+"/"+unit.toString())
-                    })
-
-//                MiniGraph(color)
+                    style = AppTextStyles.style12GCN().copy(fontSize = 11.sp, color = colors.textGreyColor),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { navController.navigate(Routes.CONNECTION + "/" + Uri.encode(title) + "/" + Uri.encode(unit)) }
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
             }
         }
+
+        Spacer(Modifier.height(2.dp))
+
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                value,
+                color = color,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 28.sp
+            )
+            if (unit.isNotBlank()) {
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    unit,
+                    style = AppTextStyles.style12GCN().copy(fontSize = 13.sp),
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            Text(
+                time,
+                style = AppTextStyles.style12GCN().copy(fontSize = 10.sp, color = colors.textDarkColor.copy(alpha = 0.7f)),
+                modifier = Modifier.padding(bottom = 3.dp)
+            )
+        }
     }
+}
+
+private fun vitalIcon(title: String): ImageVector = when {
+    title.contains("pressure", true) -> Icons.Outlined.Speed
+    title.contains("pulse", true) || title.contains("heart", true) -> Icons.Outlined.MonitorHeart
+    title.contains("spo2", true) || title.contains("oxygen", true) -> Icons.Outlined.WaterDrop
+    title.contains("temp", true) -> Icons.Outlined.DeviceThermostat
+    title.contains("resp", true) -> Icons.Outlined.Air
+    title.contains("glucose", true) || title.contains("rbs", true) || title.contains("sugar", true) -> Icons.Outlined.Bloodtype
+    title.contains("weight", true) -> Icons.Outlined.MonitorWeight
+    title.contains("height", true) -> Icons.Outlined.Height
+    else -> Icons.Outlined.FavoriteBorder
 }
 
 

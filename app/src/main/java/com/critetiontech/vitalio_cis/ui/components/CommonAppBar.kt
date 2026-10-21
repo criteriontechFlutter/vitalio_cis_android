@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,7 +46,7 @@ fun MyAppBar(
 
         navigationIcon = {
             if (showBack) {
-                IconButton(onClick = onBack) {
+                HapticIconButton(onClick = onBack) {
                     Icon(
                         Icons.Default.ArrowBack,
                         contentDescription = null

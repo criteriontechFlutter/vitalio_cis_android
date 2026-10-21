@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
+
 import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -7,6 +9,10 @@ import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.MedicinePeriod
+import com.critetiontech.ctvitalio.reminder.MedicineIntakeEvents
+import com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler
+import com.critetiontech.ctvitalio.reminder.withLocallyTaken
+import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -31,6 +37,11 @@ class MedicineReminderViewModel : ViewModel() {
 
     fun clearToast() { _toast.value = null }
 
+    init {
+        // A dose was logged from a medicine alarm; refresh so it shows as taken.
+        viewModelScope.launch { MedicineIntakeEvents.changed.collect { fetchMedicineIntake() } }
+    }
+
     fun fetchMedicineIntake() {
         viewModelScope.launch {
             _loading.value = true
@@ -40,7 +51,9 @@ class MedicineReminderViewModel : ViewModel() {
             else
                 java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
             when (val r = fetchMedicineIntakeUseCase(patient.pid, givenDate, patient.clientId)) {
-                is DomainResult.Success -> _periods.value = r.data
+                is DomainResult.Success -> _periods.value = r.data.map { period ->
+                    period.copy(medicineData = period.medicineData.withLocallyTaken(MyApplication.appContext))
+                }
                 is DomainResult.Error -> Log.e("MedicineReminderVM", r.exception.message.orEmpty())
             }
             _loading.value = false
@@ -52,10 +65,14 @@ class MedicineReminderViewModel : ViewModel() {
             when (val r = markMedicineIntakeUseCase(id, scheduledDateTime)) {
                 is DomainResult.Success -> {
                     _toast.value = ToastData("Taken", "Medication marked as taken successfully.", true)
+                    Haptics.success()
                     fetchMedicineIntake()
+                    // Drop the alarm for the dose that was just taken.
+                    MedicineReminderScheduler.requestSync(MyApplication.appContext)
                 }
                 is DomainResult.Error -> {
                     _toast.value = ToastData("Error", r.exception.message ?: "Unknown error", false)
+                    Haptics.error()
                     Log.e("MedicineReminderVM", r.exception.message.orEmpty())
                 }
             }

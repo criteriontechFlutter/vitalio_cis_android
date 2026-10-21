@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+
 import android.Manifest
 import android.content.Context
 import android.net.Uri
@@ -113,6 +116,7 @@ fun UploadPrescriptionScreen(
                             icon = Icons.Default.CameraAlt,
                             isSelected = false,
                             colors = colors,
+                            accent = CameraAccent,
                             modifier = Modifier.weight(1f)
                         ) { cameraPermLauncher.launch(Manifest.permission.CAMERA) }
 
@@ -122,6 +126,7 @@ fun UploadPrescriptionScreen(
                             icon = Icons.Default.Photo,
                             isSelected = selectedFile != null,
                             colors = colors,
+                            accent = GalleryAccent,
                             modifier = Modifier.weight(1f)
                         ) { documentLauncher.launch(arrayOf("image/*", "application/pdf")) }
                     }
@@ -137,7 +142,7 @@ fun UploadPrescriptionScreen(
                 }
 
                 // Fixed footer action button
-                Button(
+                HapticButton(
                     onClick = { viewModel.uploadPrescriptionToAnalyse() },
                     enabled = selectedFile != null && !uploadingFile,
                     modifier = Modifier
@@ -243,7 +248,7 @@ private fun SelectedPrescriptionCard(file: File, colors: MyColorScheme, onRemove
                         Text(file.name, style = AppTextStyles.style14BCB(), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text("${file.extension.uppercase()} • ${file.length() / 1024} KB", style = AppTextStyles.style12GCN())
                     }
-                    IconButton(onClick = onRemove) {
+                    HapticIconButton(onClick = onRemove) {
                         Icon(Icons.Default.Close, contentDescription = "Remove", tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
                     }
                 }

@@ -1,4 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -209,7 +212,7 @@ fun FamilyHistoryScreen() {
 
         /// NEXT BUTTON
 
-        Button(
+        HapticButton(
             onClick = {
                 navController.navigate("createAccount")
             },
@@ -239,15 +242,24 @@ fun FamilyHistoryScreen() {
         ) {
 
             Card(
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White
                 )
             ) {
 
                 Column(
-                    modifier = Modifier.padding(14.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)
                 ) {
+
+                    Text(
+                        text = "Select Disease",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF202529)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     var search by remember {
                         mutableStateOf("")
@@ -325,19 +337,19 @@ fun FamilyHistoryScreen() {
         ) {
 
             Card(
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = Color.White
                 )
             ) {
 
                 Column(
-                    modifier = Modifier.padding(20.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp)
                 ) {
 
                     Text(
                         text = "Select Relation",
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
 
@@ -367,7 +379,7 @@ fun FamilyHistoryScreen() {
                                 fontSize = 14.sp
                             )
 
-                            Checkbox(
+                            HapticCheckbox(
                                 checked = selectedRelations.contains(relation),
                                 onCheckedChange = { checked ->
 
@@ -388,18 +400,23 @@ fun FamilyHistoryScreen() {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Button(
+                    HapticButton(
                         onClick = {
                             showRelationDialog = false
                         },
                         enabled = selectedRelations.isNotEmpty(),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(10.dp)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1564ED),
+                            disabledContainerColor = Color(0xFF1564ED).copy(alpha = 0.35f),
+                            disabledContentColor = Color.White
+                        )
                     ) {
 
-                        Text("Submit")
+                        Text("Submit", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

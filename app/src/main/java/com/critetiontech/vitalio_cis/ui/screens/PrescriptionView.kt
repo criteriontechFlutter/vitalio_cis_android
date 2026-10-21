@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
+
+import com.critetiontech.ctvitalio.ui.feedback.HapticButton
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -70,21 +74,21 @@ import com.critetiontech.ctvitalio.viewmodel.VitalFrequencyDetail
 
 // ─── Design Tokens ─────────────────────────────────────────────────────────────
 private val Blue = Color(0xFF2E5BFF)
-private val BlueSoft = Color(0xFFEEF2FF)
+private val BlueSoft: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Blue, Color(0xFFEEF2FF))
 private val Green = Color(0xFF22C55E)
-private val GreenSoft = Color(0xFFDCFCE7)
+private val GreenSoft: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Green, Color(0xFFDCFCE7))
 private val Orange = Color(0xFFF97316)
-private val OrangeSoft = Color(0xFFFFF7ED)
+private val OrangeSoft: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Orange, Color(0xFFFFF7ED))
 private val Red = Color(0xFFEF4444)
-private val RedSoft = Color(0xFFFEF2F2)
+private val RedSoft: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Red, Color(0xFFFEF2F2))
 private val Purple = Color(0xFF8B5CF6)
-private val PurpleSoft = Color(0xFFF5F3FF)
+private val PurpleSoft: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Purple, Color(0xFFF5F3FF))
 private val Teal = Color(0xFF14B8A6)
-private val TealSoft = Color(0xFFF0FDFA)
-private val TextDark = Color(0xFF0F172A)
-private val TextMid = Color(0xFF475569)
+private val TealSoft: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.softTint(Teal, Color(0xFFF0FDFA))
+private val TextDark: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.textDarkColor
+private val TextMid: Color @Composable get() = com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.textGreyColor
 private val TextLight = Color(0xFF94A3B8)
-private val DividerColor = Color(0xFFF1F5F9)
+private val DividerColor: Color @Composable get() = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFF1F5F9)
 
 // ─── Helper model ──────────────────────────────────────────────────────────────
 data class DisplayVitalItem(
@@ -161,7 +165,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                             )
                             Spacer(Modifier.height(12.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                prescriptions.forEach { MedicineCard(it, colors.dashboardContainerColor) }
+                                prescriptions.forEachIndexed { i, rx -> AnimatedEnter(index = i) { MedicineCard(rx, colors.dashboardContainerColor) } }
                             }
                         }
                     }
@@ -1105,7 +1109,7 @@ private fun PrescriptionErrorState(message: String, bgColor: Color, onRetry: () 
                 lineHeight = 20.sp
             )
             Spacer(Modifier.height(20.dp))
-            Button(
+            HapticButton(
                 onClick = onRetry,
                 colors = ButtonDefaults.buttonColors(containerColor = Blue),
                 shape = RoundedCornerShape(12.dp)
@@ -1151,7 +1155,7 @@ private fun PrescriptionEmptyState(bgColor: Color, onRefresh: () -> Unit) {
                 color = TextLight
             )
             Spacer(Modifier.height(20.dp))
-            Button(
+            HapticButton(
                 onClick = onRefresh,
                 colors = ButtonDefaults.buttonColors(containerColor = Blue),
                 shape = RoundedCornerShape(12.dp)
@@ -1209,6 +1213,7 @@ private fun getFreqName(frequencyTypeId: Int): String = when (frequencyTypeId) {
 }
 
 // ─── Helper: Display Vitals Mapping ───────────────────────────────────────────
+@Composable
 private fun getDisplayVitals(rawVitals: List<PatientVitalDetail>): List<DisplayVitalItem> {
     val list = mutableListOf<DisplayVitalItem>()
     val sys = rawVitals.firstOrNull { it.vmId == 4 }?.vmValue
