@@ -9,6 +9,9 @@ import com.critetiontech.ctvitalio.domain.repository.AuthRepository
 import com.critetiontech.ctvitalio.utils.Patient
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.critetiontech.ctvitalio.utils.VerifyOtpResponse
+import com.critetiontech.ctvitalio.utils.bloodGroupNameFor
+import com.critetiontech.ctvitalio.utils.genderNameFor
+import com.critetiontech.ctvitalio.utils.profileImageUrl
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -67,10 +70,14 @@ class AuthRepositoryImpl @Inject constructor(
                     dob = p.dob, genderId = p.genderId, mobileNo = p.mobileNo, emailAddress = p.emailId,
                     age = p.age, address = p.address, cityId = p.cityId, stateId = p.stateId,
                     bloodGroupId = p.bloodGroupId, clientId = p.clientId, countryCallingCode = "",
-                    guardianRelationId = 0, guardianName = "", countryId = 0, imageUrl = "",
+                    guardianRelationId = 0, guardianName = "", countryId = 0, imageUrl = profileImageUrl(p.profileURL),
+                    // City/state come as ids only; Personal Info looks their names up once
                     zip = "", isActive = true, departmentName = null, cityName = "", stateName = "",
-                    countryName = "", genderName = "", guardianRelationName = null, bloodGroupName = null,
-                    crNo = p.crNo   // ← capture crNo from login response
+                    countryName = "", genderName = genderNameFor(p.genderId), guardianRelationName = null,
+                    bloodGroupName = bloodGroupNameFor(p.bloodGroupId),
+                    crNo = p.crNo,  // ← capture crNo from login response
+                    height = p.height.takeIf { it.isNotBlank() },
+                    weight = p.weight.takeIf { it.isNotBlank() }
                 )
                 prefs.savePatient(patient)
                 DomainResult.Success(patient)

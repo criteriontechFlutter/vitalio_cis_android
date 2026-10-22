@@ -17,6 +17,7 @@ data class VerifyOtpPatient(
     val uhId: String = "",
     val firstName: String = "",
     val lastName: String? = null,
+    val profileURL: String? = null,
     val mobileNo: String = "",
     val emailId: String = "",
     val address: String = "",
@@ -72,8 +73,31 @@ data class Patient(
     val genderName: String,
     val guardianRelationName: String?,
     val bloodGroupName: String?,
-    val crNo: String? = null   // CR Number — required by PatientOPDAllHistory API
+    val crNo: String? = null,  // CR Number — required by PatientOPDAllHistory API
+    // Nullable: patients saved before these existed come back from Gson with null
+    val height: String? = null, // as the login API sends it, e.g. "176.00/cm"
+    val weight: String? = null  // e.g. "76.00/kg"
 )
+
+fun genderNameFor(id: Int): String = when (id) {
+    1 -> "Male"
+    2 -> "Female"
+    else -> "Other"
+}
+
+fun bloodGroupNameFor(id: Int): String? = when (id) {
+    1 -> "A+"; 2 -> "A-"; 3 -> "B+"; 4 -> "B-"
+    5 -> "O+"; 6 -> "O-"; 7 -> "AB+"; 8 -> "AB-"
+    else -> null
+}
+
+/** The server sends photo paths with backslashes ("…/Upload\\Image\\x.jpg") and sometimes without a host. */
+fun profileImageUrl(raw: String?): String {
+    val path = raw?.trim()?.replace('\\', '/').orEmpty()
+    if (path.isBlank()) return ""
+    if (path.startsWith("http")) return path
+    return com.critetiontech.ctvitalio.config.ApiConfig.MODULE_4082 + path.trimStart('/')
+}
 data class EmployeeGoal(
     val pid: Int,
     val vmId: Int,

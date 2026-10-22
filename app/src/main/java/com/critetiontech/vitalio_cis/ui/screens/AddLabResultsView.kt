@@ -5,7 +5,6 @@ import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
 import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ContentValues
@@ -15,6 +14,8 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.critetiontech.ctvitalio.permissions.AppPermission
+import com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -137,14 +138,10 @@ fun AddLabResultsScreen(
         if (success && cameraUri != null) { fromCamera = true; startCrop(cameraUri!!) }
     }
 
-    val cameraPermLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            val uri = createImageUri(context)
-            cameraUri = uri
-            cameraLauncher.launch(uri)
-        }
+    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, "to photograph your lab report") {
+        val uri = createImageUri(context)
+        cameraUri = uri
+        cameraLauncher.launch(uri)
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -263,7 +260,7 @@ fun AddLabResultsScreen(
                         colors = colors,
                         accent = CameraAccent,
                         modifier = Modifier.weight(1f)
-                    ) { cameraPermLauncher.launch(Manifest.permission.CAMERA) }
+                    ) { cameraPermission.launch() }
 
                     UploadOptionCard(
                         title = "Gallery",

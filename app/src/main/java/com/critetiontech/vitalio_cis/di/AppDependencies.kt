@@ -1,7 +1,11 @@
 package com.critetiontech.ctvitalio.di
 
+import com.critetiontech.ctvitalio.data.repository.ActivityRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.AllergyRepositoryImpl
+import com.critetiontech.ctvitalio.domain.usecase.activity.AddPatientActivityUseCase
+import com.critetiontech.ctvitalio.domain.usecase.activity.FetchActivityMasterUseCase
 import com.critetiontech.ctvitalio.data.repository.AuthRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.ConsultationRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.DoctorRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.FluidRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.MedicineRepositoryImpl
@@ -13,6 +17,9 @@ import com.critetiontech.ctvitalio.domain.usecase.allergy.AddAllergyUseCase
 import com.critetiontech.ctvitalio.domain.usecase.allergy.FetchAllergiesUseCase
 import com.critetiontech.ctvitalio.domain.usecase.auth.SendOtpUseCase
 import com.critetiontech.ctvitalio.domain.usecase.auth.VerifyOtpUseCase
+import com.critetiontech.ctvitalio.domain.usecase.consultation.DeclineCallUseCase
+import com.critetiontech.ctvitalio.domain.usecase.consultation.EndCallUseCase
+import com.critetiontech.ctvitalio.domain.usecase.consultation.JoinCallUseCase
 import com.critetiontech.ctvitalio.domain.usecase.doctor.BookAppointmentUseCase
 import com.critetiontech.ctvitalio.domain.usecase.doctor.FetchAppointmentHistoryUseCase
 import com.critetiontech.ctvitalio.domain.usecase.doctor.FetchAvailableSlotsUseCase
@@ -31,6 +38,9 @@ import com.critetiontech.ctvitalio.domain.usecase.medicine.FetchMedicineIntakeUs
 import com.critetiontech.ctvitalio.domain.usecase.medicine.InsertMedicineUseCase
 import com.critetiontech.ctvitalio.domain.usecase.medicine.MarkMedicineIntakeUseCase
 import com.critetiontech.ctvitalio.domain.usecase.medicine.SearchMedicineUseCase
+import com.critetiontech.ctvitalio.domain.usecase.profile.FetchCitiesUseCase
+import com.critetiontech.ctvitalio.domain.usecase.profile.FetchCountriesUseCase
+import com.critetiontech.ctvitalio.domain.usecase.profile.FetchStatesUseCase
 import com.critetiontech.ctvitalio.domain.usecase.profile.UpdateProfileUseCase
 import com.critetiontech.ctvitalio.domain.usecase.report.AiReportUseCase
 import com.critetiontech.ctvitalio.domain.usecase.report.FetchMediaUseCase
@@ -44,6 +54,7 @@ import com.critetiontech.ctvitalio.domain.usecase.symptom.InsertSymptomsUseCase
 import com.critetiontech.ctvitalio.domain.usecase.vital.AddVitalUseCase
 import com.critetiontech.ctvitalio.domain.usecase.vital.FetchLastVitalUseCase
 import com.critetiontech.ctvitalio.domain.usecase.vital.FetchVitalAnalyticsUseCase
+import com.critetiontech.ctvitalio.domain.usecase.vital.SaveMeasuredVitalsUseCase
 import com.critetiontech.ctvitalio.network.NetworkMonitor
 import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.utils.PrefsManager
@@ -65,6 +76,8 @@ object AppDependencies {
     val reportRepository by lazy { ReportRepositoryImpl(MyApplication.appContext, prefs) }
     val symptomRepository by lazy { SymptomRepositoryImpl(MyApplication.appContext, prefs) }
     val profileRepository by lazy { ProfileRepositoryImpl(MyApplication.appContext, prefs) }
+    val consultationRepository by lazy { ConsultationRepositoryImpl(MyApplication.appContext, prefs) }
+    val activityRepository by lazy { ActivityRepositoryImpl(MyApplication.appContext, prefs) }
 
     // Use cases — created fresh each time (they're stateless wrappers)
     fun sendOtp() = SendOtpUseCase(authRepository)
@@ -103,4 +116,13 @@ object AppDependencies {
     fun getProblemsWithIcon() = GetProblemsWithIconUseCase(symptomRepository)
     fun getAllProblems() = GetAllProblemsUseCase(symptomRepository)
     fun updateProfile() = UpdateProfileUseCase(profileRepository)
+    fun fetchCountries() = FetchCountriesUseCase(profileRepository)
+    fun fetchStates() = FetchStatesUseCase(profileRepository)
+    fun fetchCities() = FetchCitiesUseCase(profileRepository)
+    fun saveMeasuredVitals() = SaveMeasuredVitalsUseCase(vitalRepository)
+    fun joinCall() = JoinCallUseCase(consultationRepository)
+    fun declineCall() = DeclineCallUseCase(consultationRepository)
+    fun endCall() = EndCallUseCase(consultationRepository)
+    fun fetchActivityMaster() = FetchActivityMasterUseCase(activityRepository)
+    fun addPatientActivity() = AddPatientActivityUseCase(activityRepository)
 }

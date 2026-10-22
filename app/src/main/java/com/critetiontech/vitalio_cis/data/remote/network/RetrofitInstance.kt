@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.networking
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import com.critetiontech.ctvitalio.network.RetryInterceptor
 import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.utils.NetworkUtils
@@ -15,15 +17,8 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
 
-    // Base URLs
-    const val BASE_5082 = "https://cis.vitalio.care:4082/"
-    const val BASE_5084 = "https://cis.vitalio.care:4084/"
-    const val BASE_4096 = "https://cis.vitalio.care:4096/"
-    const val BASE_44374 = "https://cis.vitalio.care:44374/"
-    const val BASE_4090 = "https://cis.vitalio.care:4090/"
-    const val Digi_doctor_BaseURL = "http://52.172.134.222:205/api/v1.0/"
-
-    private const val DEFAULT_BASE_URL = BASE_5082
+    // Server addresses live in ApiConfig
+    private val DEFAULT_BASE_URL = ApiConfig.MODULE_4082
 
     // 50 MB disk cache — GET responses served instantly on repeat calls
 //    private val httpCache by lazy {

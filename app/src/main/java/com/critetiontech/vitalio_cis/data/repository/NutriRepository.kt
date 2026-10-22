@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import com.critetiontech.ctvitalio.BuildConfig
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -95,7 +97,7 @@ class NutriRepository(
         }
 
     private companion object {
-        const val BASE_URL = "https://nutrianalyser.com:313/api"
+        const val BASE_URL = ApiConfig.NUTRI_ANALYSER
         val JSON = "application/json; charset=utf-8".toMediaType()
         val gson = Gson()
         val client: OkHttpClient = OkHttpClient.Builder()

@@ -1,10 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import com.critetiontech.ctvitalio.permissions.AppPermission
+import com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -88,7 +86,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
@@ -185,11 +182,12 @@ fun LabReportsScreen(
         }
     }
 
-    val storagePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        val report = pendingDownload
+    val storagePermission = rememberPermissionRequest(
+        AppPermission.Storage, "to save this report in your Downloads folder",
+        onDenied = { pendingDownload = null },
+    ) {
+        pendingDownload?.let { startDownload(it) }
         pendingDownload = null
-        if (granted && report != null) startDownload(report)
-        else if (!granted) Toast.makeText(context, "Storage permission is needed to save reports", Toast.LENGTH_SHORT).show()
     }
 
     val onDownload: (MediaItem) -> Unit = { report ->
@@ -199,12 +197,8 @@ fun LabReportsScreen(
                     Toast.makeText(context, "No app found to open this file", Toast.LENGTH_SHORT).show()
             is ReportDownloader.State.Running -> Unit
             else -> {
-                val needsPermission = ReportDownloader.needsStoragePermission() &&
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-                if (needsPermission) {
-                    pendingDownload = report
-                    storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                } else startDownload(report)
+                pendingDownload = report
+                storagePermission.launch()
             }
         }
     }

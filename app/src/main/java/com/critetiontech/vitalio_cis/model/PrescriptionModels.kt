@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
 import java.util.UUID
 
-// Response of http://food.shopright.ai:3480/uploadPrescription/
+// Response of {ApiConfig.AI_UPLOAD}uploadPrescription/
 // { "response": [ { patient, prescription } ] }  or  { "response": [ "error message" ] }
 
 data class PrescriptionResponseItem(

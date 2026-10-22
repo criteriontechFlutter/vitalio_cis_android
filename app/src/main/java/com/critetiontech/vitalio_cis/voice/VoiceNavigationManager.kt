@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.voice
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioFormat
@@ -64,7 +66,7 @@ import java.util.concurrent.TimeUnit
 private const val TAG = "VoiceNavManager"
 
 // WebSocket URL for the dictation backend (matching the iOS config)
-private const val DICTATION_WS_BASE = "ws://food.shopright.ai:3479/ws"
+private const val DICTATION_WS_BASE = ApiConfig.DICTATION_WS
 
 object VoiceNavigationManager {
 
