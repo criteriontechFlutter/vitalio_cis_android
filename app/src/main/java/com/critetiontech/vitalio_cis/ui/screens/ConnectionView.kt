@@ -3,6 +3,19 @@ package com.critetiontech.ctvitalio.ui.screens
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import com.critetiontech.ctvitalio.ui.components.Caption
+import com.critetiontech.ctvitalio.ui.components.DeviceGreen
+import com.critetiontech.ctvitalio.ui.components.brandBrush
+import com.critetiontech.ctvitalio.ui.components.tintFill
+import com.critetiontech.ctvitalio.ui.components.syncedAgo
+import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -290,12 +303,21 @@ fun ConnectionScreen(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            devices.forEach { device ->
-                DeviceRow(device, status = paired[device.code]?.let { pairedStatus(it) }) {
-                    device.code?.let { navController.navigate("${Routes.OMRON_DEVICE}/$it") }
-                }
+            // Your devices, then watches, then the Omron models that can still be paired
+            val (mine, others) = devices.partition { paired[it.code] != null }
+            var index = 0
+            fun open(device: Device) { device.code?.let { navController.navigate("${Routes.OMRON_DEVICE}/$it") } }
+            if (mine.isNotEmpty()) {
+                AnimatedEnter(index = index++) { Caption("Your devices", modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
+                mine.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = paired[device.code]) { open(device) } } }
             }
-            WearablesRow { navController.navigate(Routes.HEALTHCONNECTSYNC) }
+            AnimatedEnter(index = index++) { Caption("Watches & health apps", modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
+            AnimatedEnter(index = index++) { WearablesRow { navController.navigate(Routes.HEALTHCONNECTSYNC) } }
+            if (others.isNotEmpty()) {
+                AnimatedEnter(index = index++) { Caption("Add an Omron device", modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
+                others.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = null) { open(device) } } }
+            }
+            Spacer(Modifier.height(8.dp))
         }
 
         Text(
@@ -345,62 +367,89 @@ private fun NewDevicePill(onClick: () -> Unit) {
 /** Opens Wearable Sync (Galaxy Watch, Fitbit, Garmin… via Health Connect). */
 @Composable
 private fun WearablesRow(onClick: () -> Unit) {
-    val colors = LocalMyColorScheme.current
+    // Brand-gradient card so the "connect anything" entry stands out from the device list
+    val float = rememberInfiniteTransition(label = "watchFloat")
+    val lift by float.animateFloat(0f, 1f, infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "lift")
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.dashboardContainerColor)
+            .clip(RoundedCornerShape(18.dp))
+            .background(brandBrush())
             .bounceClick(onClick = onClick)
-            .padding(12.dp),
+            .padding(14.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(46.dp).clip(RoundedCornerShape(10.dp)).background(colors.primaryBlueColor.copy(alpha = 0.08f)),
+            modifier = Modifier.size(50.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.16f)),
         ) {
-            Icon(Icons.Rounded.Watch, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(26.dp))
+            Icon(
+                Icons.Rounded.Watch, contentDescription = null, tint = Color.White,
+                modifier = Modifier.size(28.dp).graphicsLayer { translationY = -3.dp.toPx() * lift }
+            )
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Smartwatch & Health Apps", color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("Galaxy Watch, Fitbit, Garmin & more", color = colors.textGreyColor, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Smartwatch & Health Apps", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("Galaxy Watch, Fitbit, Garmin & more", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(22.dp))
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(30.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.16f)),
+        ) { Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp)) }
     }
 }
 
 @Composable
-private fun DeviceRow(device: Device, status: String?, onClick: () -> Unit) {
+private fun DeviceRow(device: Device, paired: PairedOmronDevice?, onClick: () -> Unit) {
     val colors = LocalMyColorScheme.current
+    val p = colors.primaryBlueColor
+    val isScale = "Scale" in device.type || "Body" in device.type
+    val pulse = rememberInfiniteTransition(label = "pairedPulse")
+    val dot by pulse.animateFloat(0.35f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "dot")
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(colors.dashboardContainerColor)
             .bounceClick(onClick = onClick)
-            .padding(12.dp),
+            .padding(14.dp),
     ) {
+        val iconBox = Modifier.size(50.dp).clip(RoundedCornerShape(14.dp))
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(46.dp).clip(RoundedCornerShape(10.dp)).background(colors.primaryBlueColor.copy(alpha = 0.08f)),
+            modifier = if (paired != null) iconBox.background(brandBrush()) else iconBox.background(tintFill(p)),
         ) {
-            val isScale = "Scale" in device.type || "Body" in device.type
-            Icon(if (isScale) Icons.Rounded.MonitorWeight else Icons.Rounded.MonitorHeart, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(26.dp))
+            Icon(
+                if (isScale) Icons.Rounded.MonitorWeight else Icons.Rounded.MonitorHeart, contentDescription = null,
+                tint = if (paired != null) Color.White else p, modifier = Modifier.size(26.dp)
+            )
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(device.name, color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(status ?: device.type, color = if (status != null) Color(0xFF2E7D32) else colors.textGreyColor, fontSize = 12.sp)
+            Text(device.name, color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(3.dp))
+            if (paired != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).background(tintFill(DeviceGreen)).padding(horizontal = 8.dp, vertical = 3.dp),
+                ) {
+                    Box(Modifier.size(6.dp).graphicsLayer { alpha = dot }.clip(CircleShape).background(DeviceGreen))
+                    Spacer(Modifier.width(5.dp))
+                    Text(pairedStatus(paired), color = DeviceGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                }
+            } else {
+                Text(device.type + " · Tap to pair", color = colors.textGreyColor, fontSize = 12.sp)
+            }
         }
         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(22.dp))
     }
 }
 
 private fun pairedStatus(device: PairedOmronDevice): String =
-    if (device.lastSyncAt == 0L) "Paired · not synced yet"
-    else "Paired · synced " + android.text.format.DateUtils.getRelativeTimeSpanString(device.lastSyncAt)
+    if (device.lastSyncAt == 0L) "Paired · User ${device.user}"
+    else "User ${device.user} · synced ${syncedAgo(device.lastSyncAt)}"
 
 /* ================= DIALOG ================= */
 

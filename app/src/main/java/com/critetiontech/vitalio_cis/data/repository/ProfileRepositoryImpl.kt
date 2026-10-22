@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
@@ -7,7 +9,7 @@ import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.domain.repository.ProfileRepository
 import com.critetiontech.ctvitalio.utils.Patient
 import com.critetiontech.ctvitalio.utils.PrefsManager
-import com.critetiontech.ctvitalio.viewmodel.LocationItem
+import com.critetiontech.ctvitalio.model.LocationItem
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -165,7 +167,7 @@ class ProfileRepositoryImpl(
     // ── Location: States (API call to port 4119) ──────────────────────────
     override suspend fun getStates(countryId: Int): List<LocationItem> = try {
         val response = ApiClients.module4119.dynamicGet(
-            url = "https://cis.vitalio.care:4119/api/StateMaster/GetStateMasterByCountryId",
+            url = "${ApiConfig.MODULE_4119}api/StateMaster/GetStateMasterByCountryId",
             headers = emptyMap(),
             params = mapOf("id" to countryId.toString(), "clientId" to "176")
         )
@@ -188,7 +190,7 @@ class ProfileRepositoryImpl(
     // ── Location: Cities (API call to port 4119) ──────────────────────────
     override suspend fun getCities(stateId: Int): List<LocationItem> = try {
         val response = ApiClients.module4119.dynamicGet(
-            url = "https://cis.vitalio.care:4119/api/CityMaster/GetCityMasterByStateId",
+            url = "${ApiConfig.MODULE_4119}api/CityMaster/GetCityMasterByStateId",
             headers = emptyMap(),
             params = mapOf("id" to stateId.toString(), "clientId" to "176")
         )
@@ -209,9 +211,5 @@ class ProfileRepositoryImpl(
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────
-    private fun ensureFullUrl(path: String): String {
-        if (path.startsWith("http")) return path
-        val clean = path.trimStart('/')
-        return "https://cis.vitalio.care:4082/$clean"
-    }
+    private fun ensureFullUrl(path: String): String = com.critetiontech.ctvitalio.utils.profileImageUrl(path)
 }

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ring
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import android.util.Log
 import com.critetiontech.ctvitalio.BuildConfig
 import com.critetiontech.ctvitalio.model.UltrahumanDashboardData
@@ -22,12 +24,12 @@ private const val TAG = "SmartRingService"
 object SmartRingService {
 
     const val CLIENT_ID = "W3hWLU2juogFGfgJBdpj3uuaI1n876CwvalFCIFEBKo"
-    const val REDIRECT_URI = "https://vitalioapi.medvantage.tech:5082/callback"
+    const val REDIRECT_URI = "${ApiConfig.RING_TOKENS}callback"
     const val AUTH_BASE_URL = "https://auth.ultrahuman.com/authorise"
     const val SCOPE = "profile ring_data cgm_data ring_extended_data"
     private const val TOKEN_EXCHANGE_URL = "https://partner.ultrahuman.com/oauth/token"
-    private const val INSERT_TOKEN_URL = "https://vitalioapi.medvantage.tech:5082/api/APITokens/InsertAPITokens"
-    private const val VITALS_URL = "https://demo.vitalio.care:5082/api/UltrahumanVitals/GetUltrahumanVitalsByPid"
+    private const val INSERT_TOKEN_URL = "${ApiConfig.RING_TOKENS}api/APITokens/InsertAPITokens"
+    private const val VITALS_URL = "${ApiConfig.RING_VITALS}api/UltrahumanVitals/GetUltrahumanVitalsByPid"
 
     private val gson = Gson()
     private val client = OkHttpClient.Builder()

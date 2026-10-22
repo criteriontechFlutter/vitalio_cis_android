@@ -223,10 +223,15 @@ fun VoiceListeningOverlay(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 24.dp, vertical = 48.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 48.dp, bottom = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Two equal weights (this one and the text area below) keep the orb at a
+                    // fixed spot, so a longer transcript or the prompt card grows downward
+                    // instead of re-centring the whole block and pushing it up.
                     Spacer(Modifier.weight(1f))
 
                     Box(contentAlignment = Alignment.Center) {
@@ -241,101 +246,104 @@ fun VoiceListeningOverlay(
                         }
                     }
 
-                    Spacer(Modifier.height(32.dp))
+                    Column(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(Modifier.height(32.dp))
 
-                    // Show multi-turn guided prompt when active, otherwise live transcript
-                    if (multiTurnPrompt.isNotEmpty()) {
-                        // Guided Q&A prompt card
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = Color(0xFF2563EB).copy(alpha = 0.88f),
-                                modifier = Modifier.padding(horizontal = 24.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                        // Show multi-turn guided prompt when active, otherwise live transcript
+                        if (multiTurnPrompt.isNotEmpty()) {
+                            // Guided Q&A prompt card
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color(0xFF2563EB).copy(alpha = 0.88f),
+                                    modifier = Modifier.padding(horizontal = 24.dp)
                                 ) {
-                                    Icon(
-                                        Icons.Default.QuestionAnswer,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.QuestionAnswer,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(Modifier.width(10.dp))
+                                        Text(
+                                            text = multiTurnPrompt,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.White,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.height(10.dp))
+                                Text(
+                                    "Please speak your response",
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.55f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        } else if (isExtractingData) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                                     Spacer(Modifier.width(10.dp))
+                                    Text("Analyzing what you said...", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                                }
+                                if (processingTranscript.isNotEmpty()) {
+                                    Spacer(Modifier.height(10.dp))
                                     Text(
-                                        text = multiTurnPrompt,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color.White,
-                                        textAlign = TextAlign.Center
+                                        "\"$processingTranscript\"",
+                                        fontSize = 14.sp,
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 4,
+                                        modifier = Modifier.padding(horizontal = 26.dp)
                                     )
                                 }
                             }
-                            Spacer(Modifier.height(10.dp))
+                        } else if (!isListening && statusMessage.isNotEmpty()) {
                             Text(
-                                "Please speak your response",
-                                fontSize = 12.sp,
-                                color = Color.White.copy(alpha = 0.55f),
-                                textAlign = TextAlign.Center
+                                text = statusMessage,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 30.dp)
                             )
-                        }
-                    } else if (isExtractingData) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                                Spacer(Modifier.width(10.dp))
-                                Text("Analyzing what you said...", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                            }
-                            if (processingTranscript.isNotEmpty()) {
-                                Spacer(Modifier.height(10.dp))
+                        } else {
+                            Text(
+                                text = transcript.ifEmpty { "Listening..." },
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White.copy(alpha = if (transcript.isEmpty()) 0.7f else 1f),
+                                textAlign = TextAlign.Center,
+                                maxLines = 6,
+                                modifier = Modifier.padding(horizontal = 34.dp)
+                            )
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Take your time. It is analysed when you pause.", fontSize = 14.sp, color = Color.Gray)
+                                Spacer(Modifier.height(4.dp))
                                 Text(
-                                    "\"$processingTranscript\"",
-                                    fontSize = 14.sp,
-                                    color = Color.White.copy(alpha = 0.7f),
+                                    "Say your vitals, symptoms, fluids or medicines",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White.copy(alpha = 0.5f),
                                     textAlign = TextAlign.Center,
-                                    maxLines = 4,
                                     modifier = Modifier.padding(horizontal = 26.dp)
                                 )
                             }
                         }
-                    } else if (!isListening && statusMessage.isNotEmpty()) {
-                        Text(
-                            text = statusMessage,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 30.dp)
-                        )
-                    } else {
-                        Text(
-                            text = transcript.ifEmpty { "Listening..." },
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White.copy(alpha = if (transcript.isEmpty()) 0.7f else 1f),
-                            textAlign = TextAlign.Center,
-                            maxLines = 6,
-                            modifier = Modifier.padding(horizontal = 34.dp)
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Take your time. It is analysed when you pause.", fontSize = 14.sp, color = Color.Gray)
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                "Say your vitals, symptoms, fluids or medicines",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.White.copy(alpha = 0.5f),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 26.dp)
-                            )
-                        }
                     }
-
-                    Spacer(Modifier.weight(1f))
 
                     when {
                         isListening -> Box(
@@ -365,7 +373,6 @@ fun VoiceListeningOverlay(
                             SpeakAgainButton(onClick = onStartListening, modifier = Modifier.height(50.dp))
                         }
                     }
-                    Spacer(Modifier.height(70.dp))
                 }
             }
         }
@@ -1160,6 +1167,24 @@ fun FloatingVoiceFab(
     onClick: () -> Unit
 ) {
     if (!isListening && !showOverlay) {
+        // Two soft rings breathe out from the button to invite a tap
+        val halo = rememberInfiniteTransition(label = "fabHalo")
+        val rings = (0 until 2).map { i ->
+            halo.animateFloat(
+                0f, 1f,
+                infiniteRepeatable(tween(2600, easing = LinearEasing), initialStartOffset = StartOffset(i * 1300)),
+                label = "fabRing$i"
+            )
+        }
+        Box(contentAlignment = Alignment.Center) {
+            rings.forEach { r ->
+                Box(
+                    Modifier.size(68.dp).graphicsLayer {
+                        val sc = 1f + 0.45f * r.value
+                        scaleX = sc; scaleY = sc; alpha = 0.35f * (1f - r.value)
+                    }.clip(CircleShape).background(Color(0xFF2563EB))
+                )
+            }
         Box(
             modifier = Modifier
                 .size(68.dp)
@@ -1180,6 +1205,7 @@ fun FloatingVoiceFab(
                 tint  = Color.White,
                 modifier = Modifier.size(28.dp)
             )
+        }
         }
     }
 }

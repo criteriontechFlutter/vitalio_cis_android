@@ -335,15 +335,45 @@ composable(Routes.PRESCRIPTIONS) { PrescriptionScreen() }
 
 ---
 
+## Device & SDK Features (Omron, Health Connect, video calls)
+
+Features built on a device or third-party SDK keep the SDK code in their own package, but
+**all server calls still go through use cases**. The SDK package never touches `ApiClients`.
+
+| Package | What lives there | Server calls via |
+|---|---|---|
+| `omron/` | `OmronManager`: pairing and reading the BP monitor over Bluetooth | `OmronDeviceViewModel` → `SaveMeasuredVitalsUseCase` |
+| `healthconnect/` | `WearableSync`: reading Health Connect, background worker | `SaveMeasuredVitalsUseCase`, `FetchActivityMasterUseCase`, `AddPatientActivityUseCase` |
+| `consultation/` | Android parts of video calls: `CallActivity`, `CallService`, `CallNotifier`, intent glue | `CallViewModel` → `JoinCallUseCase` / `EndCallUseCase`; `CallNotifier` → `DeclineCallUseCase` |
+
+Activities, services, receivers and workers are Android entry points, so they live with their
+feature; their ViewModels and screens still go in `viewmodel/` and `ui/screens/`. Models shared
+across layers (e.g. `IncomingCall`, `CallJoin`, `LocationItem`) go in `model/` with no Android imports.
+
+---
+
 ## Which API Client to Use
 
-| Base URL | Client | Used for |
+All server addresses live in `config/ApiConfig.kt`; never hard-code a URL elsewhere.
+
+**Environment** (host only, ports are the same everywhere). Set `API_ENV` in `local.properties` for debug builds; release builds are always `PRODUCTION`.
+
+| `API_ENV` | Host |
+|---|---|
+| `LOCAL` | `http://182.156.200.178` |
+| `STAGING` | `https://vitaliocis.vitalio.care` |
+| `PRODUCTION` (default) | `https://cis.vitalio.care` |
+
+| Constant | Client | Used for |
 |---|---|---|
-| `cis.vitalio.care:4082` | `ApiClients.module4082` | Most patient APIs (vitals, auth, allergies, doctors) |
-| `cis.vitalio.care:4084` | `ApiClients.module4084` | Doctor profile APIs |
-| `cis.vitalio.care:4096` | `ApiClients.module4094` | Fluid intake APIs |
-| `cis.vitalio.care:44374` | `ApiClients.module44374` | — |
-| `52.172.134.222:205/api/v1.0/` | `ApiClients.digidoctor_BaseURL` | Symptom/problem icon APIs |
+| `ApiConfig.MODULE_4082` | `ApiClients.module4082` | Most patient APIs (vitals, auth, allergies, doctors) |
+| `ApiConfig.MODULE_4084` | `ApiClients.module4084` | Doctor profile APIs |
+| `ApiConfig.MODULE_4090` | `ApiClients.module4090` | Lab investigations |
+| `ApiConfig.MODULE_4096` | `ApiClients.module4094` | Fluid intake APIs |
+| `ApiConfig.MODULE_4119` | `ApiClients.module4119` | Country/state/city masters |
+| `ApiConfig.MODULE_44374` | `ApiClients.module44374` | — |
+| `ApiConfig.DIGI_DOCTOR` | `ApiClients.digidoctor_BaseURL` | Symptom/problem icon APIs |
+| `ApiConfig.CONSULTATION` | `ApiClients.consultation` | Video consultation (join / decline / end) |
 
 ---
 

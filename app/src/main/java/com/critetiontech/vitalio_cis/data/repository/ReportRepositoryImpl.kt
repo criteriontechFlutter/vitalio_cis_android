@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import android.content.Context
 import android.util.Log
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
@@ -55,7 +57,7 @@ class ReportRepositoryImpl @Inject constructor(
         val requestFile = file.asRequestBody("image/*".toMediaType())
         val filePart = MultipartBody.Part.createFormData("formFile", file.name, requestFile)
         val response = ApiClients.module4082.uploadMedia(
-            url = "https://cis.vitalio.care:4082/api/PatientMediaData/AddMedia",
+            url = "${ApiConfig.MODULE_4082}api/PatientMediaData/AddMedia",
             uhid = uhid, category = category, dateTime = dateTime, clientId = clientId,
             subCategory = subCategory, remark = remark, formFile = filePart
         )
@@ -73,7 +75,7 @@ class ReportRepositoryImpl @Inject constructor(
             .addFormDataPart("file", file.name, file.asRequestBody("image/*".toMediaTypeOrNull()))
             .build()
 
-        val url = "http://food.shopright.ai:3480/uploadLabreport/"
+        val url = "${ApiConfig.AI_UPLOAD}uploadLabreport/"
         val request = Request.Builder().url(url).post(requestBody).build()
 
         if (BuildConfig.DEBUG) {
@@ -99,7 +101,7 @@ class ReportRepositoryImpl @Inject constructor(
 
     /**
      * Builds the InsertResult payload from the AI report JSON and POSTs it to
-     * https://cis.vitalio.care:4090/api/InvestigationByPatient/InsertResult
+     * {MODULE_4090}api/InvestigationByPatient/InsertResult
      *
      * Payload structure:
      * {
@@ -165,7 +167,7 @@ class ReportRepositoryImpl @Inject constructor(
         val endpointUrl = "api/InvestigationByPatient/InsertResult"
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "InsertResult → POST https://cis.vitalio.care:4090/$endpointUrl")
+            Log.d(TAG, "InsertResult → POST ${ApiConfig.MODULE_4090}$endpointUrl")
             Log.d(TAG, "InsertResult → payload=${gson.toJson(payload)}")
         }
 
@@ -202,7 +204,7 @@ class ReportRepositoryImpl @Inject constructor(
             .addFormDataPart("file", file.name, file.asRequestBody(mimeType.toMediaTypeOrNull()))
             .build()
 
-        val url = "http://food.shopright.ai:3480/uploadPrescription/"
+        val url = "${ApiConfig.AI_UPLOAD}uploadPrescription/"
         val request = Request.Builder().url(url).post(requestBody).build()
 
         if (BuildConfig.DEBUG) Log.d(TAG, "UploadPrescription → POST $url file=${file.name}, size=${file.length()} bytes")

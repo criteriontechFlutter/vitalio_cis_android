@@ -58,6 +58,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.critetiontech.ctvitalio.ui.adaptive.isTablet
+import androidx.compose.foundation.layout.statusBarsPadding
+import com.critetiontech.ctvitalio.ui.components.EnvironmentBadge
+import com.critetiontech.ctvitalio.ui.components.EnvironmentSheet
+import com.critetiontech.ctvitalio.ui.components.secretTaps
 
 @Composable
 fun LoginScreen() {
@@ -90,7 +94,11 @@ fun LoginScreen() {
         label = "cardY"
     )
 
+
     val isTablet = isTablet()
+    // Testers: tap the picture 7 times to change server
+    var showServerSheet by remember { mutableStateOf(false) }
+    if (showServerSheet) EnvironmentSheet(onDismiss = { showServerSheet = false })
 
     Box(
         modifier = Modifier
@@ -110,6 +118,7 @@ fun LoginScreen() {
                         painter = painterResource(id = R.drawable.img),
                         contentDescription = null,
                         modifier = Modifier
+                            .secretTaps { showServerSheet = true }
                             .graphicsLayer {
                                 alpha = imageAlpha
                                 scaleX = imageScale
@@ -141,6 +150,7 @@ fun LoginScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
+                        .secretTaps { showServerSheet = true }
                         .graphicsLayer {
                             alpha = imageAlpha
                             scaleX = imageScale
@@ -158,6 +168,11 @@ fun LoginScreen() {
                 }
             }
         }
+
+        EnvironmentBadge(
+            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp),
+            onClick = { showServerSheet = true },
+        )
     }
 }
 
@@ -207,6 +222,9 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
     )
 
     val isTablet = isTablet()
+    // Testers: tap the picture 7 times to change server
+    var showServerSheet by remember { mutableStateOf(false) }
+    if (showServerSheet) EnvironmentSheet(onDismiss = { showServerSheet = false })
 
     Card(
         modifier = if (isTablet) {

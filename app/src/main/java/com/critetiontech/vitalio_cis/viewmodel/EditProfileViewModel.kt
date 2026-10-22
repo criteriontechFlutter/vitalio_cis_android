@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.LocationItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,8 +15,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 // ── location data models ──────────────────────────────────────────────────
-data class LocationItem(val id: Int, val name: String)
-
 data class LocationState(
     val countries: List<LocationItem> = emptyList(),
     val states: List<LocationItem> = emptyList(),
@@ -31,6 +30,9 @@ data class LocationState(
 class EditProfileViewModel : ViewModel() {
 
     private val updateProfileUseCase = AppDependencies.updateProfile()
+    private val fetchCountries = AppDependencies.fetchCountries()
+    private val fetchStates = AppDependencies.fetchStates()
+    private val fetchCities = AppDependencies.fetchCities()
     private val prefs = AppDependencies.prefs
 
     private val _loading = MutableStateFlow(false)
@@ -58,7 +60,7 @@ class EditProfileViewModel : ViewModel() {
     fun loadLocationData(countryId: Int, stateId: Int, cityId: Int) {
         viewModelScope.launch {
             try {
-                val countryList = AppDependencies.profileRepository.getCountries()
+                val countryList = fetchCountries()
                 val selectedCountry = countryList.firstOrNull { it.id == countryId }
                     ?: countryList.firstOrNull { it.id == 101 }
                     ?: countryList.firstOrNull()
@@ -70,7 +72,7 @@ class EditProfileViewModel : ViewModel() {
                 )
 
                 if (selectedCountry != null) {
-                    val stateList = AppDependencies.profileRepository.getStates(selectedCountry.id)
+                    val stateList = fetchStates(selectedCountry.id)
                     val selectedState = stateList.firstOrNull { it.id == stateId }
 
                     _locationState.value = _locationState.value.copy(
@@ -81,7 +83,7 @@ class EditProfileViewModel : ViewModel() {
 
                     if (selectedState != null || stateId > 0) {
                         val targetStateId = selectedState?.id ?: stateId
-                        val cityList = AppDependencies.profileRepository.getCities(targetStateId)
+                        val cityList = fetchCities(targetStateId)
                         val selectedCity = cityList.firstOrNull { it.id == cityId }
 
                         _locationState.value = _locationState.value.copy(
@@ -110,7 +112,7 @@ class EditProfileViewModel : ViewModel() {
         )
         viewModelScope.launch {
             try {
-                val stateList = AppDependencies.profileRepository.getStates(countryId)
+                val stateList = fetchStates(countryId)
                 _locationState.value = _locationState.value.copy(states = stateList)
             } catch (e: Exception) {
                 Log.e("EditProfileVM", "getStates failed: ${e.message}")
@@ -128,7 +130,7 @@ class EditProfileViewModel : ViewModel() {
         )
         viewModelScope.launch {
             try {
-                val cityList = AppDependencies.profileRepository.getCities(stateId)
+                val cityList = fetchCities(stateId)
                 _locationState.value = _locationState.value.copy(cities = cityList)
             } catch (e: Exception) {
                 Log.e("EditProfileVM", "getCities failed: ${e.message}")
@@ -174,15 +176,10 @@ class EditProfileViewModel : ViewModel() {
                 "Female" -> 2
                 else -> if (gender.isNotBlank()) 3 else patient.genderId
             }
-            val genderNameStr = when (genderId) {
-                1 -> "Male"; 2 -> "Female"; else -> "Other"
-            }
+            val genderNameStr = com.critetiontech.ctvitalio.utils.genderNameFor(genderId)
             val resolvedBloodGroupId = if (bloodGroupId > 0) bloodGroupId else patient.bloodGroupId
-            val bloodGroupNameStr = when (resolvedBloodGroupId) {
-                1 -> "A+"; 2 -> "A-"; 3 -> "B+"; 4 -> "B-"
-                5 -> "O+"; 6 -> "O-"; 7 -> "AB+"; 8 -> "AB-"
-                else -> patient.bloodGroupName ?: ""
-            }
+            val bloodGroupNameStr = com.critetiontech.ctvitalio.utils.bloodGroupNameFor(resolvedBloodGroupId)
+                ?: patient.bloodGroupName ?: ""
 
             val updatedPatient = patient.copy(
                 genderId = genderId,

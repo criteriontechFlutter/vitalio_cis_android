@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.utils
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 class ApiEndPointCorporateModule {
     val corporateEmployeeLogin = "api/LogInForVitalioApp/SendLoginOtp"
     val verifyLogInOTPForSHFCApp = "api/LogInForVitalioApp/VerifyOTP"
@@ -27,7 +29,7 @@ class ApiEndPointCorporateModule {
 
 
 
-      val uploadLabreportUrl = "http://food.shopright.ai:3480/uploadLabreport/"
+      val uploadLabreportUrl = "${ApiConfig.AI_UPLOAD}uploadLabreport/"
     val fetchMedia = "api/PatientMediaData/FetchMedia"
 
     val fetchVitalByDate="api/PatientVital/FetchVitalByDate"
@@ -53,4 +55,9 @@ class ApiEndPointCorporateModule {
     val fetchPatientActivity = "api/PatientPhysicalActivityTracker/FetchPatientActivity"
     val addPatientActivity = "api/PatientPhysicalActivityTracker/AddPatientActivity"
     val deleteActivityMaster = "api/EmployeeActivity/DeleteActivityMasterById"
+
+    // Video consultation (ApiClients.consultation)
+    val consultationJoin = "api/consultation/join"
+    val consultationDecline = "api/consultation/decline"
+    val consultationEnd = "api/consultation/end"
 }

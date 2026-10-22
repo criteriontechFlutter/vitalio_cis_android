@@ -31,6 +31,10 @@ android {
         buildConfigField("String", "NUTRI_APP_SECRET", quoted("NUTRI_APP_SECRET"))
         // OMRON Connectivity Library partner key: OMRON_PARTNER_KEY=...
         buildConfigField("String", "OMRON_PARTNER_KEY", quoted("OMRON_PARTNER_KEY"))
+        // Backend for debug builds: API_ENV=LOCAL | STAGING | PRODUCTION (see ApiConfig.kt)
+        buildConfigField("String", "API_ENV", "\"" + localProps.getProperty("API_ENV", "PRODUCTION").trim().uppercase() + "\"")
+        // ENV_SWITCHER=true lets a release APK (e.g. one shared with testers) change server in-app
+        buildConfigField("boolean", "ENV_SWITCHER", localProps.getProperty("ENV_SWITCHER", "false").trim().toBoolean().toString())
     }
 
     // Release signing reads the upload keystore from local.properties (never commit it):
@@ -58,6 +62,8 @@ android {
 
     buildTypes {
         release {
+            // A release build starts on production; only an ENV_SWITCHER build can be changed in-app
+            buildConfigField("String", "API_ENV", "\"PRODUCTION\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -175,6 +181,9 @@ dependencies {
     implementation(libs.androidx.connect.client)
     // OMRON Connectivity Library 3.5.2 (partner SDK) — Bluetooth BP monitors and scales
     implementation(files("libs/omronconnectivitylibrary.aar"))
+
+    // LiveKit: video calls with the doctor (teleconsultation)
+    implementation("io.livekit:livekit-android:2.29.1")
 
     // Retries medicine "taken" logs from alarms when offline
     implementation(libs.androidx.work.runtime)
