@@ -3,6 +3,11 @@ package com.critetiontech.ctvitalio.ui.screens
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.text.font.FontWeight
+import com.critetiontech.ctvitalio.ui.components.ProfileRing
+import com.critetiontech.ctvitalio.utils.bloodGroupNameFor
+import com.critetiontech.ctvitalio.utils.genderNameFor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,16 +35,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.viewmodel.PersonalInfoViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,23 +52,19 @@ import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
-import com.critetiontech.ctvitalio.utils.PrefsManager
 
 
 
 @Composable
-fun PersonalInfoScreen() {
+fun PersonalInfoScreen(viewModel: PersonalInfoViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
-    val context = LocalContext.current
-    val prefs = remember { PrefsManager(context) }
 
-    // Re-read patient fresh every time this screen is shown
-    var patient by remember { mutableStateOf(prefs.getPatient()) }
-    LaunchedEffect(Unit) {
-        patient = prefs.getPatient()
-    }
+    // What login (VerifyOTP) and Update Profile saved; re-read each time this screen is shown
+    val patient by viewModel.patient.collectAsState()
+    LaunchedEffect(Unit) { viewModel.load() }
 
     val navController = LocalNavController.current
+    val p = patient
 
     CommonAppBar(
         title = "Personal Info",
@@ -84,64 +84,68 @@ fun PersonalInfoScreen() {
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Profile image (view-only)
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val imageUrl = patient?.imageUrl?.takeIf { it.isNotEmpty() }
-                    if (imageUrl != null) {
+                // Profile photo in the same turning ring as the dashboard and drawer
+                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    ProfileRing(size = 116.dp, ringWidth = 3.dp, gap = 3.dp) {
                         AsyncImage(
-                            model = imageUrl,
+                            model = p?.imageUrl?.takeIf { it.isNotEmpty() },
                             contentDescription = null,
-                            modifier = Modifier.size(110.dp).clip(CircleShape),
+                            modifier = Modifier.fillMaxSize().clip(CircleShape),
                             contentScale = ContentScale.Crop,
                             error = painterResource(id = R.drawable.img),
-                            placeholder = painterResource(id = R.drawable.img)
+                            placeholder = painterResource(id = R.drawable.img),
+                            fallback = painterResource(id = R.drawable.img)
                         )
-                    } else {
-                        androidx.compose.foundation.Image(
-                            painter = painterResource(id = R.drawable.img),
-                            contentDescription = null,
-                            modifier = Modifier.size(110.dp).clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        listOfNotNull(p?.firstName, p?.lastName).joinToString(" ").trim(),
+                        color = colors.textDarkColor, fontSize = 18.sp, fontWeight = FontWeight.SemiBold
+                    )
+                    p?.uhId?.takeIf { it.isNotBlank() }?.let {
+                        Text("UHID: $it", color = colors.textGreyColor, fontSize = 13.sp)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // View-only info cards (always shown on this screen)
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     InfoCard {
-                        ProfileInfoRow("First Name", patient?.firstName.orEmpty())
-                        ProfileInfoRow("Last Name", patient?.lastName.orEmpty())
-                        ProfileInfoRow("Sex", patient?.genderName.orEmpty())
-                        ProfileInfoRow("Date of Birth", patient?.dob.orEmpty())
+                        ProfileInfoRow("First Name", p?.firstName.orEmpty())
+                        ProfileInfoRow("Last Name", p?.lastName.orEmpty())
+                        ProfileInfoRow("Sex", p?.genderName?.ifBlank { null } ?: p?.genderId?.takeIf { it > 0 }?.let(::genderNameFor).orEmpty())
+                        ProfileInfoRow("Date of Birth", displayDob(p?.dob.orEmpty()))
+                        ProfileInfoRow("Age", p?.age.orEmpty())
                     }
                     InfoCard {
-                        ProfileInfoRow("Mobile No.", patient?.mobileNo.orEmpty())
-                        ProfileInfoRow("Email", patient?.emailAddress.orEmpty())
+                        ProfileInfoRow("Blood Group", p?.bloodGroupName?.ifBlank { null } ?: p?.bloodGroupId?.let(::bloodGroupNameFor).orEmpty())
+                        ProfileInfoRow("Height", displayMeasure(p?.height))
+                        ProfileInfoRow("Weight", displayMeasure(p?.weight))
                     }
                     InfoCard {
-                        ProfileInfoRow("Street Address", patient?.address.orEmpty())
-                        ProfileInfoRow("Zip Code", patient?.zip.orEmpty())
-                        ProfileInfoRow("City", patient?.cityName.orEmpty())
-                        ProfileInfoRow("State", patient?.stateName.orEmpty())
-                        ProfileInfoRow("Country", patient?.countryName.orEmpty())
+                        ProfileInfoRow("Mobile No.", p?.mobileNo.orEmpty())
+                        ProfileInfoRow("Email", p?.emailAddress.orEmpty())
+                    }
+                    InfoCard {
+                        ProfileInfoRow("Street Address", p?.address.orEmpty())
+                        ProfileInfoRow("Zip Code", p?.zip.orEmpty())
+                        ProfileInfoRow("City", p?.cityName.orEmpty())
+                        ProfileInfoRow("State", p?.stateName.orEmpty())
+                        ProfileInfoRow("Country", p?.countryName.orEmpty())
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Bottom button → navigate to Edit Profile
+            // Bottom button → Edit Profile, which saves through the Update Profile API
             HapticButton(
                 onClick = { navController.navigate(com.critetiontech.ctvitalio.Routes.EDITPROFILE) },
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1557FF)),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .padding(16.dp)
                     .height(55.dp)
             ) {
@@ -151,6 +155,24 @@ fun PersonalInfoScreen() {
             }
         }
     }
+}
+
+/** "2000-03-01T00:00:00" → "01 Mar 2000"; anything unparseable is shown as is. */
+private fun displayDob(raw: String): String {
+    if (raw.isBlank()) return ""
+    return runCatching {
+        java.time.LocalDate.parse(raw.take(10)).format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.getDefault()))
+    }.getOrDefault(raw)
+}
+
+/** "176.00/cm" → "176 cm", "76.50/kg" → "76.5 kg". */
+private fun displayMeasure(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    val (value, unit) = raw.split("/", limit = 2).let { it[0].trim() to it.getOrNull(1)?.trim().orEmpty() }
+    val number = value.toDoubleOrNull() ?: return raw
+    if (number <= 0) return ""
+    val shown = if (number % 1.0 == 0.0) number.toLong().toString() else number.toString()
+    return "$shown $unit".trim()
 }
 
 @Composable

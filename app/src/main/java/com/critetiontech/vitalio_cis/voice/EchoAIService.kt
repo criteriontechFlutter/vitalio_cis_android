@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.voice
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import android.util.Log
 import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.utils.PrefsManager
@@ -23,7 +25,7 @@ import java.util.concurrent.TimeUnit
 //  Includes NLP fallbacks for RBS, BP, Fluid Intake, and Fluid Output.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-private const val ECHO_AI_URL = "http://food.shopright.ai:3478/api/echo/"
+private const val ECHO_AI_URL = ApiConfig.ECHO_AI
 
 /** Past this the turn falls back to the on-device result instead of keeping the user waiting. */
 const val ECHO_AI_TIMEOUT_MS = 8_000L

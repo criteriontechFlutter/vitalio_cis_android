@@ -16,6 +16,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
@@ -59,9 +60,6 @@ import com.critetiontech.ctvitalio.viewmodel.HomeViewModel
 import com.critetiontech.ctvitalio.voice.VoiceNavigationManager
 import com.critetiontech.ctvitalio.voice.VoiceListeningOverlay
 import com.critetiontech.ctvitalio.voice.FloatingVoiceFab
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.isGranted
 import kotlinx.coroutines.delay
 import java.util.Locale
 import com.critetiontech.ctvitalio.R
@@ -111,7 +109,7 @@ private fun AnimatedSection(delayMillis: Int = 0, content: @Composable () -> Uni
 //  Placing the FAB and VoiceAssistantSheet here (rather than inside HomeView)
 //  makes the mic button persistent across all three bottom-nav tabs.
 // ─────────────────────────────────────────────────────────────────────────────
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     homeViewModel: HomeViewModel = viewModel(),
@@ -121,6 +119,9 @@ fun DashboardScreen(
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
     val navController = LocalNavController.current
+
+    // First visit after sign-in: explain notifications, then ask once
+    com.critetiontech.ctvitalio.notification.RequestNotificationPermission()
 
     // ── VoiceNavigationManager state ──────────────────────────────────────────
     val isListening          by VoiceNavigationManager.isListening.collectAsState()
@@ -137,8 +138,12 @@ fun DashboardScreen(
     val vitalTrends          by VoiceNavigationManager.vitalTrends.collectAsState()
     val voiceStatusMessage   by VoiceNavigationManager.statusMessage.collectAsState()
 
-    // Mic permission (RECORD_AUDIO already in manifest)
-    val micPermission = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
+    // Voice assistant: explain the mic, then start listening once it's allowed
+    val micPermission = com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest(
+        com.critetiontech.ctvitalio.permissions.AppPermission.Microphone, "to hear your voice commands"
+    ) {
+        VoiceNavigationManager.startListening { route -> navController.navigate(route) }
+    }
 
     // Navigate when VoiceNavigationManager resolves a command
     LaunchedEffect(navigationCommand) {
@@ -297,13 +302,7 @@ fun DashboardScreen(
                                 isListening  = isListening,
                                 showOverlay  = showListeningOverlay,
                                 onClick = {
-                                    if (micPermission.status.isGranted) {
-                                        VoiceNavigationManager.startListening { route ->
-                                            navController.navigate(route)
-                                        }
-                                    } else {
-                                        micPermission.launchPermissionRequest()
-                                    }
+                                    micPermission.launch()
                                 }
                             )
                         }
@@ -342,13 +341,7 @@ fun DashboardScreen(
                         isListening  = isListening,
                         showOverlay  = showListeningOverlay,
                         onClick = {
-                            if (micPermission.status.isGranted) {
-                                VoiceNavigationManager.startListening { route ->
-                                    navController.navigate(route)
-                                }
-                            } else {
-                                micPermission.launchPermissionRequest()
-                            }
+                            micPermission.launch()
                         }
                     )
                 }
@@ -960,37 +953,89 @@ fun Header() {
         label = "headerY"
     )
 
+    // Name follows the greeting a beat later
+    val nameProgress by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(550, delayMillis = 180, easing = FastOutSlowInEasing),
+        label = "nameIn"
+    )
+    // Bell rings once when the dashboard opens
+    val bell = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(600)
+        bell.animateTo(0f, keyframes {
+            durationMillis = 900
+            18f at 90; -15f at 210; 11f at 330; -7f at 450; 3f at 570; 0f at 900
+        })
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer { this.alpha = alpha; translationY = offsetY },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
-            model = PrefsManager(context).getPatient()?.imageUrl
-                ?.takeIf { it.isNotBlank() },
-            placeholder = painterResource(R.drawable.img),
-            error = painterResource(R.drawable.img),
-            contentDescription = "Patient Profile",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(45.dp)
-                .clip(CircleShape)
-                .clickable {
-                    navController.navigate(Routes.DRAWER)
-                }
-        )
+        com.critetiontech.ctvitalio.ui.components.ProfileRing(size = 51.dp) {
+            AsyncImage(
+                model = PrefsManager(context).getPatient()?.imageUrl
+                    ?.takeIf { it.isNotBlank() },
+                placeholder = painterResource(R.drawable.img),
+                error = painterResource(R.drawable.img),
+                contentDescription = "Patient Profile",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(43.dp)
+                    .clip(CircleShape)
+                    .clickable {
+                        navController.navigate(Routes.DRAWER)
+                    }
+            )
+        }
         Spacer(Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text("${ToastUtils.getSimpleGreeting()},",
-                    style = AppTextStyles.style12GCN())
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("${ToastUtils.getSimpleGreeting()},",
+                        style = AppTextStyles.style12GCN())
+                Spacer(Modifier.width(5.dp))
+                TimeOfDayIcon()
+            }
             Text(patientData?.firstName.toString(),
-                    style = AppTextStyles.style18BCN())
+                    style = AppTextStyles.style18BCN(),
+                    modifier = Modifier.graphicsLayer {
+                        this.alpha = nameProgress
+                        translationX = (1f - nameProgress) * -16.dp.toPx()
+                    })
         }
 
         Spacer(Modifier.width(10.dp))
-        Icon(Icons.Default.Notifications, contentDescription = null)
+        Icon(
+            Icons.Default.Notifications, contentDescription = null,
+            modifier = Modifier.graphicsLayer {
+                rotationZ = bell.value
+                // Swing from the bell's top, not its centre
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.1f)
+            }
+        )
     }
+}
+
+/** Small animated icon for the time of day: a turning sun, a setting sun, or a gently rocking moon. */
+@Composable
+private fun TimeOfDayIcon() {
+    val hour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val motion = rememberInfiniteTransition(label = "timeOfDay")
+    val spin by motion.animateFloat(0f, 360f, infiniteRepeatable(tween(12000, easing = LinearEasing)), label = "sunSpin")
+    val rock by motion.animateFloat(-10f, 10f, infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "moonRock")
+    val glow by motion.animateFloat(0.75f, 1f, infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
+    val (icon, tint, rotation) = when (hour) {
+        in 5..17 -> Triple(Icons.Default.WbSunny, Color(0xFFF59E0B), spin)
+        in 18..21 -> Triple(Icons.Default.WbTwilight, Color(0xFFF97316), 0f)
+        else -> Triple(Icons.Default.Bedtime, Color(0xFF818CF8), rock)
+    }
+    Icon(
+        icon, contentDescription = null, tint = tint,
+        modifier = Modifier.size(14.dp).graphicsLayer { rotationZ = rotation; this.alpha = glow; scaleX = glow; scaleY = glow }
+    )
 }
 
 // ------------------- To Take Card -------------------
@@ -1207,12 +1252,13 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
 
     val pagerState = rememberPagerState(pageCount = { mergedVitals.size })
 
-    // auto slide
-    LaunchedEffect(Unit) {
+    // Auto slide, unhurried, and held while the user is swiping
+    LaunchedEffect(pagerState) {
         while (true) {
-            delay(2000.milliseconds)
+            delay(3500.milliseconds)
+            if (pagerState.isScrollInProgress) continue
             val nextPage = (pagerState.currentPage + 1) % mergedVitals.size
-            pagerState.animateScrollToPage(nextPage)
+            pagerState.animateScrollToPage(nextPage, animationSpec = tween(700, easing = FastOutSlowInEasing))
         }
     }
 
@@ -1230,6 +1276,7 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
         ) { page ->
 
             val vital = mergedVitals[page]
+            val isCurrent = pagerState.currentPage == page
 
             Card(
                 colors = CardDefaults.cardColors(
@@ -1239,6 +1286,13 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(5.dp)
+                    .graphicsLayer {
+                        // Pages leaving the centre shrink and fade a little, for depth
+                        val offset = kotlin.math.abs((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
+                        val scale = 1f - 0.08f * offset
+                        scaleX = scale; scaleY = scale
+                        alpha = 1f - 0.45f * offset
+                    }
             ) {
                 Row(
                     modifier = Modifier
@@ -1253,10 +1307,17 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                             .background(com.critetiontech.ctvitalio.ui.theme.softTint(colors.primaryBlueColor, Color(0xFFEAF2FF))),
                         contentAlignment = Alignment.Center
                     ) {
+                        val beat = rememberInfiniteTransition(label = "vitalBeat")
+                        val beatScale by beat.animateFloat(
+                            1f, 1.12f, infiniteRepeatable(tween(650, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "beatScale"
+                        )
                         Image(
                             painter = painterResource(id = R.drawable.vital_details),
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp).graphicsLayer {
+                                val s = if (isCurrent) beatScale else 1f
+                                scaleX = s; scaleY = s
+                            }
                         )
                     }
 
@@ -1282,7 +1343,7 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                         
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                text = displayVal,
+                                text = countUpText(displayVal, run = isCurrent),
                                 style = AppTextStyles.style24BCB().copy(fontSize = 24.sp, color = colors.textDarkColor, fontWeight = FontWeight.Bold),
                                 modifier = Modifier.alignByBaseline()
                             )
@@ -1329,18 +1390,40 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
         ) {
             repeat(mergedVitals.size) { index ->
                 val selected = pagerState.currentPage == index
+                // The active dot stretches into a pill in the brand colour
+                val width by animateDpAsState(if (selected) 18.dp else 6.dp, spring(stiffness = Spring.StiffnessMediumLow), label = "dotW")
+                val dotColor by animateColorAsState(
+                    if (selected) colors.primaryBlueColor else colors.textGreyColor.copy(alpha = 0.3f), label = "dotC"
+                )
                 Box(
                     modifier = Modifier
-                        .padding(2.dp)
-                        .size(if (selected) 6.dp else 4.dp)
+                        .padding(horizontal = 2.dp)
+                        .height(6.dp)
+                        .width(width)
                         .clip(CircleShape)
-                        .background(
-                            if (selected) Color(0xFF94A3B8) else Color(0xFFE2E8F0)
-                        )
+                        .background(dotColor)
                 )
             }
         }
     }
+}
+
+/**
+ * Counts a vital's number up from zero each time [run] turns on: "72" or "120/80" (both parts).
+ * Anything else (decimals, text) is shown as is.
+ */
+@Composable
+private fun countUpText(value: String, run: Boolean): String {
+    val parts = value.split("/")
+    if (parts.size > 2 || parts.any { it.isEmpty() || !it.all(Char::isDigit) || it.length > 4 }) return value
+    val progress = remember { Animatable(1f) }
+    LaunchedEffect(run, value) {
+        if (run) {
+            progress.snapTo(0f)
+            progress.animateTo(1f, tween(800, easing = FastOutSlowInEasing))
+        }
+    }
+    return parts.joinToString("/") { (it.toInt() * progress.value).toInt().toString() }
 }
 
 // ------------------- Primary Actions Grid -------------------
@@ -1437,22 +1520,26 @@ fun PrimaryActionsGrid(   ) {
     ) {
 
         itemsIndexed(items) { index, item ->
-            val itemAlpha by animateFloatAsState(
-                targetValue = if (gridVisible) 1f else 0f,
-                animationSpec = tween(350, delayMillis = 80 + index * 55, easing = FastOutSlowInEasing),
-                label = "gridAlpha_$index"
-            )
-            val itemY by animateFloatAsState(
-                targetValue = if (gridVisible) 0f else 28f,
-                animationSpec = tween(350, delayMillis = 80 + index * 55, easing = FastOutSlowInEasing),
-                label = "gridY_$index"
-            )
+            // Tiles pop in one after another with a soft spring
+            val pop = remember { Animatable(0f) }
+            LaunchedEffect(gridVisible) {
+                if (gridVisible) {
+                    delay(80L + index * 60L)
+                    pop.animateTo(1f, spring(dampingRatio = 0.62f, stiffness = Spring.StiffnessLow))
+                }
+            }
+            val itemAlpha = pop.value.coerceIn(0f, 1f)
+            val itemY = (1f - pop.value) * 28f
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
-                    .graphicsLayer { alpha = itemAlpha; translationY = itemY }
+                    .graphicsLayer {
+                        alpha = itemAlpha; translationY = itemY
+                        val sc = 0.82f + 0.18f * pop.value
+                        scaleX = sc; scaleY = sc
+                    }
                     .bounceClick {
                         when (item.type) {
                             "vitals" -> navController.navigate(Routes.VITALS)

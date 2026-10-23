@@ -2,7 +2,6 @@ package com.critetiontech.ctvitalio.ui.screens
 
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -28,20 +27,23 @@ import androidx.compose.ui.unit.sp
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
+import androidx.compose.ui.platform.LocalContext
+import com.critetiontech.ctvitalio.permissions.AppPermission
+import com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlin.math.sqrt
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun BreathingTherapyScreen() {
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
-    val micPermission = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+    val context = LocalContext.current
+    var micAllowed by remember { mutableStateOf(AppPermission.Microphone.isGranted(context)) }
+    val micPermission = rememberPermissionRequest(AppPermission.Microphone, "to hear your breath and guide each round") {
+        micAllowed = true
+    }
 
     CommonAppBar(
         title = "Breathing Therapy",
@@ -71,10 +73,17 @@ fun BreathingTherapyScreen() {
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
             )
 
-            if (!micPermission.status.isGranted) {
+            if (!micAllowed) {
                 Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "Blow gently towards your phone. The microphone measures each breath so the circle can guide you. Nothing is recorded.",
+                    fontSize = 14.sp,
+                    color = colors.textGreyColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp).padding(bottom = 16.dp)
+                )
                 HapticButton(
-                    onClick = { micPermission.launchPermissionRequest() },
+                    onClick = { micPermission.launch() },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)

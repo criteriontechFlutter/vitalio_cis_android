@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.config.ApiConfig
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -148,11 +150,11 @@ class PrescriptionViewModel : ViewModel() {
                 )
 
                 val apiService = RetrofitInstance.createApiService(
-                    baseUrl = RetrofitInstance.BASE_5082
+                    baseUrl = ApiConfig.MODULE_4082
                 )
 
                 val response = apiService.dynamicGet(
-                    url = "${RetrofitInstance.BASE_5082}api/PatientPrescription/PatientOPDAllHistory",
+                    url = "${ApiConfig.MODULE_4082}api/PatientPrescription/PatientOPDAllHistory",
                     params = params
                 )
 
@@ -189,9 +191,9 @@ class PrescriptionViewModel : ViewModel() {
      */
     private suspend fun fetchCrNoFromApi(uhid: String, clientId: String): String? {
         return try {
-            val apiService = RetrofitInstance.createApiService(RetrofitInstance.BASE_5082)
+            val apiService = RetrofitInstance.createApiService(ApiConfig.MODULE_4082)
             val response = apiService.dynamicGet(
-                url = "${RetrofitInstance.BASE_5082}api/PatientRegistration/GetPatientDetailsByMobileNo",
+                url = "${ApiConfig.MODULE_4082}api/PatientRegistration/GetPatientDetailsByMobileNo",
                 params = mapOf("uhId" to uhid, "clientId" to clientId)
             )
             if (response.isSuccessful) {

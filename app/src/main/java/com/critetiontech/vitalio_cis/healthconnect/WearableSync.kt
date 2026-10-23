@@ -17,14 +17,12 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.critetiontech.ctvitalio.data.remote.network.ApiClients
-import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
-import com.critetiontech.ctvitalio.data.VitalUpload
 import com.critetiontech.ctvitalio.di.AppDependencies
-import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
+import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.ActivitySaveResult
+import com.critetiontech.ctvitalio.model.AddPatientActivityRequest
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.json.JSONObject
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -338,7 +336,9 @@ object WearableSync {
     private val FOREGROUND_INTERVAL = Duration.ofMinutes(15)
 
     private val mutex = Mutex()
-    private val endpoints = ApiEndPointCorporateModule()
+    private val saveMeasuredVitals by lazy { AppDependencies.saveMeasuredVitals() }
+    private val fetchActivityMaster by lazy { AppDependencies.fetchActivityMaster() }
+    private val addPatientActivity by lazy { AppDependencies.addPatientActivity() }
 
     fun clientOrNull(context: Context): HealthConnectClient? =
         if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE)
@@ -398,7 +398,8 @@ object WearableSync {
             .groupBy { it.time.truncatedTo(ChronoUnit.MINUTES) }
             .toSortedMap()
             .forEach { (minute, readings) ->
-                val failure = VitalUpload.post(patient, minute, readings.fold(emptyMap()) { acc, r -> acc + r.apiFields })
+                val failure = (saveMeasuredVitals(patient, minute, readings.fold(emptyMap()) { acc, r -> acc + r.apiFields }) as? DomainResult.Error)
+                    ?.let { it.exception.message ?: "Couldn't save the vitals. Please try again." }
                 if (failure == null) {
                     vitalsSaved += readings.size
                     store.edit().apply {
@@ -448,42 +449,29 @@ object WearableSync {
         return workout.id in prefs(context).getStringSet("${uhid}_workouts", emptySet()).orEmpty()
     }
 
-    private suspend fun fetchActivityIds(): Map<String, Int>? = runCatching {
-        val context = com.critetiontech.ctvitalio.utils.MyApplication.appContext
-        val response = ApiHelper().callApi(context, endpoints.getAllActivityMaster, showNoConnectionToast = false) { url ->
-            ApiClients.module4082.dynamicGet(url = url, params = emptyMap())
+    private suspend fun fetchActivityIds(): Map<String, Int>? =
+        when (val result = fetchActivityMaster()) {
+            is DomainResult.Success -> result.data.associate { it.activityName.lowercase() to it.id }
+            is DomainResult.Error -> { Log.e(TAG, "activity master failed: ${result.exception.message}"); null }
         }
-        val list = JSONObject(response.body()?.string().orEmpty()).getJSONArray("responseValue")
-        (0 until list.length()).associate { i ->
-            list.getJSONObject(i).let { it.getString("activityName").lowercase() to it.getInt("id") }
-        }
-    }.onFailure { Log.e(TAG, "activity master failed: ${it.message}") }.getOrNull()
 
     private enum class WorkoutPost { SAVED, ALREADY_EXISTS, FAILED }
 
-    private suspend fun postWorkout(uhid: String, clientId: Any, activityId: Int, w: Workout): WorkoutPost = runCatching {
-        val context = com.critetiontech.ctvitalio.utils.MyApplication.appContext
-        val body = mapOf(
-            "uhid" to uhid,
-            "activityId" to activityId,
-            "timeFrom" to w.start.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm:ss")),
-            "totalTimeInMinutes" to Duration.between(w.start, w.end).toMinutes().coerceAtLeast(1).toString(),
-            "remark" to "Synced from ${w.source}",
-            "userId" to 0,
-            "clientID" to clientId
+    private suspend fun postWorkout(uhid: String, clientId: Int, activityId: Int, w: Workout): WorkoutPost {
+        val request = AddPatientActivityRequest(
+            uhid = uhid,
+            activityId = activityId,
+            timeFrom = w.start.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+            totalTimeInMinutes = Duration.between(w.start, w.end).toMinutes().coerceAtLeast(1).toString(),
+            remark = "Synced from ${w.source}",
+            userId = 0,
+            clientID = clientId,
         )
-        val response = ApiHelper().callApi(context, endpoints.addPatientActivity, showNoConnectionToast = false) { url ->
-            ApiClients.module4082.dynamicRawPost(url = url, body = body)
+        return when (val result = addPatientActivity(request)) {
+            is DomainResult.Success -> if (result.data == ActivitySaveResult.ALREADY_EXISTS) WorkoutPost.ALREADY_EXISTS else WorkoutPost.SAVED
+            is DomainResult.Error -> { Log.e(TAG, "addPatientActivity failed: ${result.exception.message}"); WorkoutPost.FAILED }
         }
-        // Server answers 500 {"status":0,"responseValue":"Already Exists!"} for a workout it already has
-        val raw = (if (response.isSuccessful) response.body() else response.errorBody())?.string().orEmpty()
-        val json = runCatching { JSONObject(raw) }.getOrNull()
-        when {
-            json?.optString("responseValue")?.contains("already exist", ignoreCase = true) == true -> WorkoutPost.ALREADY_EXISTS
-            response.isSuccessful && json?.optInt("status", 1) != 0 -> WorkoutPost.SAVED
-            else -> { Log.e(TAG, "addPatientActivity rejected: ${response.code()} $raw"); WorkoutPost.FAILED }
-        }
-    }.onFailure { Log.e(TAG, "addPatientActivity failed: ${it.message}") }.getOrDefault(WorkoutPost.FAILED)
+    }
 }
 
 /** Hourly background sync; only runs where Health Connect allows background reads. */

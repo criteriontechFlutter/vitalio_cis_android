@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vitalio</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm_title">Save this?</string>
+    <string name="connecting">Connecting…</string>
+    <string name="done">Done</string>
+    <string name="greeting">Hi, %1$s</string>
+    <string name="listening">Listening…</string>
+    <string name="mic_permission_needed">Microphone permission is needed for voice logging</string>
+    <string name="nothing_understood">Couldn’t find any health data. Please try again.</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved</string>
+    <string name="saving">Saving…</string>
+    <string name="sign_in_on_phone">Open Vitalio on your phone to sign in</string>
+    <string name="tap_to_speak">Tap to speak</string>
+    <string name="understanding">Understanding…</string>
+    <string name="voice_hint">Try “BP 120 by 80” or “2 glass paani”</string>
+</resources>

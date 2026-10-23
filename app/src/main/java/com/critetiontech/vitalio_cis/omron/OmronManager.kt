@@ -7,7 +7,6 @@ import android.content.IntentFilter
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.critetiontech.ctvitalio.BuildConfig
-import com.critetiontech.ctvitalio.data.VitalUpload
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.utils.Patient
 import com.google.gson.Gson
@@ -75,16 +74,17 @@ data class OmronReading(
     val irregularHeartbeat: Boolean = false,
     val weightKg: Double? = null,
     val bodyFatPercent: Double? = null,
-    val bmi: Double? = null
+    val bmi: Double? = null,
+    /** False when the device's clock wasn't set, so [time] is when we read it rather than when it was measured. */
+    val timeFromDevice: Boolean = true,
+    /** The device's record number; higher is newer. Orders readings when the device has no time. */
+    val sequence: Int? = null
 ) {
     val isBloodPressure get() = systolic != null && diastolic != null
 }
 
-data class OmronSyncResult(
-    val readings: List<OmronReading>,
-    val saved: Set<String>,
-    val error: String?
-)
+/** The newest reading on the device for this user, and whether it's already in the health record. */
+data class OmronSyncResult(val latest: OmronReading?, val alreadySaved: Boolean)
 
 /** Personal details scales need to work out body composition. */
 data class OmronProfile(val heightCm: Double?, val dateOfBirth: LocalDate?, val isMale: Boolean)
@@ -96,15 +96,15 @@ class OmronException(val code: Int, message: String) : Exception(message)
 /**
  * Wraps the OMRON Connectivity Library: pairing, reading stored measurements and saving them.
  *
- * Readings are kept on the phone before the device is told they were read (that clears them on
- * the device), and stay queued until the server accepts them, so nothing is lost if saving fails.
+ * A sync reads every reading stored on the device and returns the newest; the user then chooses
+ * to save it. Nothing is lost if they don't — the device keeps its readings and the next sync
+ * reads them again.
  */
 object OmronManager {
 
     private const val TAG = "OmronManager"
     private const val PREFS = "omron_devices"
     private const val KEY_DEVICES = "paired"
-    private const val KEY_PENDING = "pending"
     private const val KEY_SAVED = "saved"
     private const val SCAN_TIMEOUT_SECONDS = 30
     private const val INVALID = Int.MIN_VALUE
@@ -193,10 +193,12 @@ object OmronManager {
     ) {
         val m = manager(context)
         val c = m.configuration
-        c.deviceFilters = listOf(HashMap(config))
+        c.deviceFilters = arrayListOf(HashMap(config))
         c.timeoutInterval = SCAN_TIMEOUT_SECONDS
         c.userHashId = userHash(patient)
-        c.enableAllDataRead = false
+        // Read everything stored, not just "new" readings: pairing already marks the device's
+        // readings as read (they'd never reach us otherwise). Already-saved ones are skipped by key.
+        c.enableAllDataRead = !pairing
 
         val scan = hashMapOf<String, Any>(
             OmronConstants.OMRONDeviceScanSettings.ModeKey to
@@ -205,25 +207,30 @@ object OmronManager {
         )
         val settings = ArrayList<HashMap<*, *>>()
         settings += hashMapOf(OmronConstants.OMRONDeviceScanSettingsKey to scan)
-        if (model.kind == OmronKind.SCALE && profile != null) settings += scaleSettings(profile)
+        if (profile != null) settings += personalSettings(profile, model.kind)
         @Suppress("UNCHECKED_CAST")
         c.deviceSettings = settings as List<HashMap<Any?, Any?>>
         m.setConfiguration(c)
         m.startManager()
     }
 
-    /** Height (cm × 100), gender and date of birth are mandatory for body-composition scales. */
-    private fun scaleSettings(profile: OmronProfile): HashMap<String, Any> {
+    /**
+     * Height (cm × 100), gender and date of birth are mandatory for body-composition scales.
+     * Gender and date of birth also go to BP monitors: models like HEM-7361T keep a date-of-birth
+     * setting, and without it the library fails pairing with "DateIsNULL" (error 4).
+     */
+    private fun personalSettings(profile: OmronProfile, kind: OmronKind): HashMap<String, Any> {
         val personal = hashMapOf<String, Any>(
             OmronConstants.OMRONDevicePersonalSettings.UserGenderKey to
                 if (profile.isMale) OmronConstants.OMRONDevicePersonalSettingsUserGenderType.Male
                 else OmronConstants.OMRONDevicePersonalSettingsUserGenderType.Female,
             OmronConstants.OMRONDevicePersonalSettings.UserDateOfBirthKey to
-                (profile.dateOfBirth ?: LocalDate.of(1990, 1, 1)).toString().replace("-", ""),
-            OmronConstants.OMRONDevicePersonalSettings.WeightKey to hashMapOf(
-                OmronConstants.OMRONDeviceWeightSettingsKey to hashMapOf(
-                    OmronConstants.OMRONDeviceWeightSettings.UnitKey to OmronConstants.OMRONDeviceWeightUnit.Kg
-                )
+                (profile.dateOfBirth ?: LocalDate.of(1990, 1, 1)).toString().replace("-", "")
+        )
+        if (kind != OmronKind.SCALE) return hashMapOf(OmronConstants.OMRONDevicePersonalSettingsKey to personal)
+        personal[OmronConstants.OMRONDevicePersonalSettings.WeightKey] = hashMapOf(
+            OmronConstants.OMRONDeviceWeightSettingsKey to hashMapOf(
+                OmronConstants.OMRONDeviceWeightSettings.UnitKey to OmronConstants.OMRONDeviceWeightUnit.Kg
             )
         )
         profile.heightCm?.let {
@@ -244,7 +251,7 @@ object OmronManager {
         configure(context, patient, config, model, pairing = true, profile = profile)
 
         val found = scanFirst(context)
-        found.setSelectedUsers(listOf(user))
+        found.setSelectedUsers(arrayListOf(user))
         val paired = suspendCancellableCoroutine { cont ->
             manager(context).connectPeripheral(found) { peripheral, info ->
                 if (info.isSuccess && peripheral != null) cont.resume(peripheral) else cont.resumeWithException(info.toException())
@@ -286,7 +293,7 @@ object OmronManager {
 
     // ── Transfer ─────────────────────────────────────────────────────────
 
-    /** Reads new measurements from a paired device and saves the BP readings to the server. */
+    /** Reads the measurements stored on a paired device and returns the newest one; saving is up to the user. */
     suspend fun sync(context: Context, device: PairedOmronDevice, profile: OmronProfile?): OmronSyncResult = mutex.withLock {
         val patient = AppDependencies.prefs.getPatient() ?: throw OmronException(0, "Please log in again.")
         val model = OmronModels.byCode(device.code) ?: throw OmronException(8003, "Unknown device.")
@@ -295,74 +302,50 @@ object OmronManager {
         val m = manager(context)
         val target = OmronPeripheral(device.localName, device.uuid)
         val transferred = suspendCancellableCoroutine { cont ->
-            m.startDataTransferFromPeripheral(target, listOf(device.user), true) { peripheral, info ->
+            m.startDataTransferFromPeripheral(target, arrayListOf(device.user), true) { peripheral, info ->
                 if (info.isSuccess && peripheral != null) cont.resume(peripheral) else cont.resumeWithException(info.toException())
             }
             cont.invokeOnCancellation { runCatching { m.disconnectPeripheral(target) { _, _ -> } } }
         }
-
-        // Keep the readings on the phone before the device is told they were read
         val fresh = parse(transferred.vitalData, device.user)
-        queue(context, device, fresh)
         val ended = suspendCancellableCoroutine { cont ->
             m.endDataTransferFromPeripheral { peripheral, info ->
                 cont.resume(if (info.isSuccess) peripheral else null)
             }
         }
         val afterEnd = ended?.let { parse(it.vitalData, device.user) }.orEmpty()
-        queue(context, device, afterEnd)
 
-        val readings = (fresh + afterEnd).distinctBy { it.key }.sortedByDescending { it.time }
-        val (saved, error) = uploadPending(context, patient, device)
+        val wanted = if (model.kind == OmronKind.BP) (fresh + afterEnd).filter { it.isBloodPressure } else fresh + afterEnd
+        // Newest by device time; readings without one (clock not set) fall back to the record number
+        val latest = wanted.maxWithOrNull(
+            compareBy<OmronReading>({ it.timeFromDevice }, { if (it.timeFromDevice) it.time else Instant.EPOCH }, { it.sequence ?: Int.MIN_VALUE })
+        )
         savePaired(context, pairedDevices(context).map {
             if (it.code == device.code) it.copy(lastSyncAt = System.currentTimeMillis()) else it
         })
-        OmronSyncResult(readings, saved, error)
+        OmronSyncResult(latest, latest != null && latest.key in savedKeys(context, device))
     }
 
-    // ── Pending queue ────────────────────────────────────────────────────
-
-    private fun pending(context: Context, device: PairedOmronDevice): List<OmronReading> = runCatching {
-        gson.fromJson<List<OmronReading>>(
-            prefs(context).getString("${KEY_PENDING}_${device.code}", null) ?: return emptyList(),
-            object : TypeToken<List<OmronReading>>() {}.type
-        )
-    }.getOrNull().orEmpty()
+    // ── Saving ───────────────────────────────────────────────────────────
 
     private fun savedKeys(context: Context, device: PairedOmronDevice): Set<String> =
         prefs(context).getStringSet("${KEY_SAVED}_${device.code}", emptySet()).orEmpty()
 
-    private fun queue(context: Context, device: PairedOmronDevice, readings: List<OmronReading>) {
-        val alreadySaved = savedKeys(context, device)
-        val merged = (pending(context, device) + readings.filter { it.isBloodPressure && it.key !in alreadySaved })
-            .distinctBy { it.key }
-        prefs(context).edit().putString("${KEY_PENDING}_${device.code}", gson.toJson(merged)).apply()
+    /** AddVital fields for a BP reading, or null if the reading can't be saved as one. */
+    fun vitalFields(reading: OmronReading): Map<String, String>? {
+        if (!reading.isBloodPressure) return null
+        return mapOf(
+            "vmValueBPSys" to reading.systolic.toString(),
+            "vmValueBPDias" to reading.diastolic.toString(),
+            "vmValuePulse" to (reading.pulse?.toString() ?: "")
+        )
     }
 
-    /** Sends every queued BP reading; keeps the ones the server didn't accept for next time. */
-    private suspend fun uploadPending(context: Context, patient: Patient, device: PairedOmronDevice): Pair<Set<String>, String?> {
-        var error: String? = null
-        val left = mutableListOf<OmronReading>()
-        val saved = mutableSetOf<String>()
-        pending(context, device).sortedBy { it.time }.forEach { r ->
-            val fields = mapOf(
-                "vmValueBPSys" to r.systolic.toString(),
-                "vmValueBPDias" to r.diastolic.toString(),
-                "vmValuePulse" to (r.pulse?.toString() ?: "")
-            )
-            val failure = VitalUpload.post(patient, r.time, fields)
-            if (failure == null) saved += r.key else { left += r; error = failure }
-        }
-        // Remember recent saved keys so a re-sent reading isn't saved twice
-        val keep = (savedKeys(context, device) + saved).toList().takeLast(500).toSet()
-        prefs(context).edit()
-            .putString("${KEY_PENDING}_${device.code}", gson.toJson(left))
-            .putStringSet("${KEY_SAVED}_${device.code}", keep)
-            .apply()
-        return saved to error
+    /** Remembers a saved reading so the same one isn't offered for saving again. */
+    fun markSaved(context: Context, device: PairedOmronDevice, reading: OmronReading) {
+        val keep = (savedKeys(context, device) + reading.key).toList().takeLast(500).toSet()
+        prefs(context).edit().putStringSet("${KEY_SAVED}_${device.code}", keep).apply()
     }
-
-    fun isSaved(context: Context, device: PairedOmronDevice, reading: OmronReading) = reading.key in savedKeys(context, device)
 
     // ── Parsing ──────────────────────────────────────────────────────────
 
@@ -394,11 +377,13 @@ object OmronManager {
             if (userId != null && userId != user) return@mapNotNull null
             val sys = item[OmronConstants.OMRONVitalData.SystolicKey].asInt() ?: return@mapNotNull null
             val dia = item[OmronConstants.OMRONVitalData.DiastolicKey].asInt() ?: return@mapNotNull null
-            val time = item[OmronConstants.OMRONVitalData.StartDateKey].asInstant() ?: now
+            val measured = item[OmronConstants.OMRONVitalData.StartDateKey].asInstant()
             val seq = item[OmronConstants.OMRONVitalData.SequenceKey].asInt()
+            Log.d(TAG, "bp $sys/$dia seq=$seq start=${item[OmronConstants.OMRONVitalData.StartDateKey]}")
             OmronReading(
-                key = "bp_${seq}_${time.epochSecond}_$sys/$dia",
-                time = time, systolic = sys, diastolic = dia,
+                // Without a device time the key must not include the sync time, or the same reading looks new every sync
+                key = "bp_${seq}_${measured?.epochSecond ?: "notime"}_$sys/$dia",
+                time = measured ?: now, systolic = sys, diastolic = dia, timeFromDevice = measured != null, sequence = seq,
                 pulse = item[OmronConstants.OMRONVitalData.PulseKey].asInt(),
                 irregularHeartbeat = item[OmronConstants.OMRONVitalData.IrregularFlagKey].asInt() == 1
             )
@@ -407,10 +392,11 @@ object OmronManager {
             val userId = item[OmronConstants.OMRONWeightData.UserIdKey].asInt()
             if (userId != null && userId != user) return@mapNotNull null
             val kg = item[OmronConstants.OMRONWeightData.WeightKey].asDouble() ?: return@mapNotNull null
-            val time = item[OmronConstants.OMRONWeightData.StartDateKey].asInstant() ?: now
+            val measured = item[OmronConstants.OMRONWeightData.StartDateKey].asInstant()
+            val seq = item[OmronConstants.OMRONWeightData.SequenceKey].asInt()
             OmronReading(
-                key = "wt_${item[OmronConstants.OMRONWeightData.SequenceKey].asInt()}_${time.epochSecond}_$kg",
-                time = time, weightKg = kg,
+                key = "wt_${seq}_${measured?.epochSecond ?: "notime"}_$kg",
+                time = measured ?: now, weightKg = kg, timeFromDevice = measured != null, sequence = seq,
                 bodyFatPercent = item[OmronConstants.OMRONWeightData.BodyFatPercentageKey].asDouble(),
                 bmi = item[OmronConstants.OMRONWeightData.BMIKey].asDouble()
             )

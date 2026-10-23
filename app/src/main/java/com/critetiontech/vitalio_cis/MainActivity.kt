@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.imePadding
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -18,7 +19,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.critetiontech.ctvitalio.ui.screens.LoginScreen
 import com.critetiontech.myapplication.utils.LocalNavController
-import com.critetiontech.ctvitalio.notification.RequestNotificationPermission
 import com.critetiontech.ctvitalio.ui.screens.AddActivityScreen
 import com.critetiontech.ctvitalio.ui.screens.ActivityHistoryScreen
 import com.critetiontech.ctvitalio.ui.screens.AddLabResultsScreen
@@ -86,6 +86,7 @@ import com.critetiontech.ctvitalio.ui.screens.onboarding.WeightScreen
 import com.critetiontech.ctvitalio.ui.screens.onboarding.WelcomeScreen
 import com.critetiontech.ctvitalio.ui.theme.LocalThemeViewModel
 import com.critetiontech.ctvitalio.ui.theme.MyAppTheme
+import com.critetiontech.ctvitalio.consultation.callPush
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.critetiontech.ctvitalio.viewmodel.UploadReportViewModel
 import com.critetiontech.ctvitalio.viewmodel.UploadPrescriptionViewModel
@@ -109,13 +110,30 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { WearableSync.syncIfDue(applicationContext) }
     }
 
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        logPushTap(intent)
+    }
+
+    /** A push tapped while the app was in the background brings its data in the launch intent. */
+    private fun logPushTap(intent: android.content.Intent?) {
+        val extras = intent?.extras ?: return
+        if (!extras.containsKey("google.message_id")) return
+        val data = extras.keySet().associateWith { extras.get(it) }
+        android.util.Log.d("FCM", "Opened from push: $data")
+        // A call push that Firebase showed itself (app was closed): tapping it means "join"
+        val call = extras.callPush()
+        if (call is com.critetiontech.ctvitalio.model.CallPush.Incoming) {
+            startActivity(com.critetiontech.ctvitalio.consultation.CallActivity.intent(this, call.call, answer = true))
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+        logPushTap(intent)
         setContent {
-
-            RequestNotificationPermission()
             val navController = rememberNavController()
             val uploadReportViewModel: UploadReportViewModel = viewModel()
             val uploadPrescriptionViewModel: UploadPrescriptionViewModel = viewModel()
@@ -130,6 +148,10 @@ class MainActivity : ComponentActivity() {
                      ) {
                         NavHost(
                             navController = navController,
+                            // The window is adjustResize (manifest), which on Android 15+ no
+                            // longer shrinks the window — so shrink every screen above the
+                            // keyboard here, once. Screens' own imePadding() then become no-ops.
+                            modifier = androidx.compose.ui.Modifier.imePadding(),
                             startDestination = if (PrefsManager(context).getPatient()?.uhId?.isNotEmpty()
                                     ?: false) Routes.DASHBOARD else Routes.LOGIN,
                             enterTransition = AppNavTransitions.enter,
@@ -283,6 +305,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
                             composable(Routes.RESEARCHARTICLES) { ResearchArticlesScreen() }
                             composable(Routes.HEALTHCONNECTSYNC) { HealthConnectSyncScreen() }
+                            composable(Routes.PERMISSIONS) { com.critetiontech.ctvitalio.ui.screens.PermissionsScreen() }
                             composable(Routes.OMRON_DEVICE + "/{model}") { backStackEntry ->
                                 OmronDeviceScreen(modelCode = backStackEntry.arguments?.getString("model").orEmpty())
                             }

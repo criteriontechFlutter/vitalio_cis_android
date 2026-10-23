@@ -3,11 +3,12 @@ package com.critetiontech.ctvitalio.ui.screens
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
 
-import android.Manifest
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.critetiontech.ctvitalio.permissions.AppPermission
+import com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -67,16 +68,10 @@ fun UploadPrescriptionScreen(
         }
     }
 
-    val cameraPermLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            val uri = createImageUri(context)
-            cameraUri = uri
-            cameraLauncher.launch(uri)
-        } else {
-            showToast(context, "Camera permission is required to capture prescription")
-        }
+    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, "to scan your prescription") {
+        val uri = createImageUri(context)
+        cameraUri = uri
+        cameraLauncher.launch(uri)
     }
 
     val documentLauncher = rememberLauncherForActivityResult(
@@ -118,7 +113,7 @@ fun UploadPrescriptionScreen(
                             colors = colors,
                             accent = CameraAccent,
                             modifier = Modifier.weight(1f)
-                        ) { cameraPermLauncher.launch(Manifest.permission.CAMERA) }
+                        ) { cameraPermission.launch() }
 
                         UploadOptionCard(
                             title = "Gallery / Files",

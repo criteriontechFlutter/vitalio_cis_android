@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -188,9 +189,12 @@ fun DrawerScreen() {
                     ThemeSwitchItem()
                     Spacer(modifier = Modifier.height(12.dp))
                     HapticsSwitchItem()
+            ServerItem()
+                    ServerItem()
                     Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
                         listOf(
+                            "Permissions & Privacy" to "",
                             "FAQ" to "4",
                             "Feedback" to "4"
                         )
@@ -250,10 +254,12 @@ fun DrawerScreen() {
             ThemeSwitchItem()
             Spacer(modifier = Modifier.height(12.dp))
             HapticsSwitchItem()
+            ServerItem()
 
             Spacer(modifier = Modifier.height(12.dp))
             MenuCard(
                 listOf(
+                    "Permissions & Privacy" to "",
                     "FAQ" to "4",
                     "Feedback" to "4"
                 )
@@ -295,6 +301,36 @@ fun HapticsSwitchItem() {
             if (on) haptic(HapticEvent.Toggle)
         },
     )
+}
+
+/** Testers only: shows which backend this build talks to and opens the switcher. */
+@Composable
+fun ServerItem() {
+    if (!com.critetiontech.ctvitalio.config.ApiConfig.canSwitch) return
+    val colors = LocalMyColorScheme.current
+    val env = com.critetiontech.ctvitalio.config.ApiConfig.environment
+    var showSheet by remember { mutableStateOf(false) }
+    if (showSheet) com.critetiontech.ctvitalio.ui.components.EnvironmentSheet(onDismiss = { showSheet = false })
+
+    Spacer(modifier = Modifier.height(12.dp))
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(colors.dashboardContainerColor),
+        modifier = Modifier.fillMaxWidth().clickable { showSheet = true }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Dns, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(text = "Server: ${env.label}", color = colors.textDarkColor, fontSize = 16.sp)
+                Text(text = env.host.substringAfter("://"), color = colors.textGreyColor, fontSize = 12.sp)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
+        }
+    }
 }
 
 /** A settings card with an icon, title, optional subtitle and a switch, as used in the drawer. */
@@ -439,12 +475,9 @@ fun ProfileCard(
         cameraLauncher.launch(uri)
     }
 
-    val cameraPermLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) launchCamera()
-        else android.widget.Toast.makeText(context, "Camera permission is required to take a photo", android.widget.Toast.LENGTH_SHORT).show()
-    }
+    val cameraPermission = com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest(
+        com.critetiontech.ctvitalio.permissions.AppPermission.Camera, "to take your profile photo"
+    ) { launchCamera() }
 
     Column(
         modifier = Modifier
@@ -457,32 +490,34 @@ fun ProfileCard(
             modifier = Modifier.size(90.dp)
         ) {
 
-            /// 🔹 Profile Image
-            AsyncImage(
-                model = previewUri ?: patient?.imageUrl
-                    ?.takeIf { it.isNotBlank() },
+            /// 🔹 Profile Image, inside the same turning ring as the dashboard
+            com.critetiontech.ctvitalio.ui.components.ProfileRing(size = 90.dp, ringWidth = 3.dp, gap = 3.dp) {
+                AsyncImage(
+                    model = previewUri ?: patient?.imageUrl
+                        ?.takeIf { it.isNotBlank() },
 
-                placeholder = painterResource(R.drawable.img),
-                error = painterResource(R.drawable.img),
+                    placeholder = painterResource(R.drawable.img),
+                    error = painterResource(R.drawable.img),
 
-                contentDescription = "Profile",
+                    contentDescription = "Profile",
 
-                contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Crop,
 
-                modifier = Modifier
-                    .size(90.dp)
-                    .clip(CircleShape)
-            )
-
-            if (uploading) {
-                Box(
-                    contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(90.dp)
+                        .fillMaxSize()
                         .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.45f))
-                ) {
-                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                )
+
+                if (uploading) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.45f))
+                    ) {
+                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                    }
                 }
             }
 
@@ -534,10 +569,7 @@ fun ProfileCard(
             onDismiss = { showSheet = false },
             onCameraClick = {
                 showSheet = false
-                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) ==
-                    android.content.pm.PackageManager.PERMISSION_GRANTED
-                ) launchCamera()
-                else cameraPermLauncher.launch(android.Manifest.permission.CAMERA)
+                cameraPermission.launch()
             },
             onUploadClick = {
                 showSheet = false
@@ -711,6 +743,7 @@ fun MenuRow(
         "Shared Accounts" -> Routes.SHAREDACCOUNT
         "Connect Smart Watch" -> Routes.CONNECTWATCH
         "Emergency Contacts" -> Routes.EMERGENCYCONTACTS
+        "Permissions & Privacy" -> Routes.PERMISSIONS
         "FAQ" -> Routes.FAQ
         "Feedback" -> Routes.FEEDBACK
 

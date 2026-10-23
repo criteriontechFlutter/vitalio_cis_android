@@ -2,12 +2,10 @@ package com.critetiontech.ctvitalio.ui.screens
 
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.critetiontech.ctvitalio.permissions.AppPermission
+import com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -237,12 +235,7 @@ fun EditProfileScreen(
     }
 
     // CAMERA is declared in the manifest, so IMAGE_CAPTURE throws SecurityException until it's granted
-    val cameraPermLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) launchCamera()
-        else Toast.makeText(context, "Camera permission is required to take a photo", Toast.LENGTH_SHORT).show()
-    }
+    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, "to take your profile photo") { launchCamera() }
 
     LaunchedEffect(Unit) {
         viewModel.loadLocationData(
@@ -295,13 +288,7 @@ fun EditProfileScreen(
             onDismiss = { showImageSheet = false },
             onCameraClick = {
                 showImageSheet = false
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
-                    PackageManager.PERMISSION_GRANTED
-                ) {
-                    launchCamera()
-                } else {
-                    cameraPermLauncher.launch(Manifest.permission.CAMERA)
-                }
+                cameraPermission.launch()
             },
             onUploadClick = {
                 showImageSheet = false

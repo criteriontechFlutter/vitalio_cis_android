@@ -2,7 +2,7 @@ package com.critetiontech.ctvitalio.domain.repository
 
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.utils.Patient
-import com.critetiontech.ctvitalio.viewmodel.LocationItem
+import com.critetiontech.ctvitalio.model.LocationItem
 import java.io.File
 
 interface ProfileRepository {
