@@ -68,13 +68,16 @@ import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import com.critetiontech.ctvitalio.ui.feedback.rememberHaptics
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.viewmodel.VitalDetailViewModel
+import com.critetiontech.ctvitalio.yonker.YonkerKind
 import com.critetiontech.myapplication.utils.LocalNavController
 
 data class Device(
     val name: String,
     val type: String,
     /** Omron model number, for devices that can be paired. */
-    val code: String? = null
+    val code: String? = null,
+    /** Screen to open, for devices that connect without pairing (Yonker). */
+    val route: String? = null,
 )
 
 /** Only the Omron devices that can measure this vital: BP machines for BP/pulse, scales for weight. */
@@ -86,6 +89,16 @@ internal fun omronDevicesFor(vitalName: String): List<Device> {
         else -> return emptyList()
     }
     return OmronModels.ALL.filter { it.kind == kind }.map { Device("Omron ${it.code}", it.label, it.code) }
+}
+
+/** Yonker devices that measure this vital: the BP machine for BP/pulse, the oximeter for SpO2/pulse. */
+internal fun yonkerDevicesFor(vitalName: String): List<Device> {
+    val vital = vitalName.lowercase()
+    val kinds = buildList {
+        if (listOf("pressure", "bp", "pulse", "heart").any { it in vital }) add(YonkerKind.BP)
+        if (listOf("spo2", "oxygen", "pulse", "heart").any { it in vital }) add(YonkerKind.OXIMETER)
+    }
+    return kinds.map { Device("Yonker ${it.label}", it.label, route = "${Routes.YONKER_DEVICE}/${it.code}") }
 }
 
 /* ================= INPUT RULES ================= */
@@ -273,6 +286,7 @@ fun ConnectionScreen(
     viewModel: VitalDetailViewModel = viewModel()
 ) {
     val devices = remember(vitalName) { omronDevicesFor(vitalName) }
+    val yonker = remember(vitalName) { yonkerDevicesFor(vitalName) }
 
     val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
@@ -306,7 +320,10 @@ fun ConnectionScreen(
             // Your devices, then watches, then the Omron models that can still be paired
             val (mine, others) = devices.partition { paired[it.code] != null }
             var index = 0
-            fun open(device: Device) { device.code?.let { navController.navigate("${Routes.OMRON_DEVICE}/$it") } }
+            fun open(device: Device) {
+                device.route?.let { navController.navigate(it); return }
+                device.code?.let { navController.navigate("${Routes.OMRON_DEVICE}/$it") }
+            }
             if (mine.isNotEmpty()) {
                 AnimatedEnter(index = index++) { Caption("Your devices", modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
                 mine.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = paired[device.code]) { open(device) } } }
@@ -316,6 +333,10 @@ fun ConnectionScreen(
             if (others.isNotEmpty()) {
                 AnimatedEnter(index = index++) { Caption("Add an Omron device", modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
                 others.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = null) { open(device) } } }
+            }
+            if (yonker.isNotEmpty()) {
+                AnimatedEnter(index = index++) { Caption("Yonker devices", modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
+                yonker.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = null, hint = "Tap to connect") { open(device) } } }
             }
             Spacer(Modifier.height(8.dp))
         }
@@ -401,7 +422,7 @@ private fun WearablesRow(onClick: () -> Unit) {
 }
 
 @Composable
-private fun DeviceRow(device: Device, paired: PairedOmronDevice?, onClick: () -> Unit) {
+private fun DeviceRow(device: Device, paired: PairedOmronDevice?, hint: String = "Tap to pair", onClick: () -> Unit) {
     val colors = LocalMyColorScheme.current
     val p = colors.primaryBlueColor
     val isScale = "Scale" in device.type || "Body" in device.type
@@ -440,7 +461,7 @@ private fun DeviceRow(device: Device, paired: PairedOmronDevice?, onClick: () ->
                     Text(pairedStatus(paired), color = DeviceGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1)
                 }
             } else {
-                Text(device.type + " · Tap to pair", color = colors.textGreyColor, fontSize = 12.sp)
+                Text(device.type + " · " + hint, color = colors.textGreyColor, fontSize = 12.sp)
             }
         }
         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(22.dp))

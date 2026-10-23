@@ -34,6 +34,7 @@ import com.critetiontech.ctvitalio.ui.screens.ConnectWatchScreen
 import com.critetiontech.ctvitalio.ui.screens.ConnectionScreen
 import com.critetiontech.ctvitalio.ui.screens.HealthConnectSyncScreen
 import com.critetiontech.ctvitalio.ui.screens.OmronDeviceScreen
+import com.critetiontech.ctvitalio.ui.screens.YonkerDeviceScreen
  import com.critetiontech.ctvitalio.ui.screens.DietChecklistScreen
 import com.critetiontech.ctvitalio.ui.screens.DoctorDetailsScreen
 import com.critetiontech.ctvitalio.ui.screens.DrawerScreen
@@ -308,6 +309,9 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.PERMISSIONS) { com.critetiontech.ctvitalio.ui.screens.PermissionsScreen() }
                             composable(Routes.OMRON_DEVICE + "/{model}") { backStackEntry ->
                                 OmronDeviceScreen(modelCode = backStackEntry.arguments?.getString("model").orEmpty())
+                            }
+                            composable(Routes.YONKER_DEVICE + "/{kind}") { backStackEntry ->
+                                YonkerDeviceScreen(kindCode = backStackEntry.arguments?.getString("kind").orEmpty())
                             }
                             composable("welcome") { WelcomeScreen( ) }
                             composable("gender") { GenderScreen( ) }
