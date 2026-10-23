@@ -16,8 +16,8 @@ android {
         applicationId = "com.critetiontech.ctvitalio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 33
-        versionName = "2.0.26"
+        versionCode = 34
+        versionName = "2.0.27"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

@@ -69,7 +69,7 @@ import com.critetiontech.ctvitalio.viewmodel.OmronPhase
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-private fun Context.bluetoothOn(): Boolean =
+internal fun Context.bluetoothOn(): Boolean =
     getSystemService(BluetoothManager::class.java)?.adapter?.isEnabled == true
 
 @Composable
@@ -224,8 +224,8 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-private val readingDay = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
-private val readingClock = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
+internal val readingDay = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+internal val readingClock = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
 
 @Composable
 private fun UserPicker(count: Int, selected: Int, enabled: Boolean, onSelect: (Int) -> Unit) {
@@ -256,9 +256,9 @@ private fun UserPicker(count: Int, selected: Int, enabled: Boolean, onSelect: (I
 }
 
 /** AHA blood-pressure categories, used to colour the reading and place it on the gauge. */
-private data class BpCategory(val label: String, val color: Color, val index: Int)
+internal data class BpCategory(val label: String, val color: Color, val index: Int)
 
-private val bpScale = listOf(
+internal val bpScale = listOf(
     "Normal" to Color(0xFF43A047),
     "Elevated" to Color(0xFFF9A825),
     "Stage 1" to Color(0xFFFB8C00),
@@ -266,7 +266,7 @@ private val bpScale = listOf(
     "Crisis" to Color(0xFFB71C1C),
 )
 
-private fun bpCategory(sys: Int, dia: Int): BpCategory {
+internal fun bpCategory(sys: Int, dia: Int): BpCategory {
     val i = when {
         sys > 180 || dia > 120 -> 4
         sys >= 140 || dia >= 90 -> 3
@@ -280,7 +280,7 @@ private fun bpCategory(sys: Int, dia: Int): BpCategory {
 
 /** Five-band AHA bar with a marker that glides to the reading's band. */
 @Composable
-private fun BpGauge(category: BpCategory) {
+internal fun BpGauge(category: BpCategory) {
     val colors = LocalMyColorScheme.current
     var placed by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { placed = true }
@@ -413,7 +413,7 @@ private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, model: Omron
 }
 
 @Composable
-private fun InfoTile(
+internal fun InfoTile(
     label: String, value: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color,
     modifier: Modifier = Modifier, heartbeat: Boolean = false
@@ -441,7 +441,7 @@ private fun InfoTile(
 }
 
 @Composable
-private fun SavedBanner() {
+internal fun SavedBanner() {
     var shown by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { shown = true }
     val checkScale by animateFloatAsState(
