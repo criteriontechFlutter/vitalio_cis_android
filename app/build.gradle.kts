@@ -91,6 +91,9 @@ android {
 
 
 dependencies {
+    implementation(project(":core"))
+    // Syncs the logged-in patient to the Wear OS app
+    implementation(libs.play.services.wearable)
     implementation(libs.androidx.compose.foundation.layout)
     
     implementation(libs.androidx.core.ktx)

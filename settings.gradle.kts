@@ -23,4 +23,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "vitalio_cis"
 include(":app")
+include(":core")
+include(":wear")
  
