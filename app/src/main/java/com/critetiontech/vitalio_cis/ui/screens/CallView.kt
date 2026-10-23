@@ -1,6 +1,12 @@
 package com.critetiontech.ctvitalio.ui.screens
 
 import androidx.compose.animation.AnimatedContent
+import coil.compose.AsyncImage
+import androidx.compose.ui.draw.blur
+import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.WindowInsets
+import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -81,7 +87,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -99,7 +104,6 @@ import com.critetiontech.ctvitalio.model.IncomingCall
 import com.critetiontech.ctvitalio.viewmodel.CallPhase
 import com.critetiontech.ctvitalio.viewmodel.CallViewModel
 import com.critetiontech.ctvitalio.ui.components.DeviceGreen
-import com.critetiontech.ctvitalio.ui.components.DeviceRed
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import io.livekit.android.renderer.TextureViewRenderer
 import io.livekit.android.room.Room
@@ -109,18 +113,24 @@ import kotlinx.coroutines.launch
 import livekit.org.webrtc.RendererCommon
 import kotlin.math.roundToInt
 
-private val Ink = Color(0xFF070B14)
+private val CallRed = Color(0xFFFF3B3B)
+private val CallGreen = Color(0xFF12C17E)
+/** Hang-up inside the call: a warmer red than decline, as in the design. */
+private val HangUpRed = Color(0xFFF2421B)
+private val PanelText = Color(0xFF202529)
+private val PanelGrey = Color(0xFF6B7280)
 
 @Composable
-fun CallScreen(vm: CallViewModel, onAccept: () -> Unit, onDecline: () -> Unit, onClose: () -> Unit, pip: Boolean = false) {
+fun CallScreen(
+    vm: CallViewModel,
+    onAccept: () -> Unit,
+    onDecline: () -> Unit,
+    onClose: () -> Unit,
+    onMinimize: () -> Unit = {},
+    pip: Boolean = false,
+) {
     val call = vm.call ?: return
-    val primary = LocalMyColorScheme.current.primaryBlueColor
-    // Video calls stay dark whatever the app theme: faces read better and it saves battery
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(lerp(primary, Ink, 0.55f), Ink, Ink)))
-    ) {
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
         if (pip) PipContent(vm, call) else AnimatedContent(
             targetState = vm.phase.let { if (it is CallPhase.Ended) "ended" else it::class.simpleName },
             transitionSpec = { fadeIn(tween(350)) togetherWith fadeOut(tween(250)) },
@@ -129,59 +139,95 @@ fun CallScreen(vm: CallViewModel, onAccept: () -> Unit, onDecline: () -> Unit, o
             when (key) {
                 "Ringing" -> RingingContent(call, onAccept, onDecline)
                 "Connecting" -> WaitingContent(call, "Connecting…")
-                "InCall" -> InCallContent(vm, call)
+                "InCall" -> InCallContent(vm, call, onMinimize)
                 else -> EndedContent(call, vm.phase as? CallPhase.Ended, vm.elapsedSeconds(), onClose)
             }
         }
     }
 }
 
-// ── Ringing ──────────────────────────────────────────────────────────────────
-
+/**
+ * The doctor's photo, blurred and veiled in grey, behind everything that isn't live video.
+ * Blur needs Android 12; older phones get the plain grey instead of a sharp photo.
+ */
 @Composable
-private fun RingingContent(call: IncomingCall, onAccept: () -> Unit, onDecline: () -> Unit) {
-    Column(
-        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+private fun Backdrop(call: IncomingCall) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFFA6A4A9), Color(0xFF8E8C91), Color(0xFF737176))))
     ) {
-        Spacer(Modifier.height(56.dp))
-        Text(call.title ?: "Incoming video consultation", color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp, letterSpacing = 0.4.sp)
-        Spacer(Modifier.height(10.dp))
-        Text(
-            call.doctorName, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.weight(1f))
-        RippleAvatar(call, size = 132.dp)
-        Spacer(Modifier.weight(1f))
-        Row(Modifier.fillMaxWidth().padding(bottom = 40.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            RoundAction(Icons.Rounded.CallEnd, "Decline", DeviceRed, size = 72.dp, onClick = onDecline)
-            RoundAction(Icons.Rounded.Videocam, "Join", DeviceGreen, size = 72.dp, wiggle = true, onClick = onAccept)
+        if (!call.doctorAvatarUrl.isNullOrBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AsyncImage(
+                model = call.doctorAvatarUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize().blur(48.dp),
+            )
+            Box(Modifier.fillMaxSize().background(Color(0xFF8E8C91).copy(alpha = 0.55f)))
         }
     }
 }
 
-/** Avatar with rings spreading out from it, like sound waves. */
+@Composable
+private fun VitalioMark(modifier: Modifier = Modifier) {
+    Text(
+        "vitalio", modifier = modifier, color = Color.White, fontSize = 30.sp,
+        fontWeight = FontWeight.Light, letterSpacing = 1.sp,
+    )
+}
+
+// ── Ringing ──────────────────────────────────────────────────────────────────
+
+@Composable
+private fun RingingContent(call: IncomingCall, onAccept: () -> Unit, onDecline: () -> Unit) {
+    Backdrop(call)
+    Column(
+        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(Modifier.height(28.dp))
+        VitalioMark()
+        Spacer(Modifier.weight(1f))
+        RippleAvatar(call, size = 168.dp)
+        Text(
+            call.doctorName, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(call.title ?: "Incoming Call…", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+        Spacer(Modifier.weight(1f))
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 32.dp).padding(bottom = 56.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            CallButton(Icons.Rounded.CallEnd, "Decline", CallRed, size = 64.dp, onClick = onDecline)
+            CallButton(Icons.Rounded.PhoneInTalk, "Join", CallGreen, size = 64.dp, wiggle = true, onClick = onAccept)
+        }
+    }
+}
+
+/** Avatar with soft rings spreading out from it, like sound waves. */
 @Composable
 private fun RippleAvatar(call: IncomingCall, size: androidx.compose.ui.unit.Dp) {
     val transition = rememberInfiniteTransition(label = "ripple")
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(size * 2.2f)) {
-        repeat(3) { i ->
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(size * 1.6f)) {
+        repeat(2) { i ->
             val progress by transition.animateFloat(
                 0f, 1f,
-                infiniteRepeatable(tween(2400, easing = LinearEasing), initialStartOffset = StartOffset(i * 800)),
+                infiniteRepeatable(tween(2600, easing = LinearEasing), initialStartOffset = StartOffset(i * 1300)),
                 label = "ring$i",
             )
             Box(
                 Modifier
                     .size(size)
                     .graphicsLayer {
-                        val s = 1f + progress * 1.15f
+                        val s = 1f + progress * 0.55f
                         scaleX = s; scaleY = s
-                        alpha = (1f - progress) * 0.45f
+                        alpha = (1f - progress) * 0.35f
                     }
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.35f))
+                    .background(Color.White.copy(alpha = 0.4f))
             )
         }
         Avatar(call, size)
@@ -218,14 +264,15 @@ private fun initialsOf(name: String): String =
         .split(" ").filter { it.isNotBlank() }.take(2).joinToString("") { it.first().uppercase() }
         .ifBlank { "Dr" }
 
+/** A round call button; [description] is read out by TalkBack. */
 @Composable
-private fun RoundAction(
+private fun CallButton(
     icon: ImageVector,
-    label: String?,
-    color: Color,
-    size: androidx.compose.ui.unit.Dp = 56.dp,
+    description: String,
+    background: Color,
+    tint: Color = Color.White,
+    size: androidx.compose.ui.unit.Dp = 52.dp,
     wiggle: Boolean = false,
-    active: Boolean = true,
     onClick: () -> Unit,
 ) {
     // The accept button nudges every couple of seconds to draw the eye
@@ -241,24 +288,19 @@ private fun RoundAction(
     }
     val pop = remember { Animatable(0.6f) }
     LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = 300f)) }
+    val bg by animateColorAsState(background, tween(200), label = "callButton")
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            Modifier
-                .size(size)
-                .scale(pop.value)
-                .graphicsLayer { rotationZ = rotation.value }
-                .clip(CircleShape)
-                .background(if (active) color else Color.White.copy(alpha = 0.14f))
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(size * 0.42f))
-        }
-        if (label != null) {
-            Spacer(Modifier.height(8.dp))
-            Text(label, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
-        }
+    Box(
+        Modifier
+            .size(size)
+            .scale(pop.value)
+            .graphicsLayer { rotationZ = rotation.value }
+            .clip(CircleShape)
+            .background(bg)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = description, tint = tint, modifier = Modifier.size(size * 0.44f))
     }
 }
 
@@ -266,18 +308,19 @@ private fun RoundAction(
 
 @Composable
 private fun WaitingContent(call: IncomingCall, label: String) {
+    Backdrop(call)
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        RippleAvatar(call, size = 112.dp)
-        Text(call.doctorName, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(14.dp))
+        RippleAvatar(call, size = 140.dp)
+        Text(call.doctorName, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(10.dp))
-            Text(label, color = Color.White.copy(alpha = 0.75f), fontSize = 14.sp)
+            CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(label, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
         }
     }
 }
@@ -285,35 +328,36 @@ private fun WaitingContent(call: IncomingCall, label: String) {
 @Composable
 private fun EndedContent(call: IncomingCall, ended: CallPhase.Ended?, seconds: Long, onClose: () -> Unit) {
     val failed = ended?.failed == true
+    Backdrop(call)
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(Modifier.graphicsLayer { alpha = 0.6f }) { Avatar(call, 104.dp) }
+        Box(Modifier.graphicsLayer { alpha = 0.7f }) { Avatar(call, 120.dp) }
         Spacer(Modifier.height(20.dp))
-        Text(call.doctorName, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(8.dp))
+        Text(call.doctorName, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
         if (failed) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.ErrorOutline, null, tint = Color(0xFFFF8A80), modifier = Modifier.size(18.dp))
+                Icon(Icons.Rounded.ErrorOutline, null, tint = Color.White, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Couldn't connect the call", color = Color(0xFFFF8A80), fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                Text("Couldn't connect the call", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(6.dp))
-            Text(ended?.message.orEmpty(), color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp, textAlign = TextAlign.Center)
+            Text(ended?.message.orEmpty(), color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, textAlign = TextAlign.Center)
             Spacer(Modifier.height(28.dp))
             Box(
                 Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color.White.copy(alpha = 0.14f))
+                    .background(Color.White)
                     .clickable(onClick = onClose)
-                    .padding(horizontal = 28.dp, vertical = 12.dp)
-            ) { Text("Close", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium) }
+                    .padding(horizontal = 32.dp, vertical = 12.dp)
+            ) { Text("Close", color = PanelText, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
         } else {
             Text(
                 listOfNotNull(ended?.message, seconds.takeIf { it > 0 }?.let(::formatDuration)).joinToString(" · "),
-                color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp,
+                color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp, letterSpacing = 0.5.sp,
             )
         }
     }
@@ -334,7 +378,10 @@ private fun PipContent(vm: CallViewModel, call: IncomingCall) {
         when {
             room != null && remote != null -> VideoView(room, remote, mirror = false, modifier = Modifier.fillMaxSize())
             room != null && local != null && !vm.doctorJoined -> VideoView(room, local, mirror = vm.frontCamera, modifier = Modifier.fillMaxSize())
-            else -> Avatar(call, 56.dp, name = vm.remoteName ?: call.doctorName)
+            else -> {
+                Backdrop(call)
+                Avatar(call, 56.dp, name = vm.remoteName ?: call.doctorName)
+            }
         }
         if (vm.phase is CallPhase.Ended) {
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
@@ -342,21 +389,26 @@ private fun PipContent(vm: CallViewModel, call: IncomingCall) {
             }
         } else if (!vm.micOn) {
             Box(
-                Modifier.align(Alignment.BottomStart).padding(8.dp).size(24.dp).clip(CircleShape).background(DeviceRed),
+                Modifier.align(Alignment.BottomStart).padding(8.dp).size(24.dp).clip(CircleShape).background(CallRed),
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.MicOff, contentDescription = "Muted", tint = Color.White, modifier = Modifier.size(14.dp)) }
         }
     }
 }
 
+/** Height of the bottom panel above the navigation bar; the self view keeps clear of it. */
+private val PanelHeight = 168.dp
+
 @Composable
-private fun InCallContent(vm: CallViewModel, call: IncomingCall) {
+private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () -> Unit) {
     val room = vm.room
     var controlsVisible by remember { mutableStateOf(true) }
     var lastTouch by remember { mutableLongStateOf(0L) }
     var showQuality by remember { mutableStateOf(false) }
     var showAudio by remember { mutableStateOf(false) }
     val remote = vm.remoteVideo
+    val primary = LocalMyColorScheme.current.primaryBlueColor
+    fun touched() { lastTouch = System.currentTimeMillis() }
 
     if (showQuality) QualitySheet(vm.quality, onPick = vm::changeQuality, onDismiss = { showQuality = false })
     if (showAudio) AudioSheet(vm.audioDevices, vm.audioDevice, onPick = vm::selectAudioDevice, onDismiss = { showAudio = false })
@@ -374,54 +426,62 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall) {
             .fillMaxSize()
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
                 controlsVisible = !controlsVisible
-                lastTouch = System.currentTimeMillis()
+                touched()
             }
     ) {
         // Doctor
         if (room != null && remote != null) {
             VideoView(room, remote, mirror = false, modifier = Modifier.fillMaxSize())
         } else {
+            Backdrop(call)
             Column(
-                Modifier.fillMaxSize(),
+                Modifier.fillMaxSize().padding(bottom = PanelHeight),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                RippleAvatar(call, size = 112.dp)
+                RippleAvatar(call, size = 140.dp)
                 Text(
                     if (vm.doctorJoined) "Camera is off" else "Waiting for the doctor to join…",
-                    color = Color.White.copy(alpha = 0.75f), fontSize = 14.sp,
+                    color = Color.White, fontSize = 14.sp,
                 )
             }
         }
 
-        // Top: name, timer, connection
+        // Top: back (keeps the call going in a small window), connection and quality
         AnimatedVisibility(
             visible = controlsVisible,
             enter = fadeIn() + slideInVertically { -it },
             exit = fadeOut() + slideOutVertically { -it },
             modifier = Modifier.align(Alignment.TopStart),
         ) {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent)))
-                    .statusBarsPadding()
-                    .padding(start = 20.dp, end = 140.dp, top = 12.dp, bottom = 28.dp)
+            Row(
+                Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    vm.remoteName ?: call.doctorName, color = Color.White, fontSize = 19.sp,
-                    fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    LiveDot(if (vm.reconnecting) Warn else DeviceGreen)
-                    Spacer(Modifier.width(6.dp))
-                    if (vm.reconnecting) Text("Reconnecting…", color = Warn, fontSize = 13.sp)
-                    else CallTimer(vm)
-                    Spacer(Modifier.width(12.dp))
+                Box(
+                    Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.White.copy(alpha = 0.28f))
+                        .clickable(onClick = onMinimize),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.ArrowBackIos, contentDescription = "Minimise call", tint = Color.White,
+                        modifier = Modifier.size(18.dp).offset(x = 3.dp),
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                Row(
+                    Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.Black.copy(alpha = 0.35f))
+                        .padding(start = 10.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     SignalBars(vm.myConnection)
-                    Spacer(Modifier.width(10.dp))
-                    QualityPill(vm.quality) { showQuality = true; lastTouch = System.currentTimeMillis() }
+                    Spacer(Modifier.width(8.dp))
+                    QualityPill(vm.quality) { showQuality = true; touched() }
                 }
             }
         }
@@ -432,7 +492,7 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall) {
             visible = weak != null && !vm.reconnecting,
             enter = fadeIn() + scaleIn(initialScale = 0.9f),
             exit = fadeOut(),
-            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 92.dp),
+            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 64.dp),
         ) {
             Row(
                 Modifier
@@ -447,7 +507,7 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall) {
                 if (vm.quality != CallQuality.DATA_SAVER && weak == WEAK_MINE) {
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        "Use data saver", color = Color(0xFF7FD1FF), fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                        "Use data saver", color = Color(0xFF7FD1FF), fontSize = 13.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable { vm.changeQuality(CallQuality.DATA_SAVER) },
                     )
                 }
@@ -457,67 +517,87 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall) {
         // Me, small and draggable
         SelfView(vm, maxWidthPx = constraints.maxWidth.toFloat(), maxHeightPx = constraints.maxHeight.toFloat())
 
-        // Bottom controls
+        // Bottom panel: who, how long, and the controls
         AnimatedVisibility(
             visible = controlsVisible,
             enter = fadeIn() + slideInVertically { it },
             exit = fadeOut() + slideOutVertically { it },
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
-            Box(
+            Column(
                 Modifier
                     .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))))
+                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .background(Color.White.copy(alpha = 0.9f))
+                    // Taps on the panel shouldn't fall through and hide it
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { touched() }
                     .navigationBarsPadding()
-                    .padding(top = 28.dp, bottom = 22.dp),
-                contentAlignment = Alignment.Center,
+                    .padding(top = 20.dp, bottom = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Row(
-                    Modifier
-                        .clip(RoundedCornerShape(40.dp))
-                        .background(Color.White.copy(alpha = 0.10f))
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RoundAction(if (vm.micOn) Icons.Rounded.Mic else Icons.Rounded.MicOff, null, Color.White.copy(alpha = 0.14f),
-                        size = 52.dp, active = vm.micOn) { vm.toggleMic(); lastTouch = System.currentTimeMillis() }
-                    RoundAction(if (vm.cameraOn) Icons.Rounded.Videocam else Icons.Rounded.VideocamOff, null, Color.White.copy(alpha = 0.14f),
-                        size = 52.dp, active = vm.cameraOn) { vm.toggleCamera(); lastTouch = System.currentTimeMillis() }
-                    RoundAction(Icons.Rounded.Cameraswitch, null, Color.White.copy(alpha = 0.14f), size = 52.dp) {
-                        vm.flipCamera(); lastTouch = System.currentTimeMillis()
+                Text(
+                    vm.remoteName ?: call.doctorName, color = PanelText, fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+                Spacer(Modifier.height(4.dp))
+                if (vm.reconnecting) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        LiveDot(Warn)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Reconnecting…", color = Color(0xFFB26A00), fontSize = 14.sp)
                     }
+                } else CallTimer(vm)
+                Spacer(Modifier.height(18.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // On: solid blue. Off: pale blue with the crossed-out icon, so the state reads at a glance.
+                    val off = primary.copy(alpha = 0.12f)
+                    CallButton(Icons.Rounded.CallEnd, "Hang up", HangUpRed, onClick = vm::hangUp)
+                    CallButton(
+                        if (vm.micOn) Icons.Rounded.Mic else Icons.Rounded.MicOff,
+                        if (vm.micOn) "Mute" else "Unmute",
+                        if (vm.micOn) primary else off, tint = if (vm.micOn) Color.White else primary,
+                    ) { vm.toggleMic(); touched() }
+                    CallButton(
+                        if (vm.cameraOn) Icons.Rounded.Videocam else Icons.Rounded.VideocamOff,
+                        if (vm.cameraOn) "Turn camera off" else "Turn camera on",
+                        if (vm.cameraOn) primary else off, tint = if (vm.cameraOn) Color.White else primary,
+                    ) { vm.toggleCamera(); touched() }
+                    CallButton(Icons.Rounded.Cameraswitch, "Switch camera", primary) { vm.flipCamera(); touched() }
                     // Just speaker and earpiece: one tap flips between them. With a headset around, pick from a list.
-                    RoundAction(audioIcon(vm.audioDevice), null, Color.White.copy(alpha = 0.14f),
-                        size = 52.dp, active = vm.audioDevice !is AudioDevice.Earpiece) {
-                        lastTouch = System.currentTimeMillis()
+                    val earpiece = vm.audioDevice is AudioDevice.Earpiece
+                    CallButton(
+                        audioIcon(vm.audioDevice), "Audio output",
+                        if (earpiece) off else primary, tint = if (earpiece) primary else Color.White,
+                    ) {
+                        touched()
                         val others = vm.audioDevices.filter { it != vm.audioDevice }
                         if (vm.audioDevices.size <= 2 && others.size == 1) vm.selectAudioDevice(others.first())
                         else showAudio = true
                     }
-                    RoundAction(Icons.Rounded.CallEnd, null, DeviceRed, size = 60.dp, onClick = vm::hangUp)
                 }
             }
         }
     }
 }
 
-/** Own camera in a corner; drag it anywhere, it settles against the nearest side. */
+/** Own camera in a corner above the panel; drag it anywhere, it settles against the nearest side. */
 @Composable
 private fun SelfView(vm: CallViewModel, maxWidthPx: Float, maxHeightPx: Float) {
     val density = LocalDensity.current
-    val w = 108.dp; val h = 152.dp; val margin = 16.dp
+    val w = 104.dp; val h = 140.dp; val margin = 16.dp
     val wPx = with(density) { w.toPx() }
     val hPx = with(density) { h.toPx() }
     val mPx = with(density) { margin.toPx() }
     val topPx = with(density) { 72.dp.toPx() }
+    val navPx = WindowInsets.navigationBars.getBottom(density).toFloat()
+    val bottomLimit = (maxHeightPx - hPx - navPx - with(density) { (PanelHeight + margin).toPx() }).coerceAtLeast(topPx)
 
     val x = remember { Animatable(maxWidthPx - wPx - mPx) }
-    val y = remember { Animatable(topPx) }
+    val y = remember { Animatable(bottomLimit) }
     val scope = rememberCoroutineScope()
     fun settle() = scope.launch {
         val nearSide = if (x.value + wPx / 2 < maxWidthPx / 2) mPx else maxWidthPx - wPx - mPx
-        val bottomLimit = maxHeightPx - hPx - with(density) { 140.dp.toPx() } // clear of the controls
         launch { x.animateTo(nearSide, spring(dampingRatio = 0.75f, stiffness = 400f)) }
         launch { y.animateTo(y.value.coerceIn(topPx, bottomLimit), spring(dampingRatio = 0.75f, stiffness = 400f)) }
     }
@@ -532,7 +612,7 @@ private fun SelfView(vm: CallViewModel, maxWidthPx: Float, maxHeightPx: Float) {
             .offset { IntOffset(x.value.roundToInt(), y.value.roundToInt()) }
             .size(w, h)
             .scale(enter.value)
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(Color(0xFF1B2333))
             .pointerInput(Unit) {
                 detectDragGestures(onDragEnd = { settle() }, onDragCancel = { settle() }) { change, amount ->
@@ -598,7 +678,7 @@ private fun CallTimer(vm: CallViewModel) {
             delay(1_000)
         }
     }
-    Text(formatDuration(seconds), color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+    Text(formatDuration(seconds), color = PanelGrey, fontSize = 15.sp, letterSpacing = 1.5.sp)
 }
 
 private fun formatDuration(seconds: Long): String {
@@ -626,7 +706,7 @@ private fun SignalBars(quality: ConnectionQuality) {
         ConnectionQuality.EXCELLENT -> 4 to DeviceGreen
         ConnectionQuality.GOOD -> 3 to DeviceGreen
         ConnectionQuality.POOR -> 1 to Warn
-        ConnectionQuality.LOST -> 0 to DeviceRed
+        ConnectionQuality.LOST -> 0 to CallRed
         else -> 0 to Color.White
     }
     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {

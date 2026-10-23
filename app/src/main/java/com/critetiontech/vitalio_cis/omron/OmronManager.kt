@@ -1,9 +1,16 @@
 package com.critetiontech.ctvitalio.omron
 
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.critetiontech.ctvitalio.BuildConfig
@@ -16,6 +23,7 @@ import com.omronhealthcare.OmronConnectivityLibrary.OmronLibrary.LibraryManager.
 import com.omronhealthcare.OmronConnectivityLibrary.OmronLibrary.Model.OmronErrorInfo
 import com.omronhealthcare.OmronConnectivityLibrary.OmronLibrary.Model.OmronPeripheral
 import com.omronhealthcare.OmronConnectivityLibrary.OmronLibrary.OmronUtility.OmronConstants
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -30,7 +38,7 @@ import kotlin.coroutines.resumeWithException
 
 // ─── Models ───────────────────────────────────────────────────────────────────
 
-enum class OmronKind { BP, SCALE }
+enum class OmronKind(val label: String) { BP("BP Machine"), SCALE("Weight Scale") }
 
 /** A device our partner key supports. [code] is the model number printed on the device. */
 data class OmronModel(val code: String, val label: String, val kind: OmronKind)
@@ -52,6 +60,13 @@ object OmronModels {
     )
 
     fun byCode(code: String) = ALL.firstOrNull { it.code == code }
+
+    fun ofKind(kind: OmronKind) = ALL.filter { it.kind == kind }
+
+    /** Screen code for "pair whichever supported [kind] device is nearby"; the model is detected while pairing. */
+    fun autoCode(kind: OmronKind) = "auto-${kind.name.lowercase(Locale.US)}"
+
+    fun autoKind(code: String) = OmronKind.entries.firstOrNull { autoCode(it) == code }
 }
 
 /** A device the user has paired with this phone. [config] is the library's entry for the model. */
@@ -108,6 +123,9 @@ object OmronManager {
     private const val KEY_SAVED = "saved"
     private const val SCAN_TIMEOUT_SECONDS = 30
     private const val INVALID = Int.MIN_VALUE
+    /** Config keys the library has no constant for. */
+    private const val GROUP_ID = "deviceGroupIncludedGroupIDKey"
+    private const val CONFIG_ID = "id"
 
     private val gson = Gson()
     private val mutex = Mutex()
@@ -147,16 +165,17 @@ object OmronManager {
         (manager(context).retrieveManagerConfiguration()?.get(OmronConstants.OMRONBLEConfigDeviceKey) as? List<Map<String, String>>)
     }.getOrNull().orEmpty()
 
+    private fun norm(s: String) = s.uppercase(Locale.US).filter { it.isLetterOrDigit() }
+
+    private fun configNames(m: Map<String, String>) =
+        listOf(OmronConstants.OMRONBLEConfigDevice.ModelName, OmronConstants.OMRONBLEConfigDevice.ModelDisplayName,
+            OmronConstants.OMRONBLEConfigDevice.Identifier).mapNotNull { m[it] }.map(::norm)
+
     /** The library's configuration for [model], preferring its Asia-Pacific ("-AP") variant. */
     fun deviceConfig(context: Context, model: OmronModel): Map<String, String>? {
-        fun norm(s: String) = s.uppercase(Locale.US).filter { it.isLetterOrDigit() }
         val code = norm(model.code)
-        val names = { m: Map<String, String> ->
-            listOf(OmronConstants.OMRONBLEConfigDevice.ModelName, OmronConstants.OMRONBLEConfigDevice.ModelDisplayName,
-                OmronConstants.OMRONBLEConfigDevice.Identifier).mapNotNull { m[it] }.map(::norm)
-        }
-        val matches = deviceConfigs(context).filter { m -> names(m).any { it.startsWith(code) } }
-        return matches.firstOrNull { m -> names(m).any { it.startsWith(code + "AP") } } ?: matches.firstOrNull()
+        val matches = deviceConfigs(context).filter { m -> configNames(m).any { it.startsWith(code) } }
+        return matches.firstOrNull { m -> configNames(m).any { it.startsWith(code + "AP") } } ?: matches.firstOrNull()
     }
 
     fun userCount(config: Map<String, String>?): Int =
@@ -187,13 +206,14 @@ object OmronManager {
     /** Same value for pairing and every transfer, or the BP monitor refuses to talk (encryption key). */
     private fun userHash(patient: Patient) = patient.uhId
 
+    /** [configs] filters the scan: every supported model of the kind while pairing, the paired one when syncing. */
     private fun configure(
-        context: Context, patient: Patient, config: Map<String, String>,
-        model: OmronModel, pairing: Boolean, profile: OmronProfile?
+        context: Context, patient: Patient, configs: List<Map<String, String>>,
+        kind: OmronKind, pairing: Boolean, profile: OmronProfile?
     ) {
         val m = manager(context)
         val c = m.configuration
-        c.deviceFilters = arrayListOf(HashMap(config))
+        c.deviceFilters = ArrayList(configs.map { HashMap(it) })
         c.timeoutInterval = SCAN_TIMEOUT_SECONDS
         c.userHashId = userHash(patient)
         // Read everything stored, not just "new" readings: pairing already marks the device's
@@ -207,7 +227,7 @@ object OmronManager {
         )
         val settings = ArrayList<HashMap<*, *>>()
         settings += hashMapOf(OmronConstants.OMRONDeviceScanSettingsKey to scan)
-        if (profile != null) settings += personalSettings(profile, model.kind)
+        if (profile != null) settings += personalSettings(profile, kind)
         @Suppress("UNCHECKED_CAST")
         c.deviceSettings = settings as List<HashMap<Any?, Any?>>
         m.setConfiguration(c)
@@ -243,15 +263,24 @@ object OmronManager {
 
     // ── Pairing ──────────────────────────────────────────────────────────
 
-    /** Finds the device in pairing mode ("P" blinking) and pairs it for [user]. */
-    suspend fun pair(context: Context, model: OmronModel, user: Int, profile: OmronProfile?): PairedOmronDevice = mutex.withLock {
+    /**
+     * Finds whichever supported [kind] device is in pairing mode ("P" blinking), works out its model
+     * and pairs it for [user]. The user doesn't have to know the model number, and a monitor sold
+     * under another name (one that reports itself as HEM-7156T) still pairs.
+     *
+     * The model comes from a plain BLE scan first: given several models at once, the library's own
+     * scan finds nothing, so it's then run for the detected model only.
+     */
+    suspend fun pair(context: Context, kind: OmronKind, user: Int, profile: OmronProfile?): PairedOmronDevice = mutex.withLock {
         val patient = AppDependencies.prefs.getPatient() ?: throw OmronException(0, "Please log in again.")
-        val config = deviceConfig(context, model)
-            ?: throw OmronException(8003, "Omron setup is still loading or this model isn't supported. Please try again in a moment.")
-        configure(context, patient, config, model, pairing = true, profile = profile)
+        val candidates = OmronModels.ofKind(kind).mapNotNull { m -> deviceConfig(context, m)?.let { m to it } }
+        if (candidates.isEmpty()) throw OmronException(8003, "Omron setup is still loading. Please try again in a moment.")
+        val (model, config) = findNearby(context, candidates)
+        configure(context, patient, listOf(config), kind, pairing = true, profile = profile)
 
         val found = scanFirst(context)
-        found.setSelectedUsers(arrayListOf(user))
+        val pairedUser = user.coerceIn(1, userCount(config))
+        found.setSelectedUsers(arrayListOf(pairedUser))
         val paired = suspendCancellableCoroutine { cont ->
             manager(context).connectPeripheral(found) { peripheral, info ->
                 if (info.isSuccess && peripheral != null) cont.resume(peripheral) else cont.resumeWithException(info.toException())
@@ -264,7 +293,7 @@ object OmronManager {
             code = model.code,
             localName = paired.localName ?: found.localName,
             uuid = paired.uuid ?: found.uuid,
-            user = user,
+            user = pairedUser,
             config = HashMap(config),
             pairedAt = System.currentTimeMillis()
         )
@@ -273,11 +302,91 @@ object OmronManager {
         device
     }
 
+    /**
+     * Which of [candidates] a device is: by its device group, then its model name, then the model id
+     * in its Bluetooth name ("BLEsmart_0000057A…" → 0x57A = 1402).
+     */
+    internal fun identify(
+        groupId: String?, modelName: String?, localName: String?,
+        candidates: List<Pair<OmronModel, Map<String, String>>>
+    ): Pair<OmronModel, Map<String, String>>? {
+        if (!groupId.isNullOrBlank()) candidates.firstOrNull { it.second[GROUP_ID] == groupId }?.let { return it }
+        val name = norm(modelName.orEmpty())
+        if (name.isNotEmpty()) {
+            candidates.firstOrNull { name in configNames(it.second) }?.let { return it }
+            candidates.firstOrNull { name.startsWith(norm(it.first.code)) }?.let { return it }
+        }
+        val id = localName?.takeIf { it.startsWith("BLEsmart_", ignoreCase = true) }
+            ?.substring("BLEsmart_".length)?.take(8)?.toIntOrNull(16)?.toString()
+        return candidates.firstOrNull { id != null && (it.second[GROUP_ID] == id || it.second[CONFIG_ID] == id) }
+    }
+
+    /** Scans for an Omron device ("BLEsmart_…") that is one of [candidates] and returns which. */
+    @SuppressLint("MissingPermission")
+    private suspend fun findNearby(
+        context: Context, candidates: List<Pair<OmronModel, Map<String, String>>>
+    ): Pair<OmronModel, Map<String, String>> = suspendCancellableCoroutine { cont ->
+        val scanner = context.getSystemService(BluetoothManager::class.java)?.adapter?.bluetoothLeScanner
+        if (scanner == null) {
+            cont.resumeWithException(OmronException(6016, messageFor(6016, null)))
+            return@suspendCancellableCoroutine
+        }
+        val done = AtomicBoolean(false)
+        val handler = Handler(Looper.getMainLooper())
+        var unknown: String? = null
+        val seen = java.util.concurrent.ConcurrentHashMap.newKeySet<String>() // TEMP
+        lateinit var callback: ScanCallback
+        fun finish(result: Result<Pair<OmronModel, Map<String, String>>>) {
+            if (!done.compareAndSet(false, true)) return
+            handler.removeCallbacksAndMessages(null)
+            runCatching { scanner.stopScan(callback) }
+            cont.resumeWith(result)
+        }
+        callback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
+                // TEMP: every advertiser once, with its manufacturer ids (Omron is 0x020E)
+                if (seen.add(result.device.address)) runCatching {
+                    val mfr = result.scanRecord?.manufacturerSpecificData
+                    java.io.File(context.filesDir, "omron_diag.txt").appendText(
+                        "${java.time.LocalTime.now()} adv ${result.device.address} rec=${result.scanRecord?.deviceName} " +
+                            "dev=${result.device.name} rssi=${result.rssi} mfr=${mfr?.let { m -> (0 until m.size()).joinToString { "0x%04X".format(m.keyAt(it)) } }}\n"
+                    )
+                }
+                // A device already bonded to this phone may leave its name out; the phone remembers it
+                val name = result.scanRecord?.deviceName ?: result.device.name ?: return
+                if (!name.startsWith("BLEsmart_", ignoreCase = true)) return
+                val match = identify(null, null, name, candidates)
+                Log.d(TAG, "nearby $name rssi ${result.rssi} → ${match?.first?.code}")
+                runCatching { java.io.File(context.filesDir, "omron_diag.txt").appendText("${java.time.LocalTime.now()} nearby $name → ${match?.first?.code}\n") } // TEMP
+                if (match != null) finish(Result.success(match)) else unknown = name
+            }
+
+            override fun onScanFailed(errorCode: Int) {
+                finish(Result.failure(OmronException(6029, "Bluetooth scan failed (error $errorCode). Turn Bluetooth off and on, then try again.")))
+            }
+        }
+        scanner.startScan(null, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), callback)
+        handler.postDelayed({
+            finish(Result.failure(
+                unknown?.let { OmronException(8003, "Found an Omron device ($it), but it isn't a model we support yet.") }
+                    ?: OmronException(6029, messageFor(6029, null))
+            ))
+        }, SCAN_TIMEOUT_SECONDS * 1000L)
+        cont.invokeOnCancellation { finish(Result.failure(it ?: CancellationException())) }
+    }
+
     private suspend fun scanFirst(context: Context): OmronPeripheral = suspendCancellableCoroutine { cont ->
         val done = AtomicBoolean(false)
         val m = manager(context)
         m.startScanPeripherals { list, info ->
             if (done.get()) return@startScanPeripherals
+            // TEMP diagnostics: this phone drops app logcat
+            runCatching {
+                java.io.File(context.filesDir, "omron_diag.txt").appendText(
+                    "${java.time.LocalTime.now()} scan ok=${info.isSuccess} code=${info.resultCode} " +
+                        "${list?.map { "${it.localName}|${it.modelName}|${it.deviceGroupIncludedGroupIDKey}" }}\n"
+                )
+            }
             when {
                 !info.isSuccess -> if (done.compareAndSet(false, true)) cont.resumeWithException(info.toException())
                 else -> list?.firstOrNull { !it.modelName.isNullOrEmpty() }?.let { peripheral ->
@@ -297,7 +406,7 @@ object OmronManager {
     suspend fun sync(context: Context, device: PairedOmronDevice, profile: OmronProfile?): OmronSyncResult = mutex.withLock {
         val patient = AppDependencies.prefs.getPatient() ?: throw OmronException(0, "Please log in again.")
         val model = OmronModels.byCode(device.code) ?: throw OmronException(8003, "Unknown device.")
-        configure(context, patient, device.config, model, pairing = false, profile = profile)
+        configure(context, patient, listOf(device.config), model.kind, pairing = false, profile = profile)
 
         val m = manager(context)
         val target = OmronPeripheral(device.localName, device.uuid)

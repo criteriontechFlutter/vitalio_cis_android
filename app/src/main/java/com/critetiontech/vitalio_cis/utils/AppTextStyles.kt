@@ -13,11 +13,16 @@ import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.ui.theme.MyColorScheme
 
-val latoFont =FontFamily(
+/** The app font. Weights in between (e.g. SemiBold) use the closest file. */
+val latoFont = FontFamily(
+    Font(R.font.lato_light, weight = FontWeight.Light),
     Font(R.font.lato_regular, weight = FontWeight.Normal),
+    Font(R.font.lato_medium, weight = FontWeight.Medium),
     Font(R.font.lato_bold, weight = FontWeight.Bold),
-    Font(R.font.lato_italic, weight = FontWeight.Normal, style = FontStyle.Italic)
-) // Replace with your Lato font family
+    Font(R.font.lato_black, weight = FontWeight.Black),
+    Font(R.font.lato_italic, weight = FontWeight.Normal, style = FontStyle.Italic),
+    Font(R.font.lato_mediumitalic, weight = FontWeight.Medium, style = FontStyle.Italic)
+)
 
 object  AppTextStyles  {
 

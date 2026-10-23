@@ -42,7 +42,11 @@ class OmronDeviceViewModel : ViewModel() {
     private val context = MyApplication.appContext
     private var job: Job? = null
 
+    /** Known once paired; null while pairing an unknown device of [kind]. */
     var model: OmronModel? = null
+        private set
+
+    var kind: OmronKind? = null
         private set
 
     private val _device = MutableStateFlow<PairedOmronDevice?>(null)
@@ -57,27 +61,37 @@ class OmronDeviceViewModel : ViewModel() {
     private val _selectedUser = MutableStateFlow(1)
     val selectedUser: StateFlow<Int> = _selectedUser
 
+    /** [code] is a model number, or [OmronModels.autoCode] to pair whichever device of that kind is nearby. */
     fun load(code: String) {
-        if (model?.code == code) return
-        model = OmronModels.byCode(code)
-        _device.value = OmronManager.pairedDevice(context, code)
-        _userCount.value = model?.let { OmronManager.userCount(OmronManager.deviceConfig(context, it)) } ?: 1
+        if (loaded == code) return
+        loaded = code
+        val auto = OmronModels.autoKind(code)
+        model = if (auto == null) OmronModels.byCode(code) else null
+        kind = auto ?: model?.kind
+        _device.value = model?.let { OmronManager.pairedDevice(context, it.code) }
+        // Before the model is known, offer as many users as the roomiest model of the kind has
+        val models = model?.let(::listOf) ?: kind?.let(OmronModels::ofKind).orEmpty()
+        _userCount.value = models.maxOfOrNull { OmronManager.userCount(OmronManager.deviceConfig(context, it)) } ?: 1
     }
+
+    private var loaded: String? = null
 
     fun selectUser(user: Int) { _selectedUser.value = user }
 
     fun showError(message: String) { _phase.value = OmronPhase.Failed(message) }
 
     fun pair() = run(OmronPhase.Pairing) {
-        val m = model ?: return@run
-        _device.value = OmronManager.pair(context, m, _selectedUser.value, profile(m))
+        val k = kind ?: return@run
+        val paired = OmronManager.pair(context, k, _selectedUser.value, profile(k))
+        model = OmronModels.byCode(paired.code)
+        _device.value = paired
         _phase.value = OmronPhase.JustPaired
     }
 
     fun sync() = run(OmronPhase.Syncing) {
         val m = model ?: return@run
         val d = _device.value ?: return@run
-        val result = OmronManager.sync(context, d, profile(m))
+        val result = OmronManager.sync(context, d, profile(m.kind))
         _device.value = OmronManager.pairedDevice(context, d.code)
         _phase.value = OmronPhase.Synced(result.latest, result.alreadySaved)
     }
@@ -140,9 +154,9 @@ class OmronDeviceViewModel : ViewModel() {
      * Scales need height, gender and date of birth; height comes from the last saved vitals.
      * Some BP monitors (HEM-7361T) also store date of birth and fail pairing without it.
      */
-    private suspend fun profile(model: OmronModel): OmronProfile? {
+    private suspend fun profile(kind: OmronKind): OmronProfile? {
         val patient = AppDependencies.prefs.getPatient() ?: return null
-        val height = if (model.kind != OmronKind.SCALE) null
+        val height = if (kind != OmronKind.SCALE) null
             else (AppDependencies.fetchLastVital()(patient.uhId, patient.clientId.toString(), patient.pid.toString())
                 as? DomainResult.Success)?.data
             ?.firstOrNull { it.vitalName.equals("Height", ignoreCase = true) }?.vitalValue?.takeIf { it > 50 }

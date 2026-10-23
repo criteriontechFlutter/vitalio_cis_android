@@ -274,7 +274,7 @@ private fun DoctorSearchField(query: String, onQueryChange: (String) -> Unit, mo
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                textStyle = TextStyle(color = colors.textDarkColor, fontSize = 14.sp),
+                textStyle = TextStyle(fontFamily = com.critetiontech.ctvitalio.utils.latoFont, color = colors.textDarkColor, fontSize = 14.sp),
                 cursorBrush = SolidColor(colors.primaryBlueColor),
                 modifier = Modifier.fillMaxWidth(),
             )

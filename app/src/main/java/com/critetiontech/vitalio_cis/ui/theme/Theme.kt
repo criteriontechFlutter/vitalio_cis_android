@@ -148,12 +148,24 @@ fun MyAppTheme(
     ) {
         // Material parts (Text without a colour, Card, TextField, Switch, menus…) follow the app
         // theme too, instead of Material's default light purple.
-        androidx.compose.material3.MaterialTheme(colorScheme = materialSchemeFor(colors)) {
+        androidx.compose.material3.MaterialTheme(colorScheme = materialSchemeFor(colors), typography = LatoTypography) {
             CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides colors.textDarkColor) {
                 content()
             }
         }
     }
+}
+
+/** Material's type scale in Lato, so every Text uses the app font unless it sets its own. */
+private val LatoTypography = androidx.compose.material3.Typography().let { t ->
+    fun androidx.compose.ui.text.TextStyle.lato() = copy(fontFamily = com.critetiontech.ctvitalio.utils.latoFont)
+    t.copy(
+        displayLarge = t.displayLarge.lato(), displayMedium = t.displayMedium.lato(), displaySmall = t.displaySmall.lato(),
+        headlineLarge = t.headlineLarge.lato(), headlineMedium = t.headlineMedium.lato(), headlineSmall = t.headlineSmall.lato(),
+        titleLarge = t.titleLarge.lato(), titleMedium = t.titleMedium.lato(), titleSmall = t.titleSmall.lato(),
+        bodyLarge = t.bodyLarge.lato(), bodyMedium = t.bodyMedium.lato(), bodySmall = t.bodySmall.lato(),
+        labelLarge = t.labelLarge.lato(), labelMedium = t.labelMedium.lato(), labelSmall = t.labelSmall.lato(),
+    )
 }
 
 private fun materialSchemeFor(c: MyColorScheme): androidx.compose.material3.ColorScheme {
