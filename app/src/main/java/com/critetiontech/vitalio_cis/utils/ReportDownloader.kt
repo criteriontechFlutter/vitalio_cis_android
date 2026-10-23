@@ -68,9 +68,6 @@ object ReportDownloader {
     fun normalizeUrl(raw: String?): String? =
         raw?.trim()?.replace('\\', '/')?.takeIf { it.startsWith("http", ignoreCase = true) }
 
-    /** Android 9 and older need WRITE_EXTERNAL_STORAGE to write to public Downloads. */
-    fun needsStoragePermission(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-
     /**
      * Starts downloading [rawUrl] under [key]. Returns false if the URL isn't downloadable.
      * [onFinished] runs on a background thread with the final state.

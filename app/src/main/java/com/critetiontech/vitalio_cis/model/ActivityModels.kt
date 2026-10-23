@@ -58,3 +58,6 @@ data class AddPatientActivityRequest(
     val userId: Int = 0,
     val clientID: Int = 45
 )
+
+/** How the server took an AddPatientActivity request. */
+enum class ActivitySaveResult { SAVED, ALREADY_EXISTS }
