@@ -106,11 +106,12 @@ data class EmployeeGoal(
     val unit: String
 )
 class PrefsManager(context: Context) {
-    private val sharedPref = context.getSharedPreferences("patient_prefs", Context.MODE_PRIVATE)
+    private val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val gson = Gson()
 
     companion object {
-        private const val KEY_PATIENT = "current_patient"
+        const val PREFS_NAME = "patient_prefs"
+        const val KEY_PATIENT = "current_patient"
         private const val KEY_Allergies = "allergies_length"
         private const val KEY_Emergency = "Emergency_length"
         private const val KEY_SmartWatch = "SmartWatch_length"
@@ -299,6 +300,8 @@ class PrefsManager(context: Context) {
 
     // Optional: clear all
     fun clearAll() {
+        // Remove the patient separately first: below API 30, clear() doesn't notify listeners (watch sync)
+        sharedPref.edit().remove(KEY_PATIENT).apply()
         sharedPref.edit().clear().apply()
     }
 }
