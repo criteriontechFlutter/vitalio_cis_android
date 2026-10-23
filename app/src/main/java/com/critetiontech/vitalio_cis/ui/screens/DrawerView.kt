@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -174,7 +173,7 @@ fun DrawerScreen() {
                         listOf(
                             "Profile" to "",
                             "Allergies" to "2",
-                            "Breathing Therapy" to "",
+                            // "Breathing Therapy" to "",
                         )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -189,8 +188,6 @@ fun DrawerScreen() {
                     ThemeSwitchItem()
                     Spacer(modifier = Modifier.height(12.dp))
                     HapticsSwitchItem()
-            ServerItem()
-                    ServerItem()
                     Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
                         listOf(
@@ -225,7 +222,7 @@ fun DrawerScreen() {
                 listOf(
                     "Profile" to "",
                     "Allergies" to "2",
-                    "Breathing Therapy" to "",
+                    // "Breathing Therapy" to "",
                 )
             )
 
@@ -254,7 +251,6 @@ fun DrawerScreen() {
             ThemeSwitchItem()
             Spacer(modifier = Modifier.height(12.dp))
             HapticsSwitchItem()
-            ServerItem()
 
             Spacer(modifier = Modifier.height(12.dp))
             MenuCard(
@@ -301,36 +297,6 @@ fun HapticsSwitchItem() {
             if (on) haptic(HapticEvent.Toggle)
         },
     )
-}
-
-/** Testers only: shows which backend this build talks to and opens the switcher. */
-@Composable
-fun ServerItem() {
-    if (!com.critetiontech.ctvitalio.config.ApiConfig.canSwitch) return
-    val colors = LocalMyColorScheme.current
-    val env = com.critetiontech.ctvitalio.config.ApiConfig.environment
-    var showSheet by remember { mutableStateOf(false) }
-    if (showSheet) com.critetiontech.ctvitalio.ui.components.EnvironmentSheet(onDismiss = { showSheet = false })
-
-    Spacer(modifier = Modifier.height(12.dp))
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(colors.dashboardContainerColor),
-        modifier = Modifier.fillMaxWidth().clickable { showSheet = true }
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Dns, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
-                Text(text = "Server: ${env.label}", color = colors.textDarkColor, fontSize = 16.sp)
-                Text(text = env.host.substringAfter("://"), color = colors.textGreyColor, fontSize = 12.sp)
-            }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
-        }
-    }
 }
 
 /** A settings card with an icon, title, optional subtitle and a switch, as used in the drawer. */
