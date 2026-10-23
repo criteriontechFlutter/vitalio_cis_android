@@ -83,6 +83,7 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
     val userCount by viewModel.userCount.collectAsState()
     val selectedUser by viewModel.selectedUser.collectAsState()
     val model = viewModel.model ?: OmronModels.byCode(modelCode)
+    val kind = viewModel.kind ?: OmronModels.autoKind(modelCode) ?: model?.kind
 
     // Bluetooth permission → Bluetooth on → action
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -106,11 +107,11 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
     val sync = { withBluetooth(viewModel::sync) }
     val pair = { withBluetooth(viewModel::pair) }
 
-    CommonAppBar(title = "Omron ${model?.code.orEmpty()}") {
+    CommonAppBar(title = "Omron ${model?.code ?: kind?.label.orEmpty()}") {
         Column(
             modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor).verticalScroll(rememberScrollState())
         ) {
-            if (model == null) {
+            if (kind == null) {
                 Text("This device isn't supported.", modifier = Modifier.padding(24.dp), color = colors.textGreyColor)
                 return@Column
             }
@@ -120,9 +121,9 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
 
             AnimatedEnter(index = 0) {
                 DeviceHeader(
-                    icon = if (model.kind == OmronKind.BP) Icons.Filled.MonitorHeart else Icons.Filled.MonitorWeight,
-                    eyebrow = "Omron · ${model.label}",
-                    title = model.code,
+                    icon = if (kind == OmronKind.BP) Icons.Filled.MonitorHeart else Icons.Filled.MonitorWeight,
+                    eyebrow = if (model != null) "Omron · ${model.label}" else "Omron · Any supported model",
+                    title = model?.code ?: kind.label,
                     status = when {
                         phase == OmronPhase.Pairing -> "Searching…"
                         phase == OmronPhase.Syncing -> "Reading…"
@@ -153,10 +154,14 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
                 label = "omronPhase"
             ) { p ->
                 when (p) {
-                    OmronPhase.Pairing -> RadarBusyCard("Searching for your ${model.code}", "Keep \"P\" blinking on the device and accept the Bluetooth request if asked.", onCancel = viewModel::cancel)
+                    OmronPhase.Pairing -> RadarBusyCard(
+                        "Searching for your Omron ${kind.label.lowercase()}",
+                        "Keep \"P\" blinking on the device and accept the Bluetooth request if asked. We'll recognise the model.",
+                        onCancel = viewModel::cancel
+                    )
                     OmronPhase.Syncing -> RadarBusyCard("Reading measurements", "Keep the device close to your phone.", onCancel = viewModel::cancel)
                     OmronPhase.JustPaired -> StatusCard(
-                        true, "Device paired", "Take a measurement on the device, then sync to see it here.",
+                        true, "${model?.code ?: "Device"} paired", "Take a measurement on the device, then sync to see it here.",
                         action = "Sync now", actionIcon = Icons.Filled.Sync, onAction = sync
                     )
                     is OmronPhase.Failed -> StatusCard(
@@ -168,7 +173,7 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
                         "Take a measurement first. If you just did, press the device's Bluetooth button and sync again.",
                         icon = Icons.Filled.Info, tint = DeviceAmber,
                         action = "Sync again", actionIcon = Icons.Filled.Sync, onAction = sync
-                    ) else ReadingCard(p, p.latest, model, onSave = viewModel::save)
+                    ) else ReadingCard(p, p.latest, kind, onSave = viewModel::save)
                     OmronPhase.Idle -> Spacer(Modifier.height(0.dp))
                 }
             }
@@ -187,11 +192,12 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
                         )
                     )
                 }
+                AnimatedEnter(index = 3) { SupportedDevicesCard(kind) }
             } else {
                 AnimatedEnter(index = 1) {
                     StepsCard(
                         "How to sync",
-                        if (model.kind == OmronKind.BP) listOf(
+                        if (kind == OmronKind.BP) listOf(
                             Icons.Filled.MonitorHeart to "Take your blood pressure as User ${d.user} on the device.",
                             Icons.Filled.Bluetooth to "Press the Bluetooth / transfer button once (some models send automatically).",
                             Icons.Filled.CloudUpload to "Tap Sync above, check your latest reading and tap Save."
@@ -226,6 +232,35 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
 
 internal val readingDay = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
 internal val readingClock = DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
+
+/** The models that pair, so people can check theirs; pairing detects which one it is. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SupportedDevicesCard(kind: OmronKind) {
+    val colors = LocalMyColorScheme.current
+    FlatCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Info, null, tint = colors.primaryBlueColor, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Caption("Supported devices")
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "No need to pick your model: the app recognises it while pairing. These Omron models work:",
+            fontSize = 12.sp, color = colors.textDarkColor, lineHeight = 17.sp
+        )
+        Spacer(Modifier.height(10.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OmronModels.ofKind(kind).forEach { m ->
+                Text(
+                    m.code, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.primaryBlueColor,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).background(tintFill(colors.primaryBlueColor))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun UserPicker(count: Int, selected: Int, enabled: Boolean, onSelect: (Int) -> Unit) {
@@ -314,7 +349,7 @@ internal fun BpGauge(category: BpCategory) {
 }
 
 @Composable
-private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, model: OmronModel, onSave: () -> Unit) {
+private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, kind: OmronKind, onSave: () -> Unit) {
     val colors = LocalMyColorScheme.current
     val local = r.time.atZone(ZoneId.systemDefault())
     val category = if (r.isBloodPressure) bpCategory(r.systolic!!, r.diastolic!!) else null
@@ -391,7 +426,7 @@ private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, model: Omron
         }
         Spacer(Modifier.height(16.dp))
 
-        val canSave = r.isBloodPressure && model.kind == OmronKind.BP
+        val canSave = r.isBloodPressure && kind == OmronKind.BP
         AnimatedContent(
             targetState = when { !canSave -> 0; result.saved -> 2; else -> 1 },
             transitionSpec = { (fadeIn(tween(AppMotion.MEDIUM)) + scaleIn(initialScale = 0.92f)) togetherWith fadeOut(tween(AppMotion.SHORT)) },

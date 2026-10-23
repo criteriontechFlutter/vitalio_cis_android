@@ -371,7 +371,7 @@ private fun ReportSearchField(query: String, onQueryChange: (String) -> Unit, mo
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                textStyle = TextStyle(color = colors.textDarkColor, fontSize = 15.sp),
+                textStyle = TextStyle(fontFamily = com.critetiontech.ctvitalio.utils.latoFont, color = colors.textDarkColor, fontSize = 15.sp),
                 cursorBrush = androidx.compose.ui.graphics.SolidColor(colors.primaryBlueColor),
                 modifier = Modifier.fillMaxWidth(),
             )

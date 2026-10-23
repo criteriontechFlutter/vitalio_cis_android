@@ -80,16 +80,19 @@ data class Device(
     val route: String? = null,
 )
 
-/** Only the Omron devices that can measure this vital: BP machines for BP/pulse, scales for weight. */
-internal fun omronDevicesFor(vitalName: String): List<Device> {
+/** The kind of Omron device that measures this vital: BP machines for BP/pulse, scales for weight. */
+internal fun omronKindFor(vitalName: String): OmronKind? {
     val vital = vitalName.lowercase()
-    val kind = when {
+    return when {
         listOf("pressure", "bp", "pulse", "heart").any { it in vital } -> OmronKind.BP
         "weight" in vital -> OmronKind.SCALE
-        else -> return emptyList()
+        else -> null
     }
-    return OmronModels.ALL.filter { it.kind == kind }.map { Device("Omron ${it.code}", it.label, it.code) }
 }
+
+/** One "add" row per kind: pairing detects the model, so there's no list of models to pick from. */
+internal fun omronDevicesFor(vitalName: String): List<Device> =
+    omronKindFor(vitalName)?.let { listOf(Device("Omron ${it.label}", "Any supported model", OmronModels.autoCode(it))) }.orEmpty()
 
 /** Yonker devices that measure this vital: the BP machine for BP/pulse, the oximeter for SpO2/pulse. */
 internal fun yonkerDevicesFor(vitalName: String): List<Device> {
@@ -294,6 +297,7 @@ fun ConnectionScreen(
 
     // Re-read paired Omron devices whenever the screen comes back (e.g. after pairing)
     val context = LocalContext.current
+    val kind = remember(vitalName) { omronKindFor(vitalName) }
     var paired by remember { mutableStateOf(emptyMap<String?, PairedOmronDevice>()) }
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -317,8 +321,11 @@ fun ConnectionScreen(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            // Your devices, then watches, then the Omron models that can still be paired
-            val (mine, others) = devices.partition { paired[it.code] != null }
+            // Your devices, then watches, then adding another Omron device
+            val mine = paired.values.mapNotNull { d ->
+                OmronModels.byCode(d.code)?.takeIf { it.kind == kind }?.let { Device("Omron ${it.code}", it.label, it.code) }
+            }
+            val others = devices
             var index = 0
             fun open(device: Device) {
                 device.route?.let { navController.navigate(it); return }
@@ -806,6 +813,7 @@ private fun VitalInputRow(
                     onDone = { onDone() },
                 ),
                 textStyle = TextStyle(
+                    fontFamily = com.critetiontech.ctvitalio.utils.latoFont,
                     fontSize = 44.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (error != null) errorColor else colors.textDarkColor,

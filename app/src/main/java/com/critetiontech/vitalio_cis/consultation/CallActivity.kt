@@ -102,6 +102,7 @@ class CallActivity : ComponentActivity() {
                     onAccept = ::answer,
                     onDecline = vm::decline,
                     onClose = ::finish,
+                    onMinimize = onBackPressedDispatcher::onBackPressed,
                     pip = inPip,
                 )
             }
