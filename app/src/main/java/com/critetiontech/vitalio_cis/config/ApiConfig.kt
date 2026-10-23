@@ -6,6 +6,7 @@ import com.critetiontech.ctvitalio.BuildConfig
 import com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler
 import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.utils.PrefsManager
+import com.critetiontech.ctvitalio.voice.VoiceEndpoints
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -107,8 +108,8 @@ object ApiConfig {
     const val DIGI_DOCTOR = "http://52.172.134.222:205/api/v1.0/"
     /** Lab report and prescription reading (OCR). */
     const val AI_UPLOAD = "http://food.shopright.ai:3480/"
-    const val ECHO_AI = "http://food.shopright.ai:3478/api/echo/"
-    const val DICTATION_WS = "ws://food.shopright.ai:3479/ws"
+    const val ECHO_AI = VoiceEndpoints.ECHO_AI
+    const val DICTATION_WS = VoiceEndpoints.DICTATION_WS
     const val NUTRI_ANALYSER = "https://nutrianalyser.com:313/api"
     /** Smart ring token storage and vitals. */
     const val RING_TOKENS = "https://vitalioapi.medvantage.tech:5082/"

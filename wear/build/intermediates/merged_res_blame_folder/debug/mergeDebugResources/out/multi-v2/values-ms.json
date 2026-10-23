@@ -4,7 +4,24 @@
             "outputFile": "com.critetiontech.ctvitalio.wear-mergeDebugResources-45:/values-ms/values-ms.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\93fb2c85b5590a946e10652212170c35\\transformed\\material3\\res\\values-ms\\values-ms.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\b0a9c273399672c11360fb1886ed7562\\transformed\\ui\\res\\values-ms\\values-ms.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "107,206,296,380,476,578,663,746,841,928,1013,1098,1184,1256,1343,1420,1493,1566,1642,1708",
+                        "endColumns": "98,89,83,95,101,84,82,94,86,84,84,85,71,86,76,72,72,75,65,123",
+                        "endOffsets": "201,291,375,471,573,658,741,836,923,1008,1093,1179,1251,1338,1415,1488,1561,1637,1703,1827"
+                    },
+                    "to": {
+                        "startLines": "15,23,24,43,44,45,46,47,114,115,121,122,123,124,125,126,127,129,130,131",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "863,1705,1795,4235,4331,4433,4518,4601,11975,12062,12876,12961,13047,13119,13206,13283,13356,13530,13606,13672",
+                        "endColumns": "98,89,83,95,101,84,82,94,86,84,84,85,71,86,76,72,72,75,65,123",
+                        "endOffsets": "957,1790,1874,4326,4428,4513,4596,4691,12057,12142,12956,13042,13114,13201,13278,13351,13424,13601,13667,13791"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\f709ea5241ec907774dd0c7ab2ac392b\\transformed\\material3\\res\\values-ms\\values-ms.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -21,7 +38,41 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\9905c10299241fbdf4e7640538c007b8\\transformed\\compose-material3-1.7.1\\res\\values-ms\\values-ms.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\0a9c6c948d3d5e14307d9e5604759a4c\\transformed\\core-1.19.1\\res\\values-ms\\values-ms.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,150,252,349,459,565,683,798",
+                        "endColumns": "94,101,96,109,105,117,114,100",
+                        "endOffsets": "145,247,344,454,560,678,793,894"
+                    },
+                    "to": {
+                        "startLines": "16,17,18,19,20,21,22,128",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "962,1057,1159,1256,1366,1472,1590,13429",
+                        "endColumns": "94,101,96,109,105,117,114,100",
+                        "endOffsets": "1052,1154,1251,1361,1467,1585,1700,13525"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\22c026cb00d67cd944837690c369f72a\\transformed\\play-services-base-18.5.0\\res\\values-ms\\values.xml",
+                    "from": {
+                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
+                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                        "startOffsets": "193,295,464,590,692,860,988,1104,1207,1388,1493,1664,1795,1962,2133,2196,2256",
+                        "endColumns": "101,168,125,101,167,127,115,102,180,104,170,130,166,170,62,59,78",
+                        "endOffsets": "294,463,589,691,859,987,1103,1206,1387,1492,1663,1794,1961,2132,2195,2255,2334"
+                    },
+                    "to": {
+                        "startLines": "25,26,27,28,29,30,31,32,34,35,36,37,38,39,40,41,42",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "1879,1985,2158,2288,2394,2566,2698,2818,3071,3256,3365,3540,3675,3846,4021,4088,4152",
+                        "endColumns": "105,172,129,105,171,131,119,106,184,108,174,134,170,174,66,63,82",
+                        "endOffsets": "1980,2153,2283,2389,2561,2693,2813,2920,3251,3360,3535,3670,3841,4016,4083,4147,4230"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\b953f18bb591e2c8152657ea660a07fb\\transformed\\compose-material3-1.7.1\\res\\values-ms\\values-ms.xml",
                     "from": {
                         "startLines": "2,6,10,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -40,58 +91,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\f0560867b03f0962d77a12acec9dc6d2\\transformed\\core-1.19.1\\res\\values-ms\\values-ms.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,150,252,349,459,565,683,798",
-                        "endColumns": "94,101,96,109,105,117,114,100",
-                        "endOffsets": "145,247,344,454,560,678,793,894"
-                    },
-                    "to": {
-                        "startLines": "16,17,18,19,20,21,22,128",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "962,1057,1159,1256,1366,1472,1590,13429",
-                        "endColumns": "94,101,96,109,105,117,114,100",
-                        "endOffsets": "1052,1154,1251,1361,1467,1585,1700,13525"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\0845ac859907fa5d3101cf29a2e1d122\\transformed\\play-services-basement-18.9.0\\res\\values-ms\\values.xml",
-                    "from": {
-                        "startLines": "4",
-                        "startColumns": "0",
-                        "startOffsets": "218",
-                        "endColumns": "141",
-                        "endOffsets": "359"
-                    },
-                    "to": {
-                        "startLines": "33",
-                        "startColumns": "4",
-                        "startOffsets": "2925",
-                        "endColumns": "145",
-                        "endOffsets": "3066"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\124dd6b6210623556560515c2edeb325\\transformed\\play-services-base-18.5.0\\res\\values-ms\\values.xml",
-                    "from": {
-                        "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
-                        "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
-                        "startOffsets": "193,295,464,590,692,860,988,1104,1207,1388,1493,1664,1795,1962,2133,2196,2256",
-                        "endColumns": "101,168,125,101,167,127,115,102,180,104,170,130,166,170,62,59,78",
-                        "endOffsets": "294,463,589,691,859,987,1103,1206,1387,1492,1663,1794,1961,2132,2195,2255,2334"
-                    },
-                    "to": {
-                        "startLines": "25,26,27,28,29,30,31,32,34,35,36,37,38,39,40,41,42",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "1879,1985,2158,2288,2394,2566,2698,2818,3071,3256,3365,3540,3675,3846,4021,4088,4152",
-                        "endColumns": "105,172,129,105,171,131,119,106,184,108,174,134,170,174,66,63,82",
-                        "endOffsets": "1980,2153,2283,2389,2561,2693,2813,2920,3251,3360,3535,3670,3841,4016,4083,4147,4230"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\34dd525c42c42efeb78418d462b089c0\\transformed\\foundation\\res\\values-ms\\values-ms.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\1ec4138d4e3658f0c67836f047f04705\\transformed\\foundation\\res\\values-ms\\values-ms.xml",
                     "from": {
                         "startLines": "2,3,4",
                         "startColumns": "4,4,4",
@@ -108,20 +108,20 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\c7a0938a17bbf4abd2e76b232ad4244c\\transformed\\ui\\res\\values-ms\\values-ms.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\eb340a2b211064ffdd080ae35066f4da\\transformed\\play-services-basement-18.9.0\\res\\values-ms\\values.xml",
                     "from": {
-                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "107,206,296,380,476,578,663,746,841,928,1013,1098,1184,1256,1343,1420,1493,1566,1642,1708",
-                        "endColumns": "98,89,83,95,101,84,82,94,86,84,84,85,71,86,76,72,72,75,65,123",
-                        "endOffsets": "201,291,375,471,573,658,741,836,923,1008,1093,1179,1251,1338,1415,1488,1561,1637,1703,1827"
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "218",
+                        "endColumns": "141",
+                        "endOffsets": "359"
                     },
                     "to": {
-                        "startLines": "15,23,24,43,44,45,46,47,114,115,121,122,123,124,125,126,127,129,130,131",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "863,1705,1795,4235,4331,4433,4518,4601,11975,12062,12876,12961,13047,13119,13206,13283,13356,13530,13606,13672",
-                        "endColumns": "98,89,83,95,101,84,82,94,86,84,84,85,71,86,76,72,72,75,65,123",
-                        "endOffsets": "957,1790,1874,4326,4428,4513,4596,4691,12057,12142,12956,13042,13114,13201,13278,13351,13424,13601,13667,13791"
+                        "startLines": "33",
+                        "startColumns": "4",
+                        "startOffsets": "2925",
+                        "endColumns": "145",
+                        "endOffsets": "3066"
                     }
                 }
             ]

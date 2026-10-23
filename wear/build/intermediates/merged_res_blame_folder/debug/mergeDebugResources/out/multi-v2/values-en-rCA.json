@@ -4,7 +4,24 @@
             "outputFile": "com.critetiontech.ctvitalio.wear-mergeDebugResources-45:/values-en-rCA/values-en-rCA.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\34dd525c42c42efeb78418d462b089c0\\transformed\\foundation\\res\\values-en-rCA\\values-en-rCA.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\0a9c6c948d3d5e14307d9e5604759a4c\\transformed\\core-1.19.1\\res\\values-en-rCA\\values-en-rCA.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,151,253,352,451,555,657,773",
+                        "endColumns": "95,101,98,98,103,101,115,100",
+                        "endOffsets": "146,248,347,446,550,652,768,869"
+                    },
+                    "to": {
+                        "startLines": "16,17,18,19,20,21,22,110",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "967,1063,1165,1264,1363,1467,1569,10776",
+                        "endColumns": "95,101,98,98,103,101,115,100",
+                        "endOffsets": "1058,1160,1259,1358,1462,1564,1680,10872"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\1ec4138d4e3658f0c67836f047f04705\\transformed\\foundation\\res\\values-en-rCA\\values-en-rCA.xml",
                     "from": {
                         "startLines": "2,3,4",
                         "startColumns": "4,4,4",
@@ -21,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\93fb2c85b5590a946e10652212170c35\\transformed\\material3\\res\\values-en-rCA\\values-en-rCA.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\f709ea5241ec907774dd0c7ab2ac392b\\transformed\\material3\\res\\values-en-rCA\\values-en-rCA.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -38,7 +55,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\9905c10299241fbdf4e7640538c007b8\\transformed\\compose-material3-1.7.1\\res\\values-en-rCA\\values-en-rCA.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\b953f18bb591e2c8152657ea660a07fb\\transformed\\compose-material3-1.7.1\\res\\values-en-rCA\\values-en-rCA.xml",
                     "from": {
                         "startLines": "2,6,10,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -57,24 +74,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\f0560867b03f0962d77a12acec9dc6d2\\transformed\\core-1.19.1\\res\\values-en-rCA\\values-en-rCA.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,151,253,352,451,555,657,773",
-                        "endColumns": "95,101,98,98,103,101,115,100",
-                        "endOffsets": "146,248,347,446,550,652,768,869"
-                    },
-                    "to": {
-                        "startLines": "16,17,18,19,20,21,22,110",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "967,1063,1165,1264,1363,1467,1569,10776",
-                        "endColumns": "95,101,98,98,103,101,115,100",
-                        "endOffsets": "1058,1160,1259,1358,1462,1564,1680,10872"
-                    }
-                },
-                {
-                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\c7a0938a17bbf4abd2e76b232ad4244c\\transformed\\ui\\res\\values-en-rCA\\values-en-rCA.xml",
+                    "source": "C:\\Users\\CT-Animesh\\.gradle\\caches\\9.8.0\\transforms\\b0a9c273399672c11360fb1886ed7562\\transformed\\ui\\res\\values-en-rCA\\values-en-rCA.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
