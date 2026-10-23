@@ -1,82 +1,82 @@
 [
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xxhdpi_ic_launcher.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xxhdpi\\ic_launcher.webp"
-    },
-    {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-mdpi_ic_launcher_foreground.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-mdpi\\ic_launcher_foreground.webp"
-    },
-    {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xxxhdpi_ic_launcher_foreground.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xxxhdpi\\ic_launcher_foreground.webp"
-    },
-    {
         "merged": "com.critetiontech.ctvitalio.wear-debug-47:/drawable_ic_mic.xml.flat",
         "source": "com.critetiontech.ctvitalio.wear-main-49:/drawable/ic_mic.xml"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-hdpi_ic_launcher_foreground.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-hdpi\\ic_launcher_foreground.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xxhdpi/ic_launcher.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xhdpi_ic_launcher_round.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xhdpi\\ic_launcher_round.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xxxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xhdpi_ic_launcher.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xhdpi\\ic_launcher.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-mdpi_ic_launcher.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-mdpi\\ic_launcher.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-mdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-hdpi_ic_launcher.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-hdpi\\ic_launcher.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-hdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-hdpi/ic_launcher_foreground.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xxxhdpi_ic_launcher_round.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xxxhdpi\\ic_launcher_round.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-mdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-mdpi/ic_launcher_foreground.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\xml_network_security_config.xml.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\xml\\network_security_config.xml"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\drawable_ic_launcher_background.xml.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\drawable\\ic_launcher_background.xml"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-mdpi/ic_launcher.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-anydpi-v26\\ic_launcher.xml"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/xml_network_security_config.xml.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/xml/network_security_config.xml"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-hdpi_ic_launcher_round.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-hdpi\\ic_launcher_round.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xhdpi/ic_launcher.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xxhdpi_ic_launcher_foreground.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xxhdpi\\ic_launcher_foreground.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-hdpi/ic_launcher.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-hdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xxxhdpi_ic_launcher.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xxxhdpi\\ic_launcher.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xxxhdpi/ic_launcher.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xhdpi_ic_launcher_foreground.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xhdpi\\ic_launcher_foreground.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xhdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xhdpi/ic_launcher_foreground.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-mdpi_ic_launcher_round.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-mdpi\\ic_launcher_round.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xxxhdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xxxhdpi/ic_launcher_foreground.webp"
     },
     {
-        "merged": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-debug-47:\\mipmap-xxhdpi_ic_launcher_round.webp.flat",
-        "source": "C:\\Users\\CT-Animesh\\.gradle\\daemon\\9.8.0\\com.critetiontech.ctvitalio.wear-main-49:\\mipmap-xxhdpi\\ic_launcher_round.webp"
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xhdpi/ic_launcher_round.webp"
+    },
+    {
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.critetiontech.ctvitalio.wear-debug-47:/mipmap-xxhdpi_ic_launcher_foreground.webp.flat",
+        "source": "com.critetiontech.ctvitalio.wear-main-49:/mipmap-xxhdpi/ic_launcher_foreground.webp"
     }
 ]

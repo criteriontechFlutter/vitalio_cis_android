@@ -38,6 +38,9 @@ androidxFoundationVersion = "1.12.1"
 uiVersion = "1.12.1"
 contentpager = "1.0.0"
 foundationLayout = "1.12.1"
+wearCompose = "1.7.1"
+wearToolingPreview = "1.0.0"
+playServicesWearable = "20.0.1"
 
 
 [libraries]
@@ -86,10 +89,15 @@ androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "uiVersion" }
 androidx-contentpager = { group = "androidx.contentpager", name = "contentpager", version.ref = "contentpager" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+androidx-wear-compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "wearCompose" }
+androidx-wear-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wearCompose" }
+play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
+androidx-wear-tooling-preview ={ group = "androidx.wear", name = "wear-tooling-preview", version.ref = "wearToolingPreview" }
 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 

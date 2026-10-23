@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1250" viewBox="0 0 1600 1250" font-family="Segoe UI, Roboto, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrowP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7C3AED"/>
+    </marker>
+    <style>
+      .title { font-size: 34px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-size: 17px; fill: #475569; }
+      .h { font-size: 22px; font-weight: 700; }
+      .sh { font-size: 14px; fill: #475569; }
+      .bt { font-size: 16px; font-weight: 600; fill: #0F172A; }
+      .bs { font-size: 13px; fill: #475569; }
+      .lbl { font-size: 13px; fill: #334155; font-weight: 600; }
+      .mono { font-family: Consolas, 'Courier New', monospace; font-size: 14px; fill: #4C1D95; }
+      .ok { font-size: 15px; fill: #14532D; }
+      .no { font-size: 15px; fill: #7F1D1D; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1250" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="800" y="50" text-anchor="middle" class="title">Vitalio — Wear OS Companion App · Architecture</text>
+  <text x="800" y="80" text-anchor="middle" class="subtitle">Login comes from the phone · voice logging runs on the watch · same shared voice engine (:core) on both</text>
+
+  <!-- ═════════ PHONE ═════════ -->
+  <rect x="40" y="105" width="520" height="470" rx="18" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2.5"/>
+  <text x="60" y="140" class="h" fill="#1D4ED8">📱 PHONE · Vitalio app (:app)</text>
+  <text x="60" y="162" class="sh">Any Android phone with Google Play services</text>
+
+  <rect x="60" y="180" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#93C5FD"/>
+  <text x="76" y="205" class="bt">Login (OTP) → PrefsManager</text>
+  <text x="76" y="226" class="bs">stores patient: pid · clientId · uhId · name</text>
+
+  <rect x="60" y="255" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#3B82F6" stroke-width="2"/>
+  <text x="76" y="280" class="bt">WatchSessionSync</text>
+  <text x="76" y="301" class="bs">publishes session on app start + every login / logout</text>
+
+  <rect x="60" y="330" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#93C5FD"/>
+  <text x="76" y="355" class="bt">Voice UI · FloatingVoiceFab + VoiceListeningOverlay</text>
+  <text x="76" y="376" class="bs">phone screens · voice navigation ("open vitals")</text>
+
+  <rect x="60" y="405" width="480" height="60" rx="10" fill="#FFF7E6" stroke="#F59E0B" stroke-width="2"/>
+  <text x="76" y="430" class="bt">VoiceNavigationManager  (:core)</text>
+  <text x="76" y="451" class="bs">mic → dictation → EchoAI → anomaly check → confirm → save</text>
+
+  <rect x="60" y="480" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#93C5FD"/>
+  <text x="76" y="505" class="bt">AppVoiceBackend → Repositories / Retrofit</text>
+  <text x="76" y="526" class="bs">implements VoiceBackend with existing use cases</text>
+
+  <line x1="300" y1="240" x2="300" y2="253" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="300" y1="390" x2="300" y2="403" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="300" y1="465" x2="300" y2="478" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ═════════ DATA LAYER ═════════ -->
+  <rect x="615" y="170" width="370" height="300" rx="18" fill="#F5F3FF" stroke="#7C3AED" stroke-width="2.5"/>
+  <text x="800" y="205" text-anchor="middle" class="h" fill="#6D28D9">🔗 Wearable Data Layer</text>
+  <text x="800" y="228" text-anchor="middle" class="sh">Google Play services · Bluetooth / Wi-Fi</text>
+
+  <rect x="645" y="245" width="310" height="150" rx="10" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="663" y="270" class="lbl">DataItem</text>
+  <text x="663" y="295" class="mono">/vitalio/session</text>
+  <text x="663" y="320" class="mono">  loggedIn : true</text>
+  <text x="663" y="342" class="mono">  pid, clientId : Int</text>
+  <text x="663" y="364" class="mono">  uhId, name : String</text>
+  <text x="663" y="385" class="bs">contract: WatchSessionContract</text>
+  <text x="800" y="425" text-anchor="middle" class="bs">Paired via Galaxy Wearable /</text>
+  <text x="800" y="445" text-anchor="middle" class="bs">Pixel Watch / Wear OS app</text>
+
+  <!-- phone → data layer → watch -->
+  <line x1="540" y1="285" x2="613" y2="285" stroke="#7C3AED" stroke-width="2.5" marker-end="url(#arrowP)"/>
+  <text x="577" y="275" text-anchor="middle" class="lbl" fill="#6D28D9">put</text>
+  <line x1="985" y1="210" x2="1058" y2="210" stroke="#7C3AED" stroke-width="2.5" marker-end="url(#arrowP)"/>
+  <text x="1021" y="200" text-anchor="middle" class="lbl" fill="#6D28D9">sync</text>
+
+  <!-- ═════════ WATCH ═════════ -->
+  <rect x="1040" y="105" width="520" height="470" rx="18" fill="#ECFDF8" stroke="#0E9384" stroke-width="2.5"/>
+  <text x="1060" y="140" class="h" fill="#0F766E">⌚ WATCH · Vitalio Wear (:wear)</text>
+  <text x="1060" y="162" class="sh">Wear OS 3+ · Galaxy Watch4 and newer, Pixel Watch …</text>
+
+  <rect x="1060" y="180" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#0E9384" stroke-width="2"/>
+  <text x="1076" y="205" class="bt">SessionListenerService</text>
+  <text x="1076" y="226" class="bs">receives login / logout even when the app is closed</text>
+
+  <rect x="1060" y="255" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#5EEAD4"/>
+  <text x="1076" y="280" class="bt">WatchSessionStore</text>
+  <text x="1076" y="301" class="bs">saves session locally · signed out → "Open Vitalio on your phone"</text>
+
+  <rect x="1060" y="330" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#5EEAD4"/>
+  <text x="1076" y="355" class="bt">VoiceAssistantFlow (Wear Compose UI)</text>
+  <text x="1076" y="376" class="bs">Home → Listening → Understanding → Confirm → Result + haptics</text>
+
+  <rect x="1060" y="405" width="480" height="60" rx="10" fill="#FFF7E6" stroke="#F59E0B" stroke-width="2"/>
+  <text x="1076" y="430" class="bt">VoiceNavigationManager  (:core)</text>
+  <text x="1076" y="451" class="bs">same engine as phone · navigationEnabled = false</text>
+
+  <rect x="1060" y="480" width="480" height="60" rx="10" fill="#FFFFFF" stroke="#5EEAD4"/>
+  <text x="1076" y="505" class="bt">WearVoiceBackend (OkHttp)</text>
+  <text x="1076" y="526" class="bs">calls the same Vitalio APIs directly with the synced patient</text>
+
+  <line x1="1300" y1="240" x2="1300" y2="253" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1300" y1="315" x2="1300" y2="328" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1300" y1="390" x2="1300" y2="403" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1300" y1="465" x2="1300" y2="478" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ═════════ CLOUD ═════════ -->
+  <line x1="300" y1="575" x2="300" y2="643" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="312" y="605" class="lbl">HTTPS · WebSocket</text>
+  <line x1="1300" y1="575" x2="1300" y2="643" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="1312" y="597" class="lbl">internet: via phone (Bluetooth proxy)</text>
+  <text x="1312" y="616" class="lbl">or watch's own Wi-Fi / LTE</text>
+
+  <rect x="40" y="645" width="1520" height="185" rx="18" fill="#F8FAFC" stroke="#64748B" stroke-width="2.5"/>
+  <text x="60" y="678" class="h" fill="#334155">☁ Cloud services (same for phone and watch)</text>
+
+  <rect x="60" y="695" width="470" height="115" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="78" y="723" class="bt">🎙 Dictation WebSocket</text>
+  <text x="78" y="747" class="mono" fill="#334155">ws://food.shopright.ai:3479</text>
+  <text x="78" y="771" class="bs">16 kHz mic audio → Hindi / English transcript</text>
+  <text x="78" y="792" class="bs">+ translation for the AI</text>
+
+  <rect x="565" y="695" width="470" height="115" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="583" y="723" class="bt">🧠 EchoAI</text>
+  <text x="583" y="747" class="mono" fill="#334155">http://food.shopright.ai:3478/api/echo</text>
+  <text x="583" y="771" class="bs">text → vitals · symptoms · fluids · medicines</text>
+  <text x="583" y="792" class="bs">(+ on-device NLP fallbacks)</text>
+
+  <rect x="1070" y="695" width="470" height="115" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="1088" y="723" class="bt">🏥 Vitalio APIs</text>
+  <text x="1088" y="747" class="mono" fill="#334155">vitaliocis.vitalio.care :4082 / :4096</text>
+  <text x="1088" y="771" class="bs">AddVital · AddIntake · AddOutput · Symptoms</text>
+  <text x="1088" y="792" class="bs">Medicine intake · FetchLastVital</text>
+
+  <!-- ═════════ CORE ═════════ -->
+  <rect x="40" y="855" width="1520" height="105" rx="18" fill="#FFF7E6" stroke="#F59E0B" stroke-width="2.5"/>
+  <text x="60" y="888" class="h" fill="#B45309">🧩 :core — shared module, compiled into both apps</text>
+  <text x="60" y="918" class="bt">VoiceNavigationManager · EchoAIService · MultiTurnConversationManager · VitalAnomalyChecker</text>
+  <text x="60" y="943" class="bt">VitalUnitNormalizer · VoiceExtractedData · VoiceBackend (interface) · WatchSessionContract</text>
+
+  <!-- ═════════ COMPATIBILITY ═════════ -->
+  <rect x="40" y="985" width="750" height="235" rx="18" fill="#F0FDF4" stroke="#22C55E" stroke-width="2.5"/>
+  <text x="60" y="1020" class="h" fill="#15803D">✅ Works</text>
+  <text x="60" y="1052" class="ok">⌚ Samsung Galaxy Watch4 / 5 / 6 / 7 / Ultra / FE (Wear OS)</text>
+  <text x="60" y="1080" class="ok">⌚ Google Pixel Watch (all)</text>
+  <text x="60" y="1108" class="ok">⌚ Other Wear OS 3+ watches (TicWatch, OnePlus Watch 2 …)</text>
+  <text x="60" y="1136" class="ok">📱 Samsung Galaxy, Pixel, OnePlus, Xiaomi, Vivo, Oppo, Realme …</text>
+  <text x="60" y="1160" class="ok">     — any Android phone with Google Play services</text>
+  <text x="60" y="1192" class="ok">📶 Watch alone on Wi-Fi / LTE after the first sync from phone</text>
+
+  <rect x="810" y="985" width="750" height="235" rx="18" fill="#FEF2F2" stroke="#EF4444" stroke-width="2.5"/>
+  <text x="830" y="1020" class="h" fill="#B91C1C">❌ Won't work</text>
+  <text x="830" y="1052" class="no">⌚ Galaxy Watch3, Watch Active / Active2 and older (Tizen OS)</text>
+  <text x="830" y="1080" class="no">⌚ Old Wear OS 2 watches (Android 9 or below)</text>
+  <text x="830" y="1108" class="no">📱 iPhone — Wear OS watches cannot pair with iOS</text>
+  <text x="830" y="1136" class="no">📱 Phones without Google Play services (e.g. newer Huawei phones)</text>
+  <text x="830" y="1160" class="no">     — Data Layer unavailable, watch stays signed out</text>
+  <text x="830" y="1192" class="no">⌚ Garmin, Amazfit, Fitbit, Noise etc. (not Wear OS)</text>
+</svg>
