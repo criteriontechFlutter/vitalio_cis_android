@@ -1482,11 +1482,11 @@ fun PrimaryActionsGrid(   ) {
         type = "findDoctor"
     ),
 
-    GridItem(
-        title = stringResource(R.string.research_based_articles),
-        icon = R.drawable.medicine_reminder,
-        type = "articles"
-    ),
+//    GridItem(
+//        title = stringResource(R.string.research_based_articles),
+//        icon = R.drawable.medicine_reminder,
+//        type = "articles"
+//    ),
 
 //    GridItem(
 //        title = "Digital Twin",
