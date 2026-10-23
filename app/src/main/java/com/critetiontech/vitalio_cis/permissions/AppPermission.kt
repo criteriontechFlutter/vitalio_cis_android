@@ -69,9 +69,9 @@ enum class AppPermission(
     NearbyDevices(
         title = "Nearby devices",
         icon = Icons.Rounded.Bluetooth,
-        summary = "Connect Omron BP monitors and weighing scales over Bluetooth",
+        summary = "Connect BP monitors, oximeters and weighing scales over Bluetooth",
         usedFor = listOf(
-            "Find and pair your Omron device",
+            "Find and pair your Omron or Yonker device",
             "Transfer new readings from the device to your health record",
         ),
         privacy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
@@ -111,7 +111,7 @@ enum class AppPermission(
             Notifications -> "so your medicine alarms can ring and your care team's updates reach you"
             Camera -> "to photograph prescriptions, lab reports and your profile photo"
             Microphone -> "for the voice assistant and breathing exercises"
-            NearbyDevices -> "to connect your Omron BP monitor or scale over Bluetooth"
+            NearbyDevices -> "to connect your BP monitor, oximeter or scale over Bluetooth"
             Storage -> "to save downloaded reports in your Downloads folder"
         }
 
