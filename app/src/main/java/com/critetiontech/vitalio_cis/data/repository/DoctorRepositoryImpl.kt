@@ -19,6 +19,10 @@ import com.critetiontech.ctvitalio.model.UpcomingAppointmentItem
 import com.critetiontech.ctvitalio.model.UpcomingAppointmentsResponse
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -70,9 +74,25 @@ class DoctorRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val doctor = if (!json.isNullOrEmpty()) Gson().fromJson(json, DoctorResponsedata::class.java).responseValue.firstOrNull() else null
+        // The server sends explicit nulls (e.g. "departmentName": null). Gson would write those into
+        // DoctorDetails' non-null fields and crash later, so drop them and let the defaults apply.
+        val doctor = if (!json.isNullOrEmpty()) {
+            val root = JsonParser.parseString(json).withoutNulls()
+            Gson().fromJson(root, DoctorResponsedata::class.java).responseValue.firstOrNull()
+        } else null
         DomainResult.Success(doctor)
     } catch (e: Exception) { DomainResult.Error(e) }
+
+    /** Copy of this JSON with every null member removed, at any depth. */
+    private fun JsonElement.withoutNulls(): JsonElement = when {
+        isJsonObject -> JsonObject().also { out ->
+            asJsonObject.entrySet().forEach { (k, v) -> if (!v.isJsonNull) out.add(k, v.withoutNulls()) }
+        }
+        isJsonArray -> JsonArray().also { out ->
+            asJsonArray.forEach { if (!it.isJsonNull) out.add(it.withoutNulls()) }
+        }
+        else -> this
+    }
 
     override suspend fun fetchAvailableSlots(doctorId: String, scheduleDate: String, clientId: String): DomainResult<List<ShiftData>> = try {
         val params = mapOf("doctorId" to doctorId, "scheduleDate" to scheduleDate, "userId" to "1362", "clientID" to clientId)

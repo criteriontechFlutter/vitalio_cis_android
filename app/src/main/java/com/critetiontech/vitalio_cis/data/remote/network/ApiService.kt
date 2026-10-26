@@ -68,6 +68,13 @@ interface ApiService {
     ): Response<ResponseBody>
 
 
+    @PUT
+    suspend fun dynamicRawPut(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+
     @Multipart
     @PUT
     suspend fun dynamicMultipartPut(

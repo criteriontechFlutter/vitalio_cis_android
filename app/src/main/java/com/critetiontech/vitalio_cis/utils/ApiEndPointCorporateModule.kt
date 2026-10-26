@@ -56,6 +56,18 @@ class ApiEndPointCorporateModule {
     val addPatientActivity = "api/PatientPhysicalActivityTracker/AddPatientActivity"
     val deleteActivityMaster = "api/EmployeeActivity/DeleteActivityMasterById"
 
+    // Emergency contacts
+    val getEmergencyContacts = "api/EmergencyContact/GetEmergencyContactByPid"
+    val insertEmergencyContact = "api/EmergencyContact/InsertEmergencyContact"
+    val updateEmergencyContact = "api/EmergencyContact/UpdateEmergencyContact"
+    val removeEmergencyContact = "api/EmergencyContact/RemoveEmergencyContact"
+
+    // Family health history
+    val getFamilyHealthHistory = "api/PatientFamilyHealthHistory/GetPatientFamilyHealthHistory"
+    val insertFamilyHealthHistory = "api/PatientFamilyHealthHistory/InsertPatientFamilyHealthHistory"
+    val deleteFamilyHealthHistory = "api/PatientFamilyHealthHistory/DeletePatientFamilyHealthHistory"
+    val getAllDiseases = "api/KnowMedApis/getAllDiseaseByAlphabet"
+
     // Video consultation (ApiClients.consultation)
     val consultationJoin = "api/consultation/join"
     val consultationDecline = "api/consultation/decline"

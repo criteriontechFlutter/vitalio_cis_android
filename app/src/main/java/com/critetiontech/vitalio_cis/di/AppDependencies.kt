@@ -7,6 +7,11 @@ import com.critetiontech.ctvitalio.domain.usecase.activity.FetchActivityMasterUs
 import com.critetiontech.ctvitalio.data.repository.AuthRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.ConsultationRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.DoctorRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.EmergencyContactRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.FamilyHealthHistoryRepositoryImpl
+import com.critetiontech.ctvitalio.domain.usecase.familyhistory.AddFamilyHealthHistoryUseCase
+import com.critetiontech.ctvitalio.domain.usecase.familyhistory.GetFamilyHealthHistoryUseCase
+import com.critetiontech.ctvitalio.domain.usecase.familyhistory.RemoveFamilyHealthHistoryUseCase
 import com.critetiontech.ctvitalio.data.repository.FluidRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.MedicineRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.ProfileRepositoryImpl
@@ -50,6 +55,9 @@ import com.critetiontech.ctvitalio.domain.usecase.report.UploadPrescriptionUseCa
 import com.critetiontech.ctvitalio.domain.usecase.symptom.FetchSymptomsUseCase
 import com.critetiontech.ctvitalio.domain.usecase.symptom.GetAllProblemsUseCase
 import com.critetiontech.ctvitalio.domain.usecase.symptom.GetProblemsWithIconUseCase
+import com.critetiontech.ctvitalio.domain.usecase.symptom.GetSymptomHistoryUseCase
+import com.critetiontech.ctvitalio.domain.usecase.symptom.GetSymptomsToReviewUseCase
+import com.critetiontech.ctvitalio.domain.usecase.symptom.SaveSymptomsUseCase
 import com.critetiontech.ctvitalio.domain.usecase.symptom.InsertSymptomsUseCase
 import com.critetiontech.ctvitalio.domain.usecase.vital.AddVitalUseCase
 import com.critetiontech.ctvitalio.domain.usecase.vital.FetchLastVitalUseCase
@@ -78,6 +86,8 @@ object AppDependencies {
     val profileRepository by lazy { ProfileRepositoryImpl(MyApplication.appContext, prefs) }
     val consultationRepository by lazy { ConsultationRepositoryImpl(MyApplication.appContext, prefs) }
     val activityRepository by lazy { ActivityRepositoryImpl(MyApplication.appContext, prefs) }
+    val emergencyContactRepository by lazy { EmergencyContactRepositoryImpl(MyApplication.appContext) }
+    val familyHealthHistoryRepository by lazy { FamilyHealthHistoryRepositoryImpl(MyApplication.appContext, prefs) }
 
     // Use cases — created fresh each time (they're stateless wrappers)
     fun sendOtp() = SendOtpUseCase(authRepository)
@@ -115,6 +125,12 @@ object AppDependencies {
     fun insertSymptoms() = InsertSymptomsUseCase(symptomRepository)
     fun getProblemsWithIcon() = GetProblemsWithIconUseCase(symptomRepository)
     fun getAllProblems() = GetAllProblemsUseCase(symptomRepository)
+    fun getSymptomsToReview() = GetSymptomsToReviewUseCase(symptomRepository)
+    fun getSymptomHistory() = GetSymptomHistoryUseCase(symptomRepository)
+    fun saveSymptoms() = SaveSymptomsUseCase(symptomRepository)
+    fun getFamilyHealthHistory() = GetFamilyHealthHistoryUseCase(familyHealthHistoryRepository)
+    fun addFamilyHealthHistory() = AddFamilyHealthHistoryUseCase(familyHealthHistoryRepository)
+    fun removeFamilyHealthHistory() = RemoveFamilyHealthHistoryUseCase(familyHealthHistoryRepository)
     fun updateProfile() = UpdateProfileUseCase(profileRepository)
     fun fetchCountries() = FetchCountriesUseCase(profileRepository)
     fun fetchStates() = FetchStatesUseCase(profileRepository)

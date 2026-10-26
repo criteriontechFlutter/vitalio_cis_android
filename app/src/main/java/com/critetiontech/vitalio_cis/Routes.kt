@@ -9,6 +9,7 @@ object Routes {
     const val FLUID = "fluid"
     const val SYMPTOMSTRACKER = "symptomsTracker"
     const val SYMPTOMS = "symptoms"
+    const val SYMPTOMSHISTORY = "symptomsHistory"
     const val MEDICINETAILS = "medicinedetails"
     const val DIGITAL_TWIN = "digital_twin"
     const val HEALTH_ORBIT = "health_orbit"

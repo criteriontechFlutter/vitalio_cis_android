@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
  * host changes.
  */
 enum class ApiEnvironment(val label: String, val host: String) {
-    LOCAL("Local", "http://182.156.200.178"),
+    LOCAL("Local", "http://172.16.61.31"),
     STAGING("Staging", "https://vitaliocis.vitalio.care"),
     PRODUCTION("Production", "https://cis.vitalio.care"),
 }

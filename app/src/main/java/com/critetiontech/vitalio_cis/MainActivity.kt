@@ -37,6 +37,7 @@ import com.critetiontech.ctvitalio.ui.screens.OmronDeviceScreen
 import com.critetiontech.ctvitalio.ui.screens.YonkerDeviceScreen
  import com.critetiontech.ctvitalio.ui.screens.DietChecklistScreen
 import com.critetiontech.ctvitalio.ui.screens.DoctorDetailsScreen
+import com.critetiontech.ctvitalio.ui.screens.SymptomHistoryScreen
 import com.critetiontech.ctvitalio.ui.screens.DrawerScreen
 import com.critetiontech.ctvitalio.ui.screens.EmergencyContactsScreen
 import com.critetiontech.ctvitalio.ui.screens.FAQScreen
@@ -298,6 +299,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.SYMPTOMSTRACKER) { SymptomTrackerScreen() }
                             composable(Routes.APPOINTMENTS) { FindDoctorsTopSection() }
                             composable(Routes.SYMPTOMS) { SymptomsView() }
+                            composable(Routes.SYMPTOMSHISTORY) { SymptomHistoryScreen() }
                             composable(Routes.MANAGE_MEDICINE) { ManageMedicationsScreen() }
                             composable(Routes.MEDICINE) { MedicineReminderScreen() }
                             composable(Routes.DRAWER) { DrawerScreen() }

@@ -173,6 +173,8 @@ fun DrawerScreen() {
                         listOf(
                             "Profile" to "",
                             "Allergies" to "2",
+                            "Emergency Contacts" to "",
+                            "Family Health History" to "",
                             // "Breathing Therapy" to "",
                         )
                     )
@@ -222,6 +224,8 @@ fun DrawerScreen() {
                 listOf(
                     "Profile" to "",
                     "Allergies" to "2",
+                    "Emergency Contacts" to "",
+                    "Family Health History" to "",
                     // "Breathing Therapy" to "",
                 )
             )

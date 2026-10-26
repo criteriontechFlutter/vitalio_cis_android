@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.model.AllergyItem as ApiAllergyItem
+import com.critetiontech.ctvitalio.ui.components.AddPillButton
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.utils.CommonButton
@@ -164,11 +165,13 @@ fun AllergiesScreen(
                     }
                 }
 
-                CommonButton(
-                    text = if (addLoading) "Saving..." else "+ Add Allergies",
-                    containerColor = colors.dashboardContainerColor,
-                    textStyle = AppTextStyles.style14GCN(),
-                    onClick = { if (!addLoading) showSheet = true }
+                AddPillButton(
+                    text = "+ Add Allergies",
+                    loading = addLoading,
+                    onClick = { showSheet = true },
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .padding(vertical = 12.dp),
                 )
             }
         }

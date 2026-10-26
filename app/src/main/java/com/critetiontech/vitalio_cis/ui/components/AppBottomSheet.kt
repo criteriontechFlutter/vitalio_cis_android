@@ -54,6 +54,8 @@ fun AppBottomSheet(
     icon: ImageVector? = null,
     iconTint: Color? = null,
     showClose: Boolean = title != null,
+    /** Sheet background; defaults to the theme container colour. */
+    containerColor: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = LocalMyColorScheme.current
@@ -64,7 +66,7 @@ fun AppBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         sheetState = sheetState,
-        containerColor = colors.dashboardContainerColor,
+        containerColor = containerColor ?: colors.dashboardContainerColor,
         contentColor = colors.textDarkColor,
         tonalElevation = 0.dp,
         scrimColor = Color.Black.copy(alpha = 0.45f),

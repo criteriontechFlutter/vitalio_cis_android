@@ -27,6 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.ContactPhone
+import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -126,6 +129,7 @@ fun PersonalInfoScreen(viewModel: PersonalInfoViewModel = viewModel()) {
                         ProfileInfoRow("Mobile No.", p?.mobileNo.orEmpty())
                         ProfileInfoRow("Email", p?.emailAddress.orEmpty())
                     }
+                    EmergencyContactsLink { navController.navigate(com.critetiontech.ctvitalio.Routes.EMERGENCYCONTACTS) }
                     InfoCard {
                         ProfileInfoRow("Street Address", p?.address.orEmpty())
                         ProfileInfoRow("Zip Code", p?.zip.orEmpty())
@@ -173,6 +177,34 @@ private fun displayMeasure(raw: String?): String {
     if (number <= 0) return ""
     val shown = if (number % 1.0 == 0.0) number.toLong().toString() else number.toString()
     return "$shown $unit".trim()
+}
+
+/** Row that opens Emergency Contacts, styled like the info cards around it. */
+@Composable
+private fun EmergencyContactsLink(onClick: () -> Unit) {
+    val colors = LocalMyColorScheme.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(colors.dashboardContainerColor)
+            .bounceClick(onClick = onClick)
+            .padding(16.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.size(36.dp).clip(CircleShape).background(colors.primaryBlueColor.copy(alpha = 0.12f)),
+        ) {
+            Icon(Icons.Rounded.ContactPhone, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("Emergency Contacts", color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text("Add or update who we should call", color = colors.textGreyColor, fontSize = 12.sp)
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textGreyColor)
+    }
 }
 
 @Composable
