@@ -62,6 +62,11 @@ class ApiEndPointCorporateModule {
     val updateEmergencyContact = "api/EmergencyContact/UpdateEmergencyContact"
     val removeEmergencyContact = "api/EmergencyContact/RemoveEmergencyContact"
 
+    // Health record sharing
+    val getAllHealthShareLinks = "api/PatientHealthShare/GetAllPatientHealthShareLinks"
+    val generateHealthShareLink = "api/PatientHealthShare/GeneratePatientHealthShareLink"
+    val revokeHealthShareLink = "api/PatientHealthShare/RevokePatientHealthLink"
+
     // Family health history
     val getFamilyHealthHistory = "api/PatientFamilyHealthHistory/GetPatientFamilyHealthHistory"
     val insertFamilyHealthHistory = "api/PatientFamilyHealthHistory/InsertPatientFamilyHealthHistory"

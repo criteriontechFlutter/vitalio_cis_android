@@ -40,6 +40,7 @@ import com.critetiontech.ctvitalio.ui.screens.DoctorDetailsScreen
 import com.critetiontech.ctvitalio.ui.screens.SymptomHistoryScreen
 import com.critetiontech.ctvitalio.ui.screens.DrawerScreen
 import com.critetiontech.ctvitalio.ui.screens.EmergencyContactsScreen
+import com.critetiontech.ctvitalio.ui.screens.HealthShareScreen
 import com.critetiontech.ctvitalio.ui.screens.FAQScreen
 import com.critetiontech.ctvitalio.ui.screens.FamilyHealthScreen
 import com.critetiontech.ctvitalio.ui.screens.FeedbackScreen
@@ -241,6 +242,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.ACTIVITYHISTORY) { ActivityHistoryScreen() }
                             composable(Routes.REMINDERS) { RemindersScreen() }
                             composable(Routes.EMERGENCYCONTACTS) { EmergencyContactsScreen() }
+                            composable(Routes.HEALTHSHARE) { HealthShareScreen() }
                             composable(Routes.CONNECTWATCH) { ConnectWatchScreen() }
                             composable(Routes.SHAREDACCOUNT) { SharedAccountScreen() }
                             composable(Routes.ADDMEMBER) { AddMemberScreen() }

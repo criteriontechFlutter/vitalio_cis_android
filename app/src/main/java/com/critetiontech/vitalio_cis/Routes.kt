@@ -48,6 +48,7 @@ object Routes {
     const val ACTIVITYHISTORY  = "ActivityHistoryScreen"
     const val REMINDERS  = "RemindersScreen"
     const val EMERGENCYCONTACTS  = "EmergencyContactsScreen"
+    const val HEALTHSHARE  = "HealthShareScreen"
     const val CONNECTWATCH  = "ConnectWatchScreen"
     const val SHAREDACCOUNT  = "SharedAccountScreen"
     const val ADDMEMBER  = "AddMemberScreen"

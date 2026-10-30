@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_menu_share_health">Share Health Records</string>
+    <string name="share_title">Share Health Records</string>
+    <string name="share_intro_title">Share safely with your care team</string>
+    <string name="share_intro_text">Send your health records to a doctor or family member. They get a secure link and an access code by email, and you can stop access anytime.</string>
+    <string name="share_section_active">Active (%1$d)</string>
+    <string name="share_section_revoked">Revoked (%1$d)</string>
+    <string name="share_status_active">Active</string>
+    <string name="share_status_revoked">Revoked</string>
+    <string name="share_shared_on">Shared %1$s</string>
+    <string name="share_revoked_on">Revoked %1$s</string>
+    <string name="share_unknown_recipient">Unknown recipient</string>
+    <string name="share_empty_title">Nothing shared yet</string>
+    <string name="share_empty_text">Share your records with your doctor before a visit, or with family who help with your care.</string>
+    <string name="share_load_failed_title">Couldn\'t load shared links</string>
+    <string name="share_load_failed">Something went wrong. Please try again.</string>
+    <string name="share_offline">You\'re offline. Connect to the internet and try again.</string>
+    <string name="share_new_button">Share health records</string>
+    <string name="share_sheet_title">Share health records</string>
+    <string name="share_sheet_subtitle">We\'ll email them a secure link</string>
+    <string name="share_email_label">Recipient\'s email</string>
+    <string name="share_email_hint">doctor@example.com</string>
+    <string name="share_email_invalid">Enter a valid email address</string>
+    <string name="share_sheet_note">They\'ll need the access code from the email to open your records. Share only with people you trust.</string>
+    <string name="share_send">Send link</string>
+    <string name="share_sending">Sending</string>
+    <string name="share_create_failed">Couldn\'t share right now. Please try again.</string>
+    <string name="share_sent_title">Link sent</string>
+    <string name="share_sent_message">We\'ve emailed the link and access code to %1$s.</string>
+    <string name="share_done">Done</string>
+    <string name="share_copy_link">Copy link</string>
+    <string name="share_send_link">Send link</string>
+    <string name="share_link_copied">Link copied</string>
+    <string name="share_link_chooser">Share link</string>
+    <string name="share_link_message">My health records: %1$s\nThe access code has been sent to your email.</string>
+    <string name="share_revoke">Revoke</string>
+    <string name="share_revoke_title">Stop sharing?</string>
+    <string name="share_revoke_message">%1$s will no longer be able to open your health records. You can share again later with a new link.</string>
+    <string name="share_this_person">This person</string>
+    <string name="share_revoked_toast">Access revoked</string>
+    <string name="share_revoke_failed">Couldn\'t revoke access. Please try again.</string>
+</resources>

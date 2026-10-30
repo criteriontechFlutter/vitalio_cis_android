@@ -49,6 +49,7 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Medication
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.RateReview
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material.icons.rounded.Visibility
@@ -213,7 +214,8 @@ fun DrawerScreen() {
                         listOf(
                             "Appointments" to "",
                             "Prescriptions" to "",
-                            "Reports" to ""
+                            "Reports" to "",
+                            "Share Health Records" to ""
                         )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -266,7 +268,8 @@ fun DrawerScreen() {
                 listOf(
                     "Appointments" to "",
                     "Prescriptions" to "",
-                    "Reports" to ""
+                    "Reports" to "",
+                    "Share Health Records" to ""
                 )
             )
 
@@ -885,6 +888,7 @@ fun MenuRow(
         "Shared Accounts" -> Routes.SHAREDACCOUNT
         "Connect Smart Watch" -> Routes.CONNECTWATCH
         "Emergency Contacts" -> Routes.EMERGENCYCONTACTS
+        "Share Health Records" -> Routes.HEALTHSHARE
         "Permissions & Privacy" -> Routes.PERMISSIONS
         "FAQ" -> Routes.FAQ
         "Feedback" -> Routes.FEEDBACK
@@ -915,6 +919,7 @@ private fun menuIcon(title: String): ImageVector = when (title) {
     "Shared Accounts" -> Icons.Rounded.Group
     "Connect Smart Watch" -> Icons.Rounded.Watch
     "Emergency Contacts" -> Icons.Rounded.ContactPhone
+    "Share Health Records" -> Icons.Rounded.Share
     "Permissions & Privacy" -> Icons.Rounded.Shield
     "FAQ" -> Icons.AutoMirrored.Rounded.HelpOutline
     "Feedback" -> Icons.Rounded.RateReview
@@ -935,6 +940,7 @@ private fun menuTitleRes(title: String): Int? = when (title) {
     "Shared Accounts" -> R.string.profile_menu_shared_accounts
     "Connect Smart Watch" -> R.string.profile_menu_connect_smart_watch
     "Emergency Contacts" -> R.string.profile_menu_emergency_contacts
+    "Share Health Records" -> R.string.profile_menu_share_health
     "Permissions & Privacy" -> R.string.profile_menu_permissions_privacy
     "FAQ" -> R.string.profile_menu_faq
     "Feedback" -> R.string.profile_menu_feedback

@@ -8,6 +8,7 @@ import com.critetiontech.ctvitalio.data.repository.AuthRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.ConsultationRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.DoctorRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.EmergencyContactRepositoryImpl
+import com.critetiontech.ctvitalio.data.repository.HealthShareRepositoryImpl
 import com.critetiontech.ctvitalio.data.repository.FamilyHealthHistoryRepositoryImpl
 import com.critetiontech.ctvitalio.domain.usecase.familyhistory.AddFamilyHealthHistoryUseCase
 import com.critetiontech.ctvitalio.domain.usecase.familyhistory.GetFamilyHealthHistoryUseCase
@@ -87,6 +88,7 @@ object AppDependencies {
     val consultationRepository by lazy { ConsultationRepositoryImpl(MyApplication.appContext, prefs) }
     val activityRepository by lazy { ActivityRepositoryImpl(MyApplication.appContext, prefs) }
     val emergencyContactRepository by lazy { EmergencyContactRepositoryImpl(MyApplication.appContext) }
+    val healthShareRepository by lazy { HealthShareRepositoryImpl(MyApplication.appContext) }
     val familyHealthHistoryRepository by lazy { FamilyHealthHistoryRepositoryImpl(MyApplication.appContext, prefs) }
 
     // Use cases — created fresh each time (they're stateless wrappers)

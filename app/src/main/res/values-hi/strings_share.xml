@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_menu_share_health">स्वास्थ्य रिकॉर्ड साझा करें</string>
+    <string name="share_title">स्वास्थ्य रिकॉर्ड साझा करें</string>
+    <string name="share_intro_title">अपनी केयर टीम के साथ सुरक्षित रूप से साझा करें</string>
+    <string name="share_intro_text">अपने स्वास्थ्य रिकॉर्ड डॉक्टर या परिवार के सदस्य को भेजें। उन्हें ईमेल पर एक सुरक्षित लिंक और एक्सेस कोड मिलेगा, और आप कभी भी एक्सेस बंद कर सकते हैं।</string>
+    <string name="share_section_active">सक्रिय (%1$d)</string>
+    <string name="share_section_revoked">रद्द किए गए (%1$d)</string>
+    <string name="share_status_active">सक्रिय</string>
+    <string name="share_status_revoked">रद्द</string>
+    <string name="share_shared_on">साझा किया %1$s</string>
+    <string name="share_revoked_on">रद्द किया %1$s</string>
+    <string name="share_unknown_recipient">अज्ञात प्राप्तकर्ता</string>
+    <string name="share_empty_title">अभी तक कुछ साझा नहीं किया</string>
+    <string name="share_empty_text">विज़िट से पहले अपने डॉक्टर के साथ, या देखभाल में मदद करने वाले परिवार के साथ अपने रिकॉर्ड साझा करें।</string>
+    <string name="share_load_failed_title">साझा लिंक लोड नहीं हो सके</string>
+    <string name="share_load_failed">कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।</string>
+    <string name="share_offline">आप ऑफ़लाइन हैं। इंटरनेट से जुड़ें और फिर से कोशिश करें।</string>
+    <string name="share_new_button">स्वास्थ्य रिकॉर्ड साझा करें</string>
+    <string name="share_sheet_title">स्वास्थ्य रिकॉर्ड साझा करें</string>
+    <string name="share_sheet_subtitle">हम उन्हें एक सुरक्षित लिंक ईमेल करेंगे</string>
+    <string name="share_email_label">प्राप्तकर्ता का ईमेल</string>
+    <string name="share_email_hint">doctor@example.com</string>
+    <string name="share_email_invalid">सही ईमेल पता दर्ज करें</string>
+    <string name="share_sheet_note">आपके रिकॉर्ड खोलने के लिए उन्हें ईमेल में आए एक्सेस कोड की ज़रूरत होगी। केवल भरोसेमंद लोगों के साथ साझा करें।</string>
+    <string name="share_send">लिंक भेजें</string>
+    <string name="share_sending">भेजा जा रहा है</string>
+    <string name="share_create_failed">अभी साझा नहीं हो सका। कृपया फिर से कोशिश करें।</string>
+    <string name="share_sent_title">लिंक भेज दिया गया</string>
+    <string name="share_sent_message">हमने लिंक और एक्सेस कोड %1$s पर ईमेल कर दिया है।</string>
+    <string name="share_done">हो गया</string>
+    <string name="share_copy_link">लिंक कॉपी करें</string>
+    <string name="share_send_link">लिंक भेजें</string>
+    <string name="share_link_copied">लिंक कॉपी हो गया</string>
+    <string name="share_link_chooser">लिंक साझा करें</string>
+    <string name="share_link_message">मेरे स्वास्थ्य रिकॉर्ड: %1$s\nएक्सेस कोड आपके ईमेल पर भेज दिया गया है।</string>
+    <string name="share_revoke">रद्द करें</string>
+    <string name="share_revoke_title">साझा करना बंद करें?</string>
+    <string name="share_revoke_message">%1$s अब आपके स्वास्थ्य रिकॉर्ड नहीं खोल पाएंगे। आप बाद में नए लिंक के साथ फिर से साझा कर सकते हैं।</string>
+    <string name="share_this_person">यह व्यक्ति</string>
+    <string name="share_revoked_toast">एक्सेस रद्द कर दिया गया</string>
+    <string name="share_revoke_failed">एक्सेस रद्द नहीं हो सका। कृपया फिर से कोशिश करें।</string>
+</resources>
