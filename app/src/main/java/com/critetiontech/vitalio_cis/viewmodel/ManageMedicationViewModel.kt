@@ -33,32 +33,14 @@ class ManageMedicationViewModel @Inject constructor() : ViewModel() {
             _loading.value = true
             try {
                 val patient = PrefsManager(context).getPatient() ?: return@launch
-                val queryParams = mapOf(
-                    "pid" to patient.pid,
-                    "givenDate" to givenDate,
-                    "clientId" to patient.clientId
-                )
-                val response = ApiHelper().callApi(
-                    context,
-                    ApiEndPointCorporateModule().fetchPatientMedicineIntakeByDate,
-                    showNoConnectionToast = false
-                ) { url ->
-                    ApiClients.module4082.dynamicGet(url = url, params = queryParams)
-                }
-                if (response.isSuccessful) {
-                    val body = response.body()?.string()
-                    if (!body.isNullOrEmpty()) {
-                        val parsed = Gson().fromJson(body, MedicineIntakeByDateResponse::class.java)
-                        if (parsed.status == 1) {
-                            _loggedMedicines.value = parsed.responseValue?.loggedMedicines.orEmpty()
-                            _allMedicines.value = parsed.responseValue?.allMedicines.orEmpty()
-                        } else {
-                            _loggedMedicines.value = emptyList()
-                            _allMedicines.value = emptyList()
-                        }
+                // Through the repository so the last list for this date is shown when offline.
+                when (val r = com.critetiontech.ctvitalio.di.AppDependencies.fetchMedicineByDate()(patient.pid, givenDate, patient.clientId)) {
+                    is com.critetiontech.ctvitalio.domain.model.DomainResult.Success -> {
+                        _loggedMedicines.value = r.data.first
+                        _allMedicines.value = r.data.second
                     }
-                } else {
-                    Log.e("ManageMedicationVM", "fetchByDate error: ${response.code()}")
+                    is com.critetiontech.ctvitalio.domain.model.DomainResult.Error ->
+                        Log.e("ManageMedicationVM", "fetchByDate error: ${r.exception.message}")
                 }
             } catch (e: Exception) {
                 Log.e("ManageMedicationVM", "fetchByDate error: ${e.message}", e)

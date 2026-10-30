@@ -358,7 +358,7 @@ fun FluidInputHistoryScreen(
                                 Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidInputItem(
                                     title = item.foodName?.takeIf { it.isNotEmpty() } ?: stringResource(R.string.track_unknown),
-                                    time = displayTime,
+                                    time = if (item.isPending) stringResource(R.string.offline_pending_row, displayTime.orEmpty()) else displayTime.orEmpty(),
                                     value = "${item.foodQuantity} ml",
                                     color = legendColors.getOrElse(idx % legendColors.size) { Color.Gray }
                                 )

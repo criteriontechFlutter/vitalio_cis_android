@@ -275,7 +275,7 @@ fun FluidOutputHistoryScreen(
                                 Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidOutputItem(
                                     title = if (item.colour.isEmpty()) stringResource(R.string.track_unknown) else colourDisplayName(item.colour),
-                                    time = item.outputTimeFormat,
+                                    time = if (item.isPending) stringResource(R.string.offline_pending_row, item.outputTimeFormat) else item.outputTimeFormat,
                                     value = "${item.quantity} ml",
                                     color = colourNameToColor(item.colour)
                                 )

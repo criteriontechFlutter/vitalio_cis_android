@@ -17,6 +17,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import com.critetiontech.ctvitalio.data.offline.PendingEntries
+
 class VitalDetailViewModel : ViewModel() {
 
     private val fetchLastVitalUseCase = AppDependencies.fetchLastVital()
@@ -49,8 +51,11 @@ class VitalDetailViewModel : ViewModel() {
             _loading.value = true
             val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
             when (val r = fetchLastVitalUseCase(patient.uhId, patient.clientId.toString(), patient.pid.toString())) {
-                is DomainResult.Success -> _vitalList.value = r.data
-                is DomainResult.Error -> Log.e("VitalDetailVM", r.exception.message.orEmpty())
+                is DomainResult.Success -> _vitalList.value = PendingEntries.overlayVitals(r.data)
+                is DomainResult.Error -> {
+                    _vitalList.value = PendingEntries.overlayVitals(_vitalList.value)
+                    Log.e("VitalDetailVM", r.exception.message.orEmpty())
+                }
             }
             _loading.value = false
         }

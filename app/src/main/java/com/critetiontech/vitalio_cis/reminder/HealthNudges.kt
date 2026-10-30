@@ -34,8 +34,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -279,7 +279,7 @@ object WaterQuickAdd {
             setOnlyAlertOnce(true).setSilent(true)
         }
         val request = OneTimeWorkRequestBuilder<WaterQuickAddWorker>()
-            .setInputData(workDataOf(EXTRA_ML to ml, KEY_LOGGED_AT to Instant.now().toString()))
+            .setInputData(workDataOf(EXTRA_ML to ml, KEY_LOGGED_AT to LocalDateTime.now().withNano(0).toString()))
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
         WorkManager.getInstance(context).enqueue(request)
@@ -299,7 +299,7 @@ class WaterQuickAddWorker(context: Context, params: WorkerParameters) : Coroutin
         }
         // Same body the Fluid Intake screen sends; FoodDate is when the button was tapped.
         val body = mapOf<String, Any>(
-            "FoodDate" to (inputData.getString(WaterQuickAdd.KEY_LOGGED_AT) ?: Instant.now().toString()),
+            "FoodDate" to (inputData.getString(WaterQuickAdd.KEY_LOGGED_AT) ?: LocalDateTime.now().withNano(0).toString()),
             "FoodQuantity" to ml.toString(), "UserID" to patient.pid, "foodId" to waterId.toString(),
             "clientId" to patient.clientId, "FoodUnitId" to 27, "uhid" to patient.uhId,
             "isGiven" to 1, "entryType" to "N", "isFromPatient" to 1,

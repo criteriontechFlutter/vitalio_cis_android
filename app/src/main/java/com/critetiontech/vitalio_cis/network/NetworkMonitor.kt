@@ -24,10 +24,13 @@ class NetworkMonitor(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val isOnline: StateFlow<Boolean> = callbackFlow {
+        // Callbacks arrive per network (Wi-Fi and mobile data separately); losing one while
+        // another is still up must not read as offline.
+        val networks = java.util.concurrent.ConcurrentHashMap.newKeySet<Network>()
         val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) { trySend(true) }
-            override fun onLost(network: Network) { trySend(false) }
-            override fun onUnavailable() { trySend(false) }
+            override fun onAvailable(network: Network) { networks += network; trySend(true) }
+            override fun onLost(network: Network) { networks -= network; trySend(networks.isNotEmpty()) }
+            override fun onUnavailable() { trySend(networks.isNotEmpty()) }
         }
 
         val request = NetworkRequest.Builder()

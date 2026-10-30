@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
+import com.critetiontech.ctvitalio.data.offline.SendResult
+import okhttp3.ResponseBody
+import retrofit2.Response
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -79,12 +83,22 @@ class FluidRepositoryImpl @Inject constructor(
         DomainResult.Success(parseIntake(json))
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun addIntake(body: Map<String, Any>): DomainResult<Unit> = try {
-        val response = ApiHelper().callApi(context, endpoints.addIntake, showNoConnectionToast = false) { url ->
-            ApiClients.module4094.dynamicRawPost(url = url, body = body)
+    override suspend fun addIntake(body: Map<String, Any>): DomainResult<Unit> =
+        OfflineOutbox.submit(OfflineOutbox.Kind.INTAKE, body, ::sendIntake)
+
+    suspend fun sendIntake(body: Map<String, Any>): SendResult = post(endpoints.addIntake, body) { url ->
+        ApiClients.module4094.dynamicRawPost(url = url, body = body)
+    }
+
+    private suspend fun post(endpoint: String, body: Map<String, Any>, call: suspend (String) -> Response<ResponseBody>): SendResult = try {
+        val response = ApiHelper().callApi(context, endpoint, showNoConnectionToast = false) { url -> call(url) }
+        val raw = if (response.isSuccessful) null else response.errorBody()?.string()
+        when {
+            response.isSuccessful -> SendResult.Sent
+            SendResult.isNetworkFailure(response, raw) -> SendResult.Offline
+            else -> SendResult.Rejected("API Error: ${response.code()}")
         }
-        if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
-    } catch (e: Exception) { DomainResult.Error(e) }
+    } catch (e: Exception) { SendResult.Rejected(e.message ?: "API Error") }
 
     override suspend fun fetchOutput(uhid: String, clientId: String, userId: String, fromDate: String): DomainResult<List<OutputItem>> = try {
         val params = mapOf("uhid" to uhid, "clientId" to clientId, "userId" to userId, "fromdate" to fromDate)
@@ -101,12 +115,12 @@ class FluidRepositoryImpl @Inject constructor(
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun addOutput(body: Map<String, Any>): DomainResult<Unit> = try {
-        val response = ApiHelper().callApi(context, endpoints.addOutput, showNoConnectionToast = false) { url ->
-            ApiClients.module4082.dynamicRawPost(url = url, body = body)
-        }
-        if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
-    } catch (e: Exception) { DomainResult.Error(e) }
+    override suspend fun addOutput(body: Map<String, Any>): DomainResult<Unit> =
+        OfflineOutbox.submit(OfflineOutbox.Kind.OUTPUT, body, ::sendOutput)
+
+    suspend fun sendOutput(body: Map<String, Any>): SendResult = post(endpoints.addOutput, body) { url ->
+        ApiClients.module4082.dynamicRawPost(url = url, body = body)
+    }
 
     override suspend fun fetchFluidSummary(uhid: String, fromDate: String, toDate: String): DomainResult<List<FluidSummaryItem>> = try {
         val params = mapOf("Uhid" to uhid, "fromDate" to fromDate, "toDate" to toDate)

@@ -173,7 +173,7 @@ class ReportRepositoryImpl @Inject constructor(
             .addFormDataPart("file", file.name, file.asRequestBody(mimeTypeFor(file).toMediaTypeOrNull()))
             .build()
 
-        val url = "${ApiConfig.AI_UPLOAD}uploadLabreport/"
+        val url = "${ApiConfig.AI_UPLOAD}uploadLabreport/?"
         val request = Request.Builder().url(url).post(requestBody).build()
 
         if (BuildConfig.DEBUG) {
@@ -312,7 +312,7 @@ class ReportRepositoryImpl @Inject constructor(
             .addFormDataPart("file", file.name, file.asRequestBody(mimeType.toMediaTypeOrNull()))
             .build()
 
-        val url = "${ApiConfig.AI_UPLOAD}uploadPrescription/"
+        val url = "${ApiConfig.AI_UPLOAD}uploadPrescription/?"
         val request = Request.Builder().url(url).post(requestBody).build()
 
         if (BuildConfig.DEBUG) Log.d(TAG, "UploadPrescription → POST $url file=${file.name}, size=${file.length()} bytes (original ${original.length()} bytes)")

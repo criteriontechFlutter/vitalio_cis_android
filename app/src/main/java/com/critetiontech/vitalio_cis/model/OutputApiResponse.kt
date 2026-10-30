@@ -22,7 +22,9 @@ data class OutputItem(
     val isFromMachine: Boolean = false,
     val userName: String = "",
     val unitName: String? = null,
-    val outputType: String? = null
+    val outputType: String? = null,
+    /** Logged offline and still waiting to upload; never comes from the server. */
+    @Transient val isPending: Boolean = false,
 )
 
 data class OutputSummaryResponse(

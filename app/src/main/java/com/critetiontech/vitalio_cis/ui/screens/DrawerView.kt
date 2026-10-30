@@ -36,6 +36,28 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
+import androidx.compose.material.icons.rounded.Air
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.ContactPhone
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.FamilyRestroom
+import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.Healing
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Medication
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.RateReview
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.Watch
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
@@ -118,6 +140,7 @@ fun DrawerScreen() {
                 PrefsManager(context).clearAll()
                 // Patient is gone, so this cancels every medicine alarm.
                 com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler.requestSync(context)
+                com.critetiontech.ctvitalio.reminder.AppointmentReminders.requestSync(context)
                 navController.navigate(Routes.LOGIN) {
                     popUpTo(0) { inclusive = true }
                 }
@@ -179,7 +202,7 @@ fun DrawerScreen() {
                     MenuCard(
                         listOf(
                             "Profile" to "",
-                            "Allergies" to "2",
+                            "Allergies" to "",
                             "Emergency Contacts" to "",
                             "Family Health History" to "",
                             // "Breathing Therapy" to "",
@@ -188,23 +211,19 @@ fun DrawerScreen() {
                     Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
                         listOf(
-                            "Appointments" to "2",
+                            "Appointments" to "",
                             "Prescriptions" to "",
                             "Reports" to ""
                         )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    ThemeSwitchItem()
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LanguageItem()
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HapticsSwitchItem()
+                    SettingsCard()
                     Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
                         listOf(
                             "Permissions & Privacy" to "",
-                            "FAQ" to "4",
-                            "Feedback" to "4"
+                            "FAQ" to "",
+                            "Feedback" to ""
                         )
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -234,7 +253,7 @@ fun DrawerScreen() {
             MenuCard(
                 listOf(
                     "Profile" to "",
-                    "Allergies" to "2",
+                    "Allergies" to "",
                     "Emergency Contacts" to "",
                     "Family Health History" to "",
                     // "Breathing Therapy" to "",
@@ -245,7 +264,7 @@ fun DrawerScreen() {
 
             MenuCard(
                 listOf(
-                    "Appointments" to "2",
+                    "Appointments" to "",
                     "Prescriptions" to "",
                     "Reports" to ""
                 )
@@ -263,18 +282,14 @@ fun DrawerScreen() {
 //                )
 //            )
             Spacer(modifier = Modifier.height(12.dp))
-            ThemeSwitchItem()
-            Spacer(modifier = Modifier.height(12.dp))
-            LanguageItem()
-            Spacer(modifier = Modifier.height(12.dp))
-            HapticsSwitchItem()
+            SettingsCard()
 
             Spacer(modifier = Modifier.height(12.dp))
             MenuCard(
                 listOf(
                     "Permissions & Privacy" to "",
-                    "FAQ" to "4",
-                    "Feedback" to "4"
+                    "FAQ" to "",
+                    "Feedback" to ""
                 )
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -308,7 +323,7 @@ fun ThemeSwitchItem() {
     val selectedTheme by themeViewModel.selectedTheme.collectAsState()
 
     SettingSwitchRow(
-        icon = Icons.Default.DarkMode,
+        icon = Icons.Rounded.DarkMode,
         title = stringResource(R.string.profile_dark_mode),
         checked = selectedTheme == AppTheme.DARK,
         onCheckedChange = { themeViewModel.toggleTheme() },
@@ -370,22 +385,13 @@ fun LanguageItem() {
         }
     }
 
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(colors.dashboardContainerColor),
-        modifier = Modifier.fillMaxWidth().clickable { showSheet = true }
+    DrawerRow(
+        icon = Icons.Rounded.Language,
+        title = stringResource(R.string.language_title),
+        onClick = { showSheet = true },
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Language, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(stringResource(R.string.language_title), color = colors.textDarkColor, fontSize = 16.sp, modifier = Modifier.weight(1f))
-            Text(current.nativeName, color = colors.textGreyColor, fontSize = 14.sp)
-            Spacer(modifier = Modifier.width(4.dp))
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
-        }
+        DrawerRowValue(current.nativeName)
+        DrawerChevron()
     }
 }
 
@@ -396,7 +402,7 @@ fun HapticsSwitchItem() {
     var enabled by remember { mutableStateOf(Haptics.isEnabled(context)) }
 
     SettingSwitchRow(
-        icon = Icons.Default.Vibration,
+        icon = Icons.Rounded.Vibration,
         title = stringResource(R.string.profile_haptic_feedback),
         subtitle = stringResource(R.string.profile_haptic_feedback_subtitle),
         checked = enabled,
@@ -420,48 +426,117 @@ fun SettingSwitchRow(
 ) {
     val colors = LocalMyColorScheme.current
 
+    DrawerRow(icon = icon, title = title, subtitle = subtitle, onClick = { onCheckedChange(!checked) }) {
+        HapticSwitch(
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = colors.primaryBlueColor,
+                uncheckedThumbColor = Color.White,
+                uncheckedTrackColor = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) colors.borderGreyLightColor else Color.LightGray
+            ),
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+
+/** Dark mode, language and haptics grouped in one card, like the other drawer sections. */
+@Composable
+fun SettingsCard() {
+    DrawerCard {
+        ThemeSwitchItem()
+        DrawerDivider()
+        LanguageItem()
+        DrawerDivider()
+        HapticsSwitchItem()
+    }
+}
+
+// ── Shared drawer row layout ───────────────────────────────────────────────────
+
+private val DrawerIconBadge = 36.dp
+private val DrawerRowPadding = 16.dp
+private val DrawerIconGap = 12.dp
+
+/** Rounded section card holding drawer rows. */
+@Composable
+fun DrawerCard(content: @Composable ColumnScope.() -> Unit) {
+    val colors = LocalMyColorScheme.current
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(colors.dashboardContainerColor),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = colors.textGreyColor,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Text(text = title, color = colors.textDarkColor, fontSize = 16.sp)
-                    if (subtitle != null) {
-                        Text(text = subtitle, color = colors.textGreyColor, fontSize = 12.sp)
-                    }
-                }
-            }
-
-            HapticSwitch(
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = colors.primaryBlueColor,
-                    uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) colors.borderGreyLightColor else Color.LightGray
-                ),
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            )
-        }
+        Column(content = content)
     }
+}
+
+/** Hairline between rows, starting under the title so the icons stay as one column. */
+@Composable
+fun DrawerDivider() {
+    val colors = LocalMyColorScheme.current
+    HorizontalDivider(
+        modifier = Modifier.padding(start = DrawerRowPadding + DrawerIconBadge + DrawerIconGap),
+        thickness = 0.5.dp,
+        color = colors.borderGreyLightColor.copy(alpha = 0.5f),
+    )
+}
+
+/**
+ * One drawer row: icon badge, title (and optional subtitle), then [trailing] — a value with a
+ * chevron, or a switch. Every row shares the same height, padding and type.
+ */
+@Composable
+fun DrawerRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    onClick: (() -> Unit)? = null,
+    trailing: @Composable RowScope.() -> Unit,
+) {
+    val colors = LocalMyColorScheme.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = DrawerRowPadding, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(DrawerIconBadge)
+                .clip(CircleShape)
+                .background(colors.primaryBlueColor.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(20.dp))
+        }
+        Spacer(modifier = Modifier.width(DrawerIconGap))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.Medium, lineHeight = 20.sp)
+            if (subtitle != null) {
+                Text(subtitle, color = colors.textGreyColor, fontSize = 12.sp, lineHeight = 16.sp)
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        trailing()
+    }
+}
+
+@Composable
+fun DrawerRowValue(text: String) {
+    Text(text, color = LocalMyColorScheme.current.textGreyColor, fontSize = 14.sp, modifier = Modifier.padding(end = 4.dp))
+}
+
+@Composable
+fun DrawerChevron() {
+    Icon(
+        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+        contentDescription = null,
+        tint = LocalMyColorScheme.current.textGreyColor,
+        modifier = Modifier.size(22.dp)
+    )
 }
 
 
@@ -776,23 +851,13 @@ fun MedicalProfileCard(
 @Composable
 fun MenuCard(items: List<Pair<String, String>>) {
 
-    val colors = LocalMyColorScheme.current
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(colors.dashboardContainerColor),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column {
-
-            items.forEachIndexed { _, item ->
-
-                MenuRow(
-                    title = item.first,
-                    count = item.second
-                )
-
-            }
+    DrawerCard {
+        items.forEachIndexed { index, item ->
+            if (index > 0) DrawerDivider()
+            MenuRow(
+                title = item.first,
+                count = item.second
+            )
         }
     }
 }
@@ -827,36 +892,33 @@ fun MenuRow(
         else -> null
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                route?.let { navController.navigate(it) }
-            }
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+    DrawerRow(
+        icon = menuIcon(title),
+        title = menuTitleRes(title)?.let { stringResource(it) } ?: title,
+        onClick = { route?.let { navController.navigate(it) } },
     ) {
-
-        Text(
-            text = menuTitleRes(title)?.let { stringResource(it) } ?: title,
-            modifier = Modifier.weight(1f),
-            style = AppTextStyles.style14BCB()
-        )
-
-        if (count.isNotEmpty()) {
-            Text(
-                text = count,
-                style = AppTextStyles.style14GCN(),
-                modifier = Modifier.padding(end = 8.dp)
-            )
-        }
-
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = colors.textGreyColor
-        )
+        if (count.isNotEmpty()) DrawerRowValue(count)
+        DrawerChevron()
     }
+}
+
+/** Icon for a drawer menu identifier. */
+private fun menuIcon(title: String): ImageVector = when (title) {
+    "Profile" -> Icons.Rounded.Person
+    "Breathing Therapy" -> Icons.Rounded.Air
+    "Allergies" -> Icons.Rounded.Healing
+    "Appointments" -> Icons.Rounded.CalendarMonth
+    "Prescriptions" -> Icons.Rounded.Medication
+    "Reports" -> Icons.Rounded.Description
+    "My Observer" -> Icons.Rounded.Visibility
+    "Family Health History" -> Icons.Rounded.FamilyRestroom
+    "Shared Accounts" -> Icons.Rounded.Group
+    "Connect Smart Watch" -> Icons.Rounded.Watch
+    "Emergency Contacts" -> Icons.Rounded.ContactPhone
+    "Permissions & Privacy" -> Icons.Rounded.Shield
+    "FAQ" -> Icons.AutoMirrored.Rounded.HelpOutline
+    "Feedback" -> Icons.Rounded.RateReview
+    else -> Icons.AutoMirrored.Filled.KeyboardArrowRight
 }
 
 /** Display label for a drawer menu identifier; the identifier itself drives navigation. */

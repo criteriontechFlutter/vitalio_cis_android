@@ -30,7 +30,9 @@ data class IntakeItem(
     val isGiven: Int = 0,
     val translation: String? = null,
     // Server sends this as a decimal string, e.g. "3000.000000"
-    val fluidRecommended: String? = null
+    val fluidRecommended: String? = null,
+    /** Logged offline and still waiting to upload; never comes from the server. */
+    @Transient val isPending: Boolean = false,
 ) {
     val fluidRecommendedMl: Int?
         get() = fluidRecommended?.toDoubleOrNull()?.toInt()?.takeIf { it > 0 }

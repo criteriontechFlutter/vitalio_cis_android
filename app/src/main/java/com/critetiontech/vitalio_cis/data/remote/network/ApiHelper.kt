@@ -16,6 +16,13 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 
 class ApiHelper {
 
+    /**
+     * Raw responses saved with cacheResponse = true live under their own prefix. Repositories cache
+     * through PrefsManager.getData, often keyed by the bare endpoint and stored Gson-encoded; reading
+     * one of those here as a body handed back a quoted string and broke parsing offline.
+     */
+    private fun cacheKey(endpoint: String) = "api_cache|$endpoint"
+
     suspend fun callApi(
         context: Context,
         endpoint: String,
@@ -26,7 +33,7 @@ class ApiHelper {
 
         if (!NetworkUtils.isConnected(context)) {
 
-            val cached = PrefsManager(context).getString(context, endpoint)
+            val cached = PrefsManager(context).getString(context, cacheKey(endpoint))
             if (cached != null) {
                 Log.d("ApiHelper", "Offline → Returning cached data")
                 return@withContext Response.success(
@@ -62,7 +69,7 @@ class ApiHelper {
             }
 
             if (cacheResponse && !bodyString.isNullOrEmpty()) {
-                PrefsManager(context).saveString(context, endpoint, bodyString)
+                PrefsManager(context).saveString(context, cacheKey(endpoint), bodyString)
                 Log.d("ApiHelper", "Cached successfully")
             }
 
@@ -73,7 +80,7 @@ class ApiHelper {
         } catch (e: Exception) {
 
             Log.e("ApiHelper", "API Failed: ${e.message}")
-            val cached = PrefsManager(context).getString(context, endpoint)
+            val cached = PrefsManager(context).getString(context, cacheKey(endpoint))
 
             return@withContext if (cached != null) {
                 Log.d("ApiHelper", "Exception → Returning cached data")

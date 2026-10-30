@@ -1014,10 +1014,8 @@ object VoiceNavigationManager {
     }
 
     private suspend fun saveFluidIntakes(patient: VoicePatient, intakes: List<VoiceFluidIntakeItem>): SaveOutcome {
-        val foodDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            java.time.Instant.now().toString()
-        else
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).format(Date())
+        // Local wall-clock time, no offset: the server stores it as given (a UTC "…Z" showed 5½ h early).
+        val foodDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
 
         // One call per drink, all in parallel
         val ok = coroutineScope {

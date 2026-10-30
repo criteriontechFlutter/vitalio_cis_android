@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
+import com.critetiontech.ctvitalio.data.offline.SendResult
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -39,7 +41,11 @@ class VitalRepositoryImpl @Inject constructor(
         DomainResult.Error(e)
     }
 
-    override suspend fun addVital(body: Map<String, Any>): DomainResult<Unit> = try {
+    /** Saves now, or keeps it on the phone to upload later when there's no network. */
+    override suspend fun addVital(body: Map<String, Any>): DomainResult<Unit> =
+        OfflineOutbox.submit(OfflineOutbox.Kind.VITAL, body, ::sendVital)
+
+    suspend fun sendVital(body: Map<String, Any>): SendResult = try {
         val response = ApiHelper().callApi(context, endpoints.addVital, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
@@ -51,32 +57,37 @@ class VitalRepositoryImpl @Inject constructor(
         val reason = (body?.opt("responseValue") as? String)?.trim()?.takeIf { it.lowercase() !in generic }
             ?: body?.optString("message")?.trim()?.takeIf { it.lowercase() !in generic }
         when {
-            response.isSuccessful && (status == null || status == 1) -> DomainResult.Success(Unit)
-            response.code() == 504 && raw.orEmpty().startsWith("No Connection") ->
-                DomainResult.Error(Exception("No internet connection. Check your network and try again."))
-            raw.orEmpty().startsWith("Exception:") ->
-                DomainResult.Error(Exception("Couldn't reach the server. Check your connection and try again."))
-            else -> DomainResult.Error(Exception(reason ?: "Couldn't save the vital right now. Please try again."))
+            response.isSuccessful && (status == null || status == 1) -> SendResult.Sent
+            SendResult.isNetworkFailure(response, raw) -> SendResult.Offline
+            else -> SendResult.Rejected(reason ?: "Couldn't save the vital right now. Please try again.")
         }
     } catch (e: Exception) {
-        DomainResult.Error(Exception("Couldn't reach the server. Check your connection and try again."))
+        SendResult.Rejected("Couldn't save the vital right now. Please try again.")
     }
 
     override suspend fun fetchVitalAnalytics(params: Map<String, Any>): DomainResult<List<VitalGraphEntry>> = try {
-        val response = ApiHelper().callApi(context, endpoints.fetchVitalAnalytics, showNoConnectionToast = false) { url ->
-            ApiClients.module4082.dynamicGet(url = url, params = params)
+        // Offline, the last result for the same range and vitals is shown instead.
+        val key = "${endpoints.fetchVitalAnalytics}?" + params.toSortedMap().entries.joinToString("&") { "${it.key}=${it.value}" }
+        val body = prefs.getData(key = key, shouldSave = true) {
+            val response = ApiHelper().callApi(context, endpoints.fetchVitalAnalytics, showNoConnectionToast = false) { url ->
+                ApiClients.module4082.dynamicGet(url = url, params = params)
+            }
+            if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        if (response.isSuccessful) {
-            val body = response.body()?.string() ?: return DomainResult.Success(emptyList())
-            val parsed = Gson().fromJson(body, VitalAnalyticsResponse::class.java)
-            val entries = if (parsed.status == 1) {
-                parsed.responseValue.patientGraph.map { item ->
-                    val details = try { Gson().fromJson(item.vitalDetails, Array<VitalGraphDetail>::class.java).toList() } catch (e: Exception) { emptyList() }
-                    VitalGraphEntry(item.vitalDateTime, details)
-                }
-            } else emptyList()
-            DomainResult.Success(entries)
-        } else DomainResult.Error(Exception("API Error: ${response.code()}"))
+        when {
+            body == null -> DomainResult.Error(Exception("Couldn't load vital history"))
+            body.isEmpty() -> DomainResult.Success(emptyList())
+            else -> {
+                val parsed = Gson().fromJson(body, VitalAnalyticsResponse::class.java)
+                val entries = if (parsed.status == 1) {
+                    parsed.responseValue.patientGraph.map { item ->
+                        val details = try { Gson().fromJson(item.vitalDetails, Array<VitalGraphDetail>::class.java).toList() } catch (e: Exception) { emptyList() }
+                        VitalGraphEntry(item.vitalDateTime, details)
+                    }
+                } else emptyList()
+                DomainResult.Success(entries)
+            }
+        }
     } catch (e: Exception) {
         DomainResult.Error(e)
     }

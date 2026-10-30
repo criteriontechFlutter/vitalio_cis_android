@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
+import com.critetiontech.ctvitalio.data.offline.SendResult
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -48,12 +50,20 @@ class SymptomRepositoryImpl @Inject constructor(
         DomainResult.Success(if (parsed.status == 1) parsed.responseValue.orEmpty() else emptyList())
     } catch (e: Exception) { DomainResult.Error(e) }
 
-    override suspend fun insertSymptoms(body: Map<String, Any>): DomainResult<Unit> = try {
+    override suspend fun insertSymptoms(body: Map<String, Any>): DomainResult<Unit> =
+        OfflineOutbox.submit(OfflineOutbox.Kind.SYMPTOMS, body, ::sendSymptoms)
+
+    suspend fun sendSymptoms(body: Map<String, Any>): SendResult = try {
         val response = ApiHelper().callApi(context, endpoints.insertSymtoms, showNoConnectionToast = false) { url ->
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
-        if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
-    } catch (e: Exception) { DomainResult.Error(e) }
+        val raw = if (response.isSuccessful) null else response.errorBody()?.string()
+        when {
+            response.isSuccessful -> SendResult.Sent
+            SendResult.isNetworkFailure(response, raw) -> SendResult.Offline
+            else -> SendResult.Rejected("API Error: ${response.code()}")
+        }
+    } catch (e: Exception) { SendResult.Rejected(e.message ?: "API Error") }
 
     override suspend fun saveSymptoms(uhid: String, clientId: Int, symptoms: List<SymptomItem>): DomainResult<Unit> {
         val now = LocalDateTime.now().format(PayloadDateFormat)
@@ -102,13 +112,20 @@ class SymptomRepositoryImpl @Inject constructor(
 
     override suspend fun getAllProblems(query: String): DomainResult<List<Problem>> = try {
         val params = mapOf("alphabet" to query, "language" to 1)
-        val response = ApiHelper().callApi(context, endpoints.getAllProblems, showNoConnectionToast = false) { url ->
-            ApiClients.digidoctor_BaseURL.dynamicRawPost(url = url, body = params)
+        val body = prefs.getData(key = "${endpoints.getAllProblems}?alphabet=${query.trim().lowercase()}", shouldSave = true) {
+            val response = ApiHelper().callApi(context, endpoints.getAllProblems, showNoConnectionToast = false) { url ->
+                ApiClients.digidoctor_BaseURL.dynamicRawPost(url = url, body = params)
+            }
+            if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        if (response.isSuccessful) {
-            val body = response.body()?.string()
-            val list = if (!body.isNullOrEmpty()) Gson().fromJson(body, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
+        if (body != null) {
+            val list = if (body.isNotEmpty()) Gson().fromJson(body, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
             DomainResult.Success(list)
-        } else DomainResult.Error(Exception("API Error: ${response.code()}"))
+        } else {
+            // Offline and never searched this term: search the common-problems list we do have.
+            val common = (getProblemsWithIcon() as? DomainResult.Success)?.data.orEmpty()
+            if (common.isEmpty()) DomainResult.Error(Exception("Couldn't search symptoms"))
+            else DomainResult.Success(common.filter { it.problemName.orEmpty().contains(query.trim(), ignoreCase = true) })
+        }
     } catch (e: Exception) { DomainResult.Error(e) }
 }

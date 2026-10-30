@@ -20,7 +20,9 @@ data class Vital(
     val vitalDateTime: String = "",
     val userId: Int = 0,
     val rowId: Int = 0,
-    val displayValue: String = ""
+    val displayValue: String = "",
+    /** Logged offline and still waiting to upload; never comes from the server. */
+    @Transient val isPending: Boolean = false,
 )
 
 // Analytics API models

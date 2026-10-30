@@ -61,17 +61,21 @@ class MedicineRepositoryImpl @Inject constructor(
 
     override suspend fun fetchMedicineByDate(pid: Int, givenDate: String, clientId: Int): DomainResult<Pair<List<LoggedMedicine>, List<AllMedicine>>> = try {
         val params = mapOf("pid" to pid, "givenDate" to givenDate, "clientId" to clientId)
-        val response = ApiHelper().callApi(context, endpoints.fetchPatientMedicineIntakeByDate, showNoConnectionToast = false) { url ->
-            ApiClients.module4082.dynamicGet(url = url, params = params)
+        val body = prefs.getData(key = "${endpoints.fetchPatientMedicineIntakeByDate}?pid=$pid&givenDate=$givenDate", shouldSave = true) {
+            val response = ApiHelper().callApi(context, endpoints.fetchPatientMedicineIntakeByDate, showNoConnectionToast = false) { url ->
+                ApiClients.module4082.dynamicGet(url = url, params = params)
+            }
+            if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        if (response.isSuccessful) {
-            val body = response.body()?.string()
-            if (!body.isNullOrEmpty()) {
+        when {
+            body == null -> DomainResult.Error(Exception("Couldn't load medicines"))
+            body.isEmpty() -> DomainResult.Success(Pair(emptyList(), emptyList()))
+            else -> {
                 val parsed = Gson().fromJson(body, MedicineIntakeByDateResponse::class.java)
                 if (parsed.status == 1) DomainResult.Success(Pair(parsed.responseValue?.loggedMedicines.orEmpty(), parsed.responseValue?.allMedicines.orEmpty()))
                 else DomainResult.Success(Pair(emptyList(), emptyList()))
-            } else DomainResult.Success(Pair(emptyList(), emptyList()))
-        } else DomainResult.Error(Exception("API Error: ${response.code()}"))
+            }
+        }
     } catch (e: Exception) { DomainResult.Error(e) }
 
     override suspend fun searchMedicine(alphabet: String): DomainResult<List<SearchMedicineItem>> = try {

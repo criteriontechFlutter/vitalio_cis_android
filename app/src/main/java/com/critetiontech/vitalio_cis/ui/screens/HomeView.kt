@@ -413,6 +413,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
                 .verticalScroll(rememberScrollState())
                 .padding(homeDimens.screenPadding)
         ) {
+            com.critetiontech.ctvitalio.ui.components.SyncStatusBanner()
             ContentStateCrossfade(
                 // No separate empty state here: each section shows its own.
                 state = if (loading && vitals.isEmpty() && dailyMedicines.isEmpty()) ContentState.Loading else ContentState.Content,

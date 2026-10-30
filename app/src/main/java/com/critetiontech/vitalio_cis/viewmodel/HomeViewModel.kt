@@ -23,6 +23,10 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
+import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
+import com.critetiontech.ctvitalio.data.offline.PendingEntries
+import kotlinx.coroutines.flow.drop
+
 class HomeViewModel : ViewModel() {
 
     private val prefs = AppDependencies.prefs
@@ -42,6 +46,10 @@ class HomeViewModel : ViewModel() {
     val dailyMedicines: StateFlow<List<com.critetiontech.ctvitalio.model.MedicineItem>> = _dailyMedicines
 
     init {
+        // Offline logs uploaded: the dashboard's latest vitals now include them.
+        viewModelScope.launch {
+            OfflineOutbox.lastSyncedAt.drop(1).collect { fetchDashboardNoCache() }
+        }
         // A dose was logged from a medicine alarm; refresh so the card shows it as taken.
         viewModelScope.launch {
             MedicineIntakeEvents.changed.collect { refreshTodayMedicines() }
@@ -66,7 +74,7 @@ class HomeViewModel : ViewModel() {
                     val body = response.body()?.string()
                     val parsed = Gson().fromJson(body, DashboardResponse::class.java)
                     if (parsed.status == 1) {
-                        _vitalList.value = parsed.responseValue.latestVitals
+                        _vitalList.value = PendingEntries.overlayVitals(parsed.responseValue.latestVitals)
                         _appointments.value = parsed.responseValue.upcomingAppointments
                     }
                 }
@@ -150,7 +158,7 @@ class HomeViewModel : ViewModel() {
                     val body = response.body()?.string()
                     val parsed = Gson().fromJson(body, DashboardResponse::class.java)
                     if (parsed.status == 1) {
-                        _vitalList.value = parsed.responseValue.latestVitals
+                        _vitalList.value = PendingEntries.overlayVitals(parsed.responseValue.latestVitals)
                         _appointments.value = parsed.responseValue.upcomingAppointments
                     }
                 }

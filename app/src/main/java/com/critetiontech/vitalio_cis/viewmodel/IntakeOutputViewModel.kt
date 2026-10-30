@@ -24,6 +24,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
+import com.critetiontech.ctvitalio.data.offline.PendingEntries
+import kotlinx.coroutines.flow.drop
+
 class IntakeOutputViewModel : ViewModel() {
 
     private val deps = AppDependencies
@@ -50,9 +54,24 @@ class IntakeOutputViewModel : ViewModel() {
     private val _fluidRecommended = MutableStateFlow<Int?>(null)
     val fluidRecommended: StateFlow<Int?> = _fluidRecommended
 
-    private fun setIntakeList(list: List<IntakeItem>) {
-        _intakeList.value = list
+    /** Day the intake and output lists were last loaded for, so they can reload after a sync. */
+    private var intakeListDate: String? = null
+    private var outputListDate: String? = null
+
+    private fun setIntakeList(list: List<IntakeItem>, date: String) {
+        val names = _manualFoodList.value.associate { it.foodID to it.foodName }
+        _intakeList.value = list + PendingEntries.intake(date, names)
         list.firstNotNullOfOrNull { it.fluidRecommendedMl }?.let { _fluidRecommended.value = it }
+    }
+
+    init {
+        // Offline logs just uploaded: reload so the server's copies replace the pending ones.
+        viewModelScope.launch {
+            OfflineOutbox.lastSyncedAt.drop(1).collect {
+                intakeListDate?.let { fetchIntakeItems(it) }
+                outputListDate?.let { fetchOutput(it) }
+            }
+        }
     }
 
     private val _fluidSummaryList =MutableStateFlow<List<FluidSummaryItem>>(emptyList())
@@ -92,11 +111,12 @@ class IntakeOutputViewModel : ViewModel() {
     fun fetchIntakeItems(fromDate: String) {
         viewModelScope.launch {
             val patient = prefs.getPatient() ?: run { _intakeList.value = emptyList(); return@launch }
+            intakeListDate = fromDate
             val cached = deps.fluidRepository.cachedIntakeItems(patient.uhId, fromDate)
-            setIntakeList(cached)
+            setIntakeList(cached, fromDate)
             _intakeLoading.value = cached.isEmpty()
             when (val r = deps.fetchIntake()(patient.uhId, patient.clientId.toString(), fromDate)) {
-                is DomainResult.Success -> setIntakeList(r.data)
+                is DomainResult.Success -> setIntakeList(r.data, fromDate)
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
             _intakeLoading.value = false
@@ -107,7 +127,9 @@ class IntakeOutputViewModel : ViewModel() {
         viewModelScope.launch {
             _intakeLoading.value = true
             val patient = prefs.getPatient() ?: run { _intakeLoading.value = false; return@launch }
-            val foodDate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Instant.now().toString() else System.currentTimeMillis().toString()
+            // Local wall-clock time, no offset: the server stores the string as given, so a UTC
+            // instant ("…Z") showed up 5½ hours early in the history.
+            val foodDate = LocalDateTime.now().withNano(0).toString()
             val body = mapOf<String, Any>("FoodDate" to foodDate, "FoodQuantity" to value, "UserID" to patient.pid, "foodId" to fId, "clientId" to patient.clientId, "FoodUnitId" to 27, "uhid" to patient.uhId, "isGiven" to 1, "entryType" to "N", "isFromPatient" to 1)
             when (val r = deps.addIntake()(body)) {
                 is DomainResult.Success -> {
@@ -125,10 +147,11 @@ class IntakeOutputViewModel : ViewModel() {
 
     fun fetchOutput(date: String) {
         viewModelScope.launch {
-            _outputLoading.value = true; _outputList.value = emptyList()
+            outputListDate = date
+            _outputLoading.value = true; _outputList.value = PendingEntries.output(date)
             val patient = prefs.getPatient() ?: run { _outputLoading.value = false; return@launch }
             when (val r = deps.fetchOutput()(patient.uhId, patient.clientId.toString(), patient.pid.toString(), date)) {
-                is DomainResult.Success -> _outputList.value = r.data
+                is DomainResult.Success -> _outputList.value = r.data + PendingEntries.output(date)
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
             _outputLoading.value = false
@@ -146,6 +169,8 @@ class IntakeOutputViewModel : ViewModel() {
                     Log.d("IntakeOutputVM", "addOutput success")
                     _outputSuccess.value = true
                     Haptics.success()
+                    // Refresh the count/volume (includes the entry if it was queued offline)
+                    fetchOutput(outputListDate ?: LocalDate.now().toString())
                 }
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }

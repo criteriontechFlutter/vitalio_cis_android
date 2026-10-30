@@ -29,6 +29,7 @@ class MyApplication : Application() {
         MedicineAlarmNotifier.ensureChannels(this)
         HealthNudges.ensureChannel(this)
         HealthNudges.schedule(this)
+        com.critetiontech.ctvitalio.data.offline.OfflineOutbox.requestSync(this)
         WearableSync.schedule(this)
         OmronManager.init(this)
         VoiceCore.backend = AppVoiceBackend
