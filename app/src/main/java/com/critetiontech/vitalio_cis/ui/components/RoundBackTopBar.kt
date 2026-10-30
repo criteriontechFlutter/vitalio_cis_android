@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,7 +60,7 @@ fun RoundBackTopBar(
         ) {
             Icon(
                 Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.auth_common_back),
                 tint = colors.textDarkColor,
                 modifier = Modifier.size(26.dp),
             )

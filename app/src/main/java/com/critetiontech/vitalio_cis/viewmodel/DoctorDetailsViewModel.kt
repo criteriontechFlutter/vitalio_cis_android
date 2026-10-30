@@ -6,7 +6,9 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.di.AppDependencies
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.domain.repository.BookingException
 import com.critetiontech.ctvitalio.model.ConsentItem
@@ -213,7 +215,7 @@ class DoctorDetailsViewModel : ViewModel() {
                 // Ignore an answer for a date the patient has since moved away from.
                 is DomainResult.Success -> if (_slotDate.value == scheduleDate) _slotList.value = r.data
                 is DomainResult.Error -> {
-                    if (_slotDate.value == scheduleDate) _slotsError.value = "Couldn't load the available slots. Check your connection and try again."
+                    if (_slotDate.value == scheduleDate) _slotsError.value = MyApplication.appContext.getString(R.string.consult_slots_load_failed)
                     Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
                 }
             }
@@ -250,10 +252,10 @@ class DoctorDetailsViewModel : ViewModel() {
             when (r) {
                 is DomainResult.Success -> {
                     _latestToken.value = r.data.firstOrNull()
-                    if (_latestToken.value == null) _tokenError.value = "No token is available for this shift. Try another shift or day."
+                    if (_latestToken.value == null) _tokenError.value = MyApplication.appContext.getString(R.string.consult_no_token_available)
                 }
                 is DomainResult.Error -> {
-                    _tokenError.value = "Couldn't get your token number. Tap the shift to try again."
+                    _tokenError.value = MyApplication.appContext.getString(R.string.consult_token_load_failed)
                     Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
                 }
             }
@@ -276,7 +278,7 @@ class DoctorDetailsViewModel : ViewModel() {
         viewModelScope.launch {
             _bookingLoading.value = true; _bookingError.value = null
             val patient = prefs.getPatient() ?: run {
-                _bookingError.value = "Your session has expired. Please log in again to book."
+                _bookingError.value = MyApplication.appContext.getString(R.string.consult_session_expired)
                 _bookingLoading.value = false
                 return@launch
             }
@@ -305,10 +307,13 @@ class DoctorDetailsViewModel : ViewModel() {
             queueNo?.let { params["queueNo"] = it }
 
             when (val r = deps.bookAppointment()(params)) {
-                is DomainResult.Success -> { _visitNo.value = r.data; _bookingSuccess.value = true; Haptics.success() }
+                is DomainResult.Success -> {
+                    _visitNo.value = r.data; _bookingSuccess.value = true; Haptics.success()
+                    com.critetiontech.ctvitalio.reminder.AppointmentReminders.requestSync(com.critetiontech.ctvitalio.utils.MyApplication.appContext)
+                }
                 is DomainResult.Error -> {
                     _bookingError.value = (r.exception as? BookingException)?.message
-                        ?: "Couldn't book the appointment. Please try again."
+                        ?: MyApplication.appContext.getString(R.string.consult_booking_failed)
                     Haptics.error()
                     Log.e("DoctorDetailsVM", r.exception.message.orEmpty())
                 }

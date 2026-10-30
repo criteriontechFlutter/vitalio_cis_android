@@ -3,6 +3,8 @@ package com.critetiontech.ctvitalio.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.Problem
@@ -108,7 +110,7 @@ class SymptomSelectionViewModel : ViewModel() {
         if (s.saving || s.selected.isEmpty()) return
         viewModelScope.launch {
             val patient = deps.prefs.getPatient() ?: run {
-                _message.emit("Your session has expired. Please log in again.")
+                _message.emit(MyApplication.appContext.getString(R.string.track_session_expired))
                 return@launch
             }
             _state.update { it.copy(saving = true) }
@@ -116,11 +118,11 @@ class SymptomSelectionViewModel : ViewModel() {
                 is DomainResult.Success -> {
                     Haptics.success()
                     _state.update { it.copy(selected = emptyList()) }
-                    _message.emit("Symptoms Added Successfully!")
+                    _message.emit(MyApplication.appContext.getString(R.string.track_symptoms_added))
                 }
                 is DomainResult.Error -> {
                     Haptics.error()
-                    _message.emit("Couldn't save your symptoms. Please try again.")
+                    _message.emit(MyApplication.appContext.getString(R.string.track_symptoms_save_failed))
                     Log.e("SymptomSelectionVM", r.exception.message.orEmpty())
                 }
             }

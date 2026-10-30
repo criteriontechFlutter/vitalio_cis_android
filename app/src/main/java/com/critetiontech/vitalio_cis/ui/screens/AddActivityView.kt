@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,10 +77,10 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Add Activity", style = AppTextStyles.style18BCB())
+            Text(stringResource(R.string.track_add_activity), style = AppTextStyles.style18BCB())
             Spacer(Modifier.weight(1f))
             Text(
-                text = "Activity History",
+                text = stringResource(R.string.track_activity_history),
                 color = Color(0xFF2E5BFF),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -95,7 +96,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
         OutlinedTextField(
             value = viewModel.searchText,
             onValueChange = { viewModel.onSearchChange(it) },
-            placeholder = { Text("Search activity...", color = Color.Gray.copy(alpha = 0.6f)) },
+            placeholder = { Text(stringResource(R.string.track_search_activity), color = Color.Gray.copy(alpha = 0.6f)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray.copy(alpha = 0.6f)) },
             trailingIcon = {
                 if (viewModel.searchText.isNotEmpty()) {
@@ -110,7 +111,9 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.15f),
                 focusedBorderColor = Color(0xFF2E5BFF),
                 unfocusedContainerColor = colors.dashboardContainerColor,
-                focusedContainerColor = colors.dashboardContainerColor
+                focusedContainerColor = colors.dashboardContainerColor,
+                focusedTextColor = colors.textDarkColor,
+                unfocusedTextColor = colors.textDarkColor
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -122,7 +125,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
             // ── Recent Activities ──
             if (recentActivityList.isNotEmpty()) {
                 item {
-                    Text("Recent", style = AppTextStyles.style16BCB())
+                    Text(stringResource(R.string.track_recent), style = AppTextStyles.style16BCB())
                     Spacer(Modifier.height(10.dp))
                 }
                 item {
@@ -148,7 +151,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
 
             // ── All Activities ──
             item {
-                Text("All Activities", style = AppTextStyles.style16BCB())
+                Text(stringResource(R.string.track_all_activities), style = AppTextStyles.style16BCB())
                 Spacer(Modifier.height(10.dp))
             }
 
@@ -227,7 +230,7 @@ fun ActivityBottomSheet(
                 }
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    text = viewModel.selectedActivity.ifEmpty { "Activity" },
+                    text = viewModel.selectedActivity.ifEmpty { stringResource(R.string.track_activity) },
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.textDarkColor
@@ -258,7 +261,7 @@ fun ActivityBottomSheet(
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 // Start time
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Select Start Time", fontSize = 13.sp, color = Color(0xFF737B8C))
+                    Text(stringResource(R.string.track_select_start_time), fontSize = 13.sp, color = colors.textGreyColor)
                     Spacer(Modifier.height(8.dp))
                     TimePickerCard(
                         text = timeFormat.format(viewModel.startTime),
@@ -273,7 +276,7 @@ fun ActivityBottomSheet(
                 }
                 // End time
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Select End Time", fontSize = 13.sp, color = Color(0xFF737B8C))
+                    Text(stringResource(R.string.track_select_end_time), fontSize = 13.sp, color = colors.textGreyColor)
                     Spacer(Modifier.height(8.dp))
                     TimePickerCard(
                         text = timeFormat.format(viewModel.endTime),
@@ -299,7 +302,7 @@ fun ActivityBottomSheet(
                 modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                else Text("Save", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                else Text(stringResource(R.string.track_save), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(Modifier.height(16.dp))
@@ -361,7 +364,7 @@ fun RecentActivityChip(
         )
         Icon(
             Icons.Default.Close,
-            contentDescription = "Remove",
+            contentDescription = stringResource(R.string.track_remove),
             tint = Color(0xFFF25959),
             modifier = Modifier.size(16.dp).clickable { onDelete() }
         )

@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import androidx.annotation.StringRes
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
+
 import com.critetiontech.ctvitalio.ui.feedback.Haptics
 
 import android.util.Log
@@ -88,7 +92,7 @@ class UploadPrescriptionViewModel : ViewModel() {
 
     fun uploadPrescriptionToAnalyse() {
         val file = _selectedFile.value ?: run {
-            viewModelScope.launch { _toastEvent.emit("Please select a prescription document first") }
+            viewModelScope.launch { _toastEvent.emit(str(R.string.report_toast_select_prescription_first)) }
             return
         }
         viewModelScope.launch {
@@ -107,7 +111,7 @@ class UploadPrescriptionViewModel : ViewModel() {
                 }
                 is DomainResult.Error -> {
                     Log.e("UploadPrescriptionVM", r.exception.message.orEmpty())
-                    _toastEvent.emit(r.exception.message ?: "Upload failed")
+                    _toastEvent.emit(r.exception.message ?: str(R.string.report_toast_upload_failed))
                 }
             }
             _uploadingFile.value = false
@@ -117,7 +121,7 @@ class UploadPrescriptionViewModel : ViewModel() {
     // ── Batch insert medicines into Medication Schedule ───────────────────────
     fun insertPrescriptionMedicines(medicines: List<PrescriptionMedicine>) {
         viewModelScope.launch {
-            if (medicines.isEmpty()) { _toastEvent.emit("No medicines to add"); return@launch }
+            if (medicines.isEmpty()) { _toastEvent.emit(str(R.string.report_toast_no_medicines_to_add)); return@launch }
 
             val patient = prefs.getPatient()
             if (patient == null || patient.pid <= 0 || patient.clientId <= 0) {
@@ -128,7 +132,7 @@ class UploadPrescriptionViewModel : ViewModel() {
             val insertable = medicines.filter { it.isInsertable }
             val unmappedCount = medicines.size - insertable.size
             if (insertable.isEmpty()) {
-                _toastEvent.emit("All ${medicines.size} medicines require manual addition to reminders.")
+                _toastEvent.emit(str(R.string.report_toast_all_require_manual, medicines.size))
                 return@launch
             }
 
@@ -172,31 +176,37 @@ class UploadPrescriptionViewModel : ViewModel() {
             if (successCount > 0) {
                 _medicinesSavedSuccessfully.value = true
                 Haptics.success()
-                val manualNote = if (unmappedCount > 0) " ($unmappedCount require manual addition)" else ""
-                _toastEvent.emit("$successCount ${if (successCount == 1) "medicine" else "medicines"} added to reminders!$manualNote")
+                val added = if (successCount == 1) str(R.string.report_toast_medicines_added_one, successCount)
+                    else str(R.string.report_toast_medicines_added_other, successCount)
+                _toastEvent.emit(
+                    if (unmappedCount > 0) str(R.string.report_toast_added_with_manual_note, added, unmappedCount) else added
+                )
             } else {
                 Haptics.error()
-                _toastEvent.emit("Failed to add medicines. Please try again.")
+                _toastEvent.emit(str(R.string.report_toast_failed_add_medicines))
             }
         }
     }
 
     // ── Formatting helpers ────────────────────────────────────────────────────
+    private fun str(@StringRes id: Int, vararg args: Any): String =
+        MyApplication.appContext.getString(id, *args)
+
     fun formattedTiming(timing: String?): String {
         val t = timing?.trim().orEmpty()
-        if (t.isEmpty()) return "As Prescribed"
+        if (t.isEmpty()) return str(R.string.report_timing_as_prescribed)
         return when (t.lowercase().replace("-", "_")) {
-            "after_meals", "after_meal", "aftermeal", "aftermeals" -> "After Meals"
-            "before_meals", "before_meal", "beforemeal", "beforemeals" -> "Before Meals"
-            "empty_stomach" -> "Empty Stomach"
-            "with_food" -> "With Food"
-            "at_bedtime", "bedtime" -> "At Bedtime"
+            "after_meals", "after_meal", "aftermeal", "aftermeals" -> str(R.string.report_timing_after_meals)
+            "before_meals", "before_meal", "beforemeal", "beforemeals" -> str(R.string.report_timing_before_meals)
+            "empty_stomach" -> str(R.string.report_timing_empty_stomach)
+            "with_food" -> str(R.string.report_timing_with_food)
+            "at_bedtime", "bedtime" -> str(R.string.report_timing_at_bedtime)
             else -> t.replace("_", " ").split(" ").joinToString(" ") { w -> w.lowercase().replaceFirstChar { it.uppercase() } }
         }
     }
 
     fun formattedDate(dateString: String?): String {
-        if (dateString.isNullOrEmpty()) return "Recent"
+        if (dateString.isNullOrEmpty()) return str(R.string.report_date_recent)
         val out = SimpleDateFormat("dd MMM yyyy", Locale.US)
         listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd", "dd/MM/yyyy", "d/M/yyyy").forEach { fmt ->
             try {

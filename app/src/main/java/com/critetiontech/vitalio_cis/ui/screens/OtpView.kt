@@ -1,8 +1,18 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.collectAsState
+import com.critetiontech.ctvitalio.utils.ButtonLoadingContent
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -61,11 +71,22 @@ import com.critetiontech.ctvitalio.R
 @Composable
 fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
 
     var otpValue by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     var resendTrigger by remember { mutableIntStateOf(0) }
     var timerSeconds by remember { mutableIntStateOf(30) }
+    val isVerifying by viewModel.loading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    // Digit boxes breathe while the OTP is being verified
+    val verifyPulse by rememberInfiniteTransition(label = "verifyPulse").animateFloat(
+        initialValue = 1f,
+        targetValue = 0.55f,
+        animationSpec = infiniteRepeatable(tween(650, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "verifyPulseAlpha"
+    )
 
     // Entrance animation state
     var visible by remember { mutableStateOf(false) }
@@ -151,7 +172,7 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(
-                text = "Empower Your Health with\nOur Smart App!",
+                text = stringResource(R.string.auth_otp_header),
                 color = Color.White,
                 fontSize = 22.sp,
                 textAlign = TextAlign.Center,
@@ -178,7 +199,7 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
             ) {
                 Column(
                     modifier = Modifier
@@ -191,7 +212,7 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                     Box(modifier = Modifier.graphicsLayer { alpha = titleAlpha; translationY = titleY }) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Verify your UHID!",
+                        text = stringResource(R.string.auth_otp_title),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E63D5)
@@ -200,9 +221,9 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Enter 6 digit verification code sent to your number",
+                        text = stringResource(R.string.auth_otp_subtitle),
                         fontSize = 14.sp,
-                        color = Color.Gray,
+                        color = colors.textGreyColor,
                         textAlign = TextAlign.Center
                     )
                         }
@@ -215,8 +236,10 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                         value = otpValue,
                         onValueChange = { new ->
                             val filtered = new.filter { it.isDigit() }.take(6)
+                            if (filtered != otpValue) viewModel.clearError()
                             otpValue = filtered
                         },
+                        enabled = !isVerifying,
                         modifier = Modifier
                             .size(1.dp)
                             .focusRequester(focusRequester),
@@ -238,7 +261,8 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { focusRequester.requestFocus() }
+                            .clickable(enabled = !isVerifying) { focusRequester.requestFocus() }
+                            .graphicsLayer { alpha = if (isVerifying) verifyPulse else 1f }
                     ) {
                         repeat(6) { index ->
                             val boxScale by animateFloatAsState(
@@ -254,12 +278,23 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                             )
                             OtpDigitBox(
                                 digit = otpValue.getOrNull(index)?.toString() ?: "",
-                                isActive = index == otpValue.length && otpValue.length < 6,
+                                isActive = !isVerifying && index == otpValue.length && otpValue.length < 6,
                                 modifier = Modifier
                                     .weight(1f)
                                     .graphicsLayer { scaleX = boxScale; scaleY = boxScale; alpha = boxScale }
                                )
                         }
+                    }
+
+                    errorMessage?.let {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = it,
+                            fontSize = 12.sp,
+                            color = Color(0xFFE53935),
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -268,38 +303,53 @@ fun OtpScreen(mobile: String = "", viewModel: OTPViewModel = viewModel()) {
                         onClick = {
                             viewModel.verifyOtp(uhid = mobile, otp = otpValue)
                         },
-                        enabled = otpValue.length == 6,
+                        enabled = otpValue.length == 6 && !isVerifying,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF1E63D5),
-                            disabledContainerColor = Color(0xFF1E63D5).copy(alpha = 0.4f)
+                            // Full colour while verifying so the loader reads as "working", not "disabled"
+                            disabledContainerColor = if (isVerifying) Color(0xFF1E63D5) else Color(0xFF1E63D5).copy(alpha = 0.4f),
+                            disabledContentColor = Color.White
                         )
                     ) {
-                        Text(text = "Verify", color = Color.White)
+                        AnimatedContent(
+                            targetState = isVerifying,
+                            transitionSpec = {
+                                (fadeIn(tween(200)) + scaleIn(tween(200), initialScale = 0.85f)) togetherWith
+                                    fadeOut(tween(150))
+                            },
+                            label = "verifyContent"
+                        ) { loading ->
+                            if (loading) {
+                                ButtonLoadingContent(text = stringResource(R.string.auth_otp_verifying))
+                            } else {
+                                Text(text = stringResource(R.string.auth_otp_verify), color = Color.White)
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
-                        text = "Didn't receive the Code?",
+                        text = stringResource(R.string.auth_otp_not_received),
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = colors.textGreyColor
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     if (timerSeconds > 0) {
                         Text(
-                            text = "Resend OTP in ${timerSeconds}s",
+                            text = stringResource(R.string.auth_otp_resend_in, timerSeconds),
                             fontSize = 14.sp,
-                            color = Color.Gray
+                            color = colors.textGreyColor
                         )
                     } else {
                         Text(
-                            text = "Resend OTP",
+                            text = stringResource(R.string.auth_otp_resend),
                             fontSize = 14.sp,
                             color = Color(0xFF1E63D5),
                             fontWeight = FontWeight.Bold,
@@ -321,11 +371,12 @@ private fun OtpDigitBox(
     isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalMyColorScheme.current
     val borderColor by animateColorAsState(
         targetValue = when {
             isActive -> Color(0xFF1E63D5)
             digit.isNotEmpty() -> Color(0xFF1E63D5).copy(alpha = 0.5f)
-            else -> Color(0xFFCCCCCC)
+            else -> colors.borderGreyLightColor
         },
         label = "otpBorder"
     )
@@ -339,7 +390,7 @@ private fun OtpDigitBox(
             .aspectRatio(1f)
             .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
             .background(
-                color = if (digit.isNotEmpty()) Color(0xFFF0F4FF) else Color.Transparent,
+                color = if (digit.isNotEmpty()) softTint(Color(0xFF1E63D5), Color(0xFFF0F4FF)) else Color.Transparent,
                 shape = RoundedCornerShape(8.dp)
             ),
         contentAlignment = Alignment.Center

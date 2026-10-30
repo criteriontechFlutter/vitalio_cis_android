@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.critetiontech.ctvitalio.MainActivity
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.MedicinePeriod
@@ -135,8 +136,8 @@ object MedicineReminderScheduler {
         val at = LocalDateTime.now().plusSeconds(delaySeconds.toLong()).withNano(0)
         val dose = ReminderDose(
             intakeId = ReminderDose.TEST_INTAKE_ID,
-            medicineName = "Test reminder",
-            dose = "This is how your medicine alarm will look",
+            medicineName = context.getString(R.string.med_test_reminder_name),
+            dose = context.getString(R.string.med_test_reminder_dose),
             instructions = "",
             scheduledDateTime = at.toString(),
         )

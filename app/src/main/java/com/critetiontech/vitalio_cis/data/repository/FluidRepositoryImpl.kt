@@ -16,6 +16,7 @@ import com.critetiontech.ctvitalio.model.OutputItem
 import com.critetiontech.ctvitalio.model.OutputResponse
 import com.critetiontech.ctvitalio.model.OutputSummaryItem
 import com.critetiontech.ctvitalio.model.OutputSummaryResponse
+import com.critetiontech.ctvitalio.networking.RetrofitInstance
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,34 +30,53 @@ class FluidRepositoryImpl @Inject constructor(
 ) : FluidRepository {
     private val endpoints = ApiEndPointCorporateModule()
 
+    // These two endpoints take ~20 s on the server, so the default 20 s read timeout cut them off
+    // every time and nothing ever got cached. Give them more room.
+    private val slowHeaders = mapOf(RetrofitInstance.READ_TIMEOUT_HEADER to "60")
+
+    // Cache keys include uhid so a different patient logging in on the same device never sees
+    // the previous patient's data.
+    private fun manualFoodKey(uhid: String) = "${endpoints.getManualFoodAssignList}_$uhid"
+    private fun intakeKey(uhid: String, fromDate: String) = "${endpoints.fetchIntake}_${uhid}_$fromDate"
+
+    private fun parseManualFood(json: String?): List<ManualFoodAssignItem> {
+        if (json.isNullOrEmpty()) return emptyList()
+        val parsed = Gson().fromJson(json, ManualFoodAssignResponse::class.java)
+        return if (parsed.status == 1) parsed.responseValue?.filter { !it.foodName.isNullOrBlank() } ?: emptyList() else emptyList()
+    }
+
+    private fun parseIntake(json: String?): List<IntakeItem> {
+        if (json.isNullOrEmpty()) return emptyList()
+        val parsed = Gson().fromJson(json, IntakeResponse::class.java)
+        return if (parsed.status == 1) parsed.responseValue ?: emptyList() else emptyList()
+    }
+
+    override fun cachedManualFoodList(uhid: String): List<ManualFoodAssignItem> =
+        runCatching { parseManualFood(prefs.get(manualFoodKey(uhid), String::class.java)) }.getOrDefault(emptyList())
+
+    override fun cachedIntakeItems(uhid: String, fromDate: String): List<IntakeItem> =
+        runCatching { parseIntake(prefs.get(intakeKey(uhid, fromDate), String::class.java)) }.getOrDefault(emptyList())
+
     override suspend fun getManualFoodList(uhid: String): DomainResult<List<ManualFoodAssignItem>> = try {
         val params = mapOf("Uhid" to uhid, "intervalTimeInHour" to 24)
-        val json = prefs.getData(key = endpoints.getManualFoodAssignList, shouldSave = true) {
+        val json = prefs.getData(key = manualFoodKey(uhid), shouldSave = true) {
             val response = ApiHelper().callApi(context, endpoints.getManualFoodAssignList, showNoConnectionToast = false) { url ->
-                ApiClients.module4094.dynamicGet(url = url, params = params)
+                ApiClients.module4094.dynamicGet(url = url, headers = slowHeaders, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) {
-            val parsed = Gson().fromJson(json, ManualFoodAssignResponse::class.java)
-            if (parsed.status == 1) parsed.responseValue?.filter { !it.foodName.isNullOrBlank() } ?: emptyList() else emptyList()
-        } else emptyList()
-        DomainResult.Success(list)
+        DomainResult.Success(parseManualFood(json))
     } catch (e: Exception) { DomainResult.Error(e) }
 
     override suspend fun fetchIntakeItems(uhid: String, clientId: String, fromDate: String): DomainResult<List<IntakeItem>> = try {
         val params = mapOf("Uhid" to uhid, "entryType" to "N", "clientId" to clientId, "fromDate" to fromDate)
-        val json = prefs.getData(key = "${endpoints.fetchIntake}_$fromDate", shouldSave = true) {
+        val json = prefs.getData(key = intakeKey(uhid, fromDate), shouldSave = true) {
             val response = ApiHelper().callApi(context, endpoints.fetchIntake, showNoConnectionToast = false) { url ->
-                ApiClients.module4094.dynamicGet(url = url, params = params)
+                ApiClients.module4094.dynamicGet(url = url, headers = slowHeaders, params = params)
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) {
-            val parsed = Gson().fromJson(json, IntakeResponse::class.java)
-            if (parsed.status == 1) parsed.responseValue ?: emptyList() else emptyList()
-        } else emptyList()
-        DomainResult.Success(list)
+        DomainResult.Success(parseIntake(json))
     } catch (e: Exception) { DomainResult.Error(e) }
 
     override suspend fun addIntake(body: Map<String, Any>): DomainResult<Unit> = try {

@@ -51,6 +51,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.viewmodel.IntakeOutputViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -60,7 +63,9 @@ import androidx.core.graphics.toColorInt
 
 @Composable
 private fun outputShimmerBrush(): Brush {
-    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val shimmerColors = if (isAppDark)
+        listOf(Color(0xFF2A3138), Color(0xFF3A434D), Color(0xFF2A3138))
+    else listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
     val transition = rememberInfiniteTransition(label = "outShimmer")
     val translateX by transition.animateFloat(
         initialValue = -600f, targetValue = 600f,
@@ -88,7 +93,7 @@ private fun FluidOutputLogShimmer() {
                 }
                 Box(modifier = Modifier.width(48.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
             }
-            HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
+            HorizontalDivider(Modifier, thickness = 0.7.dp, color = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE0E0E0))
         }
     }
 }
@@ -112,6 +117,20 @@ private fun colourNameToColor(colour: String): Color {
         "dark" -> Color(0xFF8D4E2A)
         else -> Color.Gray
     }
+}
+
+/** Display-only translation of the server colour name; unknown values are shown as-is. */
+@Composable
+private fun colourDisplayName(colour: String): String = when (colour.trim().lowercase()) {
+    "red" -> stringResource(R.string.track_urine_red)
+    "yellow" -> stringResource(R.string.track_urine_yellow)
+    "light yellow" -> stringResource(R.string.track_colour_light_yellow)
+    "dark yellow" -> stringResource(R.string.track_colour_dark_yellow)
+    "amber" -> stringResource(R.string.track_urine_amber)
+    "orange" -> stringResource(R.string.track_colour_orange)
+    "brown" -> stringResource(R.string.track_urine_brown)
+    "dark" -> stringResource(R.string.track_colour_dark)
+    else -> colour
 }
 
 @Composable
@@ -177,7 +196,7 @@ fun FluidOutputHistoryScreen(
     )
 
     CommonAppBar(
-        title = "Fluid Output History",
+        title = stringResource(R.string.track_fluid_output_history),
     ) {
         Column(
             modifier = Modifier
@@ -221,12 +240,12 @@ fun FluidOutputHistoryScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "Fluid Output Log", style = AppTextStyles.style16BCN()
+                            stringResource(R.string.track_fluid_output_log), style = AppTextStyles.style16BCN()
                         )
                         Row {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, tint = colors.textDarkColor)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Icon(Icons.Default.Check, contentDescription = null)
+                            Icon(Icons.Default.Check, contentDescription = null, tint = colors.textDarkColor)
                         }
                     }
 
@@ -237,7 +256,7 @@ fun FluidOutputHistoryScreen(
                     } else if (selectedTab == 0) {
                         if (filteredDaily.isEmpty()) {
                             Text(
-                                "No records found",
+                                stringResource(R.string.track_no_records_found),
                                 style = AppTextStyles.style14GCN(),
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
@@ -255,7 +274,7 @@ fun FluidOutputHistoryScreen(
                                 )
                                 Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidOutputItem(
-                                    title = item.colour.ifEmpty { "Unknown" },
+                                    title = if (item.colour.isEmpty()) stringResource(R.string.track_unknown) else colourDisplayName(item.colour),
                                     time = item.outputTimeFormat,
                                     value = "${item.quantity} ml",
                                     color = colourNameToColor(item.colour)
@@ -266,7 +285,7 @@ fun FluidOutputHistoryScreen(
                     } else {
                         if (outputSummaryList.isEmpty()) {
                             Text(
-                                "No records found",
+                                stringResource(R.string.track_no_records_found),
                                 style = AppTextStyles.style14GCN(),
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
@@ -291,7 +310,8 @@ fun FluidOutputHistoryScreen(
                                 Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidOutputItem(
                                     title = formattedDate,
-                                    time = "${item.repetition} record${if (item.repetition != 1) "s" else ""}",
+                                    time = if (item.repetition != 1) stringResource(R.string.track_record_count_many, item.repetition)
+                                        else stringResource(R.string.track_record_count_one, item.repetition),
                                     value = "${item.quantity} ml",
                                     color = Color(0xFF2F6BFF)
                                 )
@@ -305,7 +325,7 @@ fun FluidOutputHistoryScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row {
-                Text("Total Output ", style = AppTextStyles.style14GCN())
+                Text(stringResource(R.string.track_total_output) + " ", style = AppTextStyles.style14GCN())
                 Text("$totalQuantity ml", style = AppTextStyles.style14GCN())
             }
         }
@@ -316,7 +336,11 @@ fun FluidOutputHistoryScreen(
 @Composable
 fun outputTabSection(selected: Int, onTabChange: (Int) -> Unit) {
 
-    val tabs = listOf("Daily", "Weekly", "Monthly")
+    val tabs = listOf(
+        stringResource(R.string.track_daily),
+        stringResource(R.string.track_weekly),
+        stringResource(R.string.track_monthly)
+    )
 
     val colors = LocalMyColorScheme.current
     Row(
@@ -342,7 +366,7 @@ fun outputTabSection(selected: Int, onTabChange: (Int) -> Unit) {
             ) {
                 Text(
                     text = text,
-                    color = if (selected == i) Color.White else Color.Gray
+                    color = if (selected == i) Color.White else colors.textGreyColor
                 )
             }
         }
@@ -446,7 +470,7 @@ fun FluidOutputItem(
                 style = AppTextStyles.style14BCN())
         }
 
-        HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
+        HorizontalDivider(Modifier, thickness = 0.7.dp, color = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE0E0E0))
     }
 }
 

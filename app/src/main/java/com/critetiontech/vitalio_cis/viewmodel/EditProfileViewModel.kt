@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.LocationItem
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -165,7 +167,7 @@ class EditProfileViewModel : ViewModel() {
         viewModelScope.launch {
             _loading.value = true
             val patient = prefs.getPatient() ?: run {
-                _errorMessage.value = "Session expired"
+                _errorMessage.value = MyApplication.appContext.getString(R.string.profile_session_expired_short)
                 _loading.value = false
                 return@launch
             }
@@ -216,7 +218,7 @@ class EditProfileViewModel : ViewModel() {
                     Haptics.success()
                 }
                 is DomainResult.Error -> {
-                    _errorMessage.value = r.exception.message ?: "Update failed"
+                    _errorMessage.value = r.exception.message ?: MyApplication.appContext.getString(R.string.profile_update_failed)
                     Haptics.error()
                     Log.e("EditProfileVM", r.exception.message.orEmpty())
                 }

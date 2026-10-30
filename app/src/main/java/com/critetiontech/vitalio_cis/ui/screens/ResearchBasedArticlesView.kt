@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 import androidx.compose.material.icons.rounded.Search
 
 
@@ -25,7 +28,7 @@ fun ResearchArticlesScreen() {
 
     val colors = LocalMyColorScheme.current
     CommonAppBar(
-        title = "Research Based Articles",
+        title = stringResource(R.string.report_research_articles_title),
     )
     {
         Column(
@@ -37,11 +40,11 @@ fun ResearchArticlesScreen() {
 
 
             // 🔹 Greeting
-            Text("Hi, Abhay!",
+            Text(stringResource(R.string.report_articles_greeting, "Abhay"),
                 style = AppTextStyles.style14GCN())
 
             Text(
-                "Explore Today’s\nTrending Articles",
+                stringResource(R.string.report_explore_trending_articles),
                 style = AppTextStyles.style14BCN().copy(fontSize = 22.sp))
 
             Spacer(Modifier.height(16.dp))
@@ -49,7 +52,7 @@ fun ResearchArticlesScreen() {
             com.critetiontech.ctvitalio.ui.components.MyTextField(
                 value = search.value,
                 onValueChange = { search.value = it },
-                placeholderText = "Search articles...",
+                placeholderText = stringResource(R.string.report_search_articles),
                 leadingIcon = {
                     androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Search, contentDescription = null)
                 },
@@ -60,7 +63,7 @@ fun ResearchArticlesScreen() {
             Spacer(Modifier.height(20.dp))
 
             // 🔹 Specialties
-            Text("Specialties", style = AppTextStyles.style16BCN())
+            Text(stringResource(R.string.report_specialties), style = AppTextStyles.style16BCN())
 
             Spacer(Modifier.height(12.dp))
 
@@ -68,12 +71,12 @@ fun ResearchArticlesScreen() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Chip("Cardiology", Color(0xFF5C6BC0))
-                Chip("Hematology/Oncology", Color(0xFF26A69A))
-                Chip("Clinical Medicine", Color(0xFFFF7043))
-                Chip("Endocrinology", Color(0xFFAB47BC))
-                Chip("Gastroenterology", Color(0xFFFFCA28))
-                Chip("View All Specialties", Color(0xFF8D6E63))
+                Chip(stringResource(R.string.report_specialty_cardiology), Color(0xFF5C6BC0))
+                Chip(stringResource(R.string.report_specialty_hematology_oncology), Color(0xFF26A69A))
+                Chip(stringResource(R.string.report_specialty_clinical_medicine), Color(0xFFFF7043))
+                Chip(stringResource(R.string.report_specialty_endocrinology), Color(0xFFAB47BC))
+                Chip(stringResource(R.string.report_specialty_gastroenterology), Color(0xFFFFCA28))
+                Chip(stringResource(R.string.report_view_all_specialties), Color(0xFF8D6E63))
             }
 
             Spacer(Modifier.height(20.dp))
@@ -83,8 +86,8 @@ fun ResearchArticlesScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Featured", style = AppTextStyles.style16BCN())
-                Text("View All", style = AppTextStyles.style16PCN() )
+                Text(stringResource(R.string.report_featured), style = AppTextStyles.style16BCN())
+                Text(stringResource(R.string.report_view_all), style = AppTextStyles.style16PCN() )
             }
 
             Spacer(Modifier.height(12.dp))

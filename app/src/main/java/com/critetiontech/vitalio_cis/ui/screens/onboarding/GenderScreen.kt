@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import androidx.compose.foundation.background
@@ -46,6 +49,7 @@ import com.critetiontech.ctvitalio.viewmodel.RegistrationViewModel
 fun GenderScreen( ) {
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     var selected by remember { mutableStateOf("") }
     val viewModel = remember {
         RegistrationViewModel()
@@ -53,7 +57,7 @@ fun GenderScreen( ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(16.dp)
     ) {
 
@@ -70,14 +74,14 @@ fun GenderScreen( ) {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -88,8 +92,8 @@ fun GenderScreen( ) {
         // 📊 Progress Card
         ProgressCard(
             progress = viewModel.perc,
-            title = "Getting Started",
-            subtitle = "Great start! You’re just beginning—let’s keep going!"
+            title = stringResource(R.string.auth_onb_progress_getting_started_title),
+            subtitle = stringResource(R.string.auth_onb_progress_getting_started_subtitle)
         )
         Spacer(modifier = Modifier.weight(1f))
 
@@ -104,7 +108,7 @@ fun GenderScreen( ) {
 
         // 🧾 Title
         Text(
-            "Gender",
+            stringResource(R.string.auth_onb_gender_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
@@ -113,9 +117,9 @@ fun GenderScreen( ) {
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            "Hi Abhinav, let us know if you are male or female.",
+            stringResource(R.string.auth_onb_gender_subtitle, "Abhinav"),
             fontSize = 16.sp,
-            color = Color.Gray
+            color = colors.textGreyColor
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -127,21 +131,21 @@ fun GenderScreen( ) {
         ) {
 
             GenderItem(
-                title = "Male",
+                title = stringResource(R.string.auth_onb_gender_male),
                 icon = R.drawable.male,
                 selected = selected == "Male",
                 onClick = { selected = "Male" }
             )
 
             GenderItem(
-                title = "Female",
+                title = stringResource(R.string.auth_onb_gender_female),
                 icon = R.drawable.female,
                 selected = selected == "Female",
                 onClick = { selected = "Female" }
             )
 
             GenderItem(
-                title = "Other",
+                title = stringResource(R.string.auth_onb_gender_other),
                 icon = R.drawable.gender_other,
                 selected = selected == "Other",
                 onClick = { selected = "Other" }
@@ -162,10 +166,10 @@ fun GenderScreen( ) {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 }
@@ -177,6 +181,7 @@ fun GenderItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = LocalMyColorScheme.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -188,9 +193,9 @@ fun GenderItem(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = if (selected)
-                    Color(0xFFDBEAFE)
+                    softTint(Color(0xFF2563EB), Color(0xFFDBEAFE))
                 else
-                    Color(0xFFF3F4F6)
+                    softTint(colors.textGreyColor, Color(0xFFF3F4F6))
             ),
             modifier = Modifier.size(90.dp),
             elevation = CardDefaults.cardElevation(
@@ -222,7 +227,7 @@ fun GenderItem(
                 Text(
                     text = title,
                     fontSize = 12.sp,
-                    color = if (selected) Color(0xFF2563EB) else Color.Black,
+                    color = if (selected) Color(0xFF2563EB) else colors.textDarkColor,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )

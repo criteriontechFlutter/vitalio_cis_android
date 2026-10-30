@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import androidx.compose.foundation.background
@@ -44,12 +47,13 @@ fun WelcomeScreen( ) {
     var lastName by remember { mutableStateOf("") }
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
 
     val viewModel: RegistrationViewModel = viewModel()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(16.dp)
     ) {
 
@@ -66,14 +70,14 @@ fun WelcomeScreen( ) {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -84,8 +88,8 @@ fun WelcomeScreen( ) {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "Getting Started",
-            subtitle = "Great start! You’re just beginning—let’s keep going!"
+            title = stringResource(R.string.auth_onb_progress_getting_started_title),
+            subtitle = stringResource(R.string.auth_onb_progress_getting_started_subtitle)
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -104,7 +108,7 @@ fun WelcomeScreen( ) {
 
         // 👋 Title
         Text(
-            "Welcome to Vitalio.",
+            stringResource(R.string.auth_onb_welcome_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
@@ -113,22 +117,22 @@ fun WelcomeScreen( ) {
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            "Let us know about you so we can manage to help you in better ways.",
+            stringResource(R.string.auth_onb_welcome_subtitle),
             fontSize = 16.sp,
-            color = Color.Gray
+            color = colors.textGreyColor
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // 🧾 First Name
-        Text("First Name", fontSize = 12.sp, color = Color.Gray)
+        Text(stringResource(R.string.auth_onb_first_name), fontSize = 12.sp, color = colors.textGreyColor)
 
         Spacer(modifier = Modifier.height(6.dp))
 
         OutlinedTextField(
             value = firstName,
             onValueChange = { firstName = it },
-            placeholder = { Text("Type your first name") },
+            placeholder = { Text(stringResource(R.string.auth_onb_first_name_hint)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
@@ -136,14 +140,14 @@ fun WelcomeScreen( ) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // 🧾 Last Name
-        Text("Last Name", fontSize = 12.sp, color = Color.Gray)
+        Text(stringResource(R.string.auth_onb_last_name), fontSize = 12.sp, color = colors.textGreyColor)
 
         Spacer(modifier = Modifier.height(6.dp))
 
         OutlinedTextField(
             value = lastName,
             onValueChange = { lastName = it },
-            placeholder = { Text("Type your last name") },
+            placeholder = { Text(stringResource(R.string.auth_onb_last_name_hint)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
@@ -163,10 +167,10 @@ fun WelcomeScreen( ) {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 }

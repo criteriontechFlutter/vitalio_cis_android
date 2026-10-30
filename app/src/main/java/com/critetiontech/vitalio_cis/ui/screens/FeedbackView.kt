@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
@@ -29,11 +31,16 @@ fun FeedbackScreen() {
     var expanded by remember { mutableStateOf(false) }
     var selectedModule by remember { mutableStateOf("") }
 
-    val modules = listOf("App UI", "Performance", "Bugs", "Other")
+    val modules = listOf(
+        stringResource(R.string.profile_feedback_module_app_ui),
+        stringResource(R.string.profile_feedback_module_performance),
+        stringResource(R.string.profile_feedback_module_bugs),
+        stringResource(R.string.profile_feedback_module_other),
+    )
 
     val colors = LocalMyColorScheme.current
     CommonAppBar(
-        title =  "Feedback",)
+        title =  stringResource(R.string.profile_menu_feedback),)
     {
         Column(
             modifier = Modifier
@@ -44,20 +51,20 @@ fun FeedbackScreen() {
 
 
             // 🔹 Email
-            Text("Your Email id*",
+            Text(stringResource(R.string.profile_feedback_email_label),
                 style = AppTextStyles.style14GCN())
             Spacer(modifier = Modifier.height(6.dp))
 
             MyTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholderText = "Enter Email"
+                placeholderText = stringResource(R.string.profile_feedback_email_hint)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // 🔹 Rating
-            Text("Your Rating*",
+            Text(stringResource(R.string.profile_feedback_rating_label),
                 style = AppTextStyles.style14GCN())
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -88,7 +95,7 @@ fun FeedbackScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             // 🔹 Dropdown
-            Text("What Can We Improve",
+            Text(stringResource(R.string.profile_feedback_improve_label),
                 style = AppTextStyles.style14GCN())
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -97,7 +104,7 @@ fun FeedbackScreen() {
                 MyTextField(
                     value = selectedModule,
                     onValueChange = { selectedModule = it },
-                    placeholderText = "Select Module",
+                    placeholderText = stringResource(R.string.profile_feedback_select_module),
                     trailingIcon = {
                         Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
                     },
@@ -127,14 +134,14 @@ fun FeedbackScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             // 🔹 Feedback Input
-            Text("Your Feedback*",
+            Text(stringResource(R.string.profile_feedback_label),
                 style = AppTextStyles.style14GCN())
             Spacer(modifier = Modifier.height(6.dp))
 
             MyTextField(
                 value = feedback,
                 onValueChange = { feedback = it },
-                placeholderText = "Tell us what you liked or what we can do better",
+                placeholderText = stringResource(R.string.profile_feedback_hint),
                 fixedHeight = 120
             )
 
@@ -150,7 +157,7 @@ fun FeedbackScreen() {
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor)
             ) {
-                Text("Submit Feedback")
+                Text(stringResource(R.string.profile_submit_feedback))
             }
         }
     }

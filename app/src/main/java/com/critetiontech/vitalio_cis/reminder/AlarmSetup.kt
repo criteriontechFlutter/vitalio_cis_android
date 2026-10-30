@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import com.critetiontech.ctvitalio.R
 
 /**
  * What a medicine alarm needs from the system on this Android version, and where the user
@@ -26,28 +27,28 @@ object AlarmSetup {
 
     fun requirements(context: Context): List<Requirement> = buildList {
         add(Requirement(
-            Item.Notifications, "Notifications",
-            "Needed for the alarm to ring at all.",
+            Item.Notifications, context.getString(R.string.med_setup_notifications_title),
+            context.getString(R.string.med_setup_notifications_desc),
             MedicineAlarmNotifier.notificationsEnabled(context), critical = true,
         ))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(Requirement(
-            Item.ExactAlarms, "Alarms & reminders",
-            "Rings exactly on time instead of a few minutes late.",
+            Item.ExactAlarms, context.getString(R.string.med_setup_exact_alarms_title),
+            context.getString(R.string.med_setup_exact_alarms_desc),
             MedicineReminderScheduler.canScheduleExactAlarms(context), critical = true,
         ))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) add(Requirement(
-            Item.FullScreen, "Full screen on lock screen",
-            "Opens the alarm over the lock screen.",
+            Item.FullScreen, context.getString(R.string.med_setup_full_screen_title),
+            context.getString(R.string.med_setup_full_screen_desc),
             MedicineAlarmNotifier.canUseFullScreen(context), critical = true,
         ))
         if (AlarmPopupLauncher.needsOverlayPermission()) add(Requirement(
-            Item.PopupOverApps, "Pop up while using phone",
-            "Shows the full alarm instead of a small notification when the phone is unlocked.",
+            Item.PopupOverApps, context.getString(R.string.med_setup_popup_title),
+            context.getString(R.string.med_setup_popup_desc),
             AlarmPopupLauncher.canPopUpOverApps(context), critical = true,
         ))
         add(Requirement(
-            Item.Battery, "No battery restriction",
-            "Some phones stop alarms of apps that are battery optimized.",
+            Item.Battery, context.getString(R.string.med_setup_battery_title),
+            context.getString(R.string.med_setup_battery_desc),
             context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName),
             critical = false,
         ))

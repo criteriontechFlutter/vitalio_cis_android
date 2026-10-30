@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.critetiontech.ctvitalio.ui.theme.AppColors
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 
 @Composable
 fun CommonTextField(
@@ -25,11 +27,13 @@ fun CommonTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     modifier: Modifier = Modifier
 ) {
+    val colors = LocalMyColorScheme.current
+    val dark = isAppDark
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         placeholder = {
-            Text(text = hint, color = Color(0xFFAAAAAA))
+            Text(text = hint, color = if (dark) colors.textGreyColor else Color(0xFFAAAAAA))
         },
         leadingIcon = leadingIcon,
         modifier = modifier
@@ -42,14 +46,15 @@ fun CommonTextField(
         keyboardActions = keyboardActions,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = AppColors.Primary,
-            unfocusedBorderColor = Color(0xFFE0E0E0),
+            unfocusedBorderColor = if (dark) colors.borderGreyLightColor else Color(0xFFE0E0E0),
             errorBorderColor = AppColors.red,
             errorCursorColor = AppColors.red,
-            focusedTextColor = AppColors.black,
-            unfocusedTextColor = AppColors.black,
+            focusedTextColor = if (dark) colors.textDarkColor else AppColors.black,
+            unfocusedTextColor = if (dark) colors.textDarkColor else AppColors.black,
             cursorColor = AppColors.Primary,
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color(0xFFF9FAFB)
+            // Light mode keeps the original white/off-white field; dark mode follows the theme
+            focusedContainerColor = if (dark) colors.dashboardBackgroundColor else Color.White,
+            unfocusedContainerColor = if (dark) colors.dashboardBackgroundColor else Color(0xFFF9FAFB)
         )
     )
 }

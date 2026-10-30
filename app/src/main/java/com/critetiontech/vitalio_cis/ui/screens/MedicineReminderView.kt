@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -67,7 +69,7 @@ private sealed class MedicineStatus {
     data class Upcoming(val timeLeft: String) : MedicineStatus()
 }
 
-private fun resolveStatus(item: MedicineItem): MedicineStatus {
+private fun resolveStatus(item: MedicineItem, context: android.content.Context): MedicineStatus {
     if (item.isTaken && item.takenDateTime != "1900-01-01T00:00:00") return MedicineStatus.Taken
     if (item.isSkipped) return MedicineStatus.Skipped
     return try {
@@ -78,9 +80,9 @@ private fun resolveStatus(item: MedicineItem): MedicineStatus {
         } else {
             val mins = ChronoUnit.MINUTES.between(now, scheduled)
             val label = when {
-                mins < 60       -> "in ${mins}m"
-                mins % 60 == 0L -> "in ${mins / 60}h"
-                else            -> "in ${mins / 60}h ${mins % 60}m"
+                mins < 60       -> context.getString(R.string.med_in_minutes, mins)
+                mins % 60 == 0L -> context.getString(R.string.med_in_hours, mins / 60)
+                else            -> context.getString(R.string.med_in_hours_minutes, mins / 60, mins % 60)
             }
             MedicineStatus.Upcoming(label)
         }
@@ -139,11 +141,11 @@ fun MedicineReminderScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         CommonAppBar(
-            title = "Medicine Reminder",
+            title = stringResource(R.string.med_alarm_header),
             actions = {
                 HapticTextButton(onClick = { navController.navigate(Routes.MANAGEMEDICAIONS) }) {
                     Text(
-                        "View Log",
+                        stringResource(R.string.med_view_log),
                         color = colors.primaryBlueColor,
                         style = AppTextStyles.style14BCN(),
                         fontWeight = FontWeight.SemiBold
@@ -173,7 +175,7 @@ fun MedicineReminderScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(colors.dashboardBackgroundColor),
-                refreshingText = "Updating your medicines…",
+                refreshingText = stringResource(R.string.med_updating_medicines),
             ) {
                 ContentStateCrossfade(
                     state = contentStateOf(loading = loading, empty = periods.isEmpty()),
@@ -204,7 +206,7 @@ fun MedicineReminderScreen(
                             )
                             Spacer(Modifier.height(12.dp))
                             Text(
-                                "No medicines scheduled for today",
+                                stringResource(R.string.med_no_medicines_today),
                                 style = AppTextStyles.style14BCN(),
                                 color = colors.textGreyColor,
                                 textAlign = TextAlign.Center
@@ -273,6 +275,16 @@ fun MedicineReminderScreen(
 
 // --- Period Section -----------------------------------------------------------
 
+/** Display label for the server's day period; unknown values are shown as sent. */
+@Composable
+private fun dayPeriodLabel(dayPeriod: String): String = when (dayPeriod.trim().lowercase()) {
+    "morning"   -> stringResource(R.string.med_period_morning)
+    "afternoon" -> stringResource(R.string.med_period_afternoon)
+    "evening"   -> stringResource(R.string.med_period_evening)
+    "night"     -> stringResource(R.string.med_period_night)
+    else        -> dayPeriod
+}
+
 @Composable
 fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderViewModel) {
     val iconRes = when (period.dayPeriod.lowercase()) {
@@ -294,7 +306,7 @@ fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderVie
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                period.dayPeriod,
+                dayPeriodLabel(period.dayPeriod),
                 textAlign = TextAlign.Center,
                 color = LocalMyColorScheme.current.textGreyColor,
                 fontSize = 12.sp,
@@ -320,18 +332,19 @@ fun MedicinePeriodSection(period: MedicinePeriod, viewModel: MedicineReminderVie
 @Composable
 fun MedicineCard(item: MedicineItem, viewModel: MedicineReminderViewModel) {
     val colors  = LocalMyColorScheme.current
-    val status  = remember(item) { resolveStatus(item) }
+    val context = LocalContext.current
+    val status  = remember(item) { resolveStatus(item, context) }
     val timeFmt = remember(item.scheduledDateTime) { formatScheduledTime(item.scheduledDateTime) }
 
     var showConfirm by remember { mutableStateOf(false) }
 
     if (showConfirm) {
         com.critetiontech.ctvitalio.ui.components.AppDialog(
-            title = "Mark as taken?",
-            message = "${item.medicineName.trim()}${timeFmt.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()} will be recorded as taken now.",
+            title = stringResource(R.string.med_mark_taken_confirm_title),
+            message = stringResource(R.string.med_mark_taken_confirm_message, "${item.medicineName.trim()}${timeFmt.takeIf { it.isNotBlank() }?.let { " · $it" }.orEmpty()}"),
             icon = Icons.Rounded.Medication,
-            confirmText = "Yes, taken",
-            dismissText = "Cancel",
+            confirmText = stringResource(R.string.med_yes_taken),
+            dismissText = stringResource(R.string.med_cancel),
             onDismiss = { showConfirm = false },
             onConfirm = { showConfirm = false; viewModel.markIntake(item.id, item.scheduledDateTime) },
         )
@@ -421,7 +434,7 @@ private fun StatusBadge(status: MedicineStatus, onClick: () -> Unit) {
 private fun StatusBadgeContent(status: MedicineStatus, swappedIn: Boolean, onClick: () -> Unit) {
     when (status) {
         is MedicineStatus.Taken -> TakenTag(Color(0xFF1564ED), animateTick = swappedIn)
-        is MedicineStatus.Skipped -> StatusTag(Icons.Rounded.Cancel,     "Skipped",  Color(0xFFE65100))
+        is MedicineStatus.Skipped -> StatusTag(Icons.Rounded.Cancel,     stringResource(R.string.med_skipped),  Color(0xFFE65100))
         is MedicineStatus.TakeNow -> {
             Box(
                 modifier = Modifier
@@ -433,11 +446,11 @@ private fun StatusBadgeContent(status: MedicineStatus, swappedIn: Boolean, onCli
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.CheckCircle, null, tint = Color(0xFF2E7D32), modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(5.dp))
-                    Text("Take Now", color = Color(0xFF2E7D32), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                    Text(stringResource(R.string.med_take_now), color = Color(0xFF2E7D32), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                 }
             }
         }
-        is MedicineStatus.Upcoming -> StatusTag(Icons.Rounded.Schedule, "Upcoming", Color(0xFF6A1B9A))
+        is MedicineStatus.Upcoming -> StatusTag(Icons.Rounded.Schedule, stringResource(R.string.med_upcoming), Color(0xFF6A1B9A))
     }
 }
 
@@ -456,7 +469,7 @@ private fun TakenTag(color: Color, animateTick: Boolean) {
             AnimatedCheckMark(checked = drawn, modifier = Modifier.size(12.dp), strokeWidth = 1.6.dp)
         }
         Spacer(Modifier.width(5.dp))
-        Text("Taken", color = color, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+        Text(stringResource(R.string.med_taken), color = color, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
     }
 }
 

@@ -20,6 +20,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.unit.*
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
@@ -78,7 +80,7 @@ fun RemindersScreen() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Today’s Medicine",
+            Text(stringResource(R.string.med_todays_medicine),
                 style = AppTextStyles.style18BCB())
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
@@ -208,7 +210,7 @@ fun VitalItem(item: TodayItem.Vital) {
                 style = AppTextStyles.style14BCN())
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(item.time, fontSize = 12.sp, color = Color.Gray)
+                Text(item.time, fontSize = 12.sp, color = colors.textGreyColor)
 
                 Spacer(Modifier.width(8.dp))
 
@@ -217,7 +219,7 @@ fun VitalItem(item: TodayItem.Vital) {
                         .background(Color(0xFFFFB300), RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
-                    Text("PENDING",
+                    Text(stringResource(R.string.med_pending_caps),
                         style = AppTextStyles.style12GCN().copy(fontSize = 10.sp))
                 }
             }
@@ -228,7 +230,7 @@ fun VitalItem(item: TodayItem.Vital) {
                 style = AppTextStyles.style18BCN())
             Text(item.unit,
                 style = AppTextStyles.style12GCN().copy(fontSize = 10.sp))
-            Text("Update ⟳",
+            Text(stringResource(R.string.med_update_refresh),
                 style = AppTextStyles.style12GCN().copy(fontSize = 10.sp))
         }
     }

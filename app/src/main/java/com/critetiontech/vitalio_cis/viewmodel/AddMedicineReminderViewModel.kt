@@ -158,7 +158,7 @@ class AddMedicineReminderViewModel : ViewModel() {
 
     fun insertMedicineReminder() {
         viewModelScope.launch {
-            val medicine = selectedMedicine ?: run { _errorMessage.value = "No medicine selected"; return@launch }
+            val medicine = selectedMedicine ?: run { _errorMessage.value = MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_error_no_medicine_selected); return@launch }
             _isInserting.value = true
             _errorMessage.value = null
 
@@ -201,7 +201,7 @@ class AddMedicineReminderViewModel : ViewModel() {
                     }
                 }
                 is DomainResult.Error -> {
-                    _errorMessage.value = r.exception.message ?: "Unknown error"
+                    _errorMessage.value = r.exception.message ?: MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_error_unknown)
                     Haptics.error()
                     Log.e("AddMedicineVM", r.exception.message.orEmpty())
                 }

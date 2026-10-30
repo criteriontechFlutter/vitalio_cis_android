@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,7 +42,7 @@ fun ArticleDetailScreen() {
             ) {
 
                 Text(
-                    "Published: 23 December, 2025",
+                    stringResource(R.string.report_article_published, "23 December, 2025"),
                     style = AppTextStyles.style12GCN()
                 )
 
@@ -109,7 +112,7 @@ fun ArticleDetailScreen() {
                 /* ---------------- ACKNOWLEDGEMENT ---------------- */
 
                 ExpandableSection(
-                    title = "Acknowledgements",
+                    title = stringResource(R.string.report_acknowledgements),
                     expanded = ackExpanded,
                     onToggle = { ackExpanded = !ackExpanded },
                     content = "The CA125 immunoassays for this study were kindly provided by Abbott GmbH, Vienna, Austria."
@@ -120,7 +123,7 @@ fun ArticleDetailScreen() {
                 /* ---------------- FUNDING ---------------- */
 
                 ExpandableSection(
-                    title = "Funding",
+                    title = stringResource(R.string.report_funding),
                     expanded = fundingExpanded,
                     onToggle = { fundingExpanded = !fundingExpanded },
                     content = "The EMMY study was funded by an unrestricted grant from Boehringer Ingelheim (no. 1245.151). HS’s research is supported by the Austrian Science Fund (FWF grant KL-1076, PIN8074224) and the Horizon Europe project."

@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.AllergyItem
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.google.gson.Gson
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +60,7 @@ class AllergyViewModel : ViewModel() {
                     is DomainResult.Error -> Log.e("AllergyVM", food.exception.message.orEmpty())
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Failed to load allergies."
+                _errorMessage.value = MyApplication.appContext.getString(R.string.profile_allergies_load_failed)
             } finally {
                 _loading.value = false
             }
@@ -66,7 +68,7 @@ class AllergyViewModel : ViewModel() {
     }
 
     fun addAllergy(substanceName: String, severity: String, reaction: String, details: String, typeAllergy: String) {
-        if (substanceName.isBlank()) { _errorMessage.value = "Substance name is required."; return }
+        if (substanceName.isBlank()) { _errorMessage.value = MyApplication.appContext.getString(R.string.profile_substance_required); return }
         viewModelScope.launch {
             _addLoading.value = true
             _errorMessage.value = null
@@ -88,7 +90,7 @@ class AllergyViewModel : ViewModel() {
 
             when (val r = addAllergyUseCase(body)) {
                 is DomainResult.Success -> { _addSuccess.value = true; Haptics.success(); fetchAllergies() }
-                is DomainResult.Error -> { _errorMessage.value = "Failed to add allergy."; Haptics.error(); Log.e("AllergyVM", r.exception.message.orEmpty()) }
+                is DomainResult.Error -> { _errorMessage.value = MyApplication.appContext.getString(R.string.profile_allergy_add_failed); Haptics.error(); Log.e("AllergyVM", r.exception.message.orEmpty()) }
             }
             _addLoading.value = false
         }

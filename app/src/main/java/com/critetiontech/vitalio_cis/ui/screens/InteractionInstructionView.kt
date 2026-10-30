@@ -18,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.viewmodel.InteractionCheckerViewModel
 import com.critetiontech.ctvitalio.viewmodel.InteractionInstructionItem
 import com.critetiontech.ctvitalio.viewmodel.InteractionSeverity
@@ -38,7 +41,7 @@ fun InteractionInstructionView(
     val colors = LocalMyColorScheme.current
     val instructions by viewModel.displayInstructions.collectAsState()
 
-    val title = if (instructions.isEmpty()) "Instructions" else "Instructions Found (${instructions.size})"
+    val title = if (instructions.isEmpty()) stringResource(R.string.med_instructions_title) else stringResource(R.string.med_instructions_found_count, instructions.size)
 
     CommonAppBar(
         title = title,
@@ -57,30 +60,30 @@ fun InteractionInstructionView(
                 ) {
                     Icon(
                         Icons.Default.VerifiedUser,
-                        contentDescription = "Safe",
+                        contentDescription = stringResource(R.string.med_cd_safe),
                         tint = Color(0xFF4CAF50),
                         modifier = Modifier.size(64.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "No Interactions Found",
+                        stringResource(R.string.med_no_interactions_found),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = colors.textDarkColor
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "No known interactions were found between the selected medicines.",
+                        stringResource(R.string.med_no_interactions_desc),
                         fontSize = 14.sp,
-                        color = Color.Gray,
+                        color = colors.textGreyColor,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 32.dp)
                     )
                     Spacer(modifier = Modifier.height(40.dp))
                     Text(
-                        "Warning: If no interactions are found between two drugs, it does not necessarily mean that no interactions exist. Always consult with a healthcare professional.",
+                        stringResource(R.string.med_interaction_warning),
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = colors.textGreyColor,
                         textAlign = TextAlign.Center,
                         lineHeight = 18.sp,
                         modifier = Modifier.padding(horizontal = 32.dp)
@@ -99,9 +102,9 @@ fun InteractionInstructionView(
                     }
 
                     Text(
-                        "Warning: If no interactions are found between two drugs, it does not necessarily mean that no interactions exist. Always consult with a healthcare professional.",
+                        stringResource(R.string.med_interaction_warning),
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = colors.textGreyColor,
                         textAlign = TextAlign.Center,
                         lineHeight = 18.sp,
                         modifier = Modifier
@@ -117,7 +120,7 @@ fun InteractionInstructionView(
 @Composable
 fun InteractionInstructionCard(item: InteractionInstructionItem) {
     val colors = LocalMyColorScheme.current
-    val isDarkMode = false // Assuming isDark is accessible, otherwise use colors to derive
+    val isDarkMode = isAppDark
 
     val cardBg = if (item.severity == InteractionSeverity.Caution) 
         if (isDarkMode) Color.Yellow.copy(alpha = 0.12f) else Color(0xFFFEFCE8)
@@ -151,32 +154,32 @@ fun InteractionInstructionCard(item: InteractionInstructionItem) {
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.severity.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.textDarkColor)
+                Text(stringResource(item.severity.titleRes), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.textDarkColor)
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(item.drugPair, fontSize = 13.sp, color = Color.Gray)
+                Text(item.drugPair, fontSize = 13.sp, color = colors.textGreyColor)
             }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray.copy(alpha = 0.7f), modifier = Modifier.size(16.dp).padding(top = 4.dp))
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = colors.textGreyColor.copy(alpha = 0.7f), modifier = Modifier.size(16.dp).padding(top = 4.dp))
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Substitute Medicine:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = colors.textDarkColor.copy(alpha = 0.85f))
-            Text(item.substituteMedicine, fontSize = 13.sp, color = Color.Gray)
+            Text(stringResource(R.string.med_substitute_medicine_label), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = colors.textDarkColor.copy(alpha = 0.85f))
+            Text(item.substituteMedicine, fontSize = 13.sp, color = colors.textGreyColor)
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Interaction Effect:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = colors.textDarkColor.copy(alpha = 0.85f))
-            Text(item.interactionEffect, fontSize = 13.sp, color = Color.Gray)
+            Text(stringResource(R.string.med_interaction_effect_label), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = colors.textDarkColor.copy(alpha = 0.85f))
+            Text(item.interactionEffect, fontSize = 13.sp, color = colors.textGreyColor)
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Suggestive Action:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = colors.textDarkColor.copy(alpha = 0.85f))
-            Text(item.suggestiveAction, fontSize = 13.sp, color = Color.Gray)
+            Text(stringResource(R.string.med_suggestive_action_label), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = colors.textDarkColor.copy(alpha = 0.85f))
+            Text(item.suggestiveAction, fontSize = 13.sp, color = colors.textGreyColor)
         }
     }
 }

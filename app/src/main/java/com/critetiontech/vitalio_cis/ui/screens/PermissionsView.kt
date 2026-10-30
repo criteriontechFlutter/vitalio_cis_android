@@ -53,6 +53,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -93,20 +95,23 @@ fun PermissionsScreen() {
     }
 
     var healthStatus by remember { mutableStateOf<String?>(null) }
+    var healthOk by remember { mutableStateOf(false) }
     LaunchedEffect(refresh) {
         val client = WearableSync.clientOrNull(context)
-        healthStatus = if (client == null) "Health Connect isn't installed" else {
+        healthOk = false
+        healthStatus = if (client == null) context.getString(R.string.profile_hc_not_installed) else {
             val granted = runCatching { client.permissionController.getGrantedPermissions() }.getOrDefault(emptySet())
             val total = WearableData.READ_PERMISSIONS.size
             val allowed = WearableData.READ_PERMISSIONS.count { it in granted }
-            if (allowed == 0) "Not connected" else "$allowed of $total data types allowed"
+            healthOk = allowed > 0
+            if (allowed == 0) context.getString(R.string.profile_hc_not_connected) else context.getString(R.string.profile_hc_types_allowed, allowed, total)
         }
     }
     val alarmItems = remember(refresh) {
         AlarmSetup.requirements(context).filter { it.item != AlarmSetup.Item.Notifications }
     }
 
-    CommonAppBar(title = "Permissions & Privacy") {
+    CommonAppBar(title = stringResource(R.string.profile_menu_permissions_privacy)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -117,7 +122,7 @@ fun PermissionsScreen() {
         ) {
             IntroCard()
 
-            SectionTitle("Asked when you use a feature")
+            SectionTitle(stringResource(R.string.profile_perm_section_on_use))
             PermissionCard {
                 AppPermission.entries.filter { it.isRequired }.forEachIndexed { i, permission ->
                     key(permission) {
@@ -127,19 +132,19 @@ fun PermissionsScreen() {
                 }
             }
 
-            SectionTitle("Health data")
+            SectionTitle(stringResource(R.string.profile_perm_section_health_data))
             PermissionCard {
                 LinkRow(
                     icon = Icons.Rounded.Favorite,
                     title = "Health Connect",
-                    summary = "Reads vitals, steps, sleep and workouts from your watch and health apps. Read-only — Vitalio never writes or deletes your data there.",
+                    summary = stringResource(R.string.profile_hc_summary),
                     status = healthStatus,
-                    ok = healthStatus?.contains(" of ") == true,
+                    ok = healthOk,
                     onClick = { navController.navigate(Routes.HEALTHCONNECTSYNC) },
                 )
             }
 
-            SectionTitle("Special access for medicine alarms")
+            SectionTitle(stringResource(R.string.profile_perm_section_alarms))
             PermissionCard {
                 alarmItems.forEachIndexed { i, req ->
                     if (i > 0) RowDivider()
@@ -147,20 +152,20 @@ fun PermissionsScreen() {
                         icon = req.item.icon,
                         title = req.title,
                         summary = req.description,
-                        status = if (req.granted) "Allowed" else if (req.critical) "Needed for alarms" else "Recommended",
+                        status = stringResource(if (req.granted) R.string.profile_perm_allowed else if (req.critical) R.string.profile_perm_needed_for_alarms else R.string.profile_perm_recommended),
                         ok = req.granted,
                         onClick = { context.startActivity(AlarmSetup.settingsIntent(context, req.item)) },
                     )
                 }
             }
 
-            SectionTitle("Allowed automatically")
+            SectionTitle(stringResource(R.string.profile_perm_section_automatic))
             PermissionCard {
                 listOf(
-                    Triple(Icons.Rounded.Language, "Internet", "Sync your health record securely with the Vitalio server"),
-                    Triple(Icons.Rounded.RestartAlt, "Run at startup", "Put medicine alarms back after your phone restarts"),
-                    Triple(Icons.Rounded.Vibration, "Vibration", "Vibrate for alarms and button taps"),
-                    Triple(Icons.Rounded.PhoneAndroid, "Keep phone awake", "Keep an alarm ringing until you respond"),
+                    Triple(Icons.Rounded.Language, stringResource(R.string.profile_perm_internet), stringResource(R.string.profile_perm_internet_summary)),
+                    Triple(Icons.Rounded.RestartAlt, stringResource(R.string.profile_perm_run_at_startup), stringResource(R.string.profile_perm_run_at_startup_summary)),
+                    Triple(Icons.Rounded.Vibration, stringResource(R.string.profile_perm_vibration), stringResource(R.string.profile_perm_vibration_summary)),
+                    Triple(Icons.Rounded.PhoneAndroid, stringResource(R.string.profile_perm_keep_awake), stringResource(R.string.profile_perm_keep_awake_summary)),
                 ).forEachIndexed { i, (icon, title, summary) ->
                     if (i > 0) RowDivider()
                     InfoRow(icon, title, summary)
@@ -174,7 +179,7 @@ fun PermissionsScreen() {
             ) {
                 Icon(Icons.Rounded.Settings, null, tint = colors.primaryBlueColor, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Open Android app settings", color = colors.primaryBlueColor, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.profile_perm_open_app_settings), color = colors.primaryBlueColor, fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(8.dp))
         }
@@ -209,11 +214,10 @@ private fun IntroCard() {
         }
         Spacer(Modifier.width(12.dp))
         Column {
-            Text("Your data, your control", color = colors.textDarkColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.profile_perm_intro_title), color = colors.textDarkColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(4.dp))
             Text(
-                "Vitalio asks for a permission only when you use the feature that needs it, and explains why first. " +
-                    "Tap any item to see how it's used. You can turn anything off at any time.",
+                stringResource(R.string.profile_perm_intro_body),
                 color = colors.textGreyColor, fontSize = 13.sp, lineHeight = 18.sp,
             )
         }
@@ -241,9 +245,9 @@ private fun RuntimePermissionRow(permission: AppPermission, refresh: Int) {
                 Spacer(Modifier.height(6.dp))
                 StatusChip(
                     text = when {
-                        granted -> "Allowed"
-                        blocked -> "Turned off in Settings"
-                        else -> "Not allowed"
+                        granted -> stringResource(R.string.profile_perm_allowed)
+                        blocked -> stringResource(R.string.profile_perm_turned_off_in_settings)
+                        else -> stringResource(R.string.profile_perm_not_allowed)
                     },
                     color = when {
                         granted -> AllowedColor
@@ -254,16 +258,16 @@ private fun RuntimePermissionRow(permission: AppPermission, refresh: Int) {
             }
             Icon(
                 if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown,
-                contentDescription = if (expanded) "Hide details" else "Show details",
+                contentDescription = stringResource(if (expanded) R.string.profile_cd_hide_details else R.string.profile_cd_show_details),
                 tint = colors.textGreyColor,
             )
         }
 
         AnimatedVisibility(expanded) {
             Column(Modifier.padding(start = 52.dp, top = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Used for", color = colors.textGreyColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.profile_perm_used_for), color = colors.textGreyColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 permission.usedFor.forEach {
-                    Text("•  $it", color = colors.textDarkColor, fontSize = 13.sp, lineHeight = 18.sp)
+                    Text(stringResource(R.string.profile_perm_bullet_item, it), color = colors.textDarkColor, fontSize = 13.sp, lineHeight = 18.sp)
                 }
                 Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.Top) {
                     Icon(Icons.Rounded.Lock, null, tint = colors.primaryBlueColor, modifier = Modifier.size(14.dp).padding(top = 2.dp))
@@ -276,13 +280,13 @@ private fun RuntimePermissionRow(permission: AppPermission, refresh: Int) {
                     HapticOutlinedButton(
                         onClick = { context.startActivity(AppPermission.appSettingsIntent(context)) },
                         shape = RoundedCornerShape(20.dp),
-                    ) { Text("Manage in Settings", color = colors.primaryBlueColor, fontSize = 13.sp) }
+                    ) { Text(stringResource(R.string.profile_perm_manage_in_settings), color = colors.primaryBlueColor, fontSize = 13.sp) }
                 } else {
                     HapticButton(
                         onClick = { request.launch() },
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = colors.primaryBlueColor),
-                    ) { Text(if (blocked) "Turn on in Settings" else "Allow", fontSize = 13.sp) }
+                    ) { Text(stringResource(if (blocked) R.string.profile_perm_turn_on_in_settings else R.string.profile_perm_allow), fontSize = 13.sp) }
                 }
             }
         }

@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import com.critetiontech.ctvitalio.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,7 +27,7 @@ class MedicineAlarmReceiver : BroadcastReceiver() {
                 MedicineAlarmNotifier.cancel(app, it)
                 MedicineReminderScheduler.snooze(app, it)
                 MedicineIntakeEvents.alarmHandled(it.requestCode)
-                Toast.makeText(app, "Snoozed for ${ReminderSettings(app).snoozeMinutes} min", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, app.getString(R.string.med_toast_snoozed_min, ReminderSettings(app).snoozeMinutes), Toast.LENGTH_SHORT).show()
             }
 
             ACTION_DISMISS -> ReminderAlarm.from(intent)?.let { MedicineAlarmNotifier.cancel(app, it) }
@@ -40,9 +41,9 @@ class MedicineAlarmReceiver : BroadcastReceiver() {
                         val outcomes = alarm.doses.map { IntakeRecorder.markTaken(app, it) }
                         val message = when {
                             outcomes.all { it == IntakeRecorder.Outcome.Recorded } ->
-                                if (alarm.doses.size == 1) "${alarm.doses[0].medicineName} marked as taken"
-                                else "${alarm.doses.size} medicines marked as taken"
-                            else -> "Saved. It will sync when you're back online."
+                                if (alarm.doses.size == 1) app.getString(R.string.med_toast_one_marked_taken, alarm.doses[0].medicineName)
+                                else app.getString(R.string.med_toast_many_marked_taken, alarm.doses.size)
+                            else -> app.getString(R.string.med_toast_saved_offline)
                         }
                         withContext(Dispatchers.Main) { Toast.makeText(app, message, Toast.LENGTH_SHORT).show() }
                         MedicineReminderScheduler.reschedule(app)
@@ -74,6 +75,7 @@ class MedicineAlarmReceiver : BroadcastReceiver() {
 
         MedicineAlarmNotifier.show(context, alarm, ringing = true)
         scheduleSilence(context, alarm)
+        MissedDoseCheck.schedule(context, alarm)
 
         // Locked or screen off: the full-screen intent opens the alarm by itself.
         // In use: a full-screen intent only peeks, so open the alarm screen directly.

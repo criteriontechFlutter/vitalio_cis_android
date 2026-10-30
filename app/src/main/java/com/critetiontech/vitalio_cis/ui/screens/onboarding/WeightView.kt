@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import androidx.compose.foundation.background
@@ -32,6 +36,7 @@ fun WeightScreen() {
     }
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     var expanded by remember {
         mutableStateOf(false)
     }
@@ -45,7 +50,7 @@ fun WeightScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(20.dp)
     ) {
 
@@ -63,14 +68,14 @@ fun WeightScreen() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -81,8 +86,8 @@ fun WeightScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "Staying on Track",
-            subtitle = "You're getting closer-just a little more to reach halfway!"
+            title = stringResource(R.string.auth_onb_progress_on_track_title),
+            subtitle = stringResource(R.string.auth_onb_progress_near_halfway_subtitle)
         )
         Spacer(modifier = Modifier.weight(1f))
 
@@ -96,7 +101,7 @@ fun WeightScreen() {
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "What is your current\nweight?",
+            text = stringResource(R.string.auth_onb_weight_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB),
@@ -106,18 +111,18 @@ fun WeightScreen() {
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "Your weight helps us provide tailored health and\nfitness recommendations.",
+            text = stringResource(R.string.auth_onb_weight_subtitle),
             fontSize = 16.sp,
-            color = Color.Gray,
+            color = colors.textGreyColor,
             lineHeight = 18.sp
         )
 
         Spacer(modifier = Modifier.height(28.dp))
 
         Text(
-            text = "Weight",
+            text = stringResource(R.string.auth_onb_weight_label),
             fontSize = 14.sp,
-            color = Color.DarkGray,
+            color = colors.textDarkColor,
             fontWeight = FontWeight.Medium
         )
 
@@ -134,7 +139,7 @@ fun WeightScreen() {
                 },
                 placeholder = {
                     Text(
-                        text = "Enter your weight",
+                        text = stringResource(R.string.auth_onb_weight_hint),
                         color = Color.LightGray,
                         fontSize = 13.sp
                     )
@@ -144,10 +149,10 @@ fun WeightScreen() {
                     .height(56.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFE5E7EB),
-                    unfocusedBorderColor = Color(0xFFE5E7EB),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
+                    focusedBorderColor = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB)),
+                    unfocusedBorderColor = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB)),
+                    focusedContainerColor = colors.dashboardContainerColor,
+                    unfocusedContainerColor = colors.dashboardContainerColor
                 ),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -218,10 +223,10 @@ fun WeightScreen() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 }

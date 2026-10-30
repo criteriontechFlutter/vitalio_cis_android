@@ -24,6 +24,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
@@ -31,6 +32,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.*
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  VoiceListeningOverlay
@@ -40,6 +45,14 @@ import kotlin.math.*
 //  Fluid Output, Medicines. Includes LiveDictationBanner, AI extraction
 //  indicator, and full iOS-matching confirmation card UI.
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// Secondary text on the light confirmation surfaces; unchanged in light mode.
+@Composable
+private fun voiceGrey(): Color = if (isAppDark) LocalMyColorScheme.current.textGreyColor else Color.Gray
+
+// Primary text/icon colour on the confirmation surfaces; inherits in light mode.
+@Composable
+private fun voiceInk(): Color = if (isAppDark) LocalMyColorScheme.current.textDarkColor else LocalContentColor.current
 
 // ── Animated waveform bar (matches iOS VoiceWaveBar) ─────────────────────────
 
@@ -283,7 +296,7 @@ fun VoiceListeningOverlay(
                                 }
                                 Spacer(Modifier.height(10.dp))
                                 Text(
-                                    "Please speak your response",
+                                    stringResource(R.string.voice_speak_your_response),
                                     fontSize = 12.sp,
                                     color = Color.White.copy(alpha = 0.55f),
                                     textAlign = TextAlign.Center
@@ -294,7 +307,7 @@ fun VoiceListeningOverlay(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                                     Spacer(Modifier.width(10.dp))
-                                    Text("Analyzing what you said...", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                                    Text(stringResource(R.string.voice_analyzing_what_you_said), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
                                 }
                                 if (processingTranscript.isNotEmpty()) {
                                     Spacer(Modifier.height(10.dp))
@@ -319,7 +332,7 @@ fun VoiceListeningOverlay(
                             )
                         } else {
                             Text(
-                                text = transcript.ifEmpty { "Listening..." },
+                                text = transcript.ifEmpty { stringResource(R.string.voice_listening_ellipsis) },
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.White.copy(alpha = if (transcript.isEmpty()) 0.7f else 1f),
@@ -331,10 +344,10 @@ fun VoiceListeningOverlay(
                             Spacer(Modifier.height(12.dp))
 
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Take your time. It is analysed when you pause.", fontSize = 14.sp, color = Color.Gray)
+                                Text(stringResource(R.string.voice_take_your_time), fontSize = 14.sp, color = Color.Gray)
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    "Say your vitals, symptoms, fluids or medicines",
+                                    stringResource(R.string.voice_say_your_vitals_hint),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = Color.White.copy(alpha = 0.5f),
@@ -356,7 +369,7 @@ fun VoiceListeningOverlay(
                         ) {
                             Icon(
                                 Icons.Default.Stop,
-                                contentDescription = "Stop and analyse",
+                                contentDescription = stringResource(R.string.voice_cd_stop_and_analyse),
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -368,7 +381,7 @@ fun VoiceListeningOverlay(
                                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.5f)),
                                 modifier = Modifier.height(50.dp)
                             ) {
-                                Text("Close", color = Color.White, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.voice_close), color = Color.White, fontWeight = FontWeight.SemiBold)
                             }
                             SpeakAgainButton(onClick = onStartListening, modifier = Modifier.height(50.dp))
                         }
@@ -409,14 +422,14 @@ private fun UnifiedVoiceConfirmationFullScreen(
             (if (data.fluidOutput != null) 1 else 0) +
             (data.medicines?.size ?: 0)
 
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF0F4F8))) {
+    Box(modifier = Modifier.fillMaxSize().background(if (isAppDark) LocalMyColorScheme.current.dashboardBackgroundColor else Color(0xFFF0F4F8))) {
         Column(modifier = Modifier.fillMaxSize()) {
 
             // ── Header ────────────────────────────────────────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(LocalMyColorScheme.current.dashboardContainerColor)
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -424,19 +437,20 @@ private fun UnifiedVoiceConfirmationFullScreen(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.06f))
+                        .background(if (isAppDark) LocalMyColorScheme.current.textDarkColor.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.06f))
                         .clickable { onCancel() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Close, null, tint = voiceInk(), modifier = Modifier.size(16.dp))
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Voice Health Log", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(stringResource(R.string.voice_health_log_title), fontWeight = FontWeight.Bold, fontSize = 18.sp, color = voiceInk())
                     Text(
-                        "$totalItems ${if (totalItems == 1) "item" else "items"} ready to review",
+                        if (totalItems == 1) stringResource(R.string.voice_item_ready_one, totalItems)
+                        else stringResource(R.string.voice_items_ready, totalItems),
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = voiceGrey()
                     )
                 }
 
@@ -461,17 +475,17 @@ private fun UnifiedVoiceConfirmationFullScreen(
                                     color = Color(0xFF9333EA)
                                 )
                                 Spacer(Modifier.width(5.dp))
-                                Text("Analyzing...", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9333EA))
+                                Text(stringResource(R.string.voice_analyzing), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9333EA))
                             }
                             isListening -> {
                                 Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF22C55E)))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Listening", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF22C55E))
+                                Text(stringResource(R.string.voice_listening), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF22C55E))
                             }
                             else -> {
                                 Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF2563EB)))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Ready", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                                Text(stringResource(R.string.voice_ready), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
                             }
                         }
                     }
@@ -547,13 +561,14 @@ private fun UnifiedVoiceConfirmationFullScreen(
                             Spacer(Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Please answer the question:",
+                                    stringResource(R.string.voice_answer_question),
                                     fontWeight = FontWeight.Bold, fontSize = 13.sp,
                                     color = Color(0xFF2563EB)
                                 )
                                 Text(
                                     multiTurnPrompt,
-                                    fontSize = 14.sp, fontWeight = FontWeight.SemiBold
+                                    fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                                    color = voiceInk()
                                 )
                             }
                         }
@@ -598,7 +613,7 @@ private fun UnifiedVoiceConfirmationFullScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(Color(0xFFF0F4F8).copy(alpha = 0.97f))
+                .background((if (isAppDark) LocalMyColorScheme.current.dashboardBackgroundColor else Color(0xFFF0F4F8)).copy(alpha = 0.97f))
         ) {
             HorizontalDivider()
             Row(
@@ -617,7 +632,7 @@ private fun UnifiedVoiceConfirmationFullScreen(
                     ) {
                         Icon(Icons.Default.Stop, null, tint = Color(0xFFEF4444), modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Stop", fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                        Text(stringResource(R.string.voice_stop), fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
                     }
                 } else {
                     SpeakAgainButton(
@@ -652,17 +667,17 @@ private fun UnifiedVoiceConfirmationFullScreen(
                             isSavingData -> Row(verticalAlignment = Alignment.CenterVertically) {
                                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Saving...", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                                Text(stringResource(R.string.voice_saving), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
                             }
                             isExtractingData -> Row(verticalAlignment = Alignment.CenterVertically) {
                                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Analyzing...", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                                Text(stringResource(R.string.voice_analyzing), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
                             }
                             else -> Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.CheckCircle, null, tint = Color.White, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Save All", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                                Text(stringResource(R.string.voice_save_all), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
                             }
                         }
                     }
@@ -689,7 +704,7 @@ private fun SpeakAgainButton(
     ) {
         Icon(Icons.Default.Mic, null, tint = tint, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
-        Text("Speak again", fontWeight = FontWeight.Bold, color = tint)
+        Text(stringResource(R.string.voice_speak_again), fontWeight = FontWeight.Bold, color = tint)
     }
 }
 
@@ -723,10 +738,10 @@ private fun LiveDictationBanner(
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Extracting Readings...", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF9333EA))
+                        Text(stringResource(R.string.voice_extracting_readings), fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF9333EA))
                         Text(
-                            if (processingTranscript.isEmpty()) "Structuring health data with AI..." else "\"$processingTranscript\"",
-                            fontSize = 11.sp, fontWeight = FontWeight.Medium, color = Color.Gray, maxLines = 1
+                            if (processingTranscript.isEmpty()) stringResource(R.string.voice_structuring_with_ai) else "\"$processingTranscript\"",
+                            fontSize = 11.sp, fontWeight = FontWeight.Medium, color = voiceGrey(), maxLines = 1
                         )
                     }
                     Icon(Icons.Default.AutoAwesome, null, tint = Color(0xFF9333EA), modifier = Modifier.size(16.dp))
@@ -744,9 +759,10 @@ private fun LiveDictationBanner(
                     MicroVoiceWaveVisualizer(barColor = Color(0xFF2563EB))
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = transcript.ifEmpty { "Listening for more readings..." },
+                        text = transcript.ifEmpty { stringResource(R.string.voice_listening_for_more) },
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
+                        color = voiceInk(),
                         maxLines = 2,
                         modifier = Modifier.weight(1f)
                     )
@@ -757,7 +773,7 @@ private fun LiveDictationBanner(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White)
+                        .background(LocalMyColorScheme.current.dashboardContainerColor)
                         .clickable { onStartListening() }
                         .padding(horizontal = 12.dp, vertical = 9.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -770,8 +786,8 @@ private fun LiveDictationBanner(
                     }
                     Spacer(Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Add More Readings", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                        Text("Tap to speak additional vitals, fluids, or medicines", fontSize = 11.sp, color = Color.Gray)
+                        Text(stringResource(R.string.voice_add_more_readings), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = voiceInk())
+                        Text(stringResource(R.string.voice_tap_to_speak_more), fontSize = 11.sp, color = voiceGrey())
                     }
                     Icon(Icons.Default.GraphicEq, null, tint = Color(0xFF2563EB), modifier = Modifier.size(16.dp))
                 }
@@ -786,7 +802,7 @@ private fun LiveDictationBanner(
 private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
         shape     = RoundedCornerShape(16.dp),
-        colors    = CardDefaults.cardColors(containerColor = Color.White),
+        colors    = CardDefaults.cardColors(containerColor = LocalMyColorScheme.current.dashboardContainerColor),
         elevation = CardDefaults.cardElevation(2.dp),
         modifier  = Modifier.fillMaxWidth()
     ) {
@@ -851,7 +867,7 @@ private fun AnomalyAlertsSection(alerts: List<VitalAlert>) {
                                 color = alertColor.copy(alpha = 0.15f)
                             ) {
                                 Text(
-                                    if (isCritical) "CRITICAL" else "WARNING",
+                                    if (isCritical) stringResource(R.string.voice_critical) else stringResource(R.string.voice_warning),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = alertColor,
@@ -883,8 +899,8 @@ private fun VitalsSection(
     SectionCard {
         SectionHeader(
             icon      = { Icon(Icons.Default.MonitorHeart, null, tint = blue, modifier = Modifier.size(14.dp)) },
-            title     = "Vitals",
-            badgeText = "${vitals.size} Recorded",
+            title     = stringResource(R.string.voice_vitals),
+            badgeText = stringResource(R.string.voice_vitals_recorded, vitals.size),
             accentColor = blue
         )
         Spacer(Modifier.height(8.dp))
@@ -892,21 +908,21 @@ private fun VitalsSection(
         val sys  = vitals["vmValueBPSys"]
         val dias = vitals["vmValueBPDias"]
         if (sys != null && dias != null) {
-            VitalPreviewRow("❤️", Color(0xFFEF4444), "Blood Pressure", "$sys/$dias mmHg",
+            VitalPreviewRow("❤️", Color(0xFFEF4444), stringResource(R.string.voice_blood_pressure), "$sys/$dias mmHg",
                 trend = vitalTrends["vmValueBPSys"]) {
                 onRemoveVital(listOf("vmValueBPSys", "vmValueBPDias"))
             }
         } else {
-            sys?.let  { VitalPreviewRow("❤️", Color(0xFFEF4444), "BP Systolic",  "$it mmHg",  trend = vitalTrends["vmValueBPSys"])  { onRemoveVital(listOf("vmValueBPSys")) } }
-            dias?.let { VitalPreviewRow("❤️", Color(0xFFEF4444), "BP Diastolic", "$it mmHg",  trend = vitalTrends["vmValueBPDias"]) { onRemoveVital(listOf("vmValueBPDias")) } }
+            sys?.let  { VitalPreviewRow("❤️", Color(0xFFEF4444), stringResource(R.string.voice_bp_systolic),  "$it mmHg",  trend = vitalTrends["vmValueBPSys"])  { onRemoveVital(listOf("vmValueBPSys")) } }
+            dias?.let { VitalPreviewRow("❤️", Color(0xFFEF4444), stringResource(R.string.voice_bp_diastolic), "$it mmHg",  trend = vitalTrends["vmValueBPDias"]) { onRemoveVital(listOf("vmValueBPDias")) } }
         }
-        vitals["vmValuePulse"]?.let           { VitalPreviewRow("〰️", Color(0xFFEC4899), "Pulse Rate",        "$it bpm",    trend = vitalTrends["vmValuePulse"])           { onRemoveVital(listOf("vmValuePulse")) } }
-        vitals["vmValueSPO2"]?.let            { VitalPreviewRow("🫁", Color(0xFF06B6D4), "SpO2 Level",        "$it%",       trend = vitalTrends["vmValueSPO2"])             { onRemoveVital(listOf("vmValueSPO2")) } }
-        vitals["vmValueTemperature"]?.let     { VitalPreviewRow("🌡️", Color(0xFFF97316), "Temperature",       "$it °F",     trend = vitalTrends["vmValueTemperature"])      { onRemoveVital(listOf("vmValueTemperature")) } }
-        vitals["vmValueHeartRate"]?.let       { VitalPreviewRow("💓", Color(0xFFEF4444), "Heart Rate",        "$it bpm",    trend = vitalTrends["vmValueHeartRate"])         { onRemoveVital(listOf("vmValueHeartRate")) } }
-        vitals["vmValueRespiratoryRate"]?.let { VitalPreviewRow("🌬️", Color(0xFF06B6D4), "Respiratory Rate",  "$it /min",   trend = vitalTrends["vmValueRespiratoryRate"])  { onRemoveVital(listOf("vmValueRespiratoryRate")) } }
-        vitals["vmValueRbs"]?.let             { VitalPreviewRow("🩸", Color(0xFF8B5CF6), "Blood Sugar (RBS)", "$it mg/dL",  trend = vitalTrends["vmValueRbs"])              { onRemoveVital(listOf("vmValueRbs")) } }
-        vitals["weight"]?.let                 { VitalPreviewRow("⚖️", Color(0xFF8B5CF6), "Body Weight",       "$it kg",     trend = vitalTrends["weight"])                  { onRemoveVital(listOf("weight")) } }
+        vitals["vmValuePulse"]?.let           { VitalPreviewRow("〰️", Color(0xFFEC4899), stringResource(R.string.voice_pulse_rate),        "$it bpm",    trend = vitalTrends["vmValuePulse"])           { onRemoveVital(listOf("vmValuePulse")) } }
+        vitals["vmValueSPO2"]?.let            { VitalPreviewRow("🫁", Color(0xFF06B6D4), stringResource(R.string.voice_spo2_level),        "$it%",       trend = vitalTrends["vmValueSPO2"])             { onRemoveVital(listOf("vmValueSPO2")) } }
+        vitals["vmValueTemperature"]?.let     { VitalPreviewRow("🌡️", Color(0xFFF97316), stringResource(R.string.voice_temperature),       "$it °F",     trend = vitalTrends["vmValueTemperature"])      { onRemoveVital(listOf("vmValueTemperature")) } }
+        vitals["vmValueHeartRate"]?.let       { VitalPreviewRow("💓", Color(0xFFEF4444), stringResource(R.string.voice_heart_rate),        "$it bpm",    trend = vitalTrends["vmValueHeartRate"])         { onRemoveVital(listOf("vmValueHeartRate")) } }
+        vitals["vmValueRespiratoryRate"]?.let { VitalPreviewRow("🌬️", Color(0xFF06B6D4), stringResource(R.string.voice_respiratory_rate),  "$it /min",   trend = vitalTrends["vmValueRespiratoryRate"])  { onRemoveVital(listOf("vmValueRespiratoryRate")) } }
+        vitals["vmValueRbs"]?.let             { VitalPreviewRow("🩸", Color(0xFF8B5CF6), stringResource(R.string.voice_blood_sugar_rbs), "$it mg/dL",  trend = vitalTrends["vmValueRbs"])              { onRemoveVital(listOf("vmValueRbs")) } }
+        vitals["weight"]?.let                 { VitalPreviewRow("⚖️", Color(0xFF8B5CF6), stringResource(R.string.voice_body_weight),       "$it kg",     trend = vitalTrends["weight"])                  { onRemoveVital(listOf("weight")) } }
     }
 }
 
@@ -921,8 +937,8 @@ private fun SymptomsSection(
     SectionCard {
         SectionHeader(
             icon      = { Icon(Icons.Default.LocalHospital, null, tint = orange, modifier = Modifier.size(14.dp)) },
-            title     = "Symptoms",
-            badgeText = "${symptoms.size} Detected",
+            title     = stringResource(R.string.voice_symptoms),
+            badgeText = stringResource(R.string.voice_symptoms_detected, symptoms.size),
             accentColor = orange
         )
         Spacer(Modifier.height(8.dp))
@@ -938,11 +954,12 @@ private fun SymptomsSection(
                     symptom.details,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
+                    color = voiceInk(),
                     modifier = Modifier.weight(1f)
                 )
                 Surface(shape = CircleShape, color = orange.copy(alpha = 0.15f)) {
                     Text(
-                        "Active", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = orange,
+                        stringResource(R.string.voice_active), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = orange,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
@@ -966,8 +983,8 @@ private fun FluidIntakesSection(
     SectionCard {
         SectionHeader(
             icon      = { Icon(Icons.Default.WaterDrop, null, tint = cyan, modifier = Modifier.size(14.dp)) },
-            title     = "Fluid Intake",
-            badgeText = "${intakes.size} Beverages",
+            title     = stringResource(R.string.voice_fluid_intake),
+            badgeText = stringResource(R.string.voice_beverages_count, intakes.size),
             accentColor = cyan
         )
         Spacer(Modifier.height(8.dp))
@@ -997,8 +1014,8 @@ private fun FluidOutputSection(
     SectionCard {
         SectionHeader(
             icon      = { Icon(Icons.Default.Science, null, tint = yellow, modifier = Modifier.size(14.dp)) },
-            title     = "Fluid Output",
-            badgeText = "1 Entry",
+            title     = stringResource(R.string.voice_fluid_output),
+            badgeText = stringResource(R.string.voice_one_entry),
             accentColor = yellow
         )
         Spacer(Modifier.height(8.dp))
@@ -1010,16 +1027,16 @@ private fun FluidOutputSection(
             Text("🔶", fontSize = 16.sp)
             Spacer(Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Urine Output", fontSize = 14.sp, color = Color.Gray)
+                Text(stringResource(R.string.voice_urine_output), fontSize = 14.sp, color = voiceGrey())
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier.size(8.dp).clip(CircleShape).background(parseHexColor(output.colourHex))
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(output.colourName, fontSize = 12.sp, color = Color.Gray)
+                    Text(output.colourName, fontSize = 12.sp, color = voiceGrey())
                 }
             }
-            Text("${output.quantity} ml", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text("${output.quantity} ml", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = voiceInk())
             Spacer(Modifier.width(6.dp))
             HapticIconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
                 Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
@@ -1039,8 +1056,8 @@ private fun MedicinesSection(
     SectionCard {
         SectionHeader(
             icon      = { Icon(Icons.Default.Medication, null, tint = purple, modifier = Modifier.size(14.dp)) },
-            title     = "Medication Intake",
-            badgeText = "${medicines.size} Pending",
+            title     = stringResource(R.string.voice_medication_intake),
+            badgeText = stringResource(R.string.voice_pending_count, medicines.size),
             accentColor = purple
         )
         Spacer(Modifier.height(8.dp))
@@ -1048,7 +1065,7 @@ private fun MedicinesSection(
         medicines.forEach { med ->
             Card(
                 shape  = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F5FF)),
+                colors = CardDefaults.cardColors(containerColor = softTint(purple, Color(0xFFF9F5FF))),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
             ) {
                 Column(modifier = Modifier.padding(11.dp)) {
@@ -1064,9 +1081,9 @@ private fun MedicinesSection(
                         }
                         Spacer(Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(formatMedicineName(med.medicineName), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(formatMedicineName(med.medicineName), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = voiceInk())
                             if (med.instructions.trim().isNotEmpty()) {
-                                Text(med.instructions.trim(), fontSize = 12.sp, color = Color.Gray)
+                                Text(med.instructions.trim(), fontSize = 12.sp, color = voiceGrey())
                             }
                         }
                         HapticIconButton(onClick = { onRemove(med.id) }, modifier = Modifier.size(28.dp)) {
@@ -1084,9 +1101,9 @@ private fun MedicinesSection(
                         }
                         val timeStr = formatMedicineTime(med.scheduledDateTime)
                         if (timeStr != null) {
-                            Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(10.dp), tint = Color.Gray)
+                            Icon(Icons.Default.AccessTime, null, modifier = Modifier.size(10.dp), tint = voiceGrey())
                             Spacer(Modifier.width(2.dp))
-                            Text(timeStr, fontSize = 11.sp, color = Color.Gray)
+                            Text(timeStr, fontSize = 11.sp, color = voiceGrey())
                             Spacer(Modifier.width(6.dp))
                         }
                         Spacer(Modifier.weight(1f))
@@ -1097,7 +1114,7 @@ private fun MedicinesSection(
                             ) {
                                 Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF22C55E), modifier = Modifier.size(10.dp))
                                 Spacer(Modifier.width(3.dp))
-                                Text("Take Now", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF22C55E))
+                                Text(stringResource(R.string.voice_take_now), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF22C55E))
                             }
                         }
                     }
@@ -1123,8 +1140,8 @@ fun VitalPreviewRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(emoji, fontSize = 14.sp, modifier = Modifier.width(24.dp))
-        Text(title, fontSize = 13.sp, color = Color.Gray, modifier = Modifier.weight(1f))
-        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(title, fontSize = 13.sp, color = voiceGrey(), modifier = Modifier.weight(1f))
+        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = voiceInk())
 
         // Trend delta badge
         trend?.let { t ->
@@ -1201,7 +1218,7 @@ fun FloatingVoiceFab(
         ) {
             Icon(
                 Icons.Default.Mic,
-                contentDescription = "Open voice assistant",
+                contentDescription = stringResource(R.string.voice_cd_open_assistant),
                 tint  = Color.White,
                 modifier = Modifier.size(28.dp)
             )

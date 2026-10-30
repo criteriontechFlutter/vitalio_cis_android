@@ -22,7 +22,7 @@ data class Drug(
 
 enum class InteractionSeverity {
     Caution, Harmful;
-    val title: String get() = if (this == Caution) "Caution" else "Harmful"
+    val titleRes: Int get() = if (this == Caution) com.critetiontech.ctvitalio.R.string.med_severity_caution else com.critetiontech.ctvitalio.R.string.med_severity_harmful
 }
 
 data class InteractionInstructionItem(
@@ -156,7 +156,7 @@ class InteractionCheckerViewModel : ViewModel() {
                     onComplete(true)
                 }
                 is DomainResult.Error -> {
-                    _errorMessage.value = result.exception.message ?: "Failed to check interactions"
+                    _errorMessage.value = result.exception.message ?: com.critetiontech.ctvitalio.utils.MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_error_check_interactions)
                     _displayInstructions.value = emptyList()
                     _isCheckingInteraction.value = false
                     onComplete(false)

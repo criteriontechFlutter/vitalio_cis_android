@@ -37,6 +37,18 @@ object RetrofitInstance {
             .build()
     }
 
+    // Per-request read timeout for slow endpoints: send this header (seconds) and it overrides
+    // the 20 s default for that call only. The header is stripped before it reaches the server.
+    const val READ_TIMEOUT_HEADER = "X-Read-Timeout-Sec"
+
+    private val perRequestTimeoutInterceptor = Interceptor { chain ->
+        val request = chain.request()
+        val seconds = request.header(READ_TIMEOUT_HEADER)?.toIntOrNull()
+            ?: return@Interceptor chain.proceed(request)
+        chain.withReadTimeout(seconds, TimeUnit.SECONDS)
+            .proceed(request.newBuilder().removeHeader(READ_TIMEOUT_HEADER).build())
+    }
+
     // When offline, serve stale cache up to 7 days
 //    private val offlineCacheInterceptor = Interceptor { chain ->
 //        var request = chain.request()
@@ -58,6 +70,7 @@ object RetrofitInstance {
         OkHttpClient.Builder()
 //            .cache(httpCache)
 //            .addInterceptor(offlineCacheInterceptor)   // offline: serve cache
+            .addInterceptor(perRequestTimeoutInterceptor)   // before Retry so every attempt gets it
             .addInterceptor(RetryInterceptor(maxRetries = 3))
             .addInterceptor(loggingInterceptor)
             .addNetworkInterceptor(onlineCacheInterceptor) // online: write cache headers

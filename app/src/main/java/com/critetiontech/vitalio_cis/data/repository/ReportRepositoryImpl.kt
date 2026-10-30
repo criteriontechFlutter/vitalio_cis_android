@@ -3,6 +3,14 @@ package com.critetiontech.ctvitalio.data.repository
 import com.critetiontech.ctvitalio.config.ApiConfig
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.pdf.PdfRenderer
+import android.media.ExifInterface
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -33,6 +41,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "ReportRepository"
+private const val MAX_UPLOAD_SIDE_PX = 2000
+private const val UPLOAD_JPEG_QUALITY = 80
+// 745 KB passed, 948 KB got "Invalid Image Type"; stay safely under that.
+private const val MAX_UPLOAD_BYTES = 700 * 1024
+private const val MAX_PDF_PAGES = 3
+private const val PDF_PAGE_WIDTH_PX = 1000
 
 @Singleton
 class ReportRepositoryImpl @Inject constructor(
@@ -53,8 +67,16 @@ class ReportRepositoryImpl @Inject constructor(
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
+    // Concrete Content-Type for the multipart part instead of the wildcard "image/*" (matches iOS).
+    private fun mimeTypeFor(file: File): String = when (file.extension.lowercase()) {
+        "png" -> "image/png"
+        "webp" -> "image/webp"
+        "pdf" -> "application/pdf"
+        else -> "image/jpeg"
+    }
+
     override suspend fun uploadMedia(uhid: String, clientId: String, category: String, dateTime: String, subCategory: String, remark: String, file: File): DomainResult<Unit> = try {
-        val requestFile = file.asRequestBody("image/*".toMediaType())
+        val requestFile = file.asRequestBody(mimeTypeFor(file).toMediaType())
         val filePart = MultipartBody.Part.createFormData("formFile", file.name, requestFile)
         val response = ApiClients.module4082.uploadMedia(
             url = "${ApiConfig.MODULE_4082}api/PatientMediaData/AddMedia",
@@ -64,7 +86,83 @@ class ReportRepositoryImpl @Inject constructor(
         if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
     } catch (e: Exception) { DomainResult.Error(e) }
 
+    /**
+     * Prepares a file for the AI server (uploadLabreport/ and uploadPrescription/), which
+     *  - answers {"response":"Invalid Image Type"} for heavy images: the same document fails as a
+     *    948 KB / 2.8 MB JPEG (or 1.8 MB PNG) but reads fine as a 150–750 KB JPEG at quality 80;
+     *  - answers 500 Internal Server Error for any PDF.
+     * So images are re-encoded and PDFs are rendered to one JPEG. Anything that fails to
+     * decode/render goes up unchanged.
+     */
+    private suspend fun compressForUpload(file: File): File = withContext(Dispatchers.IO) {
+        runCatching {
+            val bitmap = if (file.extension.equals("pdf", ignoreCase = true)) renderPdf(file) else decodeImage(file)
+            bitmap ?: return@runCatching file
+            val out = File(context.cacheDir, "upload_${System.currentTimeMillis()}.jpg")
+            var quality = UPLOAD_JPEG_QUALITY
+            do {
+                out.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, quality, it) }
+                quality -= 15
+            } while (out.length() > MAX_UPLOAD_BYTES && quality >= 40)
+            bitmap.recycle()
+            out
+        }.getOrDefault(file)
+    }
+
+    /**
+     * Renders the first [MAX_PDF_PAGES] pages of a PDF stacked top-to-bottom into one bitmap,
+     * [PDF_PAGE_WIDTH_PX] wide. Tested: a 3-page stack at 1000–1200 px reads every value.
+     */
+    private fun renderPdf(file: File): Bitmap? {
+        ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use { fd ->
+            PdfRenderer(fd).use { renderer ->
+                val pageCount = minOf(renderer.pageCount, MAX_PDF_PAGES)
+                if (pageCount == 0) return null
+                val pages = (0 until pageCount).map { i ->
+                    renderer.openPage(i).use { page ->
+                        val height = (PDF_PAGE_WIDTH_PX.toFloat() * page.height / page.width).toInt()
+                        Bitmap.createBitmap(PDF_PAGE_WIDTH_PX, height, Bitmap.Config.ARGB_8888).also {
+                            it.eraseColor(Color.WHITE) // PDF pages are transparent by default
+                            page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                        }
+                    }
+                }
+                val stacked = Bitmap.createBitmap(PDF_PAGE_WIDTH_PX, pages.sumOf { it.height }, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(stacked)
+                var top = 0f
+                pages.forEach { canvas.drawBitmap(it, 0f, top, null); top += it.height; it.recycle() }
+                return stacked
+            }
+        }
+    }
+
+    /** Decodes an image scaled to at most [MAX_UPLOAD_SIDE_PX] on its long side, upright. */
+    private fun decodeImage(file: File): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= MAX_UPLOAD_SIDE_PX) sample *= 2
+        val decoded = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = sample })
+            ?: return null
+
+        // Camera photos are usually stored sideways with an EXIF rotation flag. Re-encoding drops
+        // EXIF, so bake the rotation into the pixels or the AI gets a sideways page.
+        val rotation = when (ExifInterface(file.path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+        val scale = minOf(1f, MAX_UPLOAD_SIDE_PX.toFloat() / maxOf(decoded.width, decoded.height))
+        if (scale >= 1f && rotation == 0f) return decoded
+        val matrix = Matrix().apply { postScale(scale, scale); postRotate(rotation) }
+        return Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
+            .also { if (it !== decoded) decoded.recycle() }
+    }
+
     override suspend fun analyzeReport(file: File): DomainResult<String> = try {
+        val original = file
+        val file = compressForUpload(original)
         val client = OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
@@ -72,7 +170,7 @@ class ReportRepositoryImpl @Inject constructor(
             .build()
 
         val requestBody = MultipartBody.Builder().setType(MultipartBody.FORM)
-            .addFormDataPart("file", file.name, file.asRequestBody("image/*".toMediaTypeOrNull()))
+            .addFormDataPart("file", file.name, file.asRequestBody(mimeTypeFor(file).toMediaTypeOrNull()))
             .build()
 
         val url = "${ApiConfig.AI_UPLOAD}uploadLabreport/"
@@ -80,7 +178,7 @@ class ReportRepositoryImpl @Inject constructor(
 
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "AI Analyze → POST $url")
-            Log.d(TAG, "AI Analyze → file=${file.name}, size=${file.length()} bytes")
+            Log.d(TAG, "AI Analyze → file=${file.name}, size=${file.length()} bytes (original ${original.length()} bytes)")
         }
 
         val (isSuccessful, body) = withContext(Dispatchers.IO) {
@@ -92,10 +190,16 @@ class ReportRepositoryImpl @Inject constructor(
         }
 
         if (isSuccessful && !body.isNullOrEmpty()) {
-            val jsonObject = JSONObject(body)
-            val responseArray = jsonObject.getJSONArray("response")
-            if (responseArray.length() > 0 && responseArray.get(0) is JSONObject) DomainResult.Success(body)
-            else DomainResult.Error(Exception(responseArray.getString(0)))
+            // Success: {"response":[{...}]}. Failure: {"response":["msg"]} or {"response":"msg"}.
+            val responseArray = JSONObject(body).opt("response")
+            when {
+                responseArray is JSONArray && responseArray.length() > 0 && responseArray.get(0) is JSONObject ->
+                    DomainResult.Success(body)
+                responseArray is JSONArray && responseArray.length() > 0 ->
+                    DomainResult.Error(Exception(responseArray.getString(0)))
+                responseArray is String -> DomainResult.Error(Exception(responseArray))
+                else -> DomainResult.Error(Exception("Analysis failed"))
+            }
         } else DomainResult.Error(Exception("Analysis failed"))
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -191,9 +295,13 @@ class ReportRepositoryImpl @Inject constructor(
     /**
      * Uploads a prescription image/PDF to the AI prescription reader.
      * Response: { "response": [ {patient, prescription} ] } on success,
-     * or { "response": [ "<message>" ] } when the document could not be read.
+     * or { "response": [ "<message>" ] } / { "response": "<message>" } when it could not be read.
      */
     override suspend fun uploadPrescription(file: File, mimeType: String): DomainResult<PrescriptionResponseItem> = try {
+        val original = file
+        val file = compressForUpload(original)
+        // A re-encoded image is always JPEG; an untouched file (PDF) keeps the picker's type.
+        val mimeType = if (file === original) mimeType else "image/jpeg"
         val client = OkHttpClient.Builder()
             .connectTimeout(90, TimeUnit.SECONDS)
             .readTimeout(90, TimeUnit.SECONDS)
@@ -207,7 +315,7 @@ class ReportRepositoryImpl @Inject constructor(
         val url = "${ApiConfig.AI_UPLOAD}uploadPrescription/"
         val request = Request.Builder().url(url).post(requestBody).build()
 
-        if (BuildConfig.DEBUG) Log.d(TAG, "UploadPrescription → POST $url file=${file.name}, size=${file.length()} bytes")
+        if (BuildConfig.DEBUG) Log.d(TAG, "UploadPrescription → POST $url file=${file.name}, size=${file.length()} bytes (original ${original.length()} bytes)")
 
         val (isSuccessful, body) = withContext(Dispatchers.IO) {
             client.newCall(request).execute().use { response ->
@@ -218,13 +326,17 @@ class ReportRepositoryImpl @Inject constructor(
         if (BuildConfig.DEBUG) Log.d(TAG, "UploadPrescription ← body=$body")
 
         if (isSuccessful && !body.isNullOrEmpty()) {
-            val responseArray = JSONObject(body).getJSONArray("response")
-            when {
-                responseArray.length() == 0 -> DomainResult.Error(Exception("No data returned from server"))
-                responseArray.get(0) is JSONObject -> DomainResult.Success(
-                    Gson().fromJson(responseArray.getJSONObject(0).toString(), PrescriptionResponseItem::class.java)
-                )
-                else -> DomainResult.Error(Exception(responseArray.getString(0)))
+            when (val response = JSONObject(body).opt("response")) {
+                // Errors like "Invalid Image Type" / "Server is down…" come back as a bare string
+                is String -> DomainResult.Error(Exception(response))
+                is JSONArray -> when {
+                    response.length() == 0 -> DomainResult.Error(Exception("No data returned from server"))
+                    response.get(0) is JSONObject -> DomainResult.Success(
+                        Gson().fromJson(response.getJSONObject(0).toString(), PrescriptionResponseItem::class.java)
+                    )
+                    else -> DomainResult.Error(Exception(response.getString(0)))
+                }
+                else -> DomainResult.Error(Exception("Prescription analysis failed"))
             }
         } else DomainResult.Error(Exception("Prescription analysis failed"))
     } catch (e: Exception) { DomainResult.Error(e) }

@@ -116,7 +116,7 @@ class HomeViewModel : ViewModel() {
                 } else if (result is com.critetiontech.ctvitalio.domain.model.DomainResult.Error) {
                     Log.e("HomeViewModel", "🔴 markMedicineIntake API error: ${result.exception.message}", result.exception)
                     Haptics.error()
-                    android.widget.Toast.makeText(MyApplication.appContext, "Failed to mark medicine", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(MyApplication.appContext, MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.home_failed_mark_medicine), android.widget.Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "🔴 Error marking intake: ${e.message}", e)

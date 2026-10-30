@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
 import androidx.compose.foundation.background
@@ -29,6 +33,7 @@ import com.critetiontech.ctvitalio.R
 fun FamilyHistoryScreen() {
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     var showDiseaseDialog by remember {
         mutableStateOf(false)
     }
@@ -62,10 +67,20 @@ fun FamilyHistoryScreen() {
         "Grand Parent"
     )
 
+    // Values stay English (what gets stored/sent); only the shown label is translated
+    val diseaseLabels = chronicDiseaseLabels()
+    val relationLabels = mapOf(
+        "Mother" to stringResource(R.string.auth_onb_relation_mother),
+        "Father" to stringResource(R.string.auth_onb_relation_father),
+        "Brother" to stringResource(R.string.auth_onb_relation_brother),
+        "Sister" to stringResource(R.string.auth_onb_relation_sister),
+        "Grand Parent" to stringResource(R.string.auth_onb_relation_grandparent)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(20.dp)
     ) {
 
@@ -82,14 +97,14 @@ fun FamilyHistoryScreen() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -100,8 +115,8 @@ fun FamilyHistoryScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "Final Push Ahead",
-            subtitle = "So close!  Only a few steps remain!"
+            title = stringResource(R.string.auth_onb_progress_final_push_title),
+            subtitle = stringResource(R.string.auth_onb_progress_final_push_subtitle)
         )
         Spacer(modifier = Modifier.weight(1f))
 
@@ -117,7 +132,7 @@ fun FamilyHistoryScreen() {
         /// TITLE
 
         Text(
-            text = "Your Family’s Health\nHistory",
+            text = stringResource(R.string.auth_onb_family_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB),
@@ -127,8 +142,8 @@ fun FamilyHistoryScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Are there any hereditary conditions in your\nfamily?",
-            color = Color.Gray,
+            text = stringResource(R.string.auth_onb_family_subtitle),
+            color = colors.textGreyColor,
             fontSize = 16.sp,
             lineHeight = 18.sp
         )
@@ -136,8 +151,8 @@ fun FamilyHistoryScreen() {
         Spacer(modifier = Modifier.height(28.dp))
 
         Text(
-            text = "Chronic Disease",
-            color = Color.Gray,
+            text = stringResource(R.string.auth_onb_chronic_label),
+            color = colors.textGreyColor,
             fontSize = 14.sp
         )
 
@@ -146,7 +161,7 @@ fun FamilyHistoryScreen() {
         /// SELECT DISEASE FIELD
 
         OutlinedTextField(
-            value = selectedDisease,
+            value = diseaseLabels[selectedDisease] ?: selectedDisease,
             onValueChange = {},
             enabled = false,
             modifier = Modifier
@@ -155,7 +170,7 @@ fun FamilyHistoryScreen() {
                     showDiseaseDialog = true
                 },
             placeholder = {
-                Text("Select Chronic Diseases")
+                Text(stringResource(R.string.auth_onb_chronic_hint))
             },
             leadingIcon = {
                 Icon(
@@ -166,9 +181,9 @@ fun FamilyHistoryScreen() {
             },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                disabledContainerColor = Color.White,
-                disabledBorderColor = Color(0xFFE5E7EB),
-                disabledTextColor = Color.Black
+                disabledContainerColor = colors.dashboardContainerColor,
+                disabledBorderColor = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB)),
+                disabledTextColor = colors.textDarkColor
             )
         )
 
@@ -182,7 +197,7 @@ fun FamilyHistoryScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        Color(0xFFF4F7FF),
+                        softTint(Color(0xFF2563EB), Color(0xFFF4F7FF)),
                         RoundedCornerShape(12.dp)
                     )
                     .clickable {
@@ -192,15 +207,15 @@ fun FamilyHistoryScreen() {
             ) {
 
                 Text(
-                    text = selectedRelations.joinToString(", "),
-                    color = Color.Gray,
+                    text = selectedRelations.joinToString(", ") { relationLabels[it] ?: it },
+                    color = colors.textGreyColor,
                     fontSize = 12.sp
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = selectedDisease,
+                    text = diseaseLabels[selectedDisease] ?: selectedDisease,
                     color = Color(0xFF2563EB),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
@@ -222,10 +237,10 @@ fun FamilyHistoryScreen() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -244,7 +259,7 @@ fun FamilyHistoryScreen() {
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colors.dashboardContainerColor
                 )
             ) {
 
@@ -253,10 +268,10 @@ fun FamilyHistoryScreen() {
                 ) {
 
                     Text(
-                        text = "Select Disease",
+                        text = stringResource(R.string.auth_onb_select_disease),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF202529)
+                        color = colors.textDarkColor
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -266,7 +281,7 @@ fun FamilyHistoryScreen() {
                     }
 
                     val filteredList = diseaseList.filter {
-                        it.contains(search, ignoreCase = true)
+                        (diseaseLabels[it] ?: it).contains(search, ignoreCase = true)
                     }
 
                     /// SEARCH
@@ -278,7 +293,7 @@ fun FamilyHistoryScreen() {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = {
-                            Text("Search")
+                            Text(stringResource(R.string.auth_common_search))
                         },
                         leadingIcon = {
                             Icon(
@@ -301,7 +316,7 @@ fun FamilyHistoryScreen() {
                         items(filteredList) { disease ->
 
                             Text(
-                                text = disease,
+                                text = diseaseLabels[disease] ?: disease,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
@@ -317,7 +332,7 @@ fun FamilyHistoryScreen() {
                             )
 
                             HorizontalDivider(
-                                color = Color(0xFFF1F1F1)
+                                color = softTint(colors.textGreyColor, Color(0xFFF1F1F1))
                             )
                         }
                     }
@@ -339,7 +354,7 @@ fun FamilyHistoryScreen() {
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colors.dashboardContainerColor
                 )
             ) {
 
@@ -348,7 +363,7 @@ fun FamilyHistoryScreen() {
                 ) {
 
                     Text(
-                        text = "Select Relation",
+                        text = stringResource(R.string.auth_onb_select_relation),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -356,8 +371,8 @@ fun FamilyHistoryScreen() {
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Who in your family has been diagnosed with this disease?",
-                        color = Color.Gray,
+                        text = stringResource(R.string.auth_onb_select_relation_subtitle),
+                        color = colors.textGreyColor,
                         fontSize = 12.sp,
                         lineHeight = 18.sp
                     )
@@ -374,7 +389,7 @@ fun FamilyHistoryScreen() {
                         ) {
 
                             Text(
-                                text = relation,
+                                text = relationLabels[relation] ?: relation,
                                 modifier = Modifier.weight(1f),
                                 fontSize = 14.sp
                             )
@@ -394,7 +409,7 @@ fun FamilyHistoryScreen() {
                         }
 
                         HorizontalDivider(
-                            color = Color(0xFFF1F1F1)
+                            color = softTint(colors.textGreyColor, Color(0xFFF1F1F1))
                         )
                     }
 
@@ -416,7 +431,7 @@ fun FamilyHistoryScreen() {
                         )
                     ) {
 
-                        Text("Submit", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.auth_common_submit), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,6 +47,7 @@ import com.critetiontech.ctvitalio.model.UltrahumanDashboardData
 import com.critetiontech.ctvitalio.model.UltrahumanLastVitalItem
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.ui.theme.MyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.viewmodel.SmartRingViewModel
 
 private val RingIndigo = Color(0xFF6366F1)
@@ -103,7 +106,7 @@ private fun SmartRingDashboard(viewModel: SmartRingViewModel) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(8.dp).clip(CircleShape).background(RingGreen))
                     Spacer(Modifier.width(6.dp))
-                    Text("Active • Live Telemetry", style = AppTextStyles.style12GCN(), color = RingGreen)
+                    Text(stringResource(R.string.consult_ring_active_live), style = AppTextStyles.style12GCN(), color = RingGreen)
                 }
             }
             val rotation by rememberInfiniteTransition(label = "sync").animateFloat(
@@ -124,7 +127,7 @@ private fun SmartRingDashboard(viewModel: SmartRingViewModel) {
                     modifier = Modifier.size(16.dp).rotate(if (isSyncing) rotation else 0f)
                 )
                 Spacer(Modifier.width(6.dp))
-                Text(if (isSyncing) "Syncing..." else "Sync", style = AppTextStyles.style12WCB())
+                Text(if (isSyncing) stringResource(R.string.consult_ring_syncing) else stringResource(R.string.consult_ring_sync), style = AppTextStyles.style12WCB())
             }
         }
 
@@ -144,7 +147,7 @@ private fun SmartRingDashboard(viewModel: SmartRingViewModel) {
         ) {
             Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Red.copy(alpha = 0.85f), modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Disconnect / Re-pair Ring", style = AppTextStyles.style12GCB(), color = Color.Red.copy(alpha = 0.85f))
+            Text(stringResource(R.string.consult_ring_disconnect_repair), style = AppTextStyles.style12GCB(), color = Color.Red.copy(alpha = 0.85f))
         }
 
         Spacer(Modifier.height(90.dp)) // clearance for voice FAB
@@ -184,7 +187,7 @@ private fun VitalInsightsCard(data: UltrahumanDashboardData, colors: MyColorSche
     val insights = data.insightDetail?.insights
 
     RingSectionCard(colors) {
-        RingSectionTitle(Icons.Default.AutoAwesome, "Vital Insights", colors.primaryBlueColor)
+        RingSectionTitle(Icons.Default.AutoAwesome, stringResource(R.string.consult_ring_vital_insights), colors.primaryBlueColor)
 
         Row(
             modifier = Modifier
@@ -198,7 +201,7 @@ private fun VitalInsightsCard(data: UltrahumanDashboardData, colors: MyColorSche
             Spacer(Modifier.width(16.dp))
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Overall Wellness", style = AppTextStyles.style14BCB())
+                    Text(stringResource(R.string.consult_ring_overall_wellness), style = AppTextStyles.style14BCB())
                     data.wellnessStatus?.let {
                         Spacer(Modifier.width(6.dp))
                         Text(
@@ -215,10 +218,10 @@ private fun VitalInsightsCard(data: UltrahumanDashboardData, colors: MyColorSche
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PillarChip("Sleep", data.sleepScore, insights?.sleep?.displayTag, Color(0xFF0090F6), colors, Modifier.weight(1f))
-            PillarChip("Recovery", data.recoveryScore, insights?.recovery?.displayTag, Color(0xFF0DC289), colors, Modifier.weight(1f))
-            PillarChip("Movement", data.movementScore, insights?.movement?.displayTag, Color(0xFFF59E0B), colors, Modifier.weight(1f))
-            PillarChip("Stress", data.stressScore, insights?.stress?.displayTag, Color(0xFF8B5CF6), colors, Modifier.weight(1f))
+            PillarChip(stringResource(R.string.consult_ring_sleep), data.sleepScore, insights?.sleep?.displayTag, Color(0xFF0090F6), colors, Modifier.weight(1f))
+            PillarChip(stringResource(R.string.consult_ring_recovery), data.recoveryScore, insights?.recovery?.displayTag, Color(0xFF0DC289), colors, Modifier.weight(1f))
+            PillarChip(stringResource(R.string.consult_ring_movement), data.movementScore, insights?.movement?.displayTag, Color(0xFFF59E0B), colors, Modifier.weight(1f))
+            PillarChip(stringResource(R.string.consult_ring_stress), data.stressScore, insights?.stress?.displayTag, Color(0xFF8B5CF6), colors, Modifier.weight(1f))
         }
 
         insights?.sleep?.message?.takeIf { it.isNotEmpty() }?.let {
@@ -284,20 +287,20 @@ private fun InsightBanner(icon: ImageVector, message: String, color: Color) {
 @Composable
 private fun SleepArchitectureCard(data: UltrahumanDashboardData, colors: MyColorScheme, onInfo: () -> Unit) {
     RingSectionCard(colors) {
-        RingSectionTitle(Icons.Default.Hotel, "Sleep Architecture", colors.textDarkColor) {
+        RingSectionTitle(Icons.Default.Hotel, stringResource(R.string.consult_ring_sleep_architecture), colors.textDarkColor) {
             Icon(
-                Icons.Default.Info, contentDescription = "Sleep stages guide", tint = RingIndigo,
+                Icons.Default.Info, contentDescription = stringResource(R.string.consult_ring_sleep_stages_guide), tint = RingIndigo,
                 modifier = Modifier.size(18.dp).clip(CircleShape).clickable { onInfo() }
             )
         }
 
         Row {
             Column(Modifier.weight(1f)) {
-                Text("TOTAL SLEEP", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(stringResource(R.string.consult_ring_total_sleep), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                 Text(data.totalSleepText, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = RingIndigo)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("EFFICIENCY", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(stringResource(R.string.consult_ring_efficiency), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                 Text(data.sleepEfficiencyText, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = RingGreen)
             }
         }
@@ -327,9 +330,9 @@ private fun SleepArchitectureCard(data: UltrahumanDashboardData, colors: MyColor
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SleepTile("Tosses & Turns", data.tossAndTurnsText, "times", Icons.Default.SwapHoriz, colors, Modifier.weight(1f))
-            SleepTile("Night Avg HR", data.nightAvgHrText, "bpm", Icons.Default.Favorite, colors, Modifier.weight(1f))
-            SleepTile("Night Avg HRV", data.nightAvgHrvText, "ms", Icons.Default.MonitorHeart, colors, Modifier.weight(1f))
+            SleepTile(stringResource(R.string.consult_ring_tosses_turns), data.tossAndTurnsText, stringResource(R.string.consult_ring_times), Icons.Default.SwapHoriz, colors, Modifier.weight(1f))
+            SleepTile(stringResource(R.string.consult_ring_night_avg_hr), data.nightAvgHrText, "bpm", Icons.Default.Favorite, colors, Modifier.weight(1f))
+            SleepTile(stringResource(R.string.consult_ring_night_avg_hrv), data.nightAvgHrvText, "ms", Icons.Default.MonitorHeart, colors, Modifier.weight(1f))
         }
     }
 }
@@ -451,10 +454,10 @@ private fun vitalDefaultColor(name: String, fallback: Color): Color {
 private fun ClinicalVitalsCard(vitals: List<UltrahumanLastVitalItem>, colors: MyColorScheme, onViewAll: () -> Unit) {
     val preview = remember(vitals) { previewVitals(vitals) }
     RingSectionCard(colors) {
-        RingSectionTitle(Icons.Default.MonitorHeart, "Clinical Vitals", colors.textDarkColor)
+        RingSectionTitle(Icons.Default.MonitorHeart, stringResource(R.string.consult_ring_clinical_vitals), colors.textDarkColor)
 
         if (preview.isEmpty()) {
-            Text("No ring vitals recorded yet. Tap Sync to refresh.", style = AppTextStyles.style12GCN())
+            Text(stringResource(R.string.consult_ring_no_vitals), style = AppTextStyles.style12GCN())
         } else {
             preview.chunked(2).forEach { rowItems ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -473,7 +476,7 @@ private fun ClinicalVitalsCard(vitals: List<UltrahumanLastVitalItem>, colors: My
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("View all ${vitals.size} vitals recorded", style = AppTextStyles.style14BCB(), color = colors.primaryBlueColor)
+                Text(stringResource(R.string.consult_ring_view_all_vitals, vitals.size), style = AppTextStyles.style14BCB(), color = colors.primaryBlueColor)
                 Icon(Icons.Default.ChevronRight, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(16.dp))
             }
         }
@@ -506,7 +509,7 @@ private fun VitalTile(item: UltrahumanLastVitalItem, colors: MyColorScheme, modi
             Spacer(Modifier.width(3.dp))
             Text(item.unit.orEmpty(), fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 3.dp))
         }
-        Text(name.ifEmpty { "Vital" }, style = AppTextStyles.style12GCN(), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(name.ifEmpty { stringResource(R.string.consult_ring_vital) }, style = AppTextStyles.style12GCN(), maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -514,7 +517,7 @@ private fun VitalTile(item: UltrahumanLastVitalItem, colors: MyColorScheme, modi
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AllVitalsSheet(vitals: List<UltrahumanLastVitalItem>, colors: MyColorScheme, onDismiss: () -> Unit) {
-    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(onDismissRequest = onDismiss, title = "All Recorded Vitals", icon = Icons.Default.MonitorHeart) {
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(onDismissRequest = onDismiss, title = stringResource(R.string.consult_ring_all_recorded_vitals), icon = Icons.Default.MonitorHeart) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -525,7 +528,7 @@ private fun AllVitalsSheet(vitals: List<UltrahumanLastVitalItem>, colors: MyColo
             vitals.forEach { item ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(item.vitalName ?: "Vital", style = AppTextStyles.style14BCB())
+                        Text(item.vitalName ?: stringResource(R.string.consult_ring_vital), style = AppTextStyles.style14BCB())
                         item.vitalDateTime?.let { Text(it, style = AppTextStyles.style12GCN()) }
                     }
                     Column(horizontalAlignment = Alignment.End) {
@@ -546,7 +549,7 @@ private fun AllVitalsSheet(vitals: List<UltrahumanLastVitalItem>, colors: MyColo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SleepStagesInfoSheet(stages: List<SleepStageItem>, colors: MyColorScheme, onDismiss: () -> Unit) {
-    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(onDismissRequest = onDismiss, title = "Understanding Sleep Stages", icon = Icons.Default.Bedtime) {
+    com.critetiontech.ctvitalio.ui.components.AppBottomSheet(onDismissRequest = onDismiss, title = stringResource(R.string.consult_ring_understanding_sleep_stages), icon = Icons.Default.Bedtime) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -556,7 +559,7 @@ private fun SleepStagesInfoSheet(stages: List<SleepStageItem>, colors: MyColorSc
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Your smart ring monitors biometric shifts including heart rate, HRV, and skin temperature to classify your sleep into four distinct stages:",
+                stringResource(R.string.consult_ring_sleep_stages_intro),
                 style = AppTextStyles.style14GCN()
             )
             stages.forEach { stage ->
@@ -648,12 +651,12 @@ private fun SmartRingPairing(viewModel: SmartRingViewModel) {
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("Connect Your Smart Ring", style = AppTextStyles.style24BCB(), textAlign = TextAlign.Center)
+        Text(stringResource(R.string.consult_ring_connect_title), style = AppTextStyles.style24BCB(), textAlign = TextAlign.Center)
         Spacer(Modifier.height(6.dp))
-        Text("Let's get your ring talking to Vitalio!", style = AppTextStyles.style16GCN(), color = Color(0xFF3C5A87), textAlign = TextAlign.Center)
+        Text(stringResource(R.string.consult_ring_connect_subtitle), style = AppTextStyles.style16GCN(), color = if (isAppDark) colors.textGreyColor else Color(0xFF3C5A87), textAlign = TextAlign.Center)
         Spacer(Modifier.height(16.dp))
         Text(
-            "To securely link your Ultrahuman Ring and begin syncing your activity, recovery, and vitals data, Vitalio requires your approval to access the Ultrahuman platform.",
+            stringResource(R.string.consult_ring_connect_body),
             style = AppTextStyles.style14GCN(), textAlign = TextAlign.Center
         )
 
@@ -697,7 +700,7 @@ private fun SmartRingPairing(viewModel: SmartRingViewModel) {
         }
 
         Text(
-            "We will take you to Ultrahuman to authorize secure access. You will immediately return to Vitalio once connection is confirmed.",
+            stringResource(R.string.consult_ring_redirect_note),
             style = AppTextStyles.style12GCN(), textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(24.dp))
@@ -721,7 +724,7 @@ private fun SmartRingPairing(viewModel: SmartRingViewModel) {
                 Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(18.dp))
             }
             Spacer(Modifier.width(10.dp))
-            Text(if (isLoading) "Connecting..." else "Continue to Ultrahuman", style = AppTextStyles.style16WCB())
+            Text(if (isLoading) stringResource(R.string.consult_connecting) else stringResource(R.string.consult_ring_continue_to_ultrahuman), style = AppTextStyles.style16WCB())
         }
 
         Spacer(Modifier.height(90.dp)) // clearance for voice FAB

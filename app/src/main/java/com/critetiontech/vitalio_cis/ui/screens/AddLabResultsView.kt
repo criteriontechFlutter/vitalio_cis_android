@@ -1,5 +1,8 @@
   package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
 import com.critetiontech.ctvitalio.ui.feedback.bounceClick
@@ -96,6 +99,7 @@ fun AddLabResultsScreen(
     var cameraUri    by remember { mutableStateOf<Uri?>(null) }
     // Which card the attached image came from, so only that one shows the tick.
     var fromCamera   by remember { mutableStateOf(false) }
+    val isPdf        = selectedFile?.extension.equals("pdf", ignoreCase = true)
 
     // ── Crop launcher ────────────────────────────────────
     val cropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
@@ -113,7 +117,7 @@ fun AddLabResultsScreen(
             cropImageOptions = CropImageOptions(
                 fixAspectRatio = false,
                 guidelines = CropImageView.Guidelines.ON,
-                activityTitle = "Crop Report Image",
+                activityTitle = context.getString(R.string.report_crop_report_image),
                 toolbarColor = "#1564ED".toColorInt(),
                 toolbarBackButtonColor = android.graphics.Color.WHITE,
                 toolbarTintColor = android.graphics.Color.WHITE,
@@ -138,7 +142,7 @@ fun AddLabResultsScreen(
         if (success && cameraUri != null) { fromCamera = true; startCrop(cameraUri!!) }
     }
 
-    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, "to photograph your lab report") {
+    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, stringResource(R.string.perm_reason_lab_report)) {
         val uri = createImageUri(context)
         cameraUri = uri
         cameraLauncher.launch(uri)
@@ -148,10 +152,21 @@ fun AddLabResultsScreen(
         ActivityResultContracts.GetContent()
     ) { uri -> uri?.let { fromCamera = false; startCrop(it) } }
 
+    // PDFs skip the cropper; the repository renders the pages to an image before AI analysis.
+    val pdfLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            fromCamera = false
+            selectedFile = runCatching { FileUtils.getFile(context, it, extension = "pdf") }.getOrNull()
+                ?.takeIf { f -> f.length() > 0 }
+        }
+    }
+
     // ── UI ───────────────────────────────────────────────
     Box(modifier = Modifier.fillMaxSize()) {
 
-        CommonAppBar(title = "Add Lab Report") {
+        CommonAppBar(title = stringResource(R.string.report_add_lab_report_title)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -161,15 +176,15 @@ fun AddLabResultsScreen(
             ) {
 
                 // ─── Report Details section ───────────────
-                LabSectionHeader(title = "Report Details", colors = colors)
+                LabSectionHeader(title = stringResource(R.string.report_report_details), colors = colors)
                 Spacer(Modifier.height(14.dp))
 
                 // Test Type dropdown
-                LabFormLabel("Test Type", colors)
+                LabFormLabel(stringResource(R.string.report_test_type), colors)
                 Spacer(Modifier.height(6.dp))
                 Box {
                     OutlinedTextField(
-                        value = testType,
+                        value = labTestTypeLabel(testType),
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -197,7 +212,7 @@ fun AddLabResultsScreen(
                     ) {
                         testTypeList.forEach { item ->
                             DropdownMenuItem(
-                                text = { Text(item, style = AppTextStyles.style14BCN()) },
+                                text = { Text(labTestTypeLabel(item), style = AppTextStyles.style14BCN()) },
                                 onClick = { testType = item; expanded = false }
                             )
                         }
@@ -207,12 +222,12 @@ fun AddLabResultsScreen(
                 Spacer(Modifier.height(14.dp))
 
                 // Test name
-                LabFormLabel("Test Name / Sub Category", colors)
+                LabFormLabel(stringResource(R.string.report_test_name_sub_category), colors)
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(
                     value = testName,
                     onValueChange = { testName = it },
-                    placeholder = { Text("e.g. LFT, CBC, Blood Sugar", color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
+                    placeholder = { Text(stringResource(R.string.report_test_name_hint), color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = labFieldColors(colors)
@@ -221,7 +236,7 @@ fun AddLabResultsScreen(
                 Spacer(Modifier.height(14.dp))
 
                 // Date
-                LabFormLabel("Date & Time", colors)
+                LabFormLabel(stringResource(R.string.report_date_time), colors)
                 Spacer(Modifier.height(6.dp))
                 LabDateTimeField(
                     value = date,
@@ -232,12 +247,12 @@ fun AddLabResultsScreen(
                 Spacer(Modifier.height(14.dp))
 
                 // Findings
-                LabFormLabel("Findings / Remarks", colors)
+                LabFormLabel(stringResource(R.string.report_findings_remarks), colors)
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(
                     value = findings,
                     onValueChange = { findings = it },
-                    placeholder = { Text("Add remarks or findings…", color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
+                    placeholder = { Text(stringResource(R.string.report_findings_hint), color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(110.dp),
@@ -248,13 +263,13 @@ fun AddLabResultsScreen(
                 Spacer(Modifier.height(26.dp))
 
                 // ─── Attach Report section ────────────────
-                LabSectionHeader(title = "Attach Report Image", colors = colors)
+                LabSectionHeader(title = stringResource(R.string.report_attach_report), colors = colors)
                 Spacer(Modifier.height(14.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     UploadOptionCard(
-                        title = "Camera",
-                        subtitle = "Capture photo",
+                        title = stringResource(R.string.report_camera),
+                        subtitle = stringResource(R.string.report_capture_photo),
                         icon = Icons.Default.CameraAlt,
                         isSelected = selectedFile != null && fromCamera,
                         colors = colors,
@@ -263,14 +278,24 @@ fun AddLabResultsScreen(
                     ) { cameraPermission.launch() }
 
                     UploadOptionCard(
-                        title = "Gallery",
-                        subtitle = "Choose image",
+                        title = stringResource(R.string.report_gallery),
+                        subtitle = stringResource(R.string.report_choose_image),
                         icon = Icons.Default.Photo,
-                        isSelected = selectedFile != null && !fromCamera,
+                        isSelected = selectedFile != null && !fromCamera && !isPdf,
                         colors = colors,
                         accent = GalleryAccent,
                         modifier = Modifier.weight(1f)
                     ) { galleryLauncher.launch("image/*") }
+
+                    UploadOptionCard(
+                        title = stringResource(R.string.report_pdf),
+                        subtitle = stringResource(R.string.report_upload_file),
+                        icon = Icons.Default.PictureAsPdf,
+                        isSelected = isPdf,
+                        colors = colors,
+                        accent = PdfAccent,
+                        modifier = Modifier.weight(1f)
+                    ) { pdfLauncher.launch(arrayOf("application/pdf")) }
                 }
 
                 // Image preview
@@ -283,16 +308,18 @@ fun AddLabResultsScreen(
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            AsyncImage(
-                                model = Uri.fromFile(file),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                            Spacer(Modifier.height(10.dp))
+                            if (!isPdf) {
+                                AsyncImage(
+                                    model = Uri.fromFile(file),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .clip(RoundedCornerShape(12.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Spacer(Modifier.height(10.dp))
+                            }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
@@ -302,7 +329,7 @@ fun AddLabResultsScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        Icons.Default.Image,
+                                        if (isPdf) Icons.Default.PictureAsPdf else Icons.Default.Image,
                                         contentDescription = null,
                                         tint = colors.primaryBlueColor,
                                         modifier = Modifier.size(20.dp)
@@ -316,7 +343,7 @@ fun AddLabResultsScreen(
                                 HapticIconButton(onClick = { selectedFile = null }) {
                                     Icon(
                                         Icons.Default.Close,
-                                        contentDescription = "Remove",
+                                        contentDescription = stringResource(R.string.report_remove),
                                         tint = colors.textGreyColor,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -358,7 +385,7 @@ fun AddLabResultsScreen(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        "Analyze with AI",
+                        stringResource(R.string.report_analyze_with_ai),
                         style = AppTextStyles.style16WCB()
                     )
                 }
@@ -379,7 +406,8 @@ fun AddLabResultsScreen(
 // ─────────────────────────────────────────────────────────
 
 @Composable
-fun AnalyzingOverlay(colors: MyColorScheme, message: String = "Reading your lab report…") {
+fun AnalyzingOverlay(colors: MyColorScheme, message: String? = null) {
+    val overlayMessage = message ?: stringResource(R.string.report_reading_lab_report)
 
     val infiniteTransition = rememberInfiniteTransition(label = "ai_anim")
 
@@ -526,7 +554,7 @@ fun AnalyzingOverlay(colors: MyColorScheme, message: String = "Reading your lab 
                     Spacer(Modifier.height(24.dp))
 
                     Text(
-                        text = "AI is Analyzing",
+                        text = stringResource(R.string.report_ai_is_analyzing),
                         style = AppTextStyles.style18BCB(),
                         textAlign = TextAlign.Center
                     )
@@ -534,7 +562,7 @@ fun AnalyzingOverlay(colors: MyColorScheme, message: String = "Reading your lab 
                     Spacer(Modifier.height(6.dp))
 
                     Text(
-                        text = message,
+                        text = overlayMessage,
                         style = AppTextStyles.style14GCN(),
                         textAlign = TextAlign.Center
                     )
@@ -559,7 +587,7 @@ fun AnalyzingOverlay(colors: MyColorScheme, message: String = "Reading your lab 
                     Spacer(Modifier.height(16.dp))
 
                     Text(
-                        text = "This may take a few seconds",
+                        text = stringResource(R.string.report_may_take_few_seconds),
                         style = AppTextStyles.style12GCN(),
                         textAlign = TextAlign.Center,
                         color = colors.textGreyColor.copy(alpha = 0.6f)
@@ -573,6 +601,16 @@ fun AnalyzingOverlay(colors: MyColorScheme, message: String = "Reading your lab 
 // ─────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────
+
+/** Display label for a test type; the English value itself is what the upload API receives. */
+@Composable
+private fun labTestTypeLabel(type: String): String = when (type) {
+    "Investigation" -> stringResource(R.string.report_test_type_investigation)
+    "Radiology" -> stringResource(R.string.report_test_type_radiology)
+    "Imaging" -> stringResource(R.string.report_test_type_imaging)
+    "Lab" -> stringResource(R.string.report_test_type_lab)
+    else -> type
+}
 
 @Composable
 fun LabSectionHeader(title: String, colors: MyColorScheme) {
@@ -637,10 +675,10 @@ fun LabDateTimeField(
             value = current?.format(LabDateTimeDisplay) ?: value,
             onValueChange = {},
             readOnly = true,
-            placeholder = { Text("Select date & time", color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
+            placeholder = { Text(stringResource(R.string.report_select_date_time), color = colors.textGreyColor.copy(alpha = 0.6f), fontSize = 14.sp) },
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
-                Icon(Icons.Default.DateRange, contentDescription = "Pick date", tint = colors.primaryBlueColor)
+                Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.report_pick_date), tint = colors.primaryBlueColor)
             },
             shape = RoundedCornerShape(16.dp),
             colors = labFieldColors(colors)
@@ -659,7 +697,7 @@ fun LabDateTimeField(
             initial = current?.toLocalDate() ?: LocalDate.now(),
             onDismiss = { showDate = false },
             onConfirm = { pickedDate = it; showDate = false },
-            confirmText = "Next",
+            confirmText = stringResource(R.string.report_next),
             // A report can't come from the future.
             isSelectable = { !it.isAfter(LocalDate.now()) },
         )
@@ -678,9 +716,10 @@ fun LabDateTimeField(
     }
 }
 
-/** Light purple for camera capture, light green for picking from the gallery. */
+/** Light purple for camera capture, light green for picking from the gallery, red for PDF files. */
 val CameraAccent = Color(0xFF7C3AED)
 val GalleryAccent = Color(0xFF16A34A)
+val PdfAccent = Color(0xFFDC2626)
 
 /**
  * A tinted, borderless source card (camera / gallery). [accent] colours the card, icon and
@@ -731,7 +770,7 @@ fun UploadOptionCard(
         if (isSelected) {
             Icon(
                 Icons.Default.CheckCircle,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.report_selected),
                 tint = accent,
                 modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).size(20.dp)
             )
@@ -744,8 +783,9 @@ fun UploadOptionCard(
 // ─────────────────────────────────────────────────────────
 
 object FileUtils {
-    fun getFile(context: Context, uri: Uri): File {
-        val file = File(context.cacheDir, "cropped_${System.currentTimeMillis()}.jpg")
+    fun getFile(context: Context, uri: Uri, extension: String = "jpg"): File {
+        val prefix = if (extension == "pdf") "report" else "cropped"
+        val file = File(context.cacheDir, "${prefix}_${System.currentTimeMillis()}.$extension")
         context.contentResolver.openInputStream(uri)?.use { input ->
             file.outputStream().use { output -> input.copyTo(output) }
         }

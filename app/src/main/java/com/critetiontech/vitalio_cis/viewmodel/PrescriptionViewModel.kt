@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
+
 import com.critetiontech.ctvitalio.config.ApiConfig
 
 import android.util.Log
@@ -127,7 +130,7 @@ class PrescriptionViewModel : ViewModel() {
             try {
                 val patient = prefs.getPatient()
                 if (patient == null) {
-                    _errorMessage.value = "Patient data not found. Please login again."
+                    _errorMessage.value = MyApplication.appContext.getString(R.string.report_error_patient_not_found)
                     _isLoading.value = false
                     return@launch
                 }
@@ -173,11 +176,11 @@ class PrescriptionViewModel : ViewModel() {
                     _vitalFrequencies.value = value?.vitalFrequency ?: emptyList()
                 } else {
                     val errBody = response.body()?.string() ?: ""
-                    _errorMessage.value = "Server error ${response.code()}. $errBody"
+                    _errorMessage.value = MyApplication.appContext.getString(R.string.report_error_server, response.code(), errBody)
                     Log.e("PrescriptionVM", "Error ${response.code()}")
                 }
             } catch (e: Exception) {
-                _errorMessage.value = e.localizedMessage ?: "Something went wrong"
+                _errorMessage.value = e.localizedMessage ?: MyApplication.appContext.getString(R.string.report_something_went_wrong)
                 Log.e("PrescriptionVM", "Exception: ${e.message}", e)
             } finally {
                 _isLoading.value = false

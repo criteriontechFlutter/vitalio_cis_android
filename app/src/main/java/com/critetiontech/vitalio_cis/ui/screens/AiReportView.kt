@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 import androidx.compose.foundation.lazy.itemsIndexed
 
 import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
@@ -82,7 +85,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
 
     // ── UI ───────────────────────────────────────────────
     CommonAppBar(
-        title = "AI Report Analysis",
+        title = stringResource(R.string.report_ai_report_analysis_title),
         actions = {
             // Save button
             val btnBg = if (isLoading) colors.borderGreyLightColor else colors.primaryBlueColor
@@ -104,11 +107,11 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                         color = Color.White
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text("Saving…", style = AppTextStyles.style12WCB())
+                    Text(stringResource(R.string.report_saving_ellipsis), style = AppTextStyles.style12WCB())
                 } else {
                     Icon(Icons.Default.CloudUpload, null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Save Report", style = AppTextStyles.style12WCB())
+                    Text(stringResource(R.string.report_save_report), style = AppTextStyles.style12WCB())
                 }
             }
             Spacer(Modifier.width(12.dp))
@@ -153,7 +156,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                             Spacer(Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = patientDetails?.patient_name?.ifEmpty { "Patient" } ?: "Patient",
+                                    text = patientDetails?.patient_name?.ifEmpty { null } ?: stringResource(R.string.report_patient),
                                     color = Color.White,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
@@ -186,15 +189,15 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             HeaderInfoItem(
-                                label = "Lab",
+                                label = stringResource(R.string.report_header_lab),
                                 value = patientDetails?.lab_name?.ifEmpty { "—" } ?: "—"
                             )
                             HeaderInfoItem(
-                                label = "Collected",
+                                label = stringResource(R.string.report_header_collected),
                                 value = patientDetails?.collection_date?.ifEmpty { "—" } ?: "—"
                             )
                             HeaderInfoItem(
-                                label = "Reported",
+                                label = stringResource(R.string.report_header_reported),
                                 value = patientDetails?.reported_date?.ifEmpty { "—" } ?: "—"
                             )
                         }
@@ -213,7 +216,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Overall Status", style = AppTextStyles.style16BCB())
+                        Text(stringResource(R.string.report_overall_status), style = AppTextStyles.style16BCB())
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
@@ -245,7 +248,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                 item {
                     Spacer(Modifier.height(16.dp))
                     AiSectionCard(
-                        title = "Summary",
+                        title = stringResource(R.string.report_summary),
                         icon = Icons.Default.Summarize,
                         colors = colors
                     ) {
@@ -263,7 +266,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                 item {
                     Spacer(Modifier.height(12.dp))
                     AiSectionCard(
-                        title = "Recommended Specialty",
+                        title = stringResource(R.string.report_recommended_specialty),
                         icon = Icons.Default.LocalHospital,
                         colors = colors
                     ) {
@@ -308,7 +311,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                                 .background(colors.primaryBlueColor)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Test Results", style = AppTextStyles.style16BCB())
+                        Text(stringResource(R.string.report_test_results), style = AppTextStyles.style16BCB())
                         Spacer(Modifier.weight(1f))
                         Box(
                             modifier = Modifier
@@ -317,7 +320,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                "${report.size} tests",
+                                stringResource(R.string.report_tests_count, report.size),
                                 style = AppTextStyles.style12PCB()
                             )
                         }
@@ -350,7 +353,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
                         )
                         Spacer(Modifier.height(12.dp))
                         Text(
-                            "No test results found",
+                            stringResource(R.string.report_no_test_results),
                             style = AppTextStyles.style14GCN(),
                             textAlign = TextAlign.Center
                         )
@@ -449,7 +452,7 @@ fun ReportResultCard(item: ReportItem, colors: MyColorScheme) {
                 if (!item.normal_values.isNullOrEmpty()) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "Normal Range",
+                            stringResource(R.string.report_normal_range),
                             style = AppTextStyles.style12GCN(),
                             color = colors.textGreyColor.copy(alpha = 0.6f)
                         )

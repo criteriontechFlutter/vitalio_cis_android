@@ -1,6 +1,8 @@
 package com.critetiontech.ctvitalio.consultation
 
 import android.content.Context
+import androidx.annotation.StringRes
+import com.critetiontech.ctvitalio.R
 import io.livekit.android.room.track.VideoPreset169
 import io.livekit.android.room.track.VideoQuality
 
@@ -9,15 +11,15 @@ import io.livekit.android.room.track.VideoQuality
  * layer of the doctor's video they receive ([receive]). Remembered between calls.
  */
 enum class CallQuality(
-    val label: String,
-    val description: String,
+    @StringRes val label: Int,
+    @StringRes val description: Int,
     val sendPreset: VideoPreset169,
     /** null: follow the window size (full screen high, PiP low); the server still adapts to bandwidth. */
     val receive: VideoQuality?,
 ) {
-    AUTO("Auto", "Adjusts to your connection", VideoPreset169.H540, null),
-    DATA_SAVER("Data saver", "Lower quality, uses less data", VideoPreset169.H360, VideoQuality.LOW),
-    HD("HD", "Best picture, for Wi-Fi", VideoPreset169.H720, VideoQuality.HIGH);
+    AUTO(R.string.consult_quality_auto, R.string.consult_quality_auto_desc, VideoPreset169.H540, null),
+    DATA_SAVER(R.string.consult_quality_data_saver, R.string.consult_quality_data_saver_desc, VideoPreset169.H360, VideoQuality.LOW),
+    HD(R.string.consult_quality_hd, R.string.consult_quality_hd_desc, VideoPreset169.H720, VideoQuality.HIGH);
 
     fun receiveQuality(inPip: Boolean): VideoQuality = receive ?: if (inPip) VideoQuality.LOW else VideoQuality.HIGH
 

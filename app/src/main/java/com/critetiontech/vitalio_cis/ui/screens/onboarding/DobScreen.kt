@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import androidx.compose.ui.res.stringArrayResource
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import androidx.compose.foundation.background
@@ -30,10 +34,8 @@ fun DobScreen() {
 
     val navController = LocalNavController.current
 
-    val months = listOf(
-        "January","February","March","April","May","June",
-        "July","August","September","October","November","December"
-    )
+    val colors = LocalMyColorScheme.current
+    val months = stringArrayResource(R.array.auth_onb_months).toList()
 
     val viewModel = remember {
         RegistrationViewModel()
@@ -49,7 +51,7 @@ fun DobScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(16.dp)
     ) {
 
@@ -66,14 +68,14 @@ fun DobScreen() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -84,8 +86,8 @@ fun DobScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = viewModel.perc,
-            title = "One-Third Complete",
-            subtitle = "Nice work! You're a third of the way there!"
+            title = stringResource(R.string.auth_onb_progress_one_third_title),
+            subtitle = stringResource(R.string.auth_onb_progress_one_third_subtitle)
         )
         Spacer(modifier = Modifier.weight(1f))
 
@@ -103,7 +105,7 @@ fun DobScreen() {
 
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "Your date of birth?.",
+            stringResource(R.string.auth_onb_dob_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
@@ -112,9 +114,9 @@ fun DobScreen() {
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            "Your date of birth ensures personalized health insights.",
+            stringResource(R.string.auth_onb_dob_subtitle),
             fontSize = 16.sp,
-            color = Color.Gray
+            color = colors.textGreyColor
         )
         Spacer(modifier = Modifier.height(6.dp))
         Row(
@@ -156,7 +158,7 @@ fun DobScreen() {
                 containerColor = Color(0xFF3B82F6)
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 }
@@ -167,6 +169,7 @@ fun WheelPickerExact(
     startIndex: Int,
     onSelected: (Int) -> Unit
 ) {
+    val colors = LocalMyColorScheme.current
     val visibleItems = 5
     val itemHeight = 40.dp
 
@@ -225,7 +228,7 @@ fun WheelPickerExact(
                 .height(itemHeight * 2)
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color.White, Color.Transparent)
+                        listOf(colors.dashboardContainerColor, Color.Transparent)
                     )
                 )
         )
@@ -238,7 +241,7 @@ fun WheelPickerExact(
                 .height(itemHeight * 2)
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color.Transparent, Color.White)
+                        listOf(Color.Transparent, colors.dashboardContainerColor)
                     )
                 )
         )

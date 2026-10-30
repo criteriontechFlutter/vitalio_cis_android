@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import androidx.compose.foundation.background
@@ -41,6 +45,7 @@ fun RegistrationCompletedView() {
     }
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     var expanded by remember {
         mutableStateOf(false)
     }
@@ -54,7 +59,7 @@ fun RegistrationCompletedView() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(20.dp)
     ) {
 
@@ -72,7 +77,7 @@ fun RegistrationCompletedView() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
@@ -84,8 +89,8 @@ fun RegistrationCompletedView() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "You're successfully completed the process!",
-            subtitle = "Your submission is now complete, and we're excited to have you on board"
+            title = stringResource(R.string.auth_onb_progress_completed_title),
+            subtitle = stringResource(R.string.auth_onb_progress_completed_subtitle)
         )
 
 
@@ -93,9 +98,9 @@ fun RegistrationCompletedView() {
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "Hold on, while we ready your dashboard for you.",
+            text = stringResource(R.string.auth_onb_dashboard_loading),
             fontSize = 12.sp,
-            color = Color.Gray,
+            color = colors.textGreyColor,
             lineHeight = 18.sp
         )
 
@@ -118,10 +123,10 @@ fun RegistrationCompletedView() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 }

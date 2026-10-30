@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,12 +43,13 @@ fun HeightScreen() {
     }
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     val sheetState = rememberModalBottomSheetState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(20.dp)
     ) {
 
@@ -61,14 +66,14 @@ fun HeightScreen() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -79,8 +84,8 @@ fun HeightScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "Moving Ahead",
-            subtitle = "You're past halfway-great job so far!"
+            title = stringResource(R.string.auth_onb_progress_moving_ahead_title),
+            subtitle = stringResource(R.string.auth_onb_progress_moving_ahead_subtitle)
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -94,7 +99,7 @@ fun HeightScreen() {
         )
 
         Text(
-            text = "What is your height?",
+            text = stringResource(R.string.auth_onb_height_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
@@ -103,18 +108,18 @@ fun HeightScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Your height helps us offer more accurate health\nand fitness insights.",
+            text = stringResource(R.string.auth_onb_height_subtitle),
             fontSize = 16.sp,
-            color = Color.Gray,
+            color = colors.textGreyColor,
             lineHeight = 18.sp
         )
 
         Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = "Height",
+            text = stringResource(R.string.auth_onb_height_label),
             fontSize = 14.sp,
-            color = Color.Gray
+            color = colors.textGreyColor
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -131,13 +136,13 @@ fun HeightScreen() {
                     showBottomSheet = true
                 },
             placeholder = {
-                Text("Select your height")
+                Text(stringResource(R.string.auth_onb_height_hint))
             },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                disabledBorderColor = Color(0xFFE5E7EB),
-                disabledTextColor = Color.Black,
-                disabledContainerColor = Color.White
+                disabledBorderColor = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB)),
+                disabledTextColor = colors.textDarkColor,
+                disabledContainerColor = colors.dashboardContainerColor
             )
         )
 
@@ -153,10 +158,10 @@ fun HeightScreen() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 
@@ -197,6 +202,7 @@ fun HeightPickerBottomSheet(
     onSubmit: () -> Unit
 ) {
 
+    val colors = LocalMyColorScheme.current
     val feetList = (3..7).map { it.toString() }
 
     val inchList = (0..11).map {
@@ -211,7 +217,7 @@ fun HeightPickerBottomSheet(
     ) {
 
         Text(
-            text = "Select Your Height",
+            text = stringResource(R.string.auth_onb_height_sheet_title),
             fontWeight = FontWeight.SemiBold
         )
 
@@ -230,9 +236,9 @@ fun HeightPickerBottomSheet(
             ) {
 
                 Text(
-                    text = "Feet",
+                    text = stringResource(R.string.auth_onb_height_feet),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = colors.textGreyColor
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -262,7 +268,7 @@ fun HeightPickerBottomSheet(
                                 if (selectedFeet == feet)
                                     Color(0xFF2563EB)
                                 else
-                                    Color.Gray
+                                    colors.textGreyColor
                         )
                     }
                 }
@@ -275,9 +281,9 @@ fun HeightPickerBottomSheet(
             ) {
 
                 Text(
-                    text = "Inch",
+                    text = stringResource(R.string.auth_onb_height_inch),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = colors.textGreyColor
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -307,7 +313,7 @@ fun HeightPickerBottomSheet(
                                 if (selectedInch == inch)
                                     Color(0xFF2563EB)
                                 else
-                                    Color.Gray
+                                    colors.textGreyColor
                         )
                     }
                 }
@@ -320,9 +326,9 @@ fun HeightPickerBottomSheet(
             ) {
 
                 Text(
-                    text = "Unit",
+                    text = stringResource(R.string.auth_onb_height_unit),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = colors.textGreyColor
                 )
 
                 Spacer(modifier = Modifier.height(35.dp))
@@ -339,7 +345,7 @@ fun HeightPickerBottomSheet(
                 Text(
                     text = "cm",
                     fontSize = 18.sp,
-                    color = Color.Gray
+                    color = colors.textGreyColor
                 )
             }
         }
@@ -353,7 +359,7 @@ fun HeightPickerBottomSheet(
                 .height(55.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Submit")
+            Text(stringResource(R.string.auth_common_submit))
         }
 
         Spacer(modifier = Modifier.height(20.dp))

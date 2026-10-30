@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
 
 import com.critetiontech.ctvitalio.ui.feedback.ContentStateCrossfade
@@ -197,7 +199,7 @@ fun MonthPickerSheet(
     com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
-        title            = "Select month",
+        title            = stringResource(R.string.med_select_month),
         icon             = Icons.Rounded.CalendarMonth,
     ) {
         Column(
@@ -215,7 +217,7 @@ fun MonthPickerSheet(
                 modifier              = Modifier.fillMaxWidth(),
             ) {
                 HapticIconButton(onClick = { pickedYear-- }) {
-                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, "Prev year", tint = TextSecondary)
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, stringResource(R.string.med_prev_year), tint = TextSecondary)
                 }
                 Text(
                     text       = pickedYear.toString(),
@@ -226,7 +228,7 @@ fun MonthPickerSheet(
                     textAlign  = TextAlign.Center,
                 )
                 HapticIconButton(onClick = { pickedYear++ }) {
-                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Next year", tint = TextSecondary)
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, stringResource(R.string.med_next_year), tint = TextSecondary)
                 }
             }
 
@@ -285,7 +287,7 @@ fun MonthPickerSheet(
                     .fillMaxWidth()
                     .height(50.dp),
             ) {
-                Text("Confirm", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text(stringResource(R.string.med_confirm), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
         }
     }
@@ -397,7 +399,7 @@ private fun ExpandableCalendarCard(
                     Text(MONTHS[month].take(3), style = AppTextStyles.style14BCN().copy(fontSize = 16.sp))
                     Spacer(Modifier.width(2.dp))
                     Icon(
-                        Icons.Rounded.KeyboardArrowDown, "Pick month",
+                        Icons.Rounded.KeyboardArrowDown, stringResource(R.string.med_pick_month),
                         tint     = TextSecondary,
                         modifier = Modifier.size(18.dp),
                     )
@@ -700,7 +702,7 @@ fun ManageMedicationsScreen(
     }
 
     CommonAppBar(
-        title = "Manage Medications",
+        title = stringResource(R.string.med_manage_medications_title),
         actions = {
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
@@ -712,14 +714,14 @@ fun ManageMedicationsScreen(
                     .clickable { navController.navigate(Routes.PRESCRIPTION) }
                     .padding(horizontal = 12.dp, vertical = 7.dp),
             ) {
-                Text("Prescription", style = AppTextStyles.style12BCN(color = Blue500).copy(fontWeight = FontWeight.SemiBold))
+                Text(stringResource(R.string.med_prescription), style = AppTextStyles.style12BCN(color = Blue500).copy(fontWeight = FontWeight.SemiBold))
                 Icon(Icons.AutoMirrored.Outlined.ReceiptLong, null, tint = Blue500, modifier = Modifier.size(16.dp))
             }
             HapticIconButton(
                 onClick  = { navController.navigate(Routes.MEDICINE_REMINDER_SETTINGS) },
                 modifier = Modifier.padding(end = 4.dp),
             ) {
-                Icon(Icons.Rounded.Settings, "Reminder settings", tint = Blue500)
+                Icon(Icons.Rounded.Settings, stringResource(R.string.med_cd_reminder_settings), tint = Blue500)
             }
         }
     ) {
@@ -769,7 +771,7 @@ fun ManageMedicationsScreen(
                     Spacer(Modifier.height(20.dp))
 
                     // ── Logged section ─────────────────────────────────────────
-                    SectionLabel("Logged")
+                    SectionLabel(stringResource(R.string.med_logged))
                     Spacer(Modifier.height(10.dp))
                     ContentStateCrossfade(
                         state = contentStateOf(loading = loading, empty = loggedMedicines.isEmpty()),
@@ -779,7 +781,7 @@ fun ManageMedicationsScreen(
                         empty = {
                             SectionCard {
                                                         Text(
-                                                            "No medicines logged for this date",
+                                                            stringResource(R.string.med_no_medicines_logged),
                                                             color    = TextSecondary,
                                                             fontSize = 13.sp,
                                                             modifier = Modifier.padding(vertical = 16.dp)
@@ -802,8 +804,8 @@ fun ManageMedicationsScreen(
 
                     // ── All Medications section ────────────────────────────────
                     SectionLabel(
-                        if (loading) "Your Medications"
-                        else "Your Medications (${allMedicines.size.toString().padStart(2, '0')})"
+                        if (loading) stringResource(R.string.med_your_medications)
+                        else stringResource(R.string.med_your_medications_count, allMedicines.size.toString().padStart(2, '0'))
                     )
                     Spacer(Modifier.height(10.dp))
                     ContentStateCrossfade(
@@ -814,7 +816,7 @@ fun ManageMedicationsScreen(
                         empty = {
                             SectionCard {
                                                         Text(
-                                                            "No medications found",
+                                                            stringResource(R.string.med_no_medications_found),
                                                             color    = TextSecondary,
                                                             fontSize = 13.sp,
                                                             modifier = Modifier.padding(vertical = 16.dp)
@@ -847,7 +849,7 @@ fun ManageMedicationsScreen(
                     .padding(20.dp)
                     .size(56.dp)
             ) {
-                Icon(Icons.Rounded.Add, "Add", modifier = Modifier.size(28.dp))
+                Icon(Icons.Rounded.Add, stringResource(R.string.med_cd_add), modifier = Modifier.size(28.dp))
             }
             }
         }
@@ -860,11 +862,11 @@ fun ManageMedicationsScreen(
     }
     if (showAlarmSetup) {
         com.critetiontech.ctvitalio.ui.components.AppDialog(
-            title = "Set up medicine alarms",
-            message = "Allow a few permissions so your medicine alarm rings on time and opens full screen, even while you're using your phone.",
+            title = stringResource(R.string.med_setup_alarms_title),
+            message = stringResource(R.string.med_setup_alarms_message),
             icon = Icons.Rounded.Alarm,
-            confirmText = "Set up",
-            dismissText = "Later",
+            confirmText = stringResource(R.string.med_set_up),
+            dismissText = stringResource(R.string.med_later),
             onDismiss = {
                 ReminderSettings(context).setupPromptShown = true
                 showAlarmSetup = false
@@ -1016,7 +1018,7 @@ private fun LoggedRow(med: LoggedMedicine) {
             }
         }
         Spacer(Modifier.width(8.dp))
-        Icon(Icons.Rounded.Check, "Taken", tint = Green500, modifier = Modifier.size(20.dp))
+        Icon(Icons.Rounded.Check, stringResource(R.string.med_taken), tint = Green500, modifier = Modifier.size(20.dp))
     }
 }
 

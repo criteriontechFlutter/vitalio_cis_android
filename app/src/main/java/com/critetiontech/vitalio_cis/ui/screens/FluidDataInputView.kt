@@ -1,5 +1,6 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.model.STANDARD_FLUID_INTAKE_ML
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import android.annotation.SuppressLint
@@ -28,8 +29,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import com.critetiontech.ctvitalio.ui.components.AppBottomSheet
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -53,6 +60,9 @@ import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.model.ManualFoodAssignItem
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import androidx.compose.ui.res.stringResource
 import com.critetiontech.ctvitalio.viewmodel.IntakeOutputViewModel
 import com.critetiontech.ctvitalio.R
 import android.widget.Toast
@@ -122,23 +132,23 @@ fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
 
     LaunchedEffect(intakeSuccess) {
         if (intakeSuccess) {
-            Toast.makeText(context, "Fluid intake added successfully!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.track_fluid_intake_added), Toast.LENGTH_SHORT).show()
             viewModel.resetIntakeSuccess()
         }
     }
 
     LaunchedEffect(outputSuccess) {
         if (outputSuccess) {
-            Toast.makeText(context, "Output recorded successfully!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.track_output_recorded), Toast.LENGTH_SHORT).show()
             viewModel.resetOutputSuccess()
         }
     }
 
     CommonAppBar(
-        title = "Fluid Data Input",
+        title = stringResource(R.string.track_fluid_data_input),
         actions = {
             Text(
-                "History",
+                stringResource(R.string.track_history),
                 color = Color(0xFF2563EB),
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.clickable {
@@ -233,10 +243,11 @@ fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                             glassMaxMl = it
                             glassQuantity = it
                         },
-                        onUseGlass = {
+                        glassMaxMl = glassMaxMl,
+                        onCustomSize = { ml ->
                             selectedPreset = null
-                            glassMaxMl = 150
-                            glassQuantity = glassQuantity.coerceAtMost(150)
+                            glassMaxMl = ml
+                            glassQuantity = ml
                         }
                     )
                 }
@@ -270,7 +281,7 @@ fun ToggleSection(selected: Int, onChange: (Int) -> Unit) {
                 .padding(vertical = 10.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Fluid Intake", color = if (selected == 0) Color.White else Color.Gray)
+            Text(stringResource(R.string.track_fluid_intake), color = if (selected == 0) Color.White else colors.textGreyColor)
         }
         Box(
             modifier = Modifier
@@ -281,7 +292,7 @@ fun ToggleSection(selected: Int, onChange: (Int) -> Unit) {
                 .padding(vertical = 10.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Fluid Output", color = if (selected == 1) Color.White else Color.Gray)
+            Text(stringResource(R.string.track_fluid_output), color = if (selected == 1) Color.White else colors.textGreyColor)
         }
     }
 }
@@ -289,12 +300,10 @@ fun ToggleSection(selected: Int, onChange: (Int) -> Unit) {
 @Composable
 fun ProgressSection(viewModel: IntakeOutputViewModel = viewModel()) {
     val intakeList by viewModel.intakeList.collectAsState()
-    val fluidSummaryList by viewModel.fluidSummaryList.collectAsState()
+    val fluidRecommended by viewModel.fluidRecommended.collectAsState()
     val colors = LocalMyColorScheme.current
 
-    val recommendedLimit = if (fluidSummaryList.isNotEmpty()) {
-        fluidSummaryList.maxOfOrNull { it.assignedLimit }?.takeIf { it > 0 } ?: 2000
-    } else 2000
+    val recommendedLimit = fluidRecommended ?: STANDARD_FLUID_INTAKE_ML
 
     val totalIntake = intakeList.sumOf { it.foodQuantity }
     val progressFraction = (totalIntake.toFloat() / recommendedLimit).coerceIn(0f, 1f)
@@ -338,14 +347,14 @@ fun ProgressSection(viewModel: IntakeOutputViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Recommended", style = AppTextStyles.style12GCN())
+                    Text(stringResource(R.string.track_recommended), style = AppTextStyles.style12GCN())
                     Text(
                         "${"%,d".format(recommendedLimit)} ml",
                         style = AppTextStyles.style14BCN()
                     )
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Intake", style = AppTextStyles.style12GCN())
+                    Text(stringResource(R.string.track_intake), style = AppTextStyles.style12GCN())
                     Text("$totalIntake ml", style = AppTextStyles.style14BCN())
                 }
             }
@@ -357,7 +366,7 @@ fun ProgressSection(viewModel: IntakeOutputViewModel = viewModel()) {
                     .fillMaxWidth()
                     .height(10.dp)
                     .clip(RoundedCornerShape(5.dp))
-                    .background(Color(0xFFE8EFFF))
+                    .background(softTint(colors.primaryBlueColor, Color(0xFFE8EFFF)))
             ) {
                 Box(
                     modifier = Modifier
@@ -379,7 +388,12 @@ fun ProgressSection(viewModel: IntakeOutputViewModel = viewModel()) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (foodLegendNames.isEmpty()) {
-                        listOf("Water", "Juice", "Milk", "Tea").forEachIndexed { idx, name ->
+                        listOf(
+                            stringResource(R.string.track_water),
+                            stringResource(R.string.track_juice),
+                            stringResource(R.string.track_milk),
+                            stringResource(R.string.track_tea)
+                        ).forEachIndexed { idx, name ->
                             LegendDot(name, legendColors.getOrElse(idx) { Color.Gray })
                         }
                     } else {
@@ -389,7 +403,7 @@ fun ProgressSection(viewModel: IntakeOutputViewModel = viewModel()) {
                     }
                 }
                 Text(
-                    "Remaining: $remaining ml",
+                    stringResource(R.string.track_remaining_ml, remaining),
                     style = AppTextStyles.style12GCN()
                 )
             }
@@ -415,7 +429,7 @@ private fun LegendDot(name: String, color: Color) {
 
 @Composable
 fun ScaleItem(text: String, active: Boolean) {
-    Text(text, fontSize = 12.sp, color = if (active) Color(0xFF2563EB) else Color.Gray)
+    Text(text, fontSize = 12.sp, color = if (active) Color(0xFF2563EB) else LocalMyColorScheme.current.textGreyColor)
 }
 
 @Composable
@@ -613,7 +627,8 @@ fun SlideableWaterGlass(
                     .clip(GlassOutlineShape)
                     .background(
                         Brush.linearGradient(
-                            listOf(Color.White.copy(alpha = 0.70f), Color.White.copy(alpha = 0.30f))
+                            if (isAppDark) listOf(Color.White.copy(alpha = 0.16f), Color.White.copy(alpha = 0.06f))
+                            else listOf(Color.White.copy(alpha = 0.70f), Color.White.copy(alpha = 0.30f))
                         )
                     )
             )
@@ -735,19 +750,19 @@ fun SlideableWaterGlass(
                     "$percentage%",
                     fontSize = 38.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (style.isOpaque && level > 0.45f) style.textColor else Color(0xFF1A1A2E),
+                    color = if (style.isOpaque && level > 0.45f) style.textColor else LocalMyColorScheme.current.textDarkColor,
                 )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(Color.White.copy(0.55f))
+                        .background(if (isAppDark) Color.Black.copy(0.35f) else Color.White.copy(0.55f))
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "$currentMl ml of $maxMl ml",
+                        stringResource(R.string.track_ml_of_ml, currentMl, maxMl),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (style.isOpaque && level > 0.45f) style.textColor.copy(0.85f) else Color(0xFF333355)
+                        color = if (style.isOpaque && level > 0.45f) style.textColor.copy(0.85f) else LocalMyColorScheme.current.textDarkColor.copy(alpha = 0.85f)
                     )
                 }
             }
@@ -763,7 +778,7 @@ fun SlideableWaterGlass(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "⇅  Drag to adjust",
+                        stringResource(R.string.track_drag_to_adjust),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -901,13 +916,13 @@ fun FluidItem(
             painter = painterResource(id = iconResForFood(name)),
             contentDescription = null,
             modifier = Modifier.size(26.dp),
-            tint = if (selected) colors.primaryBlueColor else Color.Gray
+            tint = if (selected) colors.primaryBlueColor else colors.textGreyColor
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = name.uppercase(),
             fontSize = 11.sp,
-            color = if (selected) colors.primaryBlueColor else Color.Gray,
+            color = if (selected) colors.primaryBlueColor else colors.textGreyColor,
             textAlign = TextAlign.Center,
             maxLines = 1
         )
@@ -921,35 +936,48 @@ fun IntakeSelector(
     effectiveQuantity: Int,
     selectedPreset: Int?,
     onPresetSelect: (Int) -> Unit,
-    onUseGlass: () -> Unit
+    glassMaxMl: Int,
+    onCustomSize: (Int) -> Unit
 ) {
     val options = listOf(150, 250, 300, 400)
     val colors = LocalMyColorScheme.current
     val isGlassMode = selectedPreset == null
     val canAdd = selectedItem != null && effectiveQuantity > 0
+    var showCustomSheet by remember { mutableStateOf(false) }
+
+    if (showCustomSheet) {
+        CustomGlassSizeSheet(
+            initialMl = glassMaxMl,
+            onDismiss = { showCustomSheet = false },
+            onSave = { ml ->
+                onCustomSize(ml)
+                showCustomSheet = false
+            }
+        )
+    }
 
     Column {
         // iOS: "Select Your Glass Size" label
         Text(
-            "Select Your Glass Size",
+            stringResource(R.string.track_select_glass_size),
             fontSize = 12.sp,
-            color = Color.Gray,
+            color = colors.textGreyColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Pencil icon — blue when glass/manual mode is active
+            // Pencil icon — opens the custom size sheet; blue when glass/custom mode is active
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(if (isGlassMode) Color(0xFF2563EB) else colors.dashboardContainerColor)
-                    .clickable { onUseGlass() },
+                    .clickable { showCustomSheet = true },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.fluid_edit),
                     contentDescription = null,
-                    tint = if (isGlassMode) Color.White else Color.Gray,
+                    tint = if (isGlassMode) Color.White else colors.textGreyColor,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -967,7 +995,7 @@ fun IntakeSelector(
                 ) {
                     Text(
                         "$value ml",
-                        color = if (selectedPreset == value) Color(0xFF2563EB) else Color.Gray
+                        color = if (selectedPreset == value) Color(0xFF2563EB) else colors.textGreyColor
                     )
                 }
             }
@@ -1004,11 +1032,75 @@ fun IntakeSelector(
                 )
             } else {
                 Text(
-                    "Submit",
+                    stringResource(R.string.track_submit),
                     color = if (canAdd) Color.White else Color.White.copy(0.7f),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
+            }
+        }
+    }
+}
+
+private const val CUSTOM_GLASS_MAX_ML = 2000
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun CustomGlassSizeSheet(
+    initialMl: Int,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    val colors = LocalMyColorScheme.current
+    var input by remember { mutableStateOf(initialMl.toString()) }
+    val value = input.toIntOrNull()
+    val isValid = value != null && value in 1..CUSTOM_GLASS_MAX_ML
+
+    AppBottomSheet(
+        onDismissRequest = onDismiss,
+        title = stringResource(R.string.track_custom_glass_size),
+        subtitle = stringResource(R.string.track_custom_glass_subtitle, CUSTOM_GLASS_MAX_ML)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp)
+        ) {
+            OutlinedTextField(
+                value = input,
+                onValueChange = { new -> input = new.filter { it.isDigit() }.take(4) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(stringResource(R.string.track_glass_size)) },
+                suffix = { Text("ml") },
+                isError = input.isNotEmpty() && !isValid,
+                supportingText = {
+                    if (input.isNotEmpty() && !isValid) {
+                        Text(stringResource(R.string.track_glass_size_error, CUSTOM_GLASS_MAX_ML))
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(onDone = { if (isValid) onSave(value!!) }),
+                shape = RoundedCornerShape(14.dp)
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (isValid) colors.primaryBlueColor else Color(0xFFCCCCCC))
+                    .clickable(enabled = isValid) { onSave(value!!) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(stringResource(R.string.track_save), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -1036,6 +1128,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
     }
     val todayCount = todayItems.size
     val todayVolume = todayItems.sumOf { it.quantity }
+    val colors = LocalMyColorScheme.current
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -1049,13 +1142,13 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Urination count", fontSize = 13.sp, color = Color(0xFF2F6BFF))
-                Text("$todayCount times", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(stringResource(R.string.track_urination_count), fontSize = 13.sp, color = Color(0xFF2F6BFF))
+                Text(stringResource(R.string.track_times_count, todayCount), fontWeight = FontWeight.Bold, fontSize = 15.sp, color = colors.textDarkColor)
             }
-            Box(modifier = Modifier.width(1.dp).height(36.dp).background(Color(0xFFDDDDDD)))
+            Box(modifier = Modifier.width(1.dp).height(36.dp).background(if (isAppDark) colors.borderGreyLightColor else Color(0xFFDDDDDD)))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Urination volume", fontSize = 13.sp, color = Color(0xFF2F6BFF))
-                Text("$todayVolume ml", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(stringResource(R.string.track_urination_volume), fontSize = 13.sp, color = Color(0xFF2F6BFF))
+                Text("$todayVolume ml", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = colors.textDarkColor)
             }
         }
 
@@ -1113,7 +1206,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                             .width(152.dp)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(percent = 50))
-                            .background(Color(0xFFEEEEEE))
+                            .background(if (isAppDark) colors.dashboardContainerColor else Color(0xFFEEEEEE))
                     ) {
                         Column(
                             modifier = Modifier.fillMaxSize(),
@@ -1123,7 +1216,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                                 HorizontalDivider(
                                     Modifier,
                                     thickness = 1.dp,
-                                    color = Color.White.copy(alpha = 0.85f)
+                                    color = if (isAppDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.85f)
                                 )
                             }
                         }
@@ -1132,7 +1225,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                                 .fillMaxWidth()
                                 .fillMaxHeight(percentage)
                                 .align(Alignment.BottomCenter)
-                                .background(Color(0xFFFFF8E1))
+                                .background(softTint(Color(0xFFFF9800), Color(0xFFFFF8E1)))
                         )
                     }
                 }
@@ -1201,20 +1294,20 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("Last urination", fontSize = 13.sp, color = Color.Gray)
-            Text("  •  ", fontSize = 13.sp, color = Color.Gray)
+            Text(stringResource(R.string.track_last_urination), fontSize = 13.sp, color = colors.textGreyColor)
+            Text("  •  ", fontSize = 13.sp, color = colors.textGreyColor)
             when {
-                lastTimeAgo == null -> Text("No records today", fontSize = 13.sp, color = Color.Gray)
+                lastTimeAgo == null -> Text(stringResource(R.string.track_no_records_today), fontSize = 13.sp, color = colors.textGreyColor)
                 lastTimeAgo.first > 0 -> {
-                    Text("${lastTimeAgo.first} h ", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.track_hours_short, lastTimeAgo.first.toInt()), fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
                     Text("${lastTimeAgo.second}", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
-                    Text("m ago", fontSize = 13.sp, color = Color.Gray)
+                    Text(stringResource(R.string.track_minutes_ago_suffix), fontSize = 13.sp, color = colors.textGreyColor)
                 }
                 lastTimeAgo.second > 0 -> {
                     Text("${lastTimeAgo.second}", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
-                    Text("m ago", fontSize = 13.sp, color = Color.Gray)
+                    Text(stringResource(R.string.track_minutes_ago_suffix), fontSize = 13.sp, color = colors.textGreyColor)
                 }
-                else -> Text("Just now", fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
+                else -> Text(stringResource(R.string.track_just_now), fontSize = 13.sp, color = Color(0xFF2F6BFF), fontWeight = FontWeight.Bold)
             }
         }
 
@@ -1222,7 +1315,7 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
 
         Row(
             modifier = Modifier
-                .background(Color.White, RoundedCornerShape(16.dp))
+                .background(colors.dashboardContainerColor, RoundedCornerShape(16.dp))
                 .padding(horizontal = 28.dp, vertical = 6.dp),
             verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.Center
@@ -1233,8 +1326,8 @@ fun UrinationScreen(viewModel: IntakeOutputViewModel = viewModel()) {
                 modifier = Modifier.padding(bottom = 10.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                Text("ml", fontSize = 14.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
-                Text("∨", fontSize = 10.sp, color = Color.Gray)
+                Text("ml", fontSize = 14.sp, color = colors.textGreyColor, fontWeight = FontWeight.Medium)
+                Text("∨", fontSize = 10.sp, color = colors.textGreyColor)
             }
         }
 
@@ -1263,14 +1356,21 @@ fun BpRangeIndicator(
         Color(0xFFFFA726), Color(0xFF8D6E63), Color(0xFFD84315)
     )
     val apiLabels = listOf("Light Yellow", "Yellow", "Dark Yellow", "Amber", "Brown", "Red")
-    val displayLabels = listOf("Light\nYellow", "Yellow", "Dark\nYellow", "Amber", "Brown", "Red")
+    val displayLabels = listOf(
+        stringResource(R.string.track_urine_light_yellow),
+        stringResource(R.string.track_urine_yellow),
+        stringResource(R.string.track_urine_dark_yellow),
+        stringResource(R.string.track_urine_amber),
+        stringResource(R.string.track_urine_brown),
+        stringResource(R.string.track_urine_red)
+    )
     val hydrationChips = listOf(
-        "Hydrated" to Color(0xFF22C55E),
-        "Hydrated" to Color(0xFF84CC16),
-        "Mildly\nDehydrated" to Color(0xFFF59E0B),
-        "Dehydrated" to Color(0xFFEF6C00),
-        "Very\nDehydrated" to Color(0xFF8D4E2A),
-        "Very\nDehydrated" to Color(0xFFD84315)
+        stringResource(R.string.track_hydrated) to Color(0xFF22C55E),
+        stringResource(R.string.track_hydrated) to Color(0xFF84CC16),
+        stringResource(R.string.track_mildly_dehydrated) to Color(0xFFF59E0B),
+        stringResource(R.string.track_dehydrated) to Color(0xFFEF6C00),
+        stringResource(R.string.track_very_dehydrated) to Color(0xFF8D4E2A),
+        stringResource(R.string.track_very_dehydrated) to Color(0xFFD84315)
     )
     val selectedIndex = apiLabels.indexOf(selectedColour)
 
@@ -1326,7 +1426,7 @@ fun BpRangeIndicator(
                     text = label,
                     modifier = Modifier.weight(1f),
                     fontSize = 8.sp,
-                    color = if (selectedColour == apiLabels[i]) hydrationChips[i].second else Color.Gray,
+                    color = if (selectedColour == apiLabels[i]) hydrationChips[i].second else LocalMyColorScheme.current.textGreyColor,
                     fontWeight = if (selectedColour == apiLabels[i]) FontWeight.Bold else FontWeight.Normal,
                     textAlign = TextAlign.Center
                 )
@@ -1350,7 +1450,7 @@ fun BpRangeIndicator(
             if (isLoading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
             } else {
-                Text("Update", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text(stringResource(R.string.track_update), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
         }
     }

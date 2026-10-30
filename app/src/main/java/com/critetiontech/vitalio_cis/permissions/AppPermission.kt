@@ -18,6 +18,9 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.annotation.StringRes
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 
 /**
  * Every runtime permission Vitalio asks for, with the copy shown before the system dialog and on
@@ -25,67 +28,73 @@ import androidx.core.content.ContextCompat
  * used, and what we never do with it.
  */
 enum class AppPermission(
-    val title: String,
+    @StringRes private val titleRes: Int,
     val icon: ImageVector,
     /** One line shown under the title on the permissions screen. */
-    val summary: String,
+    @StringRes private val summaryRes: Int,
     /** Features that use it, shown as "Used for" bullets. */
-    val usedFor: List<String>,
+    private val usedForRes: List<Int>,
     /** What we promise not to do. */
-    val privacy: String,
+    @StringRes private val privacyRes: Int,
 ) {
     Notifications(
-        title = "Notifications",
+        titleRes = R.string.perm_notifications_title,
         icon = Icons.Rounded.Notifications,
-        summary = "Medicine alarms, appointment updates and health alerts",
-        usedFor = listOf(
-            "Medicine reminders that ring at your dose time",
-            "Appointment and prescription updates from your care team",
-            "Alerts when a vital reading needs attention",
+        summaryRes = R.string.perm_notifications_summary,
+        usedForRes = listOf(
+            R.string.perm_notifications_used_reminders,
+            R.string.perm_notifications_used_updates,
+            R.string.perm_notifications_used_alerts,
         ),
-        privacy = "We never send promotional spam. You can mute any type later in system settings.",
+        privacyRes = R.string.perm_notifications_privacy,
     ),
     Camera(
-        title = "Camera",
+        titleRes = R.string.perm_camera_title,
         icon = Icons.Rounded.CameraAlt,
-        summary = "Photograph prescriptions, lab reports and your profile photo",
-        usedFor = listOf(
-            "Scan a prescription so we can read your medicines",
-            "Capture a lab report to add it to your records",
-            "Take a profile photo",
+        summaryRes = R.string.perm_camera_summary,
+        usedForRes = listOf(
+            R.string.perm_camera_used_prescription,
+            R.string.perm_camera_used_lab_report,
+            R.string.perm_camera_used_profile_photo,
         ),
-        privacy = "The camera only opens when you tap a capture button. Photos are uploaded only when you choose to save them.",
+        privacyRes = R.string.perm_camera_privacy,
     ),
     Microphone(
-        title = "Microphone",
+        titleRes = R.string.perm_mic_title,
         icon = Icons.Rounded.Mic,
-        summary = "Voice assistant and breathing exercises",
-        usedFor = listOf(
-            "Speak to log vitals or open a screen with the voice assistant",
-            "Breathing therapy listens to your breath to guide each round",
+        summaryRes = R.string.perm_mic_summary,
+        usedForRes = listOf(
+            R.string.perm_mic_used_voice,
+            R.string.perm_mic_used_breathing,
         ),
-        privacy = "We listen only while the mic button or exercise is active. Audio is never recorded or stored.",
+        privacyRes = R.string.perm_mic_privacy,
     ),
     NearbyDevices(
-        title = "Nearby devices",
+        titleRes = R.string.perm_nearby_title,
         icon = Icons.Rounded.Bluetooth,
-        summary = "Connect BP monitors, oximeters and weighing scales over Bluetooth",
-        usedFor = listOf(
-            "Find and pair your Omron or Yonker device",
-            "Transfer new readings from the device to your health record",
+        summaryRes = R.string.perm_nearby_summary,
+        usedForRes = listOf(
+            R.string.perm_nearby_used_pair,
+            R.string.perm_nearby_used_transfer,
         ),
-        privacy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            "Used only to talk to your health devices. We never track your location."
+        privacyRes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            R.string.perm_nearby_privacy
         else
-            "Older Android versions call this \"Location\" because Bluetooth scanning needs it. We never read or store your location.",
+            R.string.perm_nearby_privacy_legacy,
     ),
     Storage(
-        title = "Storage",
+        titleRes = R.string.perm_storage_title,
         icon = Icons.Rounded.Folder,
-        summary = "Save downloaded reports to your Downloads folder",
-        usedFor = listOf("Download lab reports and prescriptions to your phone"),
-        privacy = "We only write the files you download. We don't read your other files.",
+        summaryRes = R.string.perm_storage_summary,
+        usedForRes = listOf(R.string.perm_storage_used_download),
+        privacyRes = R.string.perm_storage_privacy,
     );
+
+    // Read on every access (not stored) so the copy follows an in-app language switch
+    val title: String get() = MyApplication.appContext.getString(titleRes)
+    val summary: String get() = MyApplication.appContext.getString(summaryRes)
+    val usedFor: List<String> get() = usedForRes.map { MyApplication.appContext.getString(it) }
+    val privacy: String get() = MyApplication.appContext.getString(privacyRes)
 
     /** System permission names for the running Android version; empty when none is needed. */
     val manifestPermissions: Array<String>
@@ -107,13 +116,15 @@ enum class AppPermission(
 
     /** Finishes "Vitalio needs … access" when asked from the permissions screen rather than a feature. */
     val defaultReason: String
-        get() = when (this) {
-            Notifications -> "so your medicine alarms can ring and your care team's updates reach you"
-            Camera -> "to photograph prescriptions, lab reports and your profile photo"
-            Microphone -> "for the voice assistant and breathing exercises"
-            NearbyDevices -> "to connect your BP monitor, oximeter or scale over Bluetooth"
-            Storage -> "to save downloaded reports in your Downloads folder"
-        }
+        get() = MyApplication.appContext.getString(
+            when (this) {
+                Notifications -> R.string.perm_notifications_reason
+                Camera -> R.string.perm_camera_reason
+                Microphone -> R.string.perm_mic_reason
+                NearbyDevices -> R.string.perm_nearby_reason
+                Storage -> R.string.perm_storage_reason
+            }
+        )
 
     /** False when this Android version grants the feature without asking. */
     val isRequired: Boolean get() = manifestPermissions.isNotEmpty()

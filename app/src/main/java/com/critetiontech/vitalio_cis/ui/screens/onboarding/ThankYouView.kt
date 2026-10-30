@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 
@@ -36,11 +40,12 @@ import com.critetiontech.ctvitalio.R
 fun ThankYouView() {
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8F8))
+            .background(if (isAppDark) colors.dashboardBackgroundColor else Color(0xFFF8F8F8))
             .padding(horizontal = 16.dp)
     ) {
 
@@ -59,7 +64,7 @@ fun ThankYouView() {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
+                    .background(colors.dashboardContainerColor)
                     .clickable {
 
                         navController.popBackStack()
@@ -72,17 +77,17 @@ fun ThankYouView() {
                     imageVector = Icons.Default.ArrowBackIosNew,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = Color.Black
+                    tint = colors.textDarkColor
                 )
             }
 
             Spacer(modifier = Modifier.width(10.dp))
 
             Text(
-                text = "Create Account",
+                text = stringResource(R.string.auth_onb_create_account),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color.Black
+                color = colors.textDarkColor
             )
         }
 
@@ -114,7 +119,7 @@ fun ThankYouView() {
             shape = RoundedCornerShape(16.dp),
 
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF1F5F9)
+                containerColor = if (isAppDark) colors.dashboardContainerColor else Color(0xFFF1F5F9)
             ),
 
             elevation = CardDefaults.cardElevation(
@@ -151,7 +156,7 @@ fun ThankYouView() {
 
                     color = Color(0xFF2563EB),
 
-                    trackColor = Color(0xFFD6E4FF)
+                    trackColor = softTint(Color(0xFF2563EB), Color(0xFFD6E4FF))
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -159,7 +164,7 @@ fun ThankYouView() {
                 /// TITLE
 
                 Text(
-                    text = "Thank you for registering with Vitalio!",
+                    text = stringResource(R.string.auth_onb_thank_you_title),
 
                     modifier = Modifier.fillMaxWidth(),
 
@@ -169,7 +174,7 @@ fun ThankYouView() {
 
                     fontWeight = FontWeight.Bold,
 
-                    color = Color.Black
+                    color = colors.textDarkColor
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -177,7 +182,7 @@ fun ThankYouView() {
                 /// SUBTITLE
 
                 Text(
-                    text = "Your submission is now complete, and we're excited to have you on board.",
+                    text = stringResource(R.string.auth_onb_thank_you_subtitle),
 
                     modifier = Modifier.fillMaxWidth(),
 
@@ -187,7 +192,7 @@ fun ThankYouView() {
 
                     lineHeight = 18.sp,
 
-                    color = Color.Gray
+                    color = colors.textGreyColor
                 )
             }
         }
@@ -198,7 +203,7 @@ fun ThankYouView() {
         /// =========================
 
         Text(
-            text = "What’s Next?",
+            text = stringResource(R.string.auth_onb_whats_next),
 
             modifier = Modifier.fillMaxWidth(),
 
@@ -214,7 +219,7 @@ fun ThankYouView() {
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "To help you maintain optimal health, we need a few more details.",
+            text = stringResource(R.string.auth_onb_whats_next_subtitle),
 
             modifier = Modifier.fillMaxWidth(),
 
@@ -226,7 +231,7 @@ fun ThankYouView() {
 
             lineHeight = 20.sp,
 
-            color = Color.DarkGray
+            color = colors.textGreyColor
         )
 
         Spacer(modifier = Modifier.height(36.dp))
@@ -253,7 +258,7 @@ fun ThankYouView() {
         ) {
 
             Text(
-                text = "Set preferences for a better experience",
+                text = stringResource(R.string.auth_onb_set_preferences_cta),
 
                 color = Color.White,
 

@@ -91,6 +91,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -99,12 +100,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.SubcomposeAsyncImage
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.consultation.CallQuality
 import com.critetiontech.ctvitalio.model.IncomingCall
 import com.critetiontech.ctvitalio.viewmodel.CallPhase
 import com.critetiontech.ctvitalio.viewmodel.CallViewModel
 import com.critetiontech.ctvitalio.ui.components.DeviceGreen
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import io.livekit.android.renderer.TextureViewRenderer
 import io.livekit.android.room.Room
 import io.livekit.android.room.track.VideoTrack
@@ -138,7 +141,7 @@ fun CallScreen(
         ) { key ->
             when (key) {
                 "Ringing" -> RingingContent(call, onAccept, onDecline)
-                "Connecting" -> WaitingContent(call, "Connecting…")
+                "Connecting" -> WaitingContent(call, stringResource(R.string.consult_connecting))
                 "InCall" -> InCallContent(vm, call, onMinimize)
                 else -> EndedContent(call, vm.phase as? CallPhase.Ended, vm.elapsedSeconds(), onClose)
             }
@@ -195,14 +198,14 @@ private fun RingingContent(call: IncomingCall, onAccept: () -> Unit, onDecline: 
             textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis,
         )
         Spacer(Modifier.height(6.dp))
-        Text(call.title ?: "Incoming Call…", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+        Text(call.title ?: stringResource(R.string.consult_incoming_call), color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
         Spacer(Modifier.weight(1f))
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 32.dp).padding(bottom = 56.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            CallButton(Icons.Rounded.CallEnd, "Decline", CallRed, size = 64.dp, onClick = onDecline)
-            CallButton(Icons.Rounded.PhoneInTalk, "Join", CallGreen, size = 64.dp, wiggle = true, onClick = onAccept)
+            CallButton(Icons.Rounded.CallEnd, stringResource(R.string.consult_decline), CallRed, size = 64.dp, onClick = onDecline)
+            CallButton(Icons.Rounded.PhoneInTalk, stringResource(R.string.consult_join), CallGreen, size = 64.dp, wiggle = true, onClick = onAccept)
         }
     }
 }
@@ -342,7 +345,7 @@ private fun EndedContent(call: IncomingCall, ended: CallPhase.Ended?, seconds: L
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.ErrorOutline, null, tint = Color.White, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Couldn't connect the call", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.consult_could_not_connect_call), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(6.dp))
             Text(ended?.message.orEmpty(), color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, textAlign = TextAlign.Center)
@@ -353,7 +356,7 @@ private fun EndedContent(call: IncomingCall, ended: CallPhase.Ended?, seconds: L
                     .background(Color.White)
                     .clickable(onClick = onClose)
                     .padding(horizontal = 32.dp, vertical = 12.dp)
-            ) { Text("Close", color = PanelText, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+            ) { Text(stringResource(R.string.consult_close), color = PanelText, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
         } else {
             Text(
                 listOfNotNull(ended?.message, seconds.takeIf { it > 0 }?.let(::formatDuration)).joinToString(" · "),
@@ -385,13 +388,13 @@ private fun PipContent(vm: CallViewModel, call: IncomingCall) {
         }
         if (vm.phase is CallPhase.Ended) {
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.6f)), contentAlignment = Alignment.Center) {
-                Text("Call ended", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Text(stringResource(R.string.consult_call_ended), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
             }
         } else if (!vm.micOn) {
             Box(
                 Modifier.align(Alignment.BottomStart).padding(8.dp).size(24.dp).clip(CircleShape).background(CallRed),
                 contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Rounded.MicOff, contentDescription = "Muted", tint = Color.White, modifier = Modifier.size(14.dp)) }
+            ) { Icon(Icons.Rounded.MicOff, contentDescription = stringResource(R.string.consult_muted), tint = Color.White, modifier = Modifier.size(14.dp)) }
         }
     }
 }
@@ -408,6 +411,11 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () 
     var showAudio by remember { mutableStateOf(false) }
     val remote = vm.remoteVideo
     val primary = LocalMyColorScheme.current.primaryBlueColor
+    // The bottom panel is a light sheet by day; at night it follows the dark surface instead
+    val dark = isAppDark
+    val panelBg = if (dark) LocalMyColorScheme.current.dashboardContainerColor.copy(alpha = 0.9f) else Color.White.copy(alpha = 0.9f)
+    val panelText = if (dark) LocalMyColorScheme.current.textDarkColor else PanelText
+    val panelGrey = if (dark) LocalMyColorScheme.current.textGreyColor else PanelGrey
     fun touched() { lastTouch = System.currentTimeMillis() }
 
     if (showQuality) QualitySheet(vm.quality, onPick = vm::changeQuality, onDismiss = { showQuality = false })
@@ -441,7 +449,7 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () 
             ) {
                 RippleAvatar(call, size = 140.dp)
                 Text(
-                    if (vm.doctorJoined) "Camera is off" else "Waiting for the doctor to join…",
+                    if (vm.doctorJoined) stringResource(R.string.consult_camera_is_off) else stringResource(R.string.consult_waiting_for_doctor),
                     color = Color.White, fontSize = 14.sp,
                 )
             }
@@ -467,7 +475,7 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () 
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        Icons.AutoMirrored.Rounded.ArrowBackIos, contentDescription = "Minimise call", tint = Color.White,
+                        Icons.AutoMirrored.Rounded.ArrowBackIos, contentDescription = stringResource(R.string.consult_minimise_call), tint = Color.White,
                         modifier = Modifier.size(18.dp).offset(x = 3.dp),
                     )
                 }
@@ -503,11 +511,18 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () 
             ) {
                 SignalBars(ConnectionQuality.POOR)
                 Spacer(Modifier.width(8.dp))
-                Text(weak.orEmpty(), color = Color.White, fontSize = 13.sp)
+                Text(
+                    when (weak) {
+                        WEAK_MINE -> stringResource(R.string.consult_your_connection_weak)
+                        WEAK_DOCTOR -> stringResource(R.string.consult_doctor_connection_weak)
+                        else -> weak.orEmpty()
+                    },
+                    color = Color.White, fontSize = 13.sp,
+                )
                 if (vm.quality != CallQuality.DATA_SAVER && weak == WEAK_MINE) {
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        "Use data saver", color = Color(0xFF7FD1FF), fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                        stringResource(R.string.consult_use_data_saver), color = Color(0xFF7FD1FF), fontSize = 13.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable { vm.changeQuality(CallQuality.DATA_SAVER) },
                     )
                 }
@@ -528,7 +543,7 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () 
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                    .background(Color.White.copy(alpha = 0.9f))
+                    .background(panelBg)
                     // Taps on the panel shouldn't fall through and hide it
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { touched() }
                     .navigationBarsPadding()
@@ -536,7 +551,7 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () 
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    vm.remoteName ?: call.doctorName, color = PanelText, fontSize = 20.sp,
+                    vm.remoteName ?: call.doctorName, color = panelText, fontSize = 20.sp,
                     fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )
@@ -545,29 +560,29 @@ private fun InCallContent(vm: CallViewModel, call: IncomingCall, onMinimize: () 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         LiveDot(Warn)
                         Spacer(Modifier.width(6.dp))
-                        Text("Reconnecting…", color = Color(0xFFB26A00), fontSize = 14.sp)
+                        Text(stringResource(R.string.consult_reconnecting), color = if (dark) Warn else Color(0xFFB26A00), fontSize = 14.sp)
                     }
-                } else CallTimer(vm)
+                } else CallTimer(vm, panelGrey)
                 Spacer(Modifier.height(18.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     // On: solid blue. Off: pale blue with the crossed-out icon, so the state reads at a glance.
                     val off = primary.copy(alpha = 0.12f)
-                    CallButton(Icons.Rounded.CallEnd, "Hang up", HangUpRed, onClick = vm::hangUp)
+                    CallButton(Icons.Rounded.CallEnd, stringResource(R.string.consult_hang_up), HangUpRed, onClick = vm::hangUp)
                     CallButton(
                         if (vm.micOn) Icons.Rounded.Mic else Icons.Rounded.MicOff,
-                        if (vm.micOn) "Mute" else "Unmute",
+                        if (vm.micOn) stringResource(R.string.consult_mute) else stringResource(R.string.consult_unmute),
                         if (vm.micOn) primary else off, tint = if (vm.micOn) Color.White else primary,
                     ) { vm.toggleMic(); touched() }
                     CallButton(
                         if (vm.cameraOn) Icons.Rounded.Videocam else Icons.Rounded.VideocamOff,
-                        if (vm.cameraOn) "Turn camera off" else "Turn camera on",
+                        if (vm.cameraOn) stringResource(R.string.consult_turn_camera_off) else stringResource(R.string.consult_turn_camera_on),
                         if (vm.cameraOn) primary else off, tint = if (vm.cameraOn) Color.White else primary,
                     ) { vm.toggleCamera(); touched() }
-                    CallButton(Icons.Rounded.Cameraswitch, "Switch camera", primary) { vm.flipCamera(); touched() }
+                    CallButton(Icons.Rounded.Cameraswitch, stringResource(R.string.consult_switch_camera), primary) { vm.flipCamera(); touched() }
                     // Just speaker and earpiece: one tap flips between them. With a headset around, pick from a list.
                     val earpiece = vm.audioDevice is AudioDevice.Earpiece
                     CallButton(
-                        audioIcon(vm.audioDevice), "Audio output",
+                        audioIcon(vm.audioDevice), stringResource(R.string.consult_audio_output),
                         if (earpiece) off else primary, tint = if (earpiece) primary else Color.White,
                     ) {
                         touched()
@@ -628,7 +643,7 @@ private fun SelfView(vm: CallViewModel, maxWidthPx: Float, maxHeightPx: Float) {
         if (room != null && track != null && vm.cameraOn) {
             VideoView(room, track, mirror = vm.frontCamera, modifier = Modifier.fillMaxSize())
         } else {
-            Icon(Icons.Rounded.VideocamOff, contentDescription = "Camera off", tint = Color.White.copy(alpha = 0.6f))
+            Icon(Icons.Rounded.VideocamOff, contentDescription = stringResource(R.string.consult_camera_off), tint = Color.White.copy(alpha = 0.6f))
         }
     }
 }
@@ -670,7 +685,7 @@ private fun LiveDot(color: Color) {
 }
 
 @Composable
-private fun CallTimer(vm: CallViewModel) {
+private fun CallTimer(vm: CallViewModel, color: Color = PanelGrey) {
     var seconds by remember { mutableLongStateOf(vm.elapsedSeconds()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -678,7 +693,7 @@ private fun CallTimer(vm: CallViewModel) {
             delay(1_000)
         }
     }
-    Text(formatDuration(seconds), color = PanelGrey, fontSize = 15.sp, letterSpacing = 1.5.sp)
+    Text(formatDuration(seconds), color = color, fontSize = 15.sp, letterSpacing = 1.5.sp)
 }
 
 private fun formatDuration(seconds: Long): String {
@@ -728,8 +743,8 @@ private fun QualityPill(quality: CallQuality, onClick: () -> Unit) {
             .padding(start = 10.dp, end = 6.dp, top = 3.dp, bottom = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(quality.label, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-        Icon(Icons.Rounded.ExpandMore, contentDescription = "Video quality", tint = Color.White, modifier = Modifier.size(16.dp))
+        Text(stringResource(quality.label), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        Icon(Icons.Rounded.ExpandMore, contentDescription = stringResource(R.string.consult_video_quality), tint = Color.White, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -745,8 +760,8 @@ private fun QualitySheet(current: CallQuality, onPick: (CallQuality) -> Unit, on
         dragHandle = { Box(Modifier.padding(top = 10.dp).size(36.dp, 4.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.3f))) },
     ) {
         Column(Modifier.navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp)) {
-            Text("Video quality", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Text("Applies to your camera and the doctor's video", fontSize = 13.sp, color = Color.White.copy(alpha = 0.6f))
+            Text(stringResource(R.string.consult_video_quality), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.consult_video_quality_desc), fontSize = 13.sp, color = Color.White.copy(alpha = 0.6f))
             Spacer(Modifier.height(14.dp))
             CallQuality.entries.forEach { option ->
                 val selected = option == current
@@ -776,10 +791,10 @@ private fun QualitySheet(current: CallQuality, onPick: (CallQuality) -> Unit, on
                     }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(option.label, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-                        Text(option.description, fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))
+                        Text(stringResource(option.label), fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                        Text(stringResource(option.description), fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))
                     }
-                    if (selected) Icon(Icons.Rounded.Check, contentDescription = "Selected", tint = Color(0xFF7FD1FF))
+                    if (selected) Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.consult_selected), tint = Color(0xFF7FD1FF))
                 }
             }
         }
@@ -795,11 +810,12 @@ private fun audioIcon(device: AudioDevice?): ImageVector = when (device) {
     else -> Icons.Rounded.VolumeUp
 }
 
+@Composable
 private fun audioLabel(device: AudioDevice): Pair<String, String> = when (device) {
-    is AudioDevice.BluetoothHeadset -> "Bluetooth" to device.name.takeUnless { it.isBlank() || it == "Bluetooth" }.orEmpty().ifBlank { "Wireless headset" }
-    is AudioDevice.WiredHeadset -> "Headphones" to "Wired headset"
-    is AudioDevice.Earpiece -> "Phone" to "Hold the phone to your ear"
-    else -> "Speaker" to "Loudspeaker"
+    is AudioDevice.BluetoothHeadset -> "Bluetooth" to device.name.takeUnless { it.isBlank() || it == "Bluetooth" }.orEmpty().ifBlank { stringResource(R.string.consult_wireless_headset) }
+    is AudioDevice.WiredHeadset -> stringResource(R.string.consult_headphones) to stringResource(R.string.consult_wired_headset)
+    is AudioDevice.Earpiece -> stringResource(R.string.consult_phone) to stringResource(R.string.consult_hold_phone_to_ear)
+    else -> stringResource(R.string.consult_speaker) to stringResource(R.string.consult_loudspeaker)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -814,8 +830,8 @@ private fun AudioSheet(devices: List<AudioDevice>, current: AudioDevice?, onPick
         dragHandle = { Box(Modifier.padding(top = 10.dp).size(36.dp, 4.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.3f))) },
     ) {
         Column(Modifier.navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp)) {
-            Text("Audio", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Text("Where you hear the doctor", fontSize = 13.sp, color = Color.White.copy(alpha = 0.6f))
+            Text(stringResource(R.string.consult_audio), fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.consult_audio_desc), fontSize = 13.sp, color = Color.White.copy(alpha = 0.6f))
             Spacer(Modifier.height(14.dp))
             devices.forEach { device ->
                 val selected = device == current
@@ -840,7 +856,7 @@ private fun AudioSheet(devices: List<AudioDevice>, current: AudioDevice?, onPick
                         Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                         Text(subtitle, fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    if (selected) Icon(Icons.Rounded.Check, contentDescription = "Selected", tint = Color(0xFF7FD1FF))
+                    if (selected) Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.consult_selected), tint = Color(0xFF7FD1FF))
                 }
             }
         }

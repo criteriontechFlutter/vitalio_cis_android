@@ -1,5 +1,6 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import android.content.Context
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,12 +24,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.model.AppointmentHistoryItem
 import com.critetiontech.ctvitalio.model.UpcomingAppointmentItem
@@ -96,10 +100,10 @@ private fun statusFor(date: LocalDate?, cancelled: Boolean): AppointmentUi.Statu
     }
 }
 
-private fun paymentChip(status: String): Pair<String, Color>? = when {
+private fun paymentChip(context: Context, status: String): Pair<String, Color>? = when {
     status.isBlank() -> null
-    status.equals("Paid", ignoreCase = true) -> "Paid" to OkGreen
-    status.equals("Pending", ignoreCase = true) -> "Payment pending" to WarnOrange
+    status.equals("Paid", ignoreCase = true) -> context.getString(R.string.consult_paid) to OkGreen
+    status.equals("Pending", ignoreCase = true) -> context.getString(R.string.consult_payment_pending) to WarnOrange
     else -> status to ErrorRed
 }
 
@@ -107,17 +111,17 @@ private fun paymentChip(status: String): Pair<String, Color>? = when {
  * The upcoming API has no appointment date (its visitDate is when it was booked), so take the date
  * — and the department — from the matching history row when there is one.
  */
-private fun UpcomingAppointmentItem.toUi(byVisit: Map<String, AppointmentHistoryItem>): AppointmentUi {
+private fun UpcomingAppointmentItem.toUi(context: Context, byVisit: Map<String, AppointmentHistoryItem>): AppointmentUi {
     val match = byVisit[visitNo]
     val date = parseIsoDate(match?.appointmentDate) ?: parseDmyDate(visitDate)
     val chips = buildList {
-        if (tokenNumber > 0) add("Token #$tokenNumber" to Color(0xFF7C3AED))
-        paymentChip(paymentStatus)?.let(::add)
+        if (tokenNumber > 0) add(context.getString(R.string.consult_token_hash, tokenNumber) to Color(0xFF7C3AED))
+        paymentChip(context, paymentStatus)?.let(::add)
         if (patientType.isNotBlank()) add(patientType to Color(0xFF475569))
     }
     return AppointmentUi(
         key = "u_${appoientmentId}_$visitNo",
-        doctorName = doctorName.trim().ifEmpty { "Doctor" },
+        doctorName = doctorName.trim().ifEmpty { context.getString(R.string.consult_doctor_fallback) },
         subtitle = listOfNotNull(
             match?.departmentName?.takeIf { it.isNotBlank() },
             match?.qualification?.takeIf { it.isNotBlank() },
@@ -130,18 +134,18 @@ private fun UpcomingAppointmentItem.toUi(byVisit: Map<String, AppointmentHistory
     )
 }
 
-private fun AppointmentHistoryItem.toUi(): AppointmentUi {
+private fun AppointmentHistoryItem.toUi(context: Context): AppointmentUi {
     val date = parseIsoDate(appointmentDate) ?: parseIsoDate(visitDate)
     val status = statusFor(date, isCancelAppointment)
     val chips = buildList {
-        if (tokenNumber > 0) add("Token #$tokenNumber" to Color(0xFF7C3AED))
+        if (tokenNumber > 0) add(context.getString(R.string.consult_token_hash, tokenNumber) to Color(0xFF7C3AED))
         if (shiftName.isNotBlank()) add(shiftName to Color(0xFF475569))
         if (status == AppointmentUi.Status.Completed && prescriptionStatus.equals("Prescribed", ignoreCase = true))
-            add("Prescription ready" to OkGreen)
+            add(context.getString(R.string.consult_prescription_ready) to OkGreen)
     }
     return AppointmentUi(
         key = "h_${appoientmentId}_$visitNo",
-        doctorName = doctorName.trim().ifEmpty { "Doctor" },
+        doctorName = doctorName.trim().ifEmpty { context.getString(R.string.consult_doctor_fallback) },
         subtitle = listOfNotNull(
             departmentName?.takeIf { it.isNotBlank() } ?: designation.takeIf { it.isNotBlank() },
             qualification?.takeIf { it.isNotBlank() },
@@ -155,12 +159,12 @@ private fun AppointmentHistoryItem.toUi(): AppointmentUi {
 }
 
 /** "Today", "Tomorrow" or "Mon, 19 Oct" for a group header. */
-private fun dayHeader(date: LocalDate?): String {
+private fun dayHeader(context: Context, date: LocalDate?): String {
     val today = LocalDate.now()
     return when (date) {
-        null -> "Date to be confirmed"
-        today -> "Today"
-        today.plusDays(1) -> "Tomorrow"
+        null -> context.getString(R.string.consult_date_to_be_confirmed)
+        today -> context.getString(R.string.consult_today)
+        today.plusDays(1) -> context.getString(R.string.consult_tomorrow)
         else -> date.format(DateTimeFormatter.ofPattern(if (date.year == today.year) "EEE, dd MMM" else "EEE, dd MMM yyyy", Locale.getDefault()))
     }
 }
@@ -171,6 +175,7 @@ fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
     val navController = LocalNavController.current
     val haptic = rememberHaptics()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val upcoming by vm.upcoming.collectAsState()
     val history by vm.history.collectAsState()
@@ -185,20 +190,20 @@ fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
 
     val upcomingUi = remember(upcoming, history) {
         val byVisit = history.associateBy { it.visitNo }
-        upcoming.map { it.toUi(byVisit) }
+        upcoming.map { it.toUi(context, byVisit) }
             .sortedWith(compareBy<AppointmentUi> { it.date ?: LocalDate.MAX }.thenBy { it.time.isEmpty() }.thenBy { slotSortKey(it.time) })
     }
     // Past and cancelled visits; today's and future ones already sit on the Upcoming tab.
     val historyUi = remember(history, upcoming) {
         val upcomingVisits = upcoming.map { it.visitNo }.toSet()
-        history.map { it.toUi() }
+        history.map { it.toUi(context) }
             .filter { it.visitNo !in upcomingVisits || it.status == AppointmentUi.Status.Cancelled }
             .sortedWith(compareByDescending<AppointmentUi> { it.date ?: LocalDate.MIN }.thenByDescending { slotSortKey(it.time) })
     }
 
     Column(Modifier.fillMaxSize().background(colors.dashboardContainerColor)) {
         RoundBackTopBar(
-            title = "My Appointments",
+            title = stringResource(R.string.consult_my_appointments),
             // Go back to Find Doctors if we came from there, instead of stacking another copy.
             actions = {
                 BookPill {
@@ -232,7 +237,7 @@ fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
                     isRefreshing = false
                 }
             },
-            refreshingText = "Updating your appointments…",
+            refreshingText = stringResource(R.string.consult_updating_appointments),
             modifier = Modifier.fillMaxSize().padding(top = 12.dp),
         ) {
             val showUpcoming = selectedTab == 0
@@ -250,33 +255,33 @@ fun FindDoctorsTopSection(vm: AppointmentViewModel = viewModel()) {
                     failed && items.isEmpty() -> item {
                         AppointmentsMessage(
                             icon = Icons.Rounded.WifiOff,
-                            title = "Couldn't load your appointments",
-                            body = "Check your connection, then pull down or tap below to try again.",
-                            action = "Try again",
+                            title = stringResource(R.string.consult_appointments_load_failed),
+                            body = stringResource(R.string.consult_appointments_load_failed_body),
+                            action = stringResource(R.string.consult_try_again),
                             onAction = { vm.fetchAll() },
                         )
                     }
                     items.isEmpty() && showUpcoming -> item {
                         AppointmentsMessage(
                             icon = Icons.Rounded.EventBusy,
-                            title = "No upcoming appointments",
-                            body = "Book a visit with a doctor and it will show up here.",
-                            action = "Find a Doctor",
+                            title = stringResource(R.string.consult_no_upcoming_appointments),
+                            body = stringResource(R.string.consult_no_upcoming_appointments_body),
+                            action = stringResource(R.string.consult_find_a_doctor),
                             onAction = { navController.navigate(Routes.FINDDOCTOR) },
                         )
                     }
                     items.isEmpty() -> item {
                         AppointmentsMessage(
                             icon = Icons.Rounded.History,
-                            title = "No past appointments",
-                            body = "Your completed and cancelled visits will appear here.",
+                            title = stringResource(R.string.consult_no_past_appointments),
+                            body = stringResource(R.string.consult_no_past_appointments_body),
                         )
                     }
                     else -> {
                         var lastHeader: String? = null
                         items.forEachIndexed { i, appt ->
                             // Upcoming is grouped by day so "Today" stands out; history stays a plain list.
-                            val header = if (showUpcoming) dayHeader(appt.date) else null
+                            val header = if (showUpcoming) dayHeader(context, appt.date) else null
                             if (header != null && header != lastHeader) {
                                 lastHeader = header
                                 item(key = "hdr_$header") {
@@ -399,11 +404,11 @@ private fun DateBlock(date: LocalDate?, highlighted: Boolean, muted: Boolean) {
 private fun StatusChip(status: AppointmentUi.Status) {
     val colors = LocalMyColorScheme.current
     val (label, color) = when (status) {
-        AppointmentUi.Status.Today -> "Today" to OkGreen
-        AppointmentUi.Status.Tomorrow -> "Tomorrow" to colors.primaryBlueColor
-        AppointmentUi.Status.Upcoming -> "Upcoming" to colors.primaryBlueColor
-        AppointmentUi.Status.Completed -> "Completed" to Color(0xFF475569)
-        AppointmentUi.Status.Cancelled -> "Cancelled" to ErrorRed
+        AppointmentUi.Status.Today -> stringResource(R.string.consult_today) to OkGreen
+        AppointmentUi.Status.Tomorrow -> stringResource(R.string.consult_tomorrow) to colors.primaryBlueColor
+        AppointmentUi.Status.Upcoming -> stringResource(R.string.consult_upcoming) to colors.primaryBlueColor
+        AppointmentUi.Status.Completed -> stringResource(R.string.consult_completed) to Color(0xFF475569)
+        AppointmentUi.Status.Cancelled -> stringResource(R.string.consult_cancelled) to ErrorRed
     }
     TintChip(label, color)
 }
@@ -436,7 +441,7 @@ private fun BookPill(onClick: () -> Unit) {
     ) {
         Icon(Icons.Rounded.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(4.dp))
-        Text("Book", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.consult_book), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -520,7 +525,7 @@ fun AppointmentToggle(
             .background(colors.dashboardBackgroundColor)
             .padding(4.dp)
     ) {
-        listOf("Upcoming" to upcomingCount, "History" to historyCount).forEachIndexed { i, (label, count) ->
+        listOf(stringResource(R.string.consult_upcoming) to upcomingCount, stringResource(R.string.consult_history) to historyCount).forEachIndexed { i, (label, count) ->
             val active = selected == i
             val bg by animateColorAsState(if (active) colors.primaryBlueColor else Color.Transparent, label = "apptTab")
             Row(

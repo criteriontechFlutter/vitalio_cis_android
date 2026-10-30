@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
@@ -36,7 +39,7 @@ fun MyObserversScreen() {
     val colors = LocalMyColorScheme.current
 
         CommonAppBar(
-            title = "My Observers",
+            title = stringResource(R.string.profile_my_observers),
         )
         {
             Column(
@@ -67,7 +70,7 @@ fun MyObserversScreen() {
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(Color.LightGray)
+                                    .background(if (isAppDark) colors.borderGreyLightColor else Color.LightGray)
                             )
 
                             Spacer(Modifier.width(12.dp))
@@ -80,7 +83,7 @@ fun MyObserversScreen() {
                             }
 
                             Text(
-                                "Remove Access",
+                                stringResource(R.string.profile_remove_access),
                                 style = AppTextStyles.style12GCN().copy(color = Color.Red),
                                 modifier = Modifier.clickable { }
                             )
@@ -90,7 +93,7 @@ fun MyObserversScreen() {
 
                 // bottom button
                 CommonButton(
-                    text = "Add Observer +",
+                    text = stringResource(R.string.profile_add_observer),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),

@@ -15,7 +15,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
@@ -39,7 +41,7 @@ fun ConnectWatchScreen() {
 
     val colors = LocalMyColorScheme.current
     CommonAppBar(
-        title = "Connect Watch",
+        title = stringResource(R.string.device_connect_watch_title),
     )
     {
         Column(
@@ -82,7 +84,7 @@ fun WatchItem(
             Icon(
                 imageVector = Icons.Default.Watch,
                 contentDescription = null,
-                tint = Color.DarkGray,
+                tint = colors.textGreyColor,
                 modifier = Modifier.size(40.dp)
             )
 
@@ -98,7 +100,7 @@ fun WatchItem(
 
             HapticTextButton(onClick = onRemove) {
                 Text(
-                    text = "Remove",
+                    text = stringResource(R.string.device_remove),
                     style = AppTextStyles.style14GCN().copy(color = Color.Red))
                 Spacer(modifier = Modifier.width(4.dp))
                 Icon(

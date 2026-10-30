@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
@@ -33,7 +35,7 @@ import java.time.ZoneOffset
 fun AppPickerTheme(content: @Composable () -> Unit) {
     val colors = LocalMyColorScheme.current
     val blue = colors.primaryBlueColor
-    val blueTint = blue.copy(alpha = 0.12f).compositeOver(Color.White)
+    val blueTint = blue.copy(alpha = 0.12f).compositeOver(colors.dashboardContainerColor)
     MaterialTheme(
         colorScheme = lightColorScheme(
             primary = blue,
@@ -44,8 +46,8 @@ fun AppPickerTheme(content: @Composable () -> Unit) {
             onSecondaryContainer = blue,
             tertiaryContainer = blueTint,
             onTertiaryContainer = blue,
-            surface = Color.White,
-            surfaceContainerHigh = Color.White,
+            surface = colors.dashboardContainerColor,
+            surfaceContainerHigh = colors.dashboardContainerColor,
             surfaceContainerHighest = colors.dashboardBackgroundColor,
             onSurface = colors.textDarkColor,
             onSurfaceVariant = colors.textGreyColor,
@@ -66,7 +68,7 @@ fun AppDatePickerDialog(
     initial: LocalDate,
     onDismiss: () -> Unit,
     onConfirm: (LocalDate) -> Unit,
-    confirmText: String = "OK",
+    confirmText: String = stringResource(R.string.auth_common_ok),
     isSelectable: (LocalDate) -> Boolean = { true },
 ) {
     AppPickerTheme {
@@ -90,7 +92,7 @@ fun AppDatePickerDialog(
                     enabled = state.selectedDateMillis != null,
                 ) { Text(confirmText) }
             },
-            dismissButton = { HapticTextButton(onClick = onDismiss) { Text("Cancel") } },
+            dismissButton = { HapticTextButton(onClick = onDismiss) { Text(stringResource(R.string.auth_common_cancel)) } },
         ) {
             DatePicker(state = state)
         }
@@ -105,7 +107,7 @@ fun AppTimePickerDialog(
     initialMinute: Int,
     onDismiss: () -> Unit,
     onConfirm: (hour: Int, minute: Int) -> Unit,
-    title: String = "Select time",
+    title: String = stringResource(R.string.auth_common_select_time),
 ) {
     AppPickerTheme {
         val state = rememberTimePickerState(initialHour = initialHour, initialMinute = initialMinute, is24Hour = false)
@@ -115,9 +117,9 @@ fun AppTimePickerDialog(
             text = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = state) }
             },
-            confirmButton = { HapticTextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text("OK") } },
-            dismissButton = { HapticTextButton(onClick = onDismiss) { Text("Cancel") } },
-            containerColor = Color.White,
+            confirmButton = { HapticTextButton(onClick = { onConfirm(state.hour, state.minute) }) { Text(stringResource(R.string.auth_common_ok)) } },
+            dismissButton = { HapticTextButton(onClick = onDismiss) { Text(stringResource(R.string.auth_common_cancel)) } },
+            containerColor = LocalMyColorScheme.current.dashboardContainerColor,
         )
     }
 }

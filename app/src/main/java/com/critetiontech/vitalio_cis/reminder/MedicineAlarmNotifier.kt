@@ -48,30 +48,30 @@ object MedicineAlarmNotifier {
         val manager = context.getSystemService(NotificationManager::class.java)
         RETIRED_CHANNELS.forEach { manager.deleteNotificationChannel(it) }
         manager.createNotificationChannels(listOf(
-            NotificationChannel(CHANNEL_SOUND, "Medicine alarms", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Rings with alarm sound when it's time to take a medicine"
+            NotificationChannel(CHANNEL_SOUND, context.getString(R.string.med_channel_sound_name), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = context.getString(R.string.med_channel_sound_desc)
                 setSound(alarmSoundUri(), alarmAudioAttributes)
                 enableVibration(true)
                 vibrationPattern = VIBRATION_PATTERN
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 setBypassDnd(true)
             },
-            NotificationChannel(CHANNEL_VIBRATE, "Medicine alarms (vibrate only)", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Medicine alarms when alarm sound is turned off"
+            NotificationChannel(CHANNEL_VIBRATE, context.getString(R.string.med_channel_vibrate_name), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = context.getString(R.string.med_channel_vibrate_desc)
                 setSound(null, null)
                 enableVibration(true)
                 vibrationPattern = VIBRATION_PATTERN
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 setBypassDnd(true)
             },
-            NotificationChannel(CHANNEL_QUIET, "Pending medicine reminders", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Stays in the shade after an alarm until you respond"
+            NotificationChannel(CHANNEL_QUIET, context.getString(R.string.med_channel_quiet_name), NotificationManager.IMPORTANCE_LOW).apply {
+                description = context.getString(R.string.med_channel_quiet_desc)
                 setSound(null, null)
                 enableVibration(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             },
-            NotificationChannel(CHANNEL_STATUS, "Medicine log status", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "Tells you if a dose couldn't be logged"
+            NotificationChannel(CHANNEL_STATUS, context.getString(R.string.med_channel_status_name), NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = context.getString(R.string.med_channel_status_desc)
             },
         ))
     }
@@ -100,8 +100,8 @@ object MedicineAlarmNotifier {
         )
 
         val single = alarm.doses.singleOrNull()
-        val title = single?.let { "Time for ${it.medicineName}" }
-            ?: "Time for ${alarm.doses.size} medicines"
+        val title = single?.let { context.getString(R.string.med_notif_time_for_one, it.medicineName) }
+            ?: context.getString(R.string.med_notif_time_for_many, alarm.doses.size)
         val text = single?.let { listOf(it.dose, formatTime(it)).filter(String::isNotBlank).joinToString(" · ") }
             ?: alarm.doses.joinToString(", ") { it.medicineName }
         val bigText = alarm.doses.joinToString("\n") { d ->
@@ -121,9 +121,9 @@ object MedicineAlarmNotifier {
             .setOngoing(true)
             .setOnlyAlertOnce(!ringing)
             .setDeleteIntent(actionIntent(context, alarm, MedicineAlarmReceiver.ACTION_DISMISS))
-            .addAction(0, if (single != null) "Mark as taken" else "Mark all taken",
+            .addAction(0, if (single != null) context.getString(R.string.med_action_mark_taken) else context.getString(R.string.med_action_mark_all_taken),
                 actionIntent(context, alarm, MedicineAlarmReceiver.ACTION_TAKEN))
-            .addAction(0, "Snooze ${settings.snoozeMinutes} min",
+            .addAction(0, context.getString(R.string.med_action_snooze_min, settings.snoozeMinutes),
                 actionIntent(context, alarm, MedicineAlarmReceiver.ACTION_SNOOZE))
 
         if (ringing) {

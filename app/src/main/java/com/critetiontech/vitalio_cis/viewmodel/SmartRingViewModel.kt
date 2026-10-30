@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.model.UltrahumanDashboardData
 import com.critetiontech.ctvitalio.ring.RingOAuthCallback
@@ -99,7 +100,7 @@ class SmartRingViewModel : ViewModel() {
         } catch (e: Exception) {
             Log.e(TAG, "Unable to open browser: ${e.message}")
             _isLoading.value = false
-            _errorMessage.value = "Unable to start authentication session."
+            _errorMessage.value = MyApplication.appContext.getString(R.string.consult_ring_auth_start_failed)
         }
     }
 
@@ -130,7 +131,8 @@ class SmartRingViewModel : ViewModel() {
         if (tokens == null) {
             _isLoading.value = false
             _errorMessage.value = if (accessToken.isNullOrEmpty() && code.isNullOrEmpty())
-                "Authorization credentials not found." else "Could not get access token from Ultrahuman."
+                MyApplication.appContext.getString(R.string.consult_ring_credentials_not_found)
+            else MyApplication.appContext.getString(R.string.consult_ring_token_failed)
             return
         }
         insertToken(tokens)

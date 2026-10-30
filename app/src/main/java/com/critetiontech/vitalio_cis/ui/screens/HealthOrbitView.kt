@@ -31,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import kotlin.math.cos
 import kotlin.math.sin
@@ -75,7 +77,7 @@ fun HealthOrbitScreen(viewModel: VitalDetailViewModel = viewModel()) {
 
     val hasWarning = heartRate > 100 || oxygen < 95 || bpSys > 130 || bpDia > 90 || temperature > 99.5f || respRate > 20 || glucose !in 70f..140f
 
-    CommonAppBar(title = "Biometric HUD") {
+    CommonAppBar(title = stringResource(R.string.home_biometric_hud_title)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -117,20 +119,20 @@ fun DiagnosticTerminal(hr: Float, spo2: Float, sys: Float, hasWarning: Boolean) 
         Column {
             Text("> SYSTEM.SCANNING()...", color = clinicalBlue, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
             
-            val hrText = if(hr > 100) "TACHYCARDIA WARN" else "NOMINAL"
-            val o2Text = if(spo2 < 95) "HYPOXIA WARN" else "NOMINAL"
-            val bpText = if(sys > 130) "HYPERTENSION WARN" else "NOMINAL"
+            val hrText = if(hr > 100) stringResource(R.string.home_hud_tachycardia_warn) else stringResource(R.string.home_hud_nominal)
+            val o2Text = if(spo2 < 95) stringResource(R.string.home_hud_hypoxia_warn) else stringResource(R.string.home_hud_nominal)
+            val bpText = if(sys > 130) stringResource(R.string.home_hud_hypertension_warn) else stringResource(R.string.home_hud_nominal)
             
             Spacer(modifier = Modifier.height(4.dp))
-            Text("> HR CHECK : $hrText", color = if(hr > 100) alertRed else Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
-            Text("> O2 CHECK : $o2Text", color = if(spo2 < 95) alertRed else Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
-            Text("> BP CHECK : $bpText", color = if(sys > 130) alertRed else Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
+            Text(stringResource(R.string.home_hud_hr_check, hrText), color = if(hr > 100) alertRed else Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
+            Text(stringResource(R.string.home_hud_o2_check, o2Text), color = if(spo2 < 95) alertRed else Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
+            Text(stringResource(R.string.home_hud_bp_check, bpText), color = if(sys > 130) alertRed else Color.White, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
             
             Spacer(modifier = Modifier.height(8.dp))
             if (hasWarning) {
-                Text(">> ACTION REQUIRED: REFER TO CARE PLAN", color = alertRed, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                Text(stringResource(R.string.home_hud_action_required), color = alertRed, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             } else {
-                Text(">> OVERALL STATUS: ALL SYSTEMS CLEAR", color = clinicalBlue, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                Text(stringResource(R.string.home_hud_all_clear), color = clinicalBlue, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
             }
         }
     }
@@ -256,7 +258,7 @@ fun BiometricRadarVisualizer(
             drawDataNode(rot4, orbit4, cGlu, "GLU", "${glucose.toInt()}", "70-140")
         }
 
-        Icon(androidx.compose.material.icons.Icons.Default.Accessibility, "Human Core", tint = radarColor.copy(0.9f)
+        Icon(androidx.compose.material.icons.Icons.Default.Accessibility, stringResource(R.string.home_cd_human_core), tint = radarColor.copy(0.9f)
             , modifier = Modifier.size(36.dp))
     }
 }

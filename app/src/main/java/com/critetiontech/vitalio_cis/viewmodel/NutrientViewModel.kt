@@ -95,7 +95,7 @@ class NutrientViewModel(private val repo: NutriRepository = NutriRepository()) :
                         ?: list.firstOrNull()
                     _unit.value = pick
                     if (pick == null) {
-                        _detailError.value = "No serving sizes are available for this food."
+                        _detailError.value = com.critetiontech.ctvitalio.utils.MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_nutri_no_serving_sizes)
                         _detailLoading.value = false
                     } else loadNutrients()
                 }
@@ -142,7 +142,7 @@ class NutrientViewModel(private val repo: NutriRepository = NutriRepository()) :
             runCatching { repo.nutrients(food.foodId, _quantity.value, unit.id) }
                 .onSuccess {
                     _nutrients.value = it.filter { n -> n.nutrientName.isNotBlank() }
-                    if (_nutrients.value.isEmpty()) _detailError.value = "No nutrient data for this serving."
+                    if (_nutrients.value.isEmpty()) _detailError.value = com.critetiontech.ctvitalio.utils.MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_nutri_no_nutrient_data)
                 }
                 .onFailure { _nutrients.value = emptyList(); _detailError.value = it.message }
             _detailLoading.value = false

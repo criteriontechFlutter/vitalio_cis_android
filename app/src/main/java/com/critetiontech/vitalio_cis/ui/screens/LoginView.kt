@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -29,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -179,6 +182,9 @@ fun LoginScreen() {
 @Composable
 fun LoginCard(viewModel: LoginViewModel = viewModel()) {
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
+    val isSending by viewModel.loading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -236,7 +242,7 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             Modifier.fillMaxWidth()
         },
         shape = if (isTablet) RoundedCornerShape(30.dp) else RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)
     ) {
         Column(
             modifier = Modifier
@@ -249,15 +255,15 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             }) {
                 Column {
                     Text(
-                        text = "Login",
+                        text = stringResource(R.string.auth_login_title),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = AppColors.Primary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Access your health records and services",
-                        color = Color(0xFF888888),
+                        text = stringResource(R.string.auth_login_subtitle),
+                        color = colors.textGreyColor,
                         fontSize = 13.sp
                     )
                 }
@@ -272,15 +278,15 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             }) {
                 Column {
                     Text(
-                        text = "Enter UHID/Mobile No",
+                        text = stringResource(R.string.auth_login_uhid_label),
                         fontSize = 13.sp,
-                        color = Color(0xFF444444)
+                        color = colors.textDarkColor
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     CommonTextField(
                         value = viewModel.mobile,
-                        onValueChange = { viewModel.onMobileChange(it) },
-                        hint = "Enter UHID/Mobile No.",
+                        onValueChange = { viewModel.onMobileChange(it); viewModel.clearError() },
+                        hint = stringResource(R.string.auth_login_uhid_hint),
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Badge,
@@ -300,6 +306,10 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                             }
                         )
                     )
+                    errorMessage?.let {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = it, fontSize = 12.sp, color = Color(0xFFE53935))
+                    }
                 }
             }
 
@@ -311,8 +321,12 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                 scaleY = buttonScale
             }) {
                 CommonButton(
-                    text = "Send OTP",
+                    text = stringResource(R.string.auth_login_send_otp),
+                    isLoading = isSending,
+                    loadingText = stringResource(R.string.auth_login_sending_otp),
                     onClick = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
                         viewModel.sendOTP()
                     }
                 )
@@ -321,15 +335,15 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "By signing in you agree to our",
+                text = stringResource(R.string.auth_login_terms_prefix),
                 fontSize = 12.sp,
-                color = Color(0xFF888888),
+                color = colors.textGreyColor,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .graphicsLayer { alpha = titleAlpha }
             )
             Text(
-                text = "Terms & Conditions and Privacy Policy",
+                text = stringResource(R.string.auth_login_terms_link),
                 fontSize = 12.sp,
                 color = AppColors.Primary,
                 fontWeight = FontWeight.Medium,

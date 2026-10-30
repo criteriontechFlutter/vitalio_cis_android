@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
@@ -20,7 +22,7 @@ fun MedicalProfileScreen() {
 
     val colors = LocalMyColorScheme.current
     CommonAppBar(
-        title = "Medical Profile",
+        title = stringResource(R.string.profile_medical_profile),
     ) {
         Column(
             modifier = Modifier
@@ -40,9 +42,9 @@ fun MedicalProfileScreen() {
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    ProfileRow("Blood Group", "AB+")
-                    ProfileRow("Weight", "56 kg")
-                    ProfileRow("Height", "170 cm")
+                    ProfileRow(stringResource(R.string.profile_blood_group), "AB+")
+                    ProfileRow(stringResource(R.string.profile_weight), "56 kg")
+                    ProfileRow(stringResource(R.string.profile_height), "170 cm")
                 }
             }
 
@@ -58,18 +60,18 @@ fun MedicalProfileScreen() {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
-                    ProfileRow("Medical Conditions", "Hypothyroidism")
+                    ProfileRow(stringResource(R.string.profile_medical_conditions), "Hypothyroidism")
 
-                    ProfileRowWithTag("Allergies", "Rifampin", "Moderate")
+                    ProfileRowWithTag(stringResource(R.string.profile_menu_allergies), "Rifampin", "Moderate")
                     ProfileRowWithTag("", "Lemon", "Moderate")
 
                     ProfileRow(
-                        "Chronic Disease",
+                        stringResource(R.string.profile_chronic_disease),
                         "High Blood Pressure (Hypertension), Thalassemia"
                     )
 
                     ProfileRowWithTag(
-                        "Family's Health History",
+                        stringResource(R.string.profile_family_health_history_label),
                         "Blood Cancer (Leukemia)",
                         "Mother"
                     )
@@ -92,7 +94,7 @@ fun MedicalProfileScreen() {
                     .height(55.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Edit Medical Profile")
+                Text(stringResource(R.string.profile_edit_medical_profile))
             }
         }
     }

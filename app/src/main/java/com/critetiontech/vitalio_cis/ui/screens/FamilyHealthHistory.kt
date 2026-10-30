@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -78,7 +80,7 @@ fun FamilyHealthScreen(viewModel: FamilyHealthHistoryViewModel = viewModel()) {
     LaunchedEffect(Unit) { viewModel.done.collect { adding = false; removing = null } }
 
     CommonAppBar(
-        title = "Family's Health History",
+        title = stringResource(R.string.profile_family_health_history_label),
     )
     {
         Column(
@@ -92,15 +94,15 @@ fun FamilyHealthScreen(viewModel: FamilyHealthHistoryViewModel = viewModel()) {
                         CircularProgressIndicator(color = colors.primaryBlueColor, modifier = Modifier.align(Alignment.Center))
                     state.error != null && state.conditions.isEmpty() -> FamilyHistoryMessage(
                         icon = Icons.Rounded.WarningAmber,
-                        title = "Couldn't load your family's health history",
+                        title = stringResource(R.string.profile_family_history_load_failed_title),
                         text = state.error!!,
-                        actionText = "Try again",
+                        actionText = stringResource(R.string.profile_try_again),
                         onAction = viewModel::load,
                     )
                     state.conditions.isEmpty() -> FamilyHistoryMessage(
                         icon = Icons.Rounded.FamilyRestroom,
-                        title = "No family health history yet",
-                        text = "Add conditions that run in your family, like diabetes or hypertension.",
+                        title = stringResource(R.string.profile_no_family_history),
+                        text = stringResource(R.string.profile_no_family_history_text),
                     )
                     else -> LazyColumn(
                         contentPadding = PaddingValues(16.dp),
@@ -115,7 +117,7 @@ fun FamilyHealthScreen(viewModel: FamilyHealthHistoryViewModel = viewModel()) {
             }
 
             AddPillButton(
-                text = "+ Add Family's Health History",
+                text = stringResource(R.string.profile_add_family_history_button),
                 onClick = { viewModel.loadDiseases(); adding = true },
                 modifier = Modifier
                     .navigationBarsPadding()
@@ -134,11 +136,11 @@ fun FamilyHealthScreen(viewModel: FamilyHealthHistoryViewModel = viewModel()) {
 
     removing?.let { condition ->
         AppDialog(
-            title = "Remove ${condition.diseaseName}?",
-            message = "It will no longer be listed in your family's health history.",
+            title = stringResource(R.string.profile_remove_item_title, condition.diseaseName),
+            message = stringResource(R.string.profile_remove_family_history_message),
             icon = Icons.Rounded.DeleteOutline,
-            confirmText = "Remove",
-            dismissText = "Cancel",
+            confirmText = stringResource(R.string.profile_remove),
+            dismissText = stringResource(R.string.profile_cancel),
             destructive = true,
             loading = state.saving,
             onConfirm = { viewModel.remove(condition) },
@@ -171,13 +173,13 @@ private fun HealthCard(condition: FamilyHealthCondition, onRemove: () -> Unit) {
             Box {
                 Icon(
                     Icons.Default.MoreVert,
-                    contentDescription = "More options",
-                    tint = Color.Gray,
+                    contentDescription = stringResource(R.string.profile_cd_more_options),
+                    tint = colors.textGreyColor,
                     modifier = Modifier.clip(CircleShape).clickable { expanded = true }.padding(4.dp).size(18.dp),
                 )
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     DropdownMenuItem(
-                        text = { Text("Remove") },
+                        text = { Text(stringResource(R.string.profile_remove)) },
                         leadingIcon = { Icon(Icons.Rounded.DeleteOutline, contentDescription = null) },
                         onClick = { expanded = false; onRemove() },
                     )
@@ -192,7 +194,7 @@ private fun HealthCard(condition: FamilyHealthCondition, onRemove: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.padding(end = 10.dp),
         ) {
-            condition.relations.forEach { TagChip(text = it.label, color = it.tagColor) }
+            condition.relations.forEach { TagChip(text = profileRelationLabelRes(it.label)?.let { res -> stringResource(res) } ?: it.label, color = it.tagColor) }
         }
     }
 }
@@ -282,7 +284,7 @@ private fun AddFamilyHistorySheet(
                 .padding(bottom = 16.dp),
         ) {
             Text(
-                "Add Family's Health History",
+                stringResource(R.string.profile_add_family_history),
                 color = colors.textDarkColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
@@ -290,7 +292,7 @@ private fun AddFamilyHistorySheet(
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 22.dp),
             )
 
-            SheetLabel("Chronic Disease")
+            SheetLabel(stringResource(R.string.profile_chronic_disease))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -303,7 +305,7 @@ private fun AddFamilyHistorySheet(
                 Icon(Icons.Rounded.Search, contentDescription = null, tint = colors.textGreyColor.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    if (query.isEmpty()) Text("Select Chronic Diseases", color = colors.textGreyColor.copy(alpha = 0.7f), fontSize = 14.sp)
+                    if (query.isEmpty()) Text(stringResource(R.string.profile_select_chronic_diseases), color = colors.textGreyColor.copy(alpha = 0.7f), fontSize = 14.sp)
                     BasicTextField(
                         value = query,
                         onValueChange = { query = it.take(60) },
@@ -316,7 +318,7 @@ private fun AddFamilyHistorySheet(
                 if (query.isNotEmpty()) {
                     Icon(
                         Icons.Rounded.Close,
-                        contentDescription = "Clear search",
+                        contentDescription = stringResource(R.string.profile_cd_clear_search),
                         tint = colors.textGreyColor,
                         modifier = Modifier.size(20.dp).clip(CircleShape).clickable { query = "" },
                     )
@@ -363,7 +365,7 @@ private fun AddFamilyHistorySheet(
                 }
             } else if (query.isNotBlank()) {
                 Text(
-                    if (diseases.isEmpty()) "Loading diseases..." else "No matching disease",
+                    stringResource(if (diseases.isEmpty()) R.string.profile_loading_diseases else R.string.profile_no_matching_disease),
                     color = colors.textGreyColor,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 8.dp, start = 4.dp),
@@ -395,7 +397,7 @@ private fun AddFamilyHistorySheet(
                             Spacer(Modifier.width(4.dp))
                             Icon(
                                 Icons.Rounded.Close,
-                                contentDescription = "Remove ${disease.name}",
+                                contentDescription = stringResource(R.string.profile_cd_remove_item, disease.name),
                                 tint = colors.primaryBlueColor,
                                 modifier = Modifier
                                     .size(18.dp)
@@ -408,7 +410,7 @@ private fun AddFamilyHistorySheet(
             }
 
             Spacer(Modifier.height(20.dp))
-            SheetLabel("Select Relation")
+            SheetLabel(stringResource(R.string.profile_select_relation))
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -428,7 +430,7 @@ private fun AddFamilyHistorySheet(
                             }
                             .padding(horizontal = 14.dp, vertical = 15.dp),
                     ) {
-                        Text(relation.label, color = colors.textDarkColor, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                        Text(profileRelationLabelRes(relation.label)?.let { stringResource(it) } ?: relation.label, color = colors.textDarkColor, fontSize = 14.sp, modifier = Modifier.weight(1f))
                         SquareCheck(checked = checked)
                     }
                 }
@@ -445,7 +447,7 @@ private fun AddFamilyHistorySheet(
                     .bounceClick(enabled = canSubmit) { viewModel.add(selectedDiseases, selected) },
             ) {
                 if (saving) CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
-                else Text("Submit", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                else Text(stringResource(R.string.profile_submit), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             }
         }
     }

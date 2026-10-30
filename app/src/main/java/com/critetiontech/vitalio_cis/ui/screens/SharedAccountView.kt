@@ -16,6 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.Routes
@@ -44,7 +47,7 @@ fun SharedAccountScreen() {
     val navController = LocalNavController.current
     val colors = LocalMyColorScheme.current
     CommonAppBar(
-        title = "Shared Account",
+        title = stringResource(R.string.profile_shared_account),
         actions = {
             Box(modifier = Modifier
                 .background(color = colors.btnWhiteColor)
@@ -53,7 +56,7 @@ fun SharedAccountScreen() {
                     navController.navigate(Routes.ADDMEMBER)
                 }) {
                 Text(
-                    text = "Add Member",
+                    text = stringResource(R.string.profile_add_member),
                     style = AppTextStyles.style12PCB()
                 )
             }
@@ -98,7 +101,7 @@ fun MemberItem(member: Member) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(Color.LightGray, CircleShape)
+                    .background(if (isAppDark) colors.borderGreyLightColor else Color.LightGray, CircleShape)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -122,7 +125,7 @@ fun MemberItem(member: Member) {
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                    contentDescription = "Export",
+                    contentDescription = stringResource(R.string.profile_cd_export),
                     tint = colors.btnDarkColor
                 )
             }

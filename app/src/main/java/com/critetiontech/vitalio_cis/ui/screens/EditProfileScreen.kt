@@ -73,6 +73,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -110,6 +111,15 @@ private fun genderNameFromId(id: Int) = when (id) {
     1 -> "Male"
     2 -> "Female"
     else -> "Other"
+}
+
+/** Display label for a gender value; the English value itself is what gets sent to the API. */
+@androidx.annotation.StringRes
+private fun genderLabelRes(gender: String): Int? = when (gender) {
+    "Male" -> R.string.profile_gender_male
+    "Female" -> R.string.profile_gender_female
+    "Other" -> R.string.profile_gender_other
+    else -> null
 }
 
 private fun formatDisplayDate(dateStr: String): String {
@@ -200,8 +210,8 @@ fun EditProfileScreen(
 
     // ── validation ──
     val mobileError = when {
-        mobileNo.isEmpty() -> "Mobile number is required."
-        mobileNo.length < 10 -> "Mobile number must be at least 10 digits."
+        mobileNo.isEmpty() -> stringResource(R.string.profile_mobile_required)
+        mobileNo.length < 10 -> stringResource(R.string.profile_mobile_min_digits)
         else -> null
     }
     val emailRegex = Regex("^[A-Z0-9a-z._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}\$")
@@ -235,7 +245,7 @@ fun EditProfileScreen(
     }
 
     // CAMERA is declared in the manifest, so IMAGE_CAPTURE throws SecurityException until it's granted
-    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, "to take your profile photo") { launchCamera() }
+    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, stringResource(R.string.profile_camera_permission_reason)) { launchCamera() }
 
     LaunchedEffect(Unit) {
         viewModel.loadLocationData(
@@ -249,7 +259,7 @@ fun EditProfileScreen(
 
     LaunchedEffect(updateSuccess) {
         if (updateSuccess) {
-            android.widget.Toast.makeText(context, "Profile updated successfully!", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.profile_updated_success), android.widget.Toast.LENGTH_SHORT).show()
             viewModel.resetSuccess()
             navController.popBackStack()
         }
@@ -270,11 +280,11 @@ fun EditProfileScreen(
                 HapticTextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { dobMillis = it }
                     showDatePicker = false
-                }) { Text("OK", color = colors.primaryBlueColor) }
+                }) { Text(stringResource(R.string.profile_ok), color = colors.primaryBlueColor) }
             },
             dismissButton = {
                 HapticTextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel", color = colors.textGreyColor)
+                    Text(stringResource(R.string.profile_cancel), color = colors.textGreyColor)
                 }
             }
         ) {
@@ -302,7 +312,7 @@ fun EditProfileScreen(
         )
     }
 
-    CommonAppBar(title = "Edit Profile") {
+    CommonAppBar(title = stringResource(R.string.profile_edit_profile)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -328,7 +338,7 @@ fun EditProfileScreen(
 
                 // ════ SECTION 1: Personal Information ════
                 SectionCard(
-                    title = "Personal Information",
+                    title = stringResource(R.string.profile_section_personal_info),
                     icon = Icons.Default.Person,
                     colors = colors
                 ) {
@@ -336,8 +346,8 @@ fun EditProfileScreen(
                     EditProfileTextField(
                         value = firstName,
                         onValueChange = { firstName = it },
-                        label = "First Name",
-                        placeholder = "Enter first name",
+                        label = stringResource(R.string.profile_first_name),
+                        placeholder = stringResource(R.string.profile_first_name_placeholder),
                         readOnly = true,
                         colors = colors
                     )
@@ -346,15 +356,15 @@ fun EditProfileScreen(
                     EditProfileTextField(
                         value = lastName,
                         onValueChange = { lastName = it },
-                        label = "Last Name",
-                        placeholder = "Enter last name",
+                        label = stringResource(R.string.profile_last_name),
+                        placeholder = stringResource(R.string.profile_last_name_placeholder),
                         colors = colors
                     )
 
                     // Date of Birth
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "Date of Birth",
+                            text = stringResource(R.string.profile_date_of_birth),
                             style = AppTextStyles.style14GCN(),
                             fontSize = 14.sp
                         )
@@ -385,7 +395,7 @@ fun EditProfileScreen(
                     // Gender Pill Selector
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Gender",
+                            text = stringResource(R.string.profile_gender),
                             style = AppTextStyles.style14GCN(),
                             fontSize = 14.sp
                         )
@@ -408,7 +418,7 @@ fun EditProfileScreen(
 
                 // ════ SECTION 2: Contact Details ════
                 SectionCard(
-                    title = "Contact Details",
+                    title = stringResource(R.string.profile_section_contact_details),
                     icon = Icons.Default.Phone,
                     colors = colors
                 ) {
@@ -418,8 +428,8 @@ fun EditProfileScreen(
                             val filtered = v.filter { it.isDigit() }
                             mobileNo = if (filtered.length > 10) filtered.take(10) else filtered
                         },
-                        label = "Mobile Number",
-                        placeholder = "10-digit mobile number",
+                        label = stringResource(R.string.profile_mobile_number),
+                        placeholder = stringResource(R.string.profile_mobile_placeholder),
                         keyboardType = KeyboardType.Phone,
                         colors = colors
                     )
@@ -435,14 +445,14 @@ fun EditProfileScreen(
                     EditProfileTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = "Email Address",
+                        label = stringResource(R.string.profile_email_address),
                         placeholder = "example@vitalio.care",
                         keyboardType = KeyboardType.Email,
                         colors = colors
                     )
                     if (!emailValid && email.isNotEmpty()) {
                         Text(
-                            text = "Please enter a valid email address.",
+                            text = stringResource(R.string.profile_email_invalid),
                             color = Color.Red,
                             fontSize = 12.sp,
                             modifier = Modifier.fillMaxWidth()
@@ -452,7 +462,7 @@ fun EditProfileScreen(
 
                 // ════ SECTION 3: Health & Metrics ════
                 SectionCard(
-                    title = "Health & Metrics",
+                    title = stringResource(R.string.profile_section_health_metrics),
                     icon = Icons.Default.Favorite,
                     colors = colors
                 ) {
@@ -466,7 +476,7 @@ fun EditProfileScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = "Blood Group",
+                                text = stringResource(R.string.profile_blood_group),
                                 style = AppTextStyles.style14GCN(),
                                 fontSize = 14.sp
                             )
@@ -476,7 +486,7 @@ fun EditProfileScreen(
                                 onOptionSelected = { name ->
                                     selectedBloodGroupId = bloodGroupOptions.firstOrNull { it.name == name }?.id ?: 0
                                 },
-                                placeholder = "Select",
+                                placeholder = stringResource(R.string.profile_select),
                                 colors = colors
                             )
                         }
@@ -489,8 +499,8 @@ fun EditProfileScreen(
                             EditProfileTextField(
                                 value = weight,
                                 onValueChange = { weight = it.filter { c -> c.isDigit() || c == '.' } },
-                                label = "Weight (kg)",
-                                placeholder = "e.g. 65",
+                                label = stringResource(R.string.profile_weight_kg),
+                                placeholder = stringResource(R.string.profile_weight_placeholder),
                                 keyboardType = KeyboardType.Decimal,
                                 colors = colors
                             )
@@ -500,7 +510,7 @@ fun EditProfileScreen(
 
                 // ════ SECTION 4: Location Details ════
                 SectionCard(
-                    title = "Location Details",
+                    title = stringResource(R.string.profile_section_location),
                     icon = Icons.Default.LocationOn,
                     colors = colors
                 ) {
@@ -514,7 +524,7 @@ fun EditProfileScreen(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("Country", style = AppTextStyles.style14GCN(), fontSize = 14.sp)
+                            Text(stringResource(R.string.profile_country), style = AppTextStyles.style14GCN(), fontSize = 14.sp)
                             EditProfileDropdown(
                                 selectedValue = locationState.selectedCountryName,
                                 options = locationState.countries.map { it.name },
@@ -522,7 +532,7 @@ fun EditProfileScreen(
                                     val c = locationState.countries.firstOrNull { it.name == name }
                                     if (c != null) viewModel.onCountrySelected(c.id, c.name)
                                 },
-                                placeholder = "Select",
+                                placeholder = stringResource(R.string.profile_select),
                                 colors = colors
                             )
                         }
@@ -532,7 +542,7 @@ fun EditProfileScreen(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("State", style = AppTextStyles.style14GCN(), fontSize = 14.sp)
+                            Text(stringResource(R.string.profile_state), style = AppTextStyles.style14GCN(), fontSize = 14.sp)
                             EditProfileDropdown(
                                 selectedValue = locationState.selectedStateName,
                                 options = locationState.states.map { it.name },
@@ -540,7 +550,7 @@ fun EditProfileScreen(
                                     val s = locationState.states.firstOrNull { it.name == name }
                                     if (s != null) viewModel.onStateSelected(s.id, s.name)
                                 },
-                                placeholder = "Select",
+                                placeholder = stringResource(R.string.profile_select),
                                 colors = colors
                             )
                         }
@@ -556,7 +566,7 @@ fun EditProfileScreen(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Text("City", style = AppTextStyles.style14GCN(), fontSize = 14.sp)
+                            Text(stringResource(R.string.profile_city), style = AppTextStyles.style14GCN(), fontSize = 14.sp)
                             EditProfileDropdown(
                                 selectedValue = locationState.selectedCityName,
                                 options = locationState.cities.map { it.name },
@@ -564,7 +574,7 @@ fun EditProfileScreen(
                                     val c = locationState.cities.firstOrNull { it.name == name }
                                     if (c != null) viewModel.onCitySelected(c.id, c.name)
                                 },
-                                placeholder = "Select",
+                                placeholder = stringResource(R.string.profile_select),
                                 colors = colors
                             )
                         }
@@ -577,8 +587,8 @@ fun EditProfileScreen(
                             EditProfileTextField(
                                 value = zipCode,
                                 onValueChange = { zipCode = it.filter { c -> c.isDigit() } },
-                                label = "Zip Code",
-                                placeholder = "Zip Code",
+                                label = stringResource(R.string.profile_zip_code),
+                                placeholder = stringResource(R.string.profile_zip_code),
                                 keyboardType = KeyboardType.Number,
                                 colors = colors
                             )
@@ -589,8 +599,9 @@ fun EditProfileScreen(
                     EditProfileTextField(
                         value = address,
                         onValueChange = { address = it },
-                        label = "Street Address",
-                        placeholder = "Enter full address",
+                        label = stringResource(R.string.profile_street_address),
+                        placeholder = stringResource(R.string.profile_street_address_placeholder),
+                        multiLine = true,
                         colors = colors
                     )
                 }
@@ -664,7 +675,7 @@ fun EditProfileScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Save Changes",
+                                    text = stringResource(R.string.profile_save_changes),
                                     color = Color.White,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
@@ -770,7 +781,7 @@ private fun AvatarHeaderCard(
         }
 
         Text(
-            text = "Tap to change profile picture",
+            text = stringResource(R.string.profile_tap_to_change_picture),
             style = AppTextStyles.style12GCN(),
             fontSize = 13.sp
         )
@@ -869,7 +880,7 @@ private fun GenderPill(
             )
             Spacer(modifier = Modifier.width(5.dp))
             Text(
-                text = title,
+                text = genderLabelRes(title)?.let { stringResource(it) } ?: title,
                 color = if (isSelected) Color.White else colors.textDarkColor,
                 fontSize = 13.sp,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
@@ -889,7 +900,8 @@ private fun EditProfileTextField(
     placeholder: String,
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
-    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme
+    colors: com.critetiontech.ctvitalio.ui.theme.MyColorScheme,
+    multiLine: Boolean = false
 ) {
     val fieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = colors.primaryBlueColor,
@@ -911,8 +923,8 @@ private fun EditProfileTextField(
         placeholder = { Text(placeholder, color = colors.textGreyColor, fontSize = 13.sp) },
         modifier = Modifier.fillMaxWidth(),
         colors = fieldColors,
-        singleLine = label != "Street Address",
-        maxLines = if (label == "Street Address") 3 else 1,
+        singleLine = !multiLine,
+        maxLines = if (multiLine) 3 else 1,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         readOnly = readOnly,
         enabled = !readOnly,

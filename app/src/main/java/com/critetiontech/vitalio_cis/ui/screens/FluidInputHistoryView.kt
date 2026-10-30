@@ -1,5 +1,6 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.model.STANDARD_FLUID_INTAKE_ML
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
 
 import androidx.compose.foundation.background
@@ -52,6 +53,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.viewmodel.IntakeOutputViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -60,7 +65,9 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 private fun historyShimmerBrush(): Brush {
-    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val shimmerColors = if (isAppDark)
+        listOf(Color(0xFF2A3138), Color(0xFF3A434D), Color(0xFF2A3138))
+    else listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
     val transition = rememberInfiniteTransition(label = "histShimmer")
     val translateX by transition.animateFloat(
         initialValue = -600f, targetValue = 600f,
@@ -88,7 +95,7 @@ private fun FluidHistoryLogShimmer() {
                 }
                 Box(modifier = Modifier.width(48.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
             }
-            HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
+            HorizontalDivider(Modifier, thickness = 0.7.dp, color = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE0E0E0))
         }
     }
 }
@@ -109,6 +116,7 @@ fun FluidInputHistoryScreen(
 
     val intakeList by viewModel.intakeList.collectAsState()
     val fluidSummaryList by viewModel.fluidSummaryList.collectAsState()
+    val fluidRecommended by viewModel.fluidRecommended.collectAsState()
     val isLoading by viewModel.intakeLoading.collectAsState()
 
     val colors = LocalMyColorScheme.current
@@ -139,9 +147,7 @@ fun FluidInputHistoryScreen(
         else -> fluidSummaryList.sumOf { it.foodQuantity }
     }
 
-    val recommendedLimit = if (fluidSummaryList.isNotEmpty()) {
-        fluidSummaryList.maxOfOrNull { it.assignedLimit }?.takeIf { it > 0 } ?: 2000
-    } else 2000
+    val recommendedLimit = fluidRecommended ?: STANDARD_FLUID_INTAKE_ML
 
     val progressFraction = (totalIntake.toFloat() / recommendedLimit).coerceIn(0f, 1f)
     val remaining = (recommendedLimit - totalIntake).coerceAtLeast(0)
@@ -190,7 +196,7 @@ fun FluidInputHistoryScreen(
         label = "progressBar"
     )
 
-    CommonAppBar(title = "Fluid Input History") {
+    CommonAppBar(title = stringResource(R.string.track_fluid_input_history)) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -215,78 +221,85 @@ fun FluidInputHistoryScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Progress card
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
-                modifier = Modifier.graphicsLayer { alpha = progressCardAlpha; translationY = progressCardY }
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Recommended", style = AppTextStyles.style12GCN())
-                            Text(
-                                "${"%,d".format(recommendedLimit)} ml",
-                                style = AppTextStyles.style14BCN()
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("Intake", style = AppTextStyles.style12GCN())
-                            Text("$totalIntake ml", style = AppTextStyles.style14BCN())
-                        }
-                    }
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(Color(0xFFE8EFFF))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(animatedProgress)   // animated width
-                                .fillMaxHeight()
-                                .background(progressColor, RoundedCornerShape(5.dp))
-                        )
-                    }
-
-                    Spacer(Modifier.height(10.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+            // Progress card — daily only; Recommended is a per-day target
+            if (selectedTab == 0) {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
+                    modifier = Modifier.graphicsLayer { alpha = progressCardAlpha; translationY = progressCardY }
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (foodLegendNames.isEmpty()) {
-                                listOf("Water", "Juice", "Milk", "Tea").forEachIndexed { idx, name ->
-                                    LegendDot(name, legendColors.getOrElse(idx) { Color.Gray })
-                                }
-                            } else {
-                                foodLegendNames.forEachIndexed { idx, name ->
-                                    LegendDot(name, legendColors.getOrElse(idx) { Color.Gray })
-                                }
+                            Column {
+                                Text(stringResource(R.string.track_recommended), style = AppTextStyles.style12GCN())
+                                Text(
+                                    "${"%,d".format(recommendedLimit)} ml",
+                                    style = AppTextStyles.style14BCN()
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(stringResource(R.string.track_intake), style = AppTextStyles.style12GCN())
+                                Text("$totalIntake ml", style = AppTextStyles.style14BCN())
                             }
                         }
-                        Text(
-                            "Remaining: $remaining ml",
-                            style = AppTextStyles.style12GCN()
-                        )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(softTint(colors.primaryBlueColor, Color(0xFFE8EFFF)))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(animatedProgress)   // animated width
+                                    .fillMaxHeight()
+                                    .background(progressColor, RoundedCornerShape(5.dp))
+                            )
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (foodLegendNames.isEmpty()) {
+                                    listOf(
+                                        stringResource(R.string.track_water),
+                                        stringResource(R.string.track_juice),
+                                        stringResource(R.string.track_milk),
+                                        stringResource(R.string.track_tea)
+                                    ).forEachIndexed { idx, name ->
+                                        LegendDot(name, legendColors.getOrElse(idx) { Color.Gray })
+                                    }
+                                } else {
+                                    foodLegendNames.forEachIndexed { idx, name ->
+                                        LegendDot(name, legendColors.getOrElse(idx) { Color.Gray })
+                                    }
+                                }
+                            }
+                            Text(
+                                stringResource(R.string.track_remaining_ml, remaining),
+                                style = AppTextStyles.style12GCN()
+                            )
+                        }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
+            }
 
             // Log card
             Card(
@@ -299,11 +312,11 @@ fun FluidInputHistoryScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Fluid Intake Log", style = AppTextStyles.style16BCN())
+                        Text(stringResource(R.string.track_fluid_intake_log), style = AppTextStyles.style16BCN())
                         Row {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, tint = colors.textDarkColor)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Icon(Icons.Default.Check, contentDescription = null)
+                            Icon(Icons.Default.Check, contentDescription = null, tint = colors.textDarkColor)
                         }
                     }
 
@@ -314,7 +327,7 @@ fun FluidInputHistoryScreen(
                     } else if (selectedTab == 0) {
                         if (intakeList.isEmpty()) {
                             Text(
-                                "No records found",
+                                stringResource(R.string.track_no_records_found),
                                 style = AppTextStyles.style14GCN(),
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
@@ -344,7 +357,7 @@ fun FluidInputHistoryScreen(
                                 }
                                 Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidInputItem(
-                                    title = item.foodName?.takeIf { it.isNotEmpty() } ?: "Unknown",
+                                    title = item.foodName?.takeIf { it.isNotEmpty() } ?: stringResource(R.string.track_unknown),
                                     time = displayTime,
                                     value = "${item.foodQuantity} ml",
                                     color = legendColors.getOrElse(idx % legendColors.size) { Color.Gray }
@@ -355,7 +368,7 @@ fun FluidInputHistoryScreen(
                     } else {
                         if (fluidSummaryList.isEmpty()) {
                             Text(
-                                "No records found",
+                                stringResource(R.string.track_no_records_found),
                                 style = AppTextStyles.style14GCN(),
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
@@ -382,7 +395,7 @@ fun FluidInputHistoryScreen(
                                 Box(modifier = Modifier.graphicsLayer { alpha = itemAlpha; translationY = itemY }) {
                                 FluidInputItem(
                                     title = formattedDate,
-                                    time = "Limit: ${item.assignedLimit} ml",
+                                    time = stringResource(R.string.track_limit_ml, item.assignedLimit.toString()),
                                     value = "${item.foodQuantity} ml",
                                     color = legendColors.getOrElse(idx % legendColors.size) { Color.Gray }
                                 )
@@ -396,7 +409,7 @@ fun FluidInputHistoryScreen(
             Spacer(Modifier.height(16.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Total Intake  ", style = AppTextStyles.style14GCN())
+                Text(stringResource(R.string.track_total_intake) + "  ", style = AppTextStyles.style14GCN())
                 Text("$totalIntake ml", style = AppTextStyles.style16BCN())
             }
         }
@@ -421,7 +434,11 @@ private fun LegendDot(name: String, color: Color) {
 
 @Composable
 fun fluidTabSection(selected: Int, onTabChange: (Int) -> Unit) {
-    val tabs = listOf("Daily", "Weekly", "Monthly")
+    val tabs = listOf(
+        stringResource(R.string.track_daily),
+        stringResource(R.string.track_weekly),
+        stringResource(R.string.track_monthly)
+    )
     val colors = LocalMyColorScheme.current
     Row(
         modifier = Modifier
@@ -445,7 +462,7 @@ fun fluidTabSection(selected: Int, onTabChange: (Int) -> Unit) {
             ) {
                 Text(
                     text = text,
-                    color = if (selected == i) Color.White else Color.Gray
+                    color = if (selected == i) Color.White else colors.textGreyColor
                 )
             }
         }
@@ -520,7 +537,7 @@ fun FluidInputItem(
             }
             Text(value, style = AppTextStyles.style14BCN())
         }
-        HorizontalDivider(Modifier, thickness = 0.7.dp, color = Color(0xFFE0E0E0))
+        HorizontalDivider(Modifier, thickness = 0.7.dp, color = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE0E0E0))
     }
 }
 

@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 import androidx.compose.foundation.background
@@ -48,6 +51,7 @@ import com.critetiontech.ctvitalio.ui.screens.onboarding.components.ProgressCard
 fun BloodScreen() {
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     val bloodGroups = listOf(
         "A+", "A-", "B+", "B-",
         "AB+", "AB-", "O+", "O-"
@@ -58,7 +62,7 @@ fun BloodScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(20.dp)
     ) {
 
@@ -75,14 +79,14 @@ fun BloodScreen() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -93,8 +97,8 @@ fun BloodScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "One-Third Complete",
-            subtitle = "Nice work! You're a third of the way there!"
+            title = stringResource(R.string.auth_onb_progress_one_third_title),
+            subtitle = stringResource(R.string.auth_onb_progress_one_third_subtitle)
         )
         Spacer(modifier = Modifier.weight(1f))
 
@@ -109,7 +113,7 @@ fun BloodScreen() {
 
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "And what is your\nBlood Group?",
+            stringResource(R.string.auth_onb_blood_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
@@ -118,9 +122,9 @@ fun BloodScreen() {
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            "Your date of birth ensures personalized health insights.",
+            stringResource(R.string.auth_onb_dob_subtitle),
             fontSize = 16.sp,
-            color = Color.Gray )
+            color = colors.textGreyColor )
 
 
 
@@ -143,7 +147,7 @@ fun BloodScreen() {
                         .clip(RoundedCornerShape(12.dp))
                         .background(
                             if (isSelected) Color(0xFF1E5CCB)
-                            else Color(0xFFF2F4F7)
+                            else softTint(colors.textGreyColor, Color(0xFFF2F4F7))
                         )
                         .clickable {
                             selected = item
@@ -153,7 +157,7 @@ fun BloodScreen() {
                     Text(
                         text = item,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = if (isSelected) Color.White else Color.Black
+                        color = if (isSelected) Color.White else colors.textDarkColor
                     )
                 }
             }
@@ -170,10 +174,10 @@ fun BloodScreen() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 }

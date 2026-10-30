@@ -38,6 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -48,6 +50,8 @@ import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.model.SearchMedicineItem
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.viewmodel.AddMedicineReminderViewModel
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.Routes
@@ -76,7 +80,7 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        CommonAppBar(title = "Add Medicine") {
+        CommonAppBar(title = stringResource(R.string.med_add_medicine_title)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -93,15 +97,15 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .background(Color(0xFFFFF3E0), RoundedCornerShape(12.dp))
+                                .background(softTint(Orange500, Color(0xFFFFF3E0)), RoundedCornerShape(12.dp))
                                 .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(Icons.Default.Warning, null, tint = Orange500, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(10.dp))
-                            Text(err, style = AppTextStyles.style14BCN().copy(color = Color(0xFF795548)), modifier = Modifier.weight(1f))
+                            Text(err, style = AppTextStyles.style14BCN().copy(color = if (isAppDark) colors.textDarkColor else Color(0xFF795548)), modifier = Modifier.weight(1f))
                             HapticIconButton(onClick = { viewModel.clearError() }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.Close, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Close, null, tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -116,22 +120,22 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Card 1: Medication Details
-                    MedicineFormCard(title = "Medication Details", icon = Icons.Rounded.MedicalServices, iconColor = Blue500) {
+                    MedicineFormCard(title = stringResource(R.string.med_card_medication_details), icon = Icons.Rounded.MedicalServices, iconColor = Blue500) {
                         MedicineSearchSection(viewModel)
                     }
 
                     // Card 2: Frequency & Schedule
-                    MedicineFormCard(title = "Frequency & Schedule", icon = Icons.Rounded.Repeat, iconColor = Purple500) {
+                    MedicineFormCard(title = stringResource(R.string.med_card_frequency_schedule), icon = Icons.Rounded.Repeat, iconColor = Purple500) {
                         FrequencySection(viewModel)
                     }
 
                     // Card 3: Time Slots
-                    MedicineFormCard(title = "Time Slots", icon = Icons.Rounded.Schedule, iconColor = Orange500) {
+                    MedicineFormCard(title = stringResource(R.string.med_card_time_slots), icon = Icons.Rounded.Schedule, iconColor = Orange500) {
                         TimeSlotsSection(viewModel)
                     }
 
                     // Card 4: Reminder Duration
-                    MedicineFormCard(title = "Reminder Duration", icon = Icons.Rounded.DateRange, iconColor = Blue500) {
+                    MedicineFormCard(title = stringResource(R.string.med_card_reminder_duration), icon = Icons.Rounded.DateRange, iconColor = Blue500) {
                         DateRangeSection(viewModel)
                     }
 
@@ -140,11 +144,11 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                     //
                     //
                     // tructions
-                    MedicineFormCard(title = "Special Instructions", icon = Icons.Rounded.Edit, iconColor = Teal500) {
+                    MedicineFormCard(title = stringResource(R.string.med_card_special_instructions), icon = Icons.Rounded.Edit, iconColor = Teal500) {
                         OutlinedTextField(
                             value = viewModel.instructions,
                             onValueChange = { viewModel.instructions = it },
-                            placeholder = { Text("e.g., Take 30 mins after meal with warm water", fontSize = 13.sp) },
+                            placeholder = { Text(stringResource(R.string.med_instructions_placeholder), fontSize = 13.sp) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp),
                             colors = medicineFieldColors(Blue500)
@@ -170,7 +174,7 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                     } else {
                         Icon(Icons.Default.Add, null, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Add Reminder", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.med_add_reminder), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
@@ -255,6 +259,7 @@ fun MedicineFormCard(
 
 @Composable
 fun MedicineSearchSection(viewModel: AddMedicineReminderViewModel) {
+    val colors = LocalMyColorScheme.current
     val selected = viewModel.selectedMedicine
     if (selected != null) {
         // Selected medicine chip
@@ -270,10 +275,10 @@ fun MedicineSearchSection(viewModel: AddMedicineReminderViewModel) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(selected.brandName, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 Text("${selected.medicineName} • ${selected.dosageFormName} ${selected.doseStrength.toInt()} ${selected.unitName}",
-                    fontSize = 12.sp, color = Color.Gray, maxLines = 1)
+                    fontSize = 12.sp, color = colors.textGreyColor, maxLines = 1)
             }
             HapticIconButton(onClick = { viewModel.clearMedicineSelection() }) {
-                Icon(Icons.Default.Cancel, null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.Cancel, null, tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
             }
         }
     } else {
@@ -281,12 +286,12 @@ fun MedicineSearchSection(viewModel: AddMedicineReminderViewModel) {
         OutlinedTextField(
             value = viewModel.medicineName,
             onValueChange = { viewModel.onMedicineNameChange(it) },
-            placeholder = { Text("Search medicine by brand or name...", fontSize = 13.sp) },
-            leadingIcon = { Icon(Icons.Default.Search, null, tint = Color.Gray) },
+            placeholder = { Text(stringResource(R.string.med_search_medicine_placeholder), fontSize = 13.sp) },
+            leadingIcon = { Icon(Icons.Default.Search, null, tint = colors.textGreyColor) },
             trailingIcon = {
                 if (viewModel.medicineName.isNotEmpty() && !viewModel.isSearching) {
                     HapticIconButton(onClick = { viewModel.onMedicineNameChange("") }) {
-                        Icon(Icons.Default.Cancel, null, tint = Color.Gray, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Cancel, null, tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
                     }
                 }
             },
@@ -366,7 +371,7 @@ fun MedicineSearchResultRow(med: SearchMedicineItem, onClick: () -> Unit) {
     ) {
         Text(med.brandName, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
         Text("${med.medicineName} - ${med.dosageFormName} ${med.doseStrength.toInt()} ${med.unitName}",
-            fontSize = 11.sp, color = Color.Gray, maxLines = 1)
+            fontSize = 11.sp, color = LocalMyColorScheme.current.textGreyColor, maxLines = 1)
     }
     HorizontalDivider(color = Color.Gray.copy(0.1f))
 }
@@ -381,7 +386,7 @@ fun FrequencySection(viewModel: AddMedicineReminderViewModel) {
 
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         OutlinedTextField(
-            value = viewModel.frequency.ifEmpty { "Select Intake Frequency" },
+            value = if (viewModel.frequency.isEmpty()) stringResource(R.string.med_select_intake_frequency) else frequencyLabel(viewModel.frequency),
             onValueChange = {},
             readOnly = true,
             leadingIcon = { Icon(Icons.Rounded.Repeat, null, tint = Purple500, modifier = Modifier.size(18.dp)) },
@@ -395,7 +400,7 @@ fun FrequencySection(viewModel: AddMedicineReminderViewModel) {
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             items.forEach { item ->
                 DropdownMenuItem(
-                    text = { Text(item) },
+                    text = { Text(frequencyLabel(item)) },
                     onClick = { viewModel.frequency = item; expanded = false }
                 )
             }
@@ -411,6 +416,16 @@ fun FrequencySection(viewModel: AddMedicineReminderViewModel) {
     }
 }
 
+/** Display label for a frequency; the English value itself is what the API receives. */
+@Composable
+private fun frequencyLabel(frequency: String): String = when (frequency) {
+    "Every day" -> stringResource(R.string.med_freq_every_day)
+    "Every x day" -> stringResource(R.string.med_freq_every_x_day)
+    "Every week" -> stringResource(R.string.med_freq_every_week)
+    "Every month" -> stringResource(R.string.med_freq_every_month)
+    else -> frequency
+}
+
 @Composable
 fun FrequencyStepperSection(viewModel: AddMedicineReminderViewModel) {
     Row(
@@ -421,8 +436,8 @@ fun FrequencyStepperSection(viewModel: AddMedicineReminderViewModel) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("Repeat Interval", fontSize = 13.sp, color = Color.Gray)
-            Text("Every ${viewModel.frequencyValue} days", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text(stringResource(R.string.med_repeat_interval), fontSize = 13.sp, color = LocalMyColorScheme.current.textGreyColor)
+            Text(stringResource(R.string.med_every_n_days, viewModel.frequencyValue), fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             HapticIconButton(
@@ -461,11 +476,11 @@ fun FrequencyStepperSection(viewModel: AddMedicineReminderViewModel) {
 @Composable
 fun WeeklyDaysSelectorSection(viewModel: AddMedicineReminderViewModel) {
     val days = listOf(
-        "Sunday" to "S", "Monday" to "M", "Tuesday" to "T",
-        "Wednesday" to "W", "Thursday" to "T", "Friday" to "F", "Saturday" to "S"
+        "Sunday" to stringResource(R.string.med_day_letter_sun), "Monday" to stringResource(R.string.med_day_letter_mon), "Tuesday" to stringResource(R.string.med_day_letter_tue),
+        "Wednesday" to stringResource(R.string.med_day_letter_wed), "Thursday" to stringResource(R.string.med_day_letter_thu), "Friday" to stringResource(R.string.med_day_letter_fri), "Saturday" to stringResource(R.string.med_day_letter_sat)
     )
     Column {
-        Text("Select Specific Days", fontSize = 13.sp, color = Color.Gray)
+        Text(stringResource(R.string.med_select_specific_days), fontSize = 13.sp, color = LocalMyColorScheme.current.textGreyColor)
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             days.forEach { (id, label) ->
@@ -504,7 +519,7 @@ fun WeeklyDaysSelectorSection(viewModel: AddMedicineReminderViewModel) {
 fun MonthlyDateSelectorSection(viewModel: AddMedicineReminderViewModel) {
     var showCalendar by remember { mutableStateOf(false) }
     Column {
-        Text("Select Dates of the Month", fontSize = 13.sp, color = Color.Gray)
+        Text(stringResource(R.string.med_select_dates_of_month), fontSize = 13.sp, color = LocalMyColorScheme.current.textGreyColor)
         Spacer(Modifier.height(8.dp))
         Row(
             modifier = Modifier
@@ -515,10 +530,10 @@ fun MonthlyDateSelectorSection(viewModel: AddMedicineReminderViewModel) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                if (viewModel.selectedDates.isEmpty()) "Select dates" else viewModel.selectedDates.sorted().joinToString(", "),
+                if (viewModel.selectedDates.isEmpty()) stringResource(R.string.med_select_dates_hint) else viewModel.selectedDates.sorted().joinToString(", "),
                 modifier = Modifier.weight(1f),
                 fontSize = 14.sp,
-                color = if (viewModel.selectedDates.isEmpty()) Color.Gray else Color.Unspecified
+                color = if (viewModel.selectedDates.isEmpty()) LocalMyColorScheme.current.textGreyColor else Color.Unspecified
             )
             Icon(Icons.Default.DateRange, null, tint = Blue500)
         }
@@ -537,11 +552,11 @@ fun MultiDateCalendarDialog(selectedDates: List<Int>, onDatesChanged: (List<Int>
     var local by remember { mutableStateOf(selectedDates.toMutableList()) }
     val colors = LocalMyColorScheme.current
     com.critetiontech.ctvitalio.ui.components.AppDialog(
-        title = "Select Dates",
-        message = "Days of the month to take this medicine.",
+        title = stringResource(R.string.med_select_dates_title),
+        message = stringResource(R.string.med_select_dates_message),
         icon = Icons.Rounded.CalendarMonth,
-        confirmText = if (local.isEmpty()) "Done" else "Done (${local.size})",
-        dismissText = "Cancel",
+        confirmText = if (local.isEmpty()) stringResource(R.string.med_done) else stringResource(R.string.med_done_count, local.size),
+        dismissText = stringResource(R.string.med_cancel),
         onDismiss = onDismiss,
         onConfirm = { onDatesChanged(local.sorted()); onDismiss() },
     ) {
@@ -595,13 +610,13 @@ fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
                     Icon(Icons.Rounded.Schedule, null, tint = Orange500, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        if (slot.isSelected) timeFmt.format(slot.time) else "Tap to set time (HH:MM)",
+                        if (slot.isSelected) timeFmt.format(slot.time) else stringResource(R.string.med_tap_to_set_time),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (slot.isSelected) Color.Unspecified else Color.Gray,
+                        color = if (slot.isSelected) Color.Unspecified else LocalMyColorScheme.current.textGreyColor,
                         modifier = Modifier.weight(1f)
                     )
-                    Icon(Icons.Rounded.Edit, null, tint = Color.Gray, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Rounded.Edit, null, tint = LocalMyColorScheme.current.textGreyColor, modifier = Modifier.size(14.dp))
                 }
                 if (viewModel.timeSlots.size > 1 && index > 0) {
                     HapticIconButton(
@@ -619,7 +634,7 @@ fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
         HapticTextButton(onClick = { viewModel.addTimeSlot() }) {
             Icon(Icons.Default.AddCircle, null, tint = Blue500, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Add Another Time Slot", color = Blue500, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(stringResource(R.string.med_add_another_time_slot), color = Blue500, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
         }
     }
 
@@ -628,7 +643,7 @@ fun TimeSlotsSection(viewModel: AddMedicineReminderViewModel) {
         AppTimePickerDialog(
             initialHour = cal.get(Calendar.HOUR_OF_DAY),
             initialMinute = cal.get(Calendar.MINUTE),
-            title = "Dose time",
+            title = stringResource(R.string.med_dose_time),
             onDismiss = { editingSlot = null },
             onConfirm = { h, m ->
                 cal.set(Calendar.HOUR_OF_DAY, h)
@@ -649,12 +664,12 @@ fun DateRangeSection(viewModel: AddMedicineReminderViewModel) {
 
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         DateTile(
-            title = "Start Date",
+            title = stringResource(R.string.med_start_date),
             formattedDate = viewModel.startDateFormatted,
             modifier = Modifier.weight(1f)
         ) { editing = "start" }
         DateTile(
-            title = "End Date",
+            title = stringResource(R.string.med_end_date),
             formattedDate = viewModel.endDateFormatted,
             modifier = Modifier.weight(1f)
         ) { editing = "end" }
@@ -698,7 +713,7 @@ fun DateTile(title: String, formattedDate: String, modifier: Modifier = Modifier
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
-        Text(title, fontSize = 12.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+        Text(title, fontSize = 12.sp, color = LocalMyColorScheme.current.textGreyColor, fontWeight = FontWeight.Medium)
         Spacer(Modifier.height(6.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(formattedDate, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, modifier = Modifier.weight(1f))
@@ -731,12 +746,12 @@ fun MedicineSuccessSheet(onAddMore: () -> Unit, onDone: () -> Unit) {
                 modifier = Modifier.size(64.dp)
             )
             Spacer(Modifier.height(12.dp))
-            Text("Reminder Scheduled!", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text(stringResource(R.string.med_reminder_scheduled), fontWeight = FontWeight.Bold, fontSize = 20.sp)
             Spacer(Modifier.height(6.dp))
             Text(
-                "Your medicine reminder has been created successfully. We'll notify you on time.",
+                stringResource(R.string.med_reminder_scheduled_desc),
                 fontSize = 14.sp,
-                color = Color.Gray,
+                color = colors.textGreyColor,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(20.dp))
@@ -748,11 +763,11 @@ fun MedicineSuccessSheet(onAddMore: () -> Unit, onDone: () -> Unit) {
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Blue500)
             ) {
-                Text("Add Another Medicine", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(stringResource(R.string.med_add_another_medicine), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
             Spacer(Modifier.height(8.dp))
             HapticTextButton(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                Text("Done", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(stringResource(R.string.med_done), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
         }
     }
@@ -778,8 +793,8 @@ fun AddAllergyBottomSheet(
 
     com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
         onDismissRequest = onDismiss,
-        title = "Add Allergy",
-        subtitle = "Medicines or foods that cause a reaction",
+        title = stringResource(R.string.med_add_allergy_title),
+        subtitle = stringResource(R.string.med_add_allergy_subtitle),
         icon = Icons.Rounded.HealthAndSafety,
         iconTint = Color(0xFFE5484D),
     ) {
@@ -791,14 +806,14 @@ fun AddAllergyBottomSheet(
         ) {
 
             // Substance Type dropdown
-            Text("Substance Type", style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
+            Text(stringResource(R.string.med_substance_type), style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(6.dp))
             ExposedDropdownMenuBox(
                 expanded = typeExpanded,
                 onExpandedChange = { typeExpanded = !typeExpanded }
             ) {
                 OutlinedTextField(
-                    value = if (selectedType == "MedicineAllergy") "Medicine Allergy" else "Food Allergy",
+                    value = if (selectedType == "MedicineAllergy") stringResource(R.string.med_medicine_allergy) else stringResource(R.string.med_food_allergy),
                     onValueChange = {},
                     readOnly = true,
                     modifier = Modifier
@@ -813,7 +828,7 @@ fun AddAllergyBottomSheet(
                 ) {
                     allergyTypes.forEach { type ->
                         DropdownMenuItem(
-                            text = { Text(if (type == "MedicineAllergy") "Medicine Allergy" else "Food Allergy") },
+                            text = { Text(if (type == "MedicineAllergy") stringResource(R.string.med_medicine_allergy) else stringResource(R.string.med_food_allergy)) },
                             onClick = {
                                 selectedType = type
                                 typeExpanded = false
@@ -826,12 +841,12 @@ fun AddAllergyBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Substance Name
-            Text("Substance Name", style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
+            Text(stringResource(R.string.med_substance_name), style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = substanceName,
                 onValueChange = { substanceName = it },
-                placeholder = { Text("Enter substance name") },
+                placeholder = { Text(stringResource(R.string.med_enter_substance_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 trailingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
@@ -840,12 +855,12 @@ fun AddAllergyBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Reaction
-            Text("Reaction / Allergy", style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
+            Text(stringResource(R.string.med_reaction_allergy), style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = reaction,
                 onValueChange = { reaction = it },
-                placeholder = { Text("Enter reaction / allergy") },
+                placeholder = { Text(stringResource(R.string.med_enter_reaction_allergy)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -853,24 +868,28 @@ fun AddAllergyBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Details / Notes (optional)
-            Text("Notes (optional)", style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
+            Text(stringResource(R.string.med_notes_optional), style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = details,
                 onValueChange = { details = it },
-                placeholder = { Text("Additional details...") },
+                placeholder = { Text(stringResource(R.string.med_additional_details)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("How severe was the reaction?", style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
+            Text(stringResource(R.string.med_how_severe), style = com.critetiontech.ctvitalio.utils.AppTextStyles.style12GCN())
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Mild", "Moderate", "Severe").forEach { level ->
                     SeverityButton(
-                        text = level,
+                        text = when (level) {
+                            "Mild" -> stringResource(R.string.med_severity_mild)
+                            "Moderate" -> stringResource(R.string.med_severity_moderate)
+                            else -> stringResource(R.string.med_severity_severe)
+                        },
                         isSelected = selectedSeverity == level,
                         onClick = { selectedSeverity = level }
                     )
@@ -880,7 +899,7 @@ fun AddAllergyBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
 
             com.critetiontech.ctvitalio.utils.CommonButton(
-                text = if (isLoading) "Saving..." else "Submit",
+                text = if (isLoading) stringResource(R.string.med_saving) else stringResource(R.string.med_submit),
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     if (!isLoading) {
@@ -899,7 +918,7 @@ fun SeverityButton(text: String, isSelected: Boolean = false, onClick: () -> Uni
     Box(
         modifier = Modifier
             .background(
-                if (isSelected) Color(0xFF4A90D9) else Color(0xFFF3F4F6),
+                if (isSelected) Color(0xFF4A90D9) else LocalMyColorScheme.current.dashboardBackgroundColor,
                 RoundedCornerShape(12.dp)
             )
             .padding(horizontal = 16.dp, vertical = 10.dp)

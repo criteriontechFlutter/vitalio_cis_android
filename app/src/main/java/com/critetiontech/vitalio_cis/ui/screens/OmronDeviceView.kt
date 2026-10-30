@@ -48,6 +48,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -84,17 +86,18 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
     val selectedUser by viewModel.selectedUser.collectAsState()
     val model = viewModel.model ?: OmronModels.byCode(modelCode)
     val kind = viewModel.kind ?: OmronModels.autoKind(modelCode) ?: model?.kind
+    val kindLabel = kind?.label?.let { deviceKindLabel(it) }.orEmpty()
 
     // Bluetooth permission → Bluetooth on → action
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     val enableBluetooth = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (context.bluetoothOn()) pendingAction?.invoke()
-        else viewModel.showError("Bluetooth is off. Turn it on to connect your Omron device.")
+        else viewModel.showError(context.getString(R.string.device_omron_bluetooth_off))
         pendingAction = null
     }
     val nearbyDevices = rememberPermissionRequest(
         AppPermission.NearbyDevices,
-        "to find your Omron device and read its measurements over Bluetooth",
+        stringResource(R.string.device_omron_permission_reason),
         onDenied = { pendingAction = null },
     ) {
         if (context.bluetoothOn()) { pendingAction?.invoke(); pendingAction = null }
@@ -107,12 +110,12 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
     val sync = { withBluetooth(viewModel::sync) }
     val pair = { withBluetooth(viewModel::pair) }
 
-    CommonAppBar(title = "Omron ${model?.code ?: kind?.label.orEmpty()}") {
+    CommonAppBar(title = "Omron ${model?.code ?: kindLabel}") {
         Column(
             modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor).verticalScroll(rememberScrollState())
         ) {
             if (kind == null) {
-                Text("This device isn't supported.", modifier = Modifier.padding(24.dp), color = colors.textGreyColor)
+                Text(stringResource(R.string.device_not_supported), modifier = Modifier.padding(24.dp), color = colors.textGreyColor)
                 return@Column
             }
             val busy = phase == OmronPhase.Pairing || phase == OmronPhase.Syncing
@@ -122,21 +125,21 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
             AnimatedEnter(index = 0) {
                 DeviceHeader(
                     icon = if (kind == OmronKind.BP) Icons.Filled.MonitorHeart else Icons.Filled.MonitorWeight,
-                    eyebrow = if (model != null) "Omron · ${model.label}" else "Omron · Any supported model",
-                    title = model?.code ?: kind.label,
+                    eyebrow = if (model != null) "Omron · ${deviceKindLabel(model.label)}" else "Omron · ${stringResource(R.string.device_any_supported_model)}",
+                    title = model?.code ?: kindLabel,
                     status = when {
-                        phase == OmronPhase.Pairing -> "Searching…"
-                        phase == OmronPhase.Syncing -> "Reading…"
-                        d == null -> "Not paired"
-                        d.lastSyncAt == 0L -> "Paired · User ${d.user}"
-                        else -> "User ${d.user} · synced ${syncedAgo(d.lastSyncAt)}"
+                        phase == OmronPhase.Pairing -> stringResource(R.string.device_status_searching)
+                        phase == OmronPhase.Syncing -> stringResource(R.string.device_status_reading)
+                        d == null -> stringResource(R.string.device_status_not_paired)
+                        d.lastSyncAt == 0L -> stringResource(R.string.device_paired_user, d.user)
+                        else -> stringResource(R.string.device_user_synced, d.user, syncedAgo(d.lastSyncAt))
                     },
                     live = d != null,
                     busy = busy,
                     action = {
-                        if (d == null) HeaderActionPill(if (busy) "Pairing" else "Pair", Icons.Filled.Bluetooth, enabled = !busy, onClick = pair)
+                        if (d == null) HeaderActionPill(if (busy) stringResource(R.string.device_action_pairing) else stringResource(R.string.device_action_pair), Icons.Filled.Bluetooth, enabled = !busy, onClick = pair)
                         else HeaderActionPill(
-                            if (busy) "Syncing" else "Sync", Icons.Filled.Sync,
+                            if (busy) stringResource(R.string.device_action_syncing) else stringResource(R.string.device_action_sync), Icons.Filled.Sync,
                             enabled = !busy && !saving, spinning = phase == OmronPhase.Syncing, onClick = sync
                         )
                     }
@@ -155,24 +158,24 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
             ) { p ->
                 when (p) {
                     OmronPhase.Pairing -> RadarBusyCard(
-                        "Searching for your Omron ${kind.label.lowercase()}",
-                        "Keep \"P\" blinking on the device and accept the Bluetooth request if asked. We'll recognise the model.",
+                        stringResource(R.string.device_omron_searching_for, kindLabel.lowercase()),
+                        stringResource(R.string.device_omron_searching_hint),
                         onCancel = viewModel::cancel
                     )
-                    OmronPhase.Syncing -> RadarBusyCard("Reading measurements", "Keep the device close to your phone.", onCancel = viewModel::cancel)
+                    OmronPhase.Syncing -> RadarBusyCard(stringResource(R.string.device_omron_reading_measurements), stringResource(R.string.device_omron_keep_device_close), onCancel = viewModel::cancel)
                     OmronPhase.JustPaired -> StatusCard(
-                        true, "${model?.code ?: "Device"} paired", "Take a measurement on the device, then sync to see it here.",
-                        action = "Sync now", actionIcon = Icons.Filled.Sync, onAction = sync
+                        true, stringResource(R.string.device_model_paired, model?.code ?: stringResource(R.string.device_generic_device)), stringResource(R.string.device_omron_just_paired_message),
+                        action = stringResource(R.string.device_action_sync_now), actionIcon = Icons.Filled.Sync, onAction = sync
                     )
                     is OmronPhase.Failed -> StatusCard(
-                        false, "Couldn't connect", p.message,
-                        action = "Try again", actionIcon = Icons.Filled.Refresh, onAction = if (d == null) pair else sync
+                        false, stringResource(R.string.device_couldnt_connect), p.message,
+                        action = stringResource(R.string.device_action_try_again), actionIcon = Icons.Filled.Refresh, onAction = if (d == null) pair else sync
                     )
                     is OmronPhase.Synced -> if (p.latest == null) StatusCard(
-                        false, "No readings found",
-                        "Take a measurement first. If you just did, press the device's Bluetooth button and sync again.",
+                        false, stringResource(R.string.device_omron_no_readings),
+                        stringResource(R.string.device_omron_no_readings_message),
                         icon = Icons.Filled.Info, tint = DeviceAmber,
-                        action = "Sync again", actionIcon = Icons.Filled.Sync, onAction = sync
+                        action = stringResource(R.string.device_action_sync_again), actionIcon = Icons.Filled.Sync, onAction = sync
                     ) else ReadingCard(p, p.latest, kind, onSave = viewModel::save)
                     OmronPhase.Idle -> Spacer(Modifier.height(0.dp))
                 }
@@ -184,11 +187,11 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
                 }
                 AnimatedEnter(index = 2) {
                     StepsCard(
-                        "How to pair",
+                        stringResource(R.string.device_omron_how_to_pair),
                         listOf(
-                            Icons.Filled.BatteryChargingFull to "Put batteries in and set the date & time on the device (see its manual).",
-                            Icons.Filled.Bluetooth to "Press and hold the Bluetooth / transfer button until \"P\" blinks on the screen.",
-                            Icons.Filled.TouchApp to "Keep the device next to your phone and tap Pair above."
+                            Icons.Filled.BatteryChargingFull to stringResource(R.string.device_omron_pair_step_1),
+                            Icons.Filled.Bluetooth to stringResource(R.string.device_omron_pair_step_2),
+                            Icons.Filled.TouchApp to stringResource(R.string.device_omron_pair_step_3)
                         )
                     )
                 }
@@ -196,15 +199,15 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
             } else {
                 AnimatedEnter(index = 1) {
                     StepsCard(
-                        "How to sync",
+                        stringResource(R.string.device_omron_how_to_sync),
                         if (kind == OmronKind.BP) listOf(
-                            Icons.Filled.MonitorHeart to "Take your blood pressure as User ${d.user} on the device.",
-                            Icons.Filled.Bluetooth to "Press the Bluetooth / transfer button once (some models send automatically).",
-                            Icons.Filled.CloudUpload to "Tap Sync above, check your latest reading and tap Save."
+                            Icons.Filled.MonitorHeart to stringResource(R.string.device_omron_sync_bp_step_1, d.user),
+                            Icons.Filled.Bluetooth to stringResource(R.string.device_omron_sync_bp_step_2),
+                            Icons.Filled.CloudUpload to stringResource(R.string.device_omron_sync_bp_step_3)
                         ) else listOf(
-                            Icons.Filled.MonitorWeight to "Step on the scale and wait for the reading.",
-                            Icons.Filled.Bluetooth to "Keep the scale on; it sends readings over Bluetooth.",
-                            Icons.Filled.Sync to "Tap Sync above."
+                            Icons.Filled.MonitorWeight to stringResource(R.string.device_omron_sync_scale_step_1),
+                            Icons.Filled.Bluetooth to stringResource(R.string.device_omron_sync_scale_step_2),
+                            Icons.Filled.Sync to stringResource(R.string.device_omron_sync_scale_step_3)
                         )
                     )
                 }
@@ -213,10 +216,10 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
                         HapticTextButton(onClick = viewModel::remove, enabled = !busy && !saving) {
                             Icon(Icons.Filled.LinkOff, null, tint = DeviceRed, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("Remove device", color = DeviceRed)
+                            Text(stringResource(R.string.device_remove_device), color = DeviceRed)
                         }
                         Text(
-                            "After removing, also forget the device in your phone's Bluetooth settings before pairing again.",
+                            stringResource(R.string.device_omron_remove_hint),
                             fontSize = 11.sp, color = colors.textGreyColor, textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 32.dp)
                         )
@@ -242,11 +245,11 @@ private fun SupportedDevicesCard(kind: OmronKind) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.Info, null, tint = colors.primaryBlueColor, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Caption("Supported devices")
+            Caption(stringResource(R.string.device_supported_devices))
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "No need to pick your model: the app recognises it while pairing. These Omron models work:",
+            stringResource(R.string.device_omron_supported_models_intro),
             fontSize = 12.sp, color = colors.textDarkColor, lineHeight = 17.sp
         )
         Spacer(Modifier.height(10.dp))
@@ -267,9 +270,9 @@ private fun UserPicker(count: Int, selected: Int, enabled: Boolean, onSelect: (I
     val colors = LocalMyColorScheme.current
     val p = colors.primaryBlueColor
     FlatCard {
-        Caption("Device user")
+        Caption(stringResource(R.string.device_device_user))
         Spacer(Modifier.height(4.dp))
-        Text("Pick the user you measure as on the device. Readings are stored per user.", fontSize = 12.sp, color = colors.textDarkColor, lineHeight = 17.sp)
+        Text(stringResource(R.string.device_omron_pick_user), fontSize = 12.sp, color = colors.textDarkColor, lineHeight = 17.sp)
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             (1..count).forEach { user ->
@@ -283,7 +286,7 @@ private fun UserPicker(count: Int, selected: Int, enabled: Boolean, onSelect: (I
                 ) {
                     Icon(Icons.Filled.Person, null, tint = if (on) Color.White else p, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("User $user", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = if (on) Color.White else colors.textDarkColor)
+                    Text(stringResource(R.string.device_user_number, user), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = if (on) Color.White else colors.textDarkColor)
                 }
             }
         }
@@ -291,14 +294,14 @@ private fun UserPicker(count: Int, selected: Int, enabled: Boolean, onSelect: (I
 }
 
 /** AHA blood-pressure categories, used to colour the reading and place it on the gauge. */
-internal data class BpCategory(val label: String, val color: Color, val index: Int)
+internal data class BpCategory(@androidx.annotation.StringRes val label: Int, val color: Color, val index: Int)
 
 internal val bpScale = listOf(
-    "Normal" to Color(0xFF43A047),
-    "Elevated" to Color(0xFFF9A825),
-    "Stage 1" to Color(0xFFFB8C00),
-    "Stage 2" to Color(0xFFE53935),
-    "Crisis" to Color(0xFFB71C1C),
+    R.string.device_bp_normal to Color(0xFF43A047),
+    R.string.device_bp_elevated to Color(0xFFF9A825),
+    R.string.device_bp_stage_1 to Color(0xFFFB8C00),
+    R.string.device_bp_stage_2 to Color(0xFFE53935),
+    R.string.device_bp_crisis to Color(0xFFB71C1C),
 )
 
 internal fun bpCategory(sys: Int, dia: Int): BpCategory {
@@ -309,7 +312,7 @@ internal fun bpCategory(sys: Int, dia: Int): BpCategory {
         sys >= 120 -> 1
         else -> 0
     }
-    val label = when (i) { 2 -> "High · Stage 1"; 3 -> "High · Stage 2"; 4 -> "Hypertensive crisis"; else -> bpScale[i].first }
+    val label = when (i) { 2 -> R.string.device_bp_high_stage_1; 3 -> R.string.device_bp_high_stage_2; 4 -> R.string.device_bp_hypertensive_crisis; else -> bpScale[i].first }
     return BpCategory(label, bpScale[i].second, i)
 }
 
@@ -339,7 +342,7 @@ internal fun BpGauge(category: BpCategory) {
         Row(Modifier.fillMaxWidth()) {
             bpScale.forEachIndexed { i, (name, _) ->
                 Text(
-                    name, fontSize = 9.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
+                    stringResource(name), fontSize = 9.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
                     color = if (i == category.index) category.color else colors.textGreyColor,
                     fontWeight = if (i == category.index) FontWeight.Bold else FontWeight.Normal
                 )
@@ -361,7 +364,7 @@ private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, kind: OmronK
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(7.dp).graphicsLayer { alpha = liveAlpha }.clip(CircleShape).background(accent))
             Spacer(Modifier.width(6.dp))
-            Caption("Latest reading")
+            Caption(stringResource(R.string.device_latest_reading))
             r.sequence?.let {
                 Spacer(Modifier.width(6.dp))
                 Text(
@@ -373,7 +376,7 @@ private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, kind: OmronK
             Spacer(Modifier.weight(1f))
             category?.let {
                 Text(
-                    it.label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = it.color,
+                    stringResource(it.label), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = it.color,
                     modifier = Modifier.clip(RoundedCornerShape(50)).background(tintFill(it.color))
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 )
@@ -384,12 +387,12 @@ private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, kind: OmronK
         if (r.isBloodPressure) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Column {
-                    Caption("Sys")
+                    Caption(stringResource(R.string.device_field_sys))
                     Text("${rememberCountUp(r.systolic!!)}", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = colors.textDarkColor, lineHeight = 50.sp)
                 }
                 Text("/", fontSize = 36.sp, color = colors.textGreyColor.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
                 Column {
-                    Caption("Dia")
+                    Caption(stringResource(R.string.device_field_dia))
                     Text("${rememberCountUp(r.diastolic!!)}", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = colors.textDarkColor, lineHeight = 50.sp)
                 }
                 Text("mmHg", fontSize = 13.sp, color = colors.textGreyColor, modifier = Modifier.padding(start = 8.dp, bottom = 10.dp))
@@ -401,28 +404,28 @@ private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, kind: OmronK
                 Text("${r.weightKg}", fontSize = 44.sp, fontWeight = FontWeight.Bold, color = colors.textDarkColor)
                 Text(" kg", fontSize = 14.sp, color = colors.textGreyColor, modifier = Modifier.padding(bottom = 8.dp))
             }
-            r.bodyFatPercent?.let { Text("Body fat $it%", fontSize = 13.sp, color = colors.textGreyColor) }
+            r.bodyFatPercent?.let { Text(stringResource(R.string.device_body_fat_percent, it), fontSize = 13.sp, color = colors.textGreyColor) }
         }
 
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             if (r.isBloodPressure) {
-                InfoTile("Pulse", r.pulse?.let { "$it bpm" } ?: "--", Icons.Filled.Favorite, Color(0xFFE53935), Modifier.weight(1f), heartbeat = true)
+                InfoTile(stringResource(R.string.device_field_pulse), r.pulse?.let { "$it bpm" } ?: "--", Icons.Filled.Favorite, Color(0xFFE53935), Modifier.weight(1f), heartbeat = true)
             }
             InfoTile(
-                if (r.timeFromDevice) "Measured" else "Synced",
+                if (r.timeFromDevice) stringResource(R.string.device_measured) else stringResource(R.string.device_synced),
                 "${local.format(readingClock)}\n${local.format(readingDay)}",
                 Icons.Filled.Schedule, colors.primaryBlueColor, Modifier.weight(1f)
             )
         }
         if (!r.timeFromDevice) {
-            NoteRow(Icons.Filled.Info, "The monitor's clock isn't set, so the measured time is unknown. Set the date & time on the device.", DeviceAmber, Modifier.padding(top = 10.dp))
+            NoteRow(Icons.Filled.Info, stringResource(R.string.device_omron_clock_not_set), DeviceAmber, Modifier.padding(top = 10.dp))
         }
         if (r.irregularHeartbeat) {
-            NoteRow(Icons.Filled.Warning, "Irregular heartbeat detected", DeviceAmber, Modifier.padding(top = 10.dp))
+            NoteRow(Icons.Filled.Warning, stringResource(R.string.device_irregular_heartbeat), DeviceAmber, Modifier.padding(top = 10.dp))
         }
         AnimatedVisibility(visible = result.error != null) {
-            NoteRow(Icons.Filled.ErrorOutline, "Couldn't save: ${result.error.orEmpty()}", DeviceRed, Modifier.padding(top = 10.dp))
+            NoteRow(Icons.Filled.ErrorOutline, stringResource(R.string.device_couldnt_save_reason, result.error.orEmpty()), DeviceRed, Modifier.padding(top = 10.dp))
         }
         Spacer(Modifier.height(16.dp))
 
@@ -433,10 +436,10 @@ private fun ReadingCard(result: OmronPhase.Synced, r: OmronReading, kind: OmronK
             label = "saveState"
         ) { state ->
             when (state) {
-                0 -> NoteRow(Icons.Filled.Info, "Weight is shown here only — the server doesn't store weight from devices yet.", colors.textGreyColor)
+                0 -> NoteRow(Icons.Filled.Info, stringResource(R.string.device_omron_weight_not_stored), colors.textGreyColor)
                 2 -> SavedBanner()
                 else -> GradientButton(
-                    if (result.error != null) "Try again" else "Save to health record",
+                    if (result.error != null) stringResource(R.string.device_action_try_again) else stringResource(R.string.device_save_to_health_record),
                     if (result.error != null) Icons.Filled.Refresh else Icons.Filled.CloudUpload,
                     colorsOverride = listOf(Color(0xFF1B7A43), DeviceGreen, Color(0xFF4CC17F)),
                     loading = result.saving,
@@ -492,8 +495,8 @@ internal fun SavedBanner() {
         ) { Icon(Icons.Filled.Check, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
         Spacer(Modifier.width(12.dp))
         Column {
-            Text("Saved to your health record", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = DeviceGreen)
-            Text("It now shows in Vitals.", fontSize = 12.sp, color = DeviceGreen.copy(alpha = 0.8f))
+            Text(stringResource(R.string.device_saved_to_health_record), fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = DeviceGreen)
+            Text(stringResource(R.string.device_now_shows_in_vitals), fontSize = 12.sp, color = DeviceGreen.copy(alpha = 0.8f))
         }
     }
 }

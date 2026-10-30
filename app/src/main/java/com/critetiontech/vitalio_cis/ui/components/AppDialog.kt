@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -60,7 +62,7 @@ fun AppDialog(
     message: String? = null,
     icon: ImageVector? = null,
     iconTint: Color? = null,
-    confirmText: String? = "OK",
+    confirmText: String? = stringResource(R.string.auth_common_ok),
     onConfirm: () -> Unit = onDismiss,
     dismissText: String? = null,
     destructive: Boolean = false,
@@ -111,7 +113,7 @@ fun AppDialog(
                             .border(1.dp, colors.borderGreyLightColor.copy(alpha = 0.5f), CircleShape)
                             .bounceClick(enabled = canDismiss) { onDismiss() },
                     ) {
-                        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.auth_common_close), tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
                     }
                 }
             }

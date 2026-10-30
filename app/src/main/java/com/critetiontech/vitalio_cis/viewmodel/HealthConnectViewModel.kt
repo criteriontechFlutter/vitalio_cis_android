@@ -8,6 +8,7 @@ import com.critetiontech.ctvitalio.healthconnect.WearableData
 import com.critetiontech.ctvitalio.healthconnect.WearableReader
 import com.critetiontech.ctvitalio.healthconnect.WearableSnapshot
 import com.critetiontech.ctvitalio.healthconnect.WearableSync
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +28,7 @@ class HealthConnectViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow("")
     val errorMessage: StateFlow<String> = _errorMessage
 
-    private val _availabilityMessage = MutableStateFlow("Checking Health Connect…")
+    private val _availabilityMessage = MutableStateFlow(context.getString(R.string.device_hc_checking))
     val availabilityMessage: StateFlow<String> = _availabilityMessage
 
     private val _snapshot = MutableStateFlow<WearableSnapshot?>(null)
@@ -49,13 +50,13 @@ class HealthConnectViewModel : ViewModel() {
     fun checkAvailability(sdkStatus: Int) {
         Log.d("HealthConnect", "SDK status = $sdkStatus")
         when (sdkStatus) {
-            HealthConnectClient.SDK_AVAILABLE -> _availabilityMessage.value = "Health Connect is available ✓"
+            HealthConnectClient.SDK_AVAILABLE -> _availabilityMessage.value = context.getString(R.string.device_hc_available)
             HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
-                _availabilityMessage.value = "Health Connect needs an update"
+                _availabilityMessage.value = context.getString(R.string.device_hc_needs_update)
                 _syncState.value = SyncState.UPDATE_REQUIRED
             }
             else -> {
-                _availabilityMessage.value = "Health Connect is not installed"
+                _availabilityMessage.value = context.getString(R.string.device_hc_not_installed)
                 _syncState.value = SyncState.NOT_INSTALLED
             }
         }
@@ -95,8 +96,8 @@ class HealthConnectViewModel : ViewModel() {
             _syncState.value = when {
                 result.error != null -> { _errorMessage.value = result.error; SyncState.ERROR }
                 nothingRead -> {
-                    _errorMessage.value = snapshot.readErrors.firstOrNull()?.let { "Couldn't read from Health Connect: $it" }
-                        ?: "No data found from your watch or health apps yet.\nMake sure your watch app (e.g. Samsung Health) is set to sync with Health Connect."
+                    _errorMessage.value = snapshot.readErrors.firstOrNull()?.let { context.getString(R.string.device_hc_read_error, it) }
+                        ?: context.getString(R.string.device_hc_no_data_found)
                     SyncState.ERROR
                 }
                 else -> SyncState.SUCCESS

@@ -18,6 +18,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.EventAvailable
+import androidx.compose.material.icons.rounded.NotificationImportant
+import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.Medication
 import androidx.compose.material.icons.rounded.NotificationsActive
@@ -32,11 +35,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.critetiontech.ctvitalio.reminder.AlarmSetup
+import com.critetiontech.ctvitalio.reminder.HealthNudges
+import com.critetiontech.ctvitalio.reminder.NudgeSettings
 import com.critetiontech.ctvitalio.reminder.MedicineReminderScheduler
 import com.critetiontech.ctvitalio.reminder.ReminderSettings
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
@@ -70,6 +77,16 @@ fun MedicineReminderSettingsScreen() {
     var doses by remember { mutableStateOf(settings.doses) }
     var syncing by remember { mutableStateOf(false) }
 
+    val nudges = remember { NudgeSettings(context) }
+    var fluidNudge by remember { mutableStateOf(nudges.fluidEnabled) }
+    var missedDoseNudge by remember { mutableStateOf(nudges.missedDoseEnabled) }
+    var appointmentNudge by remember { mutableStateOf(nudges.appointmentEnabled) }
+
+    fun applyNudge(block: NudgeSettings.() -> Unit) {
+        nudges.block()
+        HealthNudges.schedule(context)
+    }
+
     var setup by remember { mutableStateOf(AlarmSetup.requirements(context)) }
 
     fun applyChange(block: ReminderSettings.() -> Unit) {
@@ -97,7 +114,7 @@ fun MedicineReminderSettingsScreen() {
         setup = AlarmSetup.requirements(context)
     }
 
-    CommonAppBar(title = "Medicine Reminders") {
+    CommonAppBar(title = stringResource(R.string.med_reminders_title)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -122,8 +139,8 @@ fun MedicineReminderSettingsScreen() {
             SettingsCard {
                 SwitchRow(
                     icon = Icons.Rounded.NotificationsActive,
-                    title = "Medicine alarms",
-                    subtitle = "Full screen alarm with sound at dose time",
+                    title = stringResource(R.string.med_channel_sound_name),
+                    subtitle = stringResource(R.string.med_alarms_switch_subtitle),
                     checked = enabled,
                     onCheckedChange = { enabled = it; applyChange { this.enabled = it } },
                 )
@@ -131,12 +148,12 @@ fun MedicineReminderSettingsScreen() {
 
             // ── Timing & sound ──────────────────────────────────────────────────
             SettingsCard {
-                RowHeader(Icons.Rounded.Alarm, "Remind me")
+                RowHeader(Icons.Rounded.Alarm, stringResource(R.string.med_remind_me))
                 Spacer(Modifier.height(10.dp))
                 ChoiceChips(
                     options = offsetOptions,
                     selected = offset,
-                    label = { if (it == 0) "On time" else "$it min before" },
+                    label = { if (it == 0) context.getString(R.string.med_on_time) else context.getString(R.string.med_min_before, it) },
                     enabled = enabled,
                     onSelect = { offset = it; applyChange { offsetMinutes = it } },
                 )
@@ -145,8 +162,8 @@ fun MedicineReminderSettingsScreen() {
 
                 SwitchRow(
                     icon = Icons.Rounded.VolumeUp,
-                    title = "Alarm sound",
-                    subtitle = if (sound) "Rings until you respond (up to 2 min)" else "Vibrate only",
+                    title = stringResource(R.string.med_alarm_sound),
+                    subtitle = if (sound) stringResource(R.string.med_alarm_sound_on_desc) else stringResource(R.string.med_vibrate_only),
                     checked = sound,
                     enabled = enabled,
                     onCheckedChange = { sound = it; applyChange { soundEnabled = it } },
@@ -154,12 +171,12 @@ fun MedicineReminderSettingsScreen() {
 
                 HorizontalDivider(Modifier.padding(vertical = 14.dp), color = colors.borderGreyLightColor.copy(alpha = 0.4f))
 
-                RowHeader(Icons.Rounded.Snooze, "Snooze for")
+                RowHeader(Icons.Rounded.Snooze, stringResource(R.string.med_snooze_for))
                 Spacer(Modifier.height(10.dp))
                 ChoiceChips(
                     options = snoozeOptions,
                     selected = snooze,
-                    label = { "$it min" },
+                    label = { context.getString(R.string.med_minutes_short, it) },
                     enabled = enabled,
                     onSelect = { snooze = it; applyChange { snoozeMinutes = it } },
                 )
@@ -168,19 +185,53 @@ fun MedicineReminderSettingsScreen() {
                 HapticOutlinedButton(
                     onClick = {
                         MedicineReminderScheduler.scheduleTestAlarm(context)
-                        android.widget.Toast.makeText(context, "Test alarm will ring in 5 seconds", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.med_test_alarm_toast), android.widget.Toast.LENGTH_SHORT).show()
                     },
                     enabled = enabled,
                     shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Test alarm", color = if (enabled) ReminderBlue else ReminderGrey)
+                    Text(stringResource(R.string.med_test_alarm), color = if (enabled) ReminderBlue else ReminderGrey)
                 }
+            }
+
+            // ── Reminders that run on the phone: water, missed dose, appointments ──
+            Text(stringResource(R.string.nudge_settings_header), style = AppTextStyles.style16BCB())
+            SettingsCard {
+                SwitchRow(
+                    icon = Icons.Rounded.WaterDrop,
+                    title = stringResource(R.string.nudge_settings_fluid_title),
+                    subtitle = stringResource(R.string.nudge_settings_fluid_desc),
+                    checked = fluidNudge,
+                    onCheckedChange = { fluidNudge = it; applyNudge { fluidEnabled = it } },
+                )
+
+                HorizontalDivider(Modifier.padding(vertical = 14.dp), color = colors.borderGreyLightColor.copy(alpha = 0.4f))
+
+                // Follows medicine alarms: with alarms off there's nothing to follow up on.
+                SwitchRow(
+                    icon = Icons.Rounded.NotificationImportant,
+                    title = stringResource(R.string.nudge_settings_missed_title),
+                    subtitle = stringResource(R.string.nudge_settings_missed_desc),
+                    checked = missedDoseNudge,
+                    enabled = enabled,
+                    onCheckedChange = { missedDoseNudge = it; applyNudge { missedDoseEnabled = it } },
+                )
+
+                HorizontalDivider(Modifier.padding(vertical = 14.dp), color = colors.borderGreyLightColor.copy(alpha = 0.4f))
+
+                SwitchRow(
+                    icon = Icons.Rounded.EventAvailable,
+                    title = stringResource(R.string.nudge_settings_appt_title),
+                    subtitle = stringResource(R.string.nudge_settings_appt_desc),
+                    checked = appointmentNudge,
+                    onCheckedChange = { appointmentNudge = it; applyNudge { appointmentEnabled = it } },
+                )
             }
 
             // ── Scheduled alerts ────────────────────────────────────────────────
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Upcoming alerts", style = AppTextStyles.style16BCB(), modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.med_upcoming_alerts), style = AppTextStyles.style16BCB(), modifier = Modifier.weight(1f))
                 if (syncing) CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
             }
 
@@ -188,7 +239,7 @@ fun MedicineReminderSettingsScreen() {
             if (groups.isEmpty() && !syncing) {
                 SettingsCard {
                     Text(
-                        "No upcoming doses. Alarms are set automatically for medicines you add.",
+                        stringResource(R.string.med_no_upcoming_doses),
                         color = ReminderGrey, fontSize = 13.sp,
                         modifier = Modifier.padding(vertical = 8.dp),
                     )
@@ -318,10 +369,11 @@ private fun AlarmSetupCard(requirements: List<AlarmSetup.Requirement>, onFix: (A
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("Alarm setup", style = AppTextStyles.style14BCB())
+                Text(stringResource(R.string.med_alarm_setup), style = AppTextStyles.style14BCB())
                 Text(
-                    if (missingCritical > 0) "$missingCritical step${if (missingCritical > 1) "s" else ""} left for reliable full-screen alarms"
-                    else "Alarms will ring on time and open full screen",
+                    if (missingCritical > 1) stringResource(R.string.med_setup_steps_left_many, missingCritical)
+                    else if (missingCritical == 1) stringResource(R.string.med_setup_steps_left_one)
+                    else stringResource(R.string.med_setup_all_good),
                     color = ReminderGrey, fontSize = 12.sp,
                 )
             }
@@ -340,12 +392,12 @@ private fun AlarmSetupCard(requirements: List<AlarmSetup.Requirement>, onFix: (A
                 )
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(req.title + if (!req.critical) " (recommended)" else "", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(if (!req.critical) stringResource(R.string.med_recommended_suffix, req.title) else req.title, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     if (!req.granted) Text(req.description, color = ReminderGrey, fontSize = 12.sp)
                 }
                 if (!req.granted) {
                     HapticTextButton(onClick = { onFix(req.item) }) {
-                        Text("Allow", color = ReminderBlue, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.med_allow), color = ReminderBlue, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -355,11 +407,11 @@ private fun AlarmSetupCard(requirements: List<AlarmSetup.Requirement>, onFix: (A
 
 private val alertTimeFormat = DateTimeFormatter.ofPattern("hh:mm a", Locale.getDefault())
 
-private fun formatAlertTime(millis: Long): String {
+private fun formatAlertTime(millis: Long, tomorrow: String): String {
     val time = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
     val prefix = when (time.toLocalDate()) {
         LocalDate.now() -> ""
-        LocalDate.now().plusDays(1) -> "Tmrw "
+        LocalDate.now().plusDays(1) -> "$tomorrow "
         else -> time.toLocalDate().toString() + " "
     }
     return prefix + time.format(alertTimeFormat)
@@ -409,7 +461,7 @@ private fun MedicineAlertCard(
                     Icon(Icons.Rounded.Alarm, null, tint = if (active && upcoming) ReminderBlue else ReminderGrey,
                         modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text(formatAlertTime(at), fontSize = 12.sp, color = if (active && upcoming) ReminderBlue else ReminderGrey)
+                    Text(formatAlertTime(at, stringResource(R.string.med_tomorrow_short)), fontSize = 12.sp, color = if (active && upcoming) ReminderBlue else ReminderGrey)
                 }
             }
         }

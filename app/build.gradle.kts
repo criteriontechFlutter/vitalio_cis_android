@@ -16,8 +16,12 @@ android {
         applicationId = "com.critetiontech.ctvitalio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 34
-        versionName = "2.0.27"
+        // Version lives in version.properties at the repo root (shared with :wear)
+        val versionProps = Properties().apply {
+            rootProject.file("version.properties").inputStream().use { load(it) }
+        }
+        versionCode = versionProps.getProperty("VERSION_CODE").trim().toInt()
+        versionName = versionProps.getProperty("VERSION_NAME").trim()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

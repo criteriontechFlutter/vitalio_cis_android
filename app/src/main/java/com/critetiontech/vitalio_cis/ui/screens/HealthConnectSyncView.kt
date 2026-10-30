@@ -37,6 +37,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -126,7 +128,7 @@ fun HealthConnectSyncScreen(
     val sync: () -> Unit = sync@{
         val client = healthConnectClient
         if (client == null) {
-            Toast.makeText(context, "Health Connect is not available on this device.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.device_hc_not_available), Toast.LENGTH_LONG).show()
             return@sync
         }
         if (missing.size == WearableData.READ_PERMISSIONS.size) requestPermissions()
@@ -136,7 +138,7 @@ fun HealthConnectSyncScreen(
     val unavailable = syncState == SyncState.NOT_INSTALLED || syncState == SyncState.UPDATE_REQUIRED
     val syncing = syncState == SyncState.SYNCING
 
-    CommonAppBar(title = "Wearable Sync") {
+    CommonAppBar(title = stringResource(R.string.device_hc_wearable_sync_title)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -147,19 +149,19 @@ fun HealthConnectSyncScreen(
                 DeviceHeader(
                     icon = Icons.Filled.Watch,
                     eyebrow = "Health Connect",
-                    title = "Watches & Health Apps",
+                    title = stringResource(R.string.device_hc_header_title),
                     status = when {
-                        syncing -> "Syncing…"
+                        syncing -> stringResource(R.string.device_status_syncing)
                         unavailable -> availMsg
-                        snapshot?.sources?.isNotEmpty() == true -> "Connected · ${snapshot!!.sources.size} source(s)"
-                        else -> "Galaxy Watch, Fitbit, Pixel, Garmin & more"
+                        snapshot?.sources?.isNotEmpty() == true -> stringResource(R.string.device_hc_connected_sources, snapshot!!.sources.size)
+                        else -> stringResource(R.string.device_hc_watch_brands_more)
                     },
                     live = snapshot != null && !unavailable,
                     busy = syncing,
                     action = if (unavailable) null else {
                         {
                             HeaderActionPill(
-                                if (syncing) "Syncing" else if (snapshot == null) "Connect" else "Sync",
+                                if (syncing) stringResource(R.string.device_action_syncing) else if (snapshot == null) stringResource(R.string.device_action_connect) else stringResource(R.string.device_action_sync),
                                 Icons.Filled.Sync, enabled = !syncing, spinning = syncing, onClick = sync
                             )
                         }
@@ -171,20 +173,19 @@ fun HealthConnectSyncScreen(
                 syncState == SyncState.NOT_INSTALLED -> {
                     AnimatedEnter(index = 1) {
                         StatusCard(
-                            false, "Health Connect not installed",
-                            "Google Health Connect is needed to sync vitals from Galaxy Watch, Fitbit, Wear OS and other wearable apps. " +
-                                "It's built into Android 14+; on Android 9–13 install it from the Play Store.",
+                            false, stringResource(R.string.device_hc_not_installed_title),
+                            stringResource(R.string.device_hc_not_installed_message),
                             icon = Icons.Filled.HealthAndSafety, tint = DeviceAmber,
-                            action = "Install Health Connect", actionIcon = Icons.Filled.Download, onAction = openPlayStore
+                            action = stringResource(R.string.device_hc_install), actionIcon = Icons.Filled.Download, onAction = openPlayStore
                         )
                     }
                     AnimatedEnter(index = 2) { HowToConnectCard() }
                 }
                 syncState == SyncState.UPDATE_REQUIRED -> AnimatedEnter(index = 1) {
                     StatusCard(
-                        false, "Health Connect needs an update", "Please update Health Connect in the Play Store to continue.",
+                        false, stringResource(R.string.device_hc_needs_update), stringResource(R.string.device_hc_update_message),
                         icon = Icons.Filled.SystemUpdate, tint = DeviceAmber,
-                        action = "Update Health Connect", actionIcon = Icons.Filled.Download, onAction = openPlayStore
+                        action = stringResource(R.string.device_hc_update), actionIcon = Icons.Filled.Download, onAction = openPlayStore
                     )
                 }
                 else -> {
@@ -198,19 +199,21 @@ fun HealthConnectSyncScreen(
                         label = "hcState"
                     ) { state ->
                         when (state) {
-                            SyncState.SYNCING -> RadarBusyCard("Syncing health data", "Reading from Health Connect.", icon = Icons.Filled.Watch)
+                            SyncState.SYNCING -> RadarBusyCard(stringResource(R.string.device_hc_syncing_health_data), stringResource(R.string.device_hc_reading_from_hc), icon = Icons.Filled.Watch)
                             SyncState.SUCCESS -> StatusCard(
                                 true,
-                                if (savedCount.first + savedCount.second == 0) "Already up to date" else "Synced",
-                                if (savedCount.first + savedCount.second == 0) "No new readings since the last sync."
-                                else listOfNotNull(
-                                    "${savedCount.first} vital(s)".takeIf { savedCount.first > 0 },
-                                    "${savedCount.second} workout(s)".takeIf { savedCount.second > 0 }
-                                ).joinToString(" and ") + " saved to your health record."
+                                if (savedCount.first + savedCount.second == 0) stringResource(R.string.device_hc_up_to_date) else stringResource(R.string.device_synced),
+                                when {
+                                    savedCount.first + savedCount.second == 0 -> stringResource(R.string.device_hc_no_new_readings)
+                                    savedCount.first > 0 && savedCount.second > 0 ->
+                                        stringResource(R.string.device_hc_saved_vitals_workouts, savedCount.first, savedCount.second)
+                                    savedCount.first > 0 -> stringResource(R.string.device_hc_saved_vitals, savedCount.first)
+                                    else -> stringResource(R.string.device_hc_saved_workouts, savedCount.second)
+                                }
                             )
                             SyncState.ERROR -> StatusCard(
-                                false, "Sync failed", errorMessage,
-                                action = "Try again", actionIcon = Icons.Filled.Refresh, onAction = sync
+                                false, stringResource(R.string.device_hc_sync_failed), errorMessage,
+                                action = stringResource(R.string.device_action_try_again), actionIcon = Icons.Filled.Refresh, onAction = sync
                             )
                             SyncState.PERMISSIONS_DENIED -> PermissionsDeniedCard(missing, requestPermissions, openHealthConnectSettings)
                             else -> Spacer(Modifier.height(0.dp))
@@ -236,14 +239,14 @@ fun HealthConnectSyncScreen(
 
                     snapshot?.let { data ->
                         if (data.vitals.isNotEmpty()) {
-                            SectionTitle("Vitals", "Saved to your health record")
+                            SectionTitle(stringResource(R.string.device_hc_vitals), stringResource(R.string.device_saved_to_health_record))
                             data.vitals.forEachIndexed { i, v ->
                                 AnimatedEnter(index = 3 + i) { VitalCard(v, WearableSync.isSaved(context, v)) }
                             }
                         }
                         TodayCard(data)
                         if (data.workouts.isNotEmpty()) {
-                            SectionTitle("Today's workouts", null)
+                            SectionTitle(stringResource(R.string.device_hc_todays_workouts), null)
                             data.workouts.forEachIndexed { i, w ->
                                 AnimatedEnter(index = 3 + i) { WorkoutCard(w, WearableSync.isSaved(context, w)) }
                             }
@@ -263,9 +266,10 @@ fun HealthConnectSyncScreen(
 
 private val timeFormat = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.getDefault())
 
+@Composable
 private fun Instant.display(): String {
     val local = atZone(ZoneId.systemDefault())
-    return if (local.toLocalDate() == LocalDate.now()) "Today, " + local.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()))
+    return if (local.toLocalDate() == LocalDate.now()) stringResource(R.string.device_hc_today_at, local.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())))
     else local.format(timeFormat)
 }
 
@@ -298,7 +302,7 @@ private fun SourcesRow(sources: Set<String>) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Caption("Data from")
+        Caption(stringResource(R.string.device_hc_data_from))
         sources.sorted().forEach { source ->
             Row(
                 modifier = Modifier.clip(RoundedCornerShape(50)).background(tintFill(p)).padding(horizontal = 10.dp, vertical = 5.dp),
@@ -328,12 +332,12 @@ private fun AutoSyncCard(enabled: Boolean, background: Boolean, onToggle: (Boole
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Auto Sync", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textDarkColor)
+                Text(stringResource(R.string.device_hc_auto_sync), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textDarkColor)
                 Text(
                     when {
-                        !enabled -> "Sync only when you tap Sync"
-                        background -> "Every hour in the background and whenever you open the app"
-                        else -> "Whenever you open the app (background sync isn't supported on this phone)"
+                        !enabled -> stringResource(R.string.device_hc_auto_sync_off)
+                        background -> stringResource(R.string.device_hc_auto_sync_background)
+                        else -> stringResource(R.string.device_hc_auto_sync_foreground)
                     },
                     fontSize = 12.sp, color = colors.textGreyColor, lineHeight = 16.sp
                 )
@@ -368,9 +372,9 @@ private fun VitalCard(reading: VitalReading, saved: Boolean) {
                 }
                 SavedChip(
                     when {
-                        !reading.metric.savedToServer -> "App only"
-                        saved -> "Saved"
-                        else -> "Not synced"
+                        !reading.metric.savedToServer -> stringResource(R.string.device_hc_app_only)
+                        saved -> stringResource(R.string.device_hc_saved)
+                        else -> stringResource(R.string.device_hc_not_synced)
                     },
                     saved
                 )
@@ -399,16 +403,16 @@ private fun SavedChip(label: String, saved: Boolean) {
 private fun TodayCard(data: WearableSnapshot) {
     val d = data.daily
     val tiles = listOfNotNull(
-        d.steps?.let { Triple(Icons.Filled.DirectionsWalk, "Steps", "%,d".format(it)) },
-        d.distanceKm?.let { Triple(Icons.Filled.Straighten, "Distance", String.format(Locale.US, "%.2f km", it)) },
-        d.activeKcal?.let { Triple(Icons.Filled.LocalFireDepartment, "Active calories", "${it.toInt()} kcal") },
-        d.totalKcal?.let { Triple(Icons.Filled.Whatshot, "Total calories", "${it.toInt()} kcal") },
-        d.sleep?.takeIf { !it.isZero }?.let { Triple(Icons.Filled.Bedtime, "Sleep", "${it.toHours()}h ${it.toMinutes() % 60}m") },
-        d.restingHeartRate?.let { Triple(Icons.Filled.FavoriteBorder, "Resting HR", "$it bpm") },
+        d.steps?.let { Triple(Icons.Filled.DirectionsWalk, stringResource(R.string.device_hc_steps), "%,d".format(it)) },
+        d.distanceKm?.let { Triple(Icons.Filled.Straighten, stringResource(R.string.device_hc_distance), String.format(Locale.US, "%.2f km", it)) },
+        d.activeKcal?.let { Triple(Icons.Filled.LocalFireDepartment, stringResource(R.string.device_hc_active_calories), "${it.toInt()} kcal") },
+        d.totalKcal?.let { Triple(Icons.Filled.Whatshot, stringResource(R.string.device_hc_total_calories), "${it.toInt()} kcal") },
+        d.sleep?.takeIf { !it.isZero }?.let { Triple(Icons.Filled.Bedtime, stringResource(R.string.device_hc_sleep), "${it.toHours()}h ${it.toMinutes() % 60}m") },
+        d.restingHeartRate?.let { Triple(Icons.Filled.FavoriteBorder, stringResource(R.string.device_hc_resting_hr), "$it bpm") },
         d.hrvMs?.let { Triple(Icons.Filled.Timeline, "HRV", "${it.toInt()} ms") }
     )
     if (tiles.isEmpty()) return
-    SectionTitle("Today", "Shown here only — not saved to your record yet")
+    SectionTitle(stringResource(R.string.device_hc_today), stringResource(R.string.device_hc_today_not_saved))
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         tiles.chunked(2).forEachIndexed { r, row ->
             AnimatedEnter(index = r) {
@@ -456,9 +460,9 @@ private fun WorkoutCard(workout: Workout, saved: Boolean) {
             }
             SavedChip(
                 when {
-                    saved -> "Saved"
-                    workout.activityName == null -> "Not supported"
-                    else -> "Not synced"
+                    saved -> stringResource(R.string.device_hc_saved)
+                    workout.activityName == null -> stringResource(R.string.device_hc_not_supported)
+                    else -> stringResource(R.string.device_hc_not_synced)
                 },
                 saved
             )
@@ -469,11 +473,11 @@ private fun WorkoutCard(workout: Workout, saved: Boolean) {
 @Composable
 private fun MissingPermissionsNote(count: Int, onAllow: () -> Unit) {
     NoteRow(
-        Icons.Filled.Info, "$count data type(s) not allowed yet", DeviceAmber,
+        Icons.Filled.Info, stringResource(R.string.device_hc_data_types_not_allowed, count), DeviceAmber,
         Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
         HapticTextButton(onClick = onAllow, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
-            Text("Allow", fontSize = 12.sp, color = LocalMyColorScheme.current.primaryBlueColor, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.device_hc_allow), fontSize = 12.sp, color = LocalMyColorScheme.current.primaryBlueColor, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -488,10 +492,10 @@ private fun PermissionsDeniedCard(
 ) {
     val colors = LocalMyColorScheme.current
     StatusCard(
-        false, "Health permissions denied",
-        "Allow at least one data type so Vitalio can read it from your watch. You can always grant it again.",
+        false, stringResource(R.string.device_hc_permissions_denied_title),
+        stringResource(R.string.device_hc_permissions_denied_message),
         icon = Icons.Filled.LockOpen, tint = DeviceAmber,
-        action = "Allow again", actionIcon = Icons.Filled.Key, onAction = onRequestAgain,
+        action = stringResource(R.string.device_hc_allow_again), actionIcon = Icons.Filled.Key, onAction = onRequestAgain,
         extra = {
             if (deniedPermissions.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -499,7 +503,7 @@ private fun PermissionsDeniedCard(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(tintFill(colors.textGreyColor)).padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Caption("Missing permissions")
+                    Caption(stringResource(R.string.device_hc_missing_permissions))
                     deniedPermissions.sorted().forEach { perm ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.Cancel, contentDescription = null, tint = DeviceRed, modifier = Modifier.size(14.dp))
@@ -513,10 +517,10 @@ private fun PermissionsDeniedCard(
             HapticTextButton(onClick = onOpenSettings) {
                 Icon(Icons.Filled.Settings, null, tint = colors.primaryBlueColor, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Open Health Connect settings", color = colors.primaryBlueColor, fontSize = 13.sp)
+                Text(stringResource(R.string.device_hc_open_settings), color = colors.primaryBlueColor, fontSize = 13.sp)
             }
             Text(
-                "In Health Connect: App permissions → Vitalio → turn on all toggles",
+                stringResource(R.string.device_hc_settings_hint),
                 fontSize = 11.sp, color = colors.textGreyColor, textAlign = TextAlign.Center, lineHeight = 16.sp
             )
         }
@@ -528,13 +532,13 @@ private fun PermissionsDeniedCard(
 @Composable
 private fun HowToConnectCard() {
     StepsCard(
-        "How to connect your watch",
+        stringResource(R.string.device_hc_how_to_connect),
         listOf(
-            Icons.Filled.Watch to "Pair your watch with its app (Samsung Health, Fitbit, Garmin Connect, Mi Fitness, NoiseFit…)",
-            Icons.Filled.Link to "In that app, turn on Health Connect sync — e.g. Samsung Health → Settings → Health Connect",
-            Icons.Filled.Sync to "Come back here, tap Sync above and allow the data types",
-            Icons.Filled.Autorenew to "Turn on Auto Sync to keep your record updated automatically"
+            Icons.Filled.Watch to stringResource(R.string.device_hc_connect_step_1),
+            Icons.Filled.Link to stringResource(R.string.device_hc_connect_step_2),
+            Icons.Filled.Sync to stringResource(R.string.device_hc_connect_step_3),
+            Icons.Filled.Autorenew to stringResource(R.string.device_hc_connect_step_4)
         ),
-        footnote = "Your watch app must write to Health Connect. Most popular watch apps support it; check the app's settings if no data shows up."
+        footnote = stringResource(R.string.device_hc_connect_footnote)
     )
 }

@@ -31,6 +31,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.viewmodel.SymptomHistoryViewModel
@@ -46,20 +48,20 @@ fun SymptomHistoryScreen(viewModel: SymptomHistoryViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
     val state by viewModel.state.collectAsState()
 
-    CommonAppBar(title = "Symptoms History") {
+    CommonAppBar(title = stringResource(R.string.track_symptoms_history)) {
         Box(Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
             when {
                 state.loading && state.days.isEmpty() ->
                     CircularProgressIndicator(color = colors.primaryBlueColor, modifier = Modifier.align(Alignment.Center))
                 state.error != null && state.days.isEmpty() -> HistoryMessage(
-                    title = "Unable to Load History",
+                    title = stringResource(R.string.track_unable_load_history),
                     text = state.error!!,
-                    actionText = "Try Again",
+                    actionText = stringResource(R.string.track_try_again),
                     onAction = viewModel::load,
                 )
                 state.days.isEmpty() -> HistoryMessage(
-                    title = "No Symptoms Recorded",
-                    text = "Symptoms you add will show up here.",
+                    title = stringResource(R.string.track_no_symptoms_recorded),
+                    text = stringResource(R.string.track_symptoms_history_empty),
                 )
                 else -> LazyColumn(
                     contentPadding = PaddingValues(16.dp),
@@ -69,7 +71,7 @@ fun SymptomHistoryScreen(viewModel: SymptomHistoryViewModel = viewModel()) {
                     state.days.forEach { day ->
                         item(key = "header-${day.date}") {
                             Text(
-                                day.date?.format(DayHeaderFormat) ?: "Unknown Date",
+                                day.date?.format(DayHeaderFormat) ?: stringResource(R.string.track_unknown_date),
                                 color = colors.textDarkColor,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,

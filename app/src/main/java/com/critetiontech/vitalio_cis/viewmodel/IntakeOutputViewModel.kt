@@ -46,7 +46,16 @@ class IntakeOutputViewModel : ViewModel() {
     private val _intakeList = MutableStateFlow<List<IntakeItem>>(emptyList())
     val intakeList: StateFlow<List<IntakeItem>> = _intakeList
 
-    private val _fluidSummaryList = MutableStateFlow<List<FluidSummaryItem>>(emptyList())
+    // Latest fluidRecommended from FetchIntake; kept when a day has no entries so the target doesn't drop back to default
+    private val _fluidRecommended = MutableStateFlow<Int?>(null)
+    val fluidRecommended: StateFlow<Int?> = _fluidRecommended
+
+    private fun setIntakeList(list: List<IntakeItem>) {
+        _intakeList.value = list
+        list.firstNotNullOfOrNull { it.fluidRecommendedMl }?.let { _fluidRecommended.value = it }
+    }
+
+    private val _fluidSummaryList =MutableStateFlow<List<FluidSummaryItem>>(emptyList())
     val fluidSummaryList: StateFlow<List<FluidSummaryItem>> = _fluidSummaryList
 
     private val _intakeLoading = MutableStateFlow(false)
@@ -64,10 +73,14 @@ class IntakeOutputViewModel : ViewModel() {
     private val _manualFoodList = MutableStateFlow<List<ManualFoodAssignItem>>(emptyList())
     val manualFoodList: StateFlow<List<ManualFoodAssignItem>> = _manualFoodList
 
+    // Both calls below take ~20 s on the server: show the cached copy right away and only show the
+    // spinner when there's nothing cached yet. The network result replaces it when it arrives.
     fun getManualFoodAssignList() {
         viewModelScope.launch {
-            _intakeLoading.value = true
-            val patient = prefs.getPatient() ?: run { _intakeLoading.value = false; return@launch }
+            val patient = prefs.getPatient() ?: return@launch
+            val cached = deps.fluidRepository.cachedManualFoodList(patient.uhId)
+            if (cached.isNotEmpty()) _manualFoodList.value = cached
+            _intakeLoading.value = cached.isEmpty()
             when (val r = deps.getManualFoodList()(patient.uhId)) {
                 is DomainResult.Success -> _manualFoodList.value = r.data
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
@@ -78,10 +91,12 @@ class IntakeOutputViewModel : ViewModel() {
 
     fun fetchIntakeItems(fromDate: String) {
         viewModelScope.launch {
-            _intakeLoading.value = true; _intakeList.value = emptyList()
-            val patient = prefs.getPatient() ?: run { _intakeLoading.value = false; return@launch }
+            val patient = prefs.getPatient() ?: run { _intakeList.value = emptyList(); return@launch }
+            val cached = deps.fluidRepository.cachedIntakeItems(patient.uhId, fromDate)
+            setIntakeList(cached)
+            _intakeLoading.value = cached.isEmpty()
             when (val r = deps.fetchIntake()(patient.uhId, patient.clientId.toString(), fromDate)) {
-                is DomainResult.Success -> _intakeList.value = r.data
+                is DomainResult.Success -> setIntakeList(r.data)
                 is DomainResult.Error -> Log.e("IntakeOutputVM", r.exception.message.orEmpty())
             }
             _intakeLoading.value = false

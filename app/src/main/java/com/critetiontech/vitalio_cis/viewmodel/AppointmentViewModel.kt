@@ -7,6 +7,8 @@ import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.AppointmentHistoryItem
 import com.critetiontech.ctvitalio.model.UpcomingAppointmentItem
+import com.critetiontech.ctvitalio.reminder.AppointmentReminders
+import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
@@ -77,7 +79,10 @@ class AppointmentViewModel : ViewModel() {
             }
 
             when (val r = fetchUpcomingUseCase(pid, clientId)) {
-                is DomainResult.Success -> { _upcoming.value = r.data; _upcomingError.value = false }
+                is DomainResult.Success -> {
+                    _upcoming.value = r.data; _upcomingError.value = false
+                    AppointmentReminders.requestSync(MyApplication.appContext)
+                }
                 is DomainResult.Error -> {
                     _upcomingError.value = _upcoming.value.isEmpty()
                     Log.e("AppointmentVM", "upcoming: ${r.exception.message}")

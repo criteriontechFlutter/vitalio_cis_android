@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.feedback
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -115,7 +117,7 @@ fun StretchPullRefreshBox(
     enabled: Boolean = true,
     behindStatusBar: Boolean = false,
     state: PullToRefreshState = rememberPullToRefreshState(),
-    refreshingText: String = "Updating your health data…",
+    refreshingText: String = stringResource(R.string.auth_common_refreshing_health_data),
     stretchHeight: Dp = PullStretchHeight,
     illustration: (@Composable () -> Unit)? = DefaultRefreshIllustration,
     content: @Composable BoxScope.() -> Unit,
@@ -155,7 +157,7 @@ fun PullStretchHeader(
     isRefreshing: Boolean,
     color: Color = LocalMyColorScheme.current.primaryBlueColor,
     behindStatusBar: Boolean = false,
-    refreshingText: String = "Updating your health data…",
+    refreshingText: String = stringResource(R.string.auth_common_refreshing_health_data),
     stretchHeight: Dp = PullStretchHeight,
     illustration: (@Composable () -> Unit)? = DefaultRefreshIllustration,
 ) {
@@ -170,12 +172,14 @@ fun PullStretchHeader(
         label = "pullArrow",
     )
     val corner = 24.dp * fraction.coerceAtMost(1f)
+    val releaseText = stringResource(R.string.auth_common_release_to_refresh)
+    val pullText = stringResource(R.string.auth_common_pull_to_refresh)
     val label by remember(isRefreshing) {
         derivedStateOf {
             when {
                 isRefreshing -> refreshingText
-                state.distanceFraction >= 1f -> "Release to refresh"
-                else -> "Pull to refresh"
+                state.distanceFraction >= 1f -> releaseText
+                else -> pullText
             }
         }
     }

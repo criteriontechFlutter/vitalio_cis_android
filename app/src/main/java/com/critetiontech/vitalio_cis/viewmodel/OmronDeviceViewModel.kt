@@ -13,6 +13,7 @@ import com.critetiontech.ctvitalio.omron.OmronModels
 import com.critetiontech.ctvitalio.omron.OmronProfile
 import com.critetiontech.ctvitalio.omron.OmronReading
 import com.critetiontech.ctvitalio.omron.PairedOmronDevice
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -112,11 +113,11 @@ class OmronDeviceViewModel : ViewModel() {
 
     /** Returns null when saved, otherwise the reason it wasn't. */
     private suspend fun saveReading(device: PairedOmronDevice, reading: OmronReading): String? {
-        val patient = prefs.getPatient() ?: return "Please log in again."
-        val fields = OmronManager.vitalFields(reading) ?: return "Only blood pressure readings can be saved."
+        val patient = prefs.getPatient() ?: return context.getString(R.string.device_error_log_in_again)
+        val fields = OmronManager.vitalFields(reading) ?: return context.getString(R.string.device_error_only_bp_saved)
         return when (val result = saveMeasuredVitals(patient, reading.time, fields)) {
             is DomainResult.Success -> { OmronManager.markSaved(context, device, reading); null }
-            is DomainResult.Error -> result.exception.message ?: "Couldn't save the vitals. Please try again."
+            is DomainResult.Error -> result.exception.message ?: context.getString(R.string.device_error_save_vitals_failed)
         }
     }
 
@@ -142,10 +143,10 @@ class OmronDeviceViewModel : ViewModel() {
                 throw e
             } catch (e: OmronException) {
                 Log.w("OmronDevice", "error ${e.code}: ${e.message}")
-                _phase.value = OmronPhase.Failed(e.message ?: "Something went wrong. Please try again.")
+                _phase.value = OmronPhase.Failed(e.message ?: context.getString(R.string.device_error_something_went_wrong))
             } catch (e: Exception) {
                 Log.e("OmronDevice", "unexpected", e)
-                _phase.value = OmronPhase.Failed(e.message ?: "Something went wrong. Please try again.")
+                _phase.value = OmronPhase.Failed(e.message ?: context.getString(R.string.device_error_something_went_wrong))
             }
         }
     }

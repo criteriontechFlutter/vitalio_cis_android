@@ -3,6 +3,7 @@ package com.critetiontech.ctvitalio.utils
 import android.app.Application
 import android.content.Context
 import com.critetiontech.ctvitalio.healthconnect.WearableSync
+import com.critetiontech.ctvitalio.reminder.HealthNudges
 import com.critetiontech.ctvitalio.omron.OmronManager
 import com.critetiontech.ctvitalio.reminder.MedicineAlarmNotifier
 import com.critetiontech.ctvitalio.voice.AppVoiceBackend
@@ -12,6 +13,11 @@ import com.critetiontech.ctvitalio.watch.WatchSessionSync
 // @HiltAndroidApp annotation is ready but requires a Hilt-compatible build configuration.
 // Will be re-enabled once Hilt annotation processing is unblocked (Kotlin 2.1.0 + AGP 8.11.0 compatibility).
 class MyApplication : Application() {
+
+    override fun attachBaseContext(base: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(base))
+    }
+
     companion object {
         lateinit var appContext: Context
             private set
@@ -21,6 +27,8 @@ class MyApplication : Application() {
         super.onCreate()
         appContext = applicationContext
         MedicineAlarmNotifier.ensureChannels(this)
+        HealthNudges.ensureChannel(this)
+        HealthNudges.schedule(this)
         WearableSync.schedule(this)
         OmronManager.init(this)
         VoiceCore.backend = AppVoiceBackend

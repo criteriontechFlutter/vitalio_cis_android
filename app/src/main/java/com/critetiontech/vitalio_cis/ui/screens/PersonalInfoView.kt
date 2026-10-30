@@ -48,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -70,7 +71,7 @@ fun PersonalInfoScreen(viewModel: PersonalInfoViewModel = viewModel()) {
     val p = patient
 
     CommonAppBar(
-        title = "Personal Info",
+        title = stringResource(R.string.profile_personal_info),
         actions = {}
     ) {
         Column(
@@ -106,7 +107,7 @@ fun PersonalInfoScreen(viewModel: PersonalInfoViewModel = viewModel()) {
                         color = colors.textDarkColor, fontSize = 18.sp, fontWeight = FontWeight.SemiBold
                     )
                     p?.uhId?.takeIf { it.isNotBlank() }?.let {
-                        Text("UHID: $it", color = colors.textGreyColor, fontSize = 13.sp)
+                        Text(stringResource(R.string.profile_uhid, it), color = colors.textGreyColor, fontSize = 13.sp)
                     }
                 }
 
@@ -114,28 +115,28 @@ fun PersonalInfoScreen(viewModel: PersonalInfoViewModel = viewModel()) {
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     InfoCard {
-                        ProfileInfoRow("First Name", p?.firstName.orEmpty())
-                        ProfileInfoRow("Last Name", p?.lastName.orEmpty())
-                        ProfileInfoRow("Sex", p?.genderName?.ifBlank { null } ?: p?.genderId?.takeIf { it > 0 }?.let(::genderNameFor).orEmpty())
-                        ProfileInfoRow("Date of Birth", displayDob(p?.dob.orEmpty()))
-                        ProfileInfoRow("Age", p?.age.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_first_name), p?.firstName.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_last_name), p?.lastName.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_sex), p?.genderName?.ifBlank { null } ?: p?.genderId?.takeIf { it > 0 }?.let(::genderNameFor).orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_date_of_birth), displayDob(p?.dob.orEmpty()))
+                        ProfileInfoRow(stringResource(R.string.profile_age), p?.age.orEmpty())
                     }
                     InfoCard {
-                        ProfileInfoRow("Blood Group", p?.bloodGroupName?.ifBlank { null } ?: p?.bloodGroupId?.let(::bloodGroupNameFor).orEmpty())
-                        ProfileInfoRow("Height", displayMeasure(p?.height))
-                        ProfileInfoRow("Weight", displayMeasure(p?.weight))
+                        ProfileInfoRow(stringResource(R.string.profile_blood_group), p?.bloodGroupName?.ifBlank { null } ?: p?.bloodGroupId?.let(::bloodGroupNameFor).orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_height), displayMeasure(p?.height))
+                        ProfileInfoRow(stringResource(R.string.profile_weight), displayMeasure(p?.weight))
                     }
                     InfoCard {
-                        ProfileInfoRow("Mobile No.", p?.mobileNo.orEmpty())
-                        ProfileInfoRow("Email", p?.emailAddress.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_mobile_no), p?.mobileNo.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_email), p?.emailAddress.orEmpty())
                     }
                     EmergencyContactsLink { navController.navigate(com.critetiontech.ctvitalio.Routes.EMERGENCYCONTACTS) }
                     InfoCard {
-                        ProfileInfoRow("Street Address", p?.address.orEmpty())
-                        ProfileInfoRow("Zip Code", p?.zip.orEmpty())
-                        ProfileInfoRow("City", p?.cityName.orEmpty())
-                        ProfileInfoRow("State", p?.stateName.orEmpty())
-                        ProfileInfoRow("Country", p?.countryName.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_street_address), p?.address.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_zip_code), p?.zip.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_city), p?.cityName.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_state), p?.stateName.orEmpty())
+                        ProfileInfoRow(stringResource(R.string.profile_country), p?.countryName.orEmpty())
                     }
                 }
 
@@ -155,7 +156,7 @@ fun PersonalInfoScreen(viewModel: PersonalInfoViewModel = viewModel()) {
             ) {
                 Icon(Icons.Default.Edit, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Edit Personal Info")
+                Text(stringResource(R.string.profile_edit_personal_info))
             }
         }
     }
@@ -200,8 +201,8 @@ private fun EmergencyContactsLink(onClick: () -> Unit) {
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Emergency Contacts", color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Text("Add or update who we should call", color = colors.textGreyColor, fontSize = 12.sp)
+            Text(stringResource(R.string.profile_menu_emergency_contacts), color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.profile_emergency_contacts_link_subtitle), color = colors.textGreyColor, fontSize = 12.sp)
         }
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textGreyColor)
     }

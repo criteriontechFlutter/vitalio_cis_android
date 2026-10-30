@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
 
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
@@ -115,7 +118,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
 
     LaunchedEffect(Unit) { vm.fetchOPDHistory() }
 
-    CommonAppBar(title = "Prescription") {
+    CommonAppBar(title = stringResource(R.string.report_prescription_title)) {
         when {
             // ── Loading ──────────────────────────────────────────────────
             isLoading -> PrescriptionLoadingState(colors.dashboardBackgroundColor)
@@ -160,7 +163,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                 icon = Icons.Default.MedicalServices,
                                 iconBg = BlueSoft,
                                 iconTint = Blue,
-                                title = "Prescribed Medicines",
+                                title = stringResource(R.string.report_prescribed_medicines),
                                 badge = "${prescriptions.size}"
                             )
                             Spacer(Modifier.height(12.dp))
@@ -178,7 +181,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                     icon = Icons.Default.MonitorHeart,
                                     iconBg = RedSoft,
                                     iconTint = Red,
-                                    title = "Recorded Vitals"
+                                    title = stringResource(R.string.report_recorded_vitals)
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 VitalsGrid(displayVitals, colors.dashboardContainerColor)
@@ -194,7 +197,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                     icon = Icons.Default.Biotech,
                                     iconBg = PurpleSoft,
                                     iconTint = Purple,
-                                    title = "Recommended Investigations",
+                                    title = stringResource(R.string.report_recommended_investigations),
                                     badge = "${investigations.size}"
                                 )
                                 Spacer(Modifier.height(12.dp))
@@ -211,7 +214,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                     icon = Icons.Default.TextSnippet,
                                     iconBg = TealSoft,
                                     iconTint = Teal,
-                                    title = "Clinical Summary"
+                                    title = stringResource(R.string.report_clinical_summary)
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 ClinicalSummaryCard(clinicalSummary, colors.dashboardContainerColor)
@@ -227,7 +230,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                     icon = Icons.Default.LocalHospital,
                                     iconBg = RedSoft,
                                     iconTint = Red,
-                                    title = "Symptoms & Diagnosis"
+                                    title = stringResource(R.string.report_symptoms_diagnosis)
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 SymptomsDiagnosisCard(
@@ -245,7 +248,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                     icon = Icons.Default.Restaurant,
                                     iconBg = GreenSoft,
                                     iconTint = Green,
-                                    title = "Dietary Guidance"
+                                    title = stringResource(R.string.report_dietary_guidance)
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 DietaryCard(recommendedDiet, avoidDiet, colors.dashboardContainerColor)
@@ -261,7 +264,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                     icon = Icons.Default.Schedule,
                                     iconBg = BlueSoft,
                                     iconTint = Blue,
-                                    title = "Monitoring Schedule"
+                                    title = stringResource(R.string.report_monitoring_schedule)
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 MonitoringCard(vitalFrequencies, colors.dashboardContainerColor)
@@ -277,7 +280,7 @@ fun PrescriptionScreen(vm: PrescriptionViewModel = viewModel()) {
                                     icon = Icons.Default.CalendarMonth,
                                     iconBg = OrangeSoft,
                                     iconTint = Orange,
-                                    title = "Follow-up Instructions"
+                                    title = stringResource(R.string.report_follow_up_instructions)
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 FollowUpCard(followUp, colors.dashboardContainerColor)
@@ -320,14 +323,14 @@ private fun PrescriptionHeaderBanner(count: Int) {
             Spacer(Modifier.width(14.dp))
             Column {
                 Text(
-                    "OPD Prescription",
+                    stringResource(R.string.report_opd_prescription),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    "$count medicine${if (count != 1) "s" else ""} prescribed",
+                    if (count == 1) stringResource(R.string.report_medicines_prescribed_one, count) else stringResource(R.string.report_medicines_prescribed_other, count),
                     fontSize = 13.sp,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -392,7 +395,7 @@ private fun SectionHeader(
 private fun MedicineCard(med: PrescriptionDetail, containerColor: Color) {
     val isOngoing = med.medicineStatus.lowercase() == "ongoing"
     val statusColor = if (isOngoing) Green else TextLight
-    val statusBg = if (isOngoing) GreenSoft else Color(0xFFF8FAFC)
+    val statusBg = if (isOngoing) GreenSoft else com.critetiontech.ctvitalio.ui.theme.softTint(TextLight, Color(0xFFF8FAFC))
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -485,7 +488,7 @@ private fun MedicineCard(med: PrescriptionDetail, containerColor: Color) {
                         if (med.duration.isNotBlank() && med.duration != "0") {
                             MiniPill(
                                 icon = Icons.Default.CalendarMonth,
-                                text = "${med.duration} Days",
+                                text = stringResource(R.string.report_duration_days, med.duration),
                                 color = Teal
                             )
                         }
@@ -656,7 +659,7 @@ private fun InvestigationsCard(investigations: List<InvestigationDetail>, contai
                     )
                     Spacer(Modifier.width(8.dp))
                     StatusBadge(
-                        label = if (inv.isDone) "Done" else "Pending",
+                        label = if (inv.isDone) stringResource(R.string.report_status_done) else stringResource(R.string.report_status_pending),
                         color = if (inv.isDone) Green else Orange,
                         bg = if (inv.isDone) GreenSoft else OrangeSoft
                     )
@@ -745,7 +748,7 @@ private fun SymptomsDiagnosisCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        "DIAGNOSIS",
+                        stringResource(R.string.report_diagnosis_caps),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Red
@@ -794,7 +797,7 @@ private fun SymptomsDiagnosisCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        "REPORTED SYMPTOMS",
+                        stringResource(R.string.report_reported_symptoms_caps),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Orange
@@ -856,7 +859,7 @@ private fun DietaryCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        "RECOMMENDED FOODS",
+                        stringResource(R.string.report_recommended_foods_caps),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Green
@@ -899,7 +902,7 @@ private fun DietaryCard(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        "FOODS TO AVOID",
+                        stringResource(R.string.report_foods_to_avoid_caps),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Red
@@ -975,7 +978,7 @@ private fun MonitoringCard(frequencies: List<VitalFrequencyDetail>, containerCol
                             if (freq.quantity != null) {
                                 Text("  ·  ", fontSize = 12.sp, color = TextLight)
                                 Text(
-                                    "Target: ${freq.quantity.toInt()} ml",
+                                    stringResource(R.string.report_target_ml, freq.quantity.toInt()),
                                     fontSize = 12.sp,
                                     color = Blue,
                                     fontWeight = FontWeight.Medium
@@ -1036,7 +1039,7 @@ private fun FollowUpCard(followUp: ProblemDetail, containerColor: Color) {
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Next Visit",
+                    stringResource(R.string.report_next_visit),
                     fontSize = 11.sp,
                     color = TextLight,
                     fontWeight = FontWeight.Medium
@@ -1075,7 +1078,7 @@ private fun PrescriptionLoadingState(bgColor: Color) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(color = Blue, strokeWidth = 3.dp)
             Spacer(Modifier.height(16.dp))
-            Text("Fetching prescription...", fontSize = 14.sp, color = TextLight)
+            Text(stringResource(R.string.report_fetching_prescription), fontSize = 14.sp, color = TextLight)
         }
     }
 }
@@ -1100,7 +1103,7 @@ private fun PrescriptionErrorState(message: String, bgColor: Color, onRetry: () 
                 Icon(Icons.Default.ErrorOutline, null, tint = Red, modifier = Modifier.size(40.dp))
             }
             Spacer(Modifier.height(20.dp))
-            Text("Something went wrong", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            Text(stringResource(R.string.report_something_went_wrong), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextDark)
             Spacer(Modifier.height(6.dp))
             Text(
                 message.take(120),
@@ -1116,7 +1119,7 @@ private fun PrescriptionErrorState(message: String, bgColor: Color, onRetry: () 
             ) {
                 Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Try Again", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.report_try_again), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -1147,10 +1150,10 @@ private fun PrescriptionEmptyState(bgColor: Color, onRefresh: () -> Unit) {
                 )
             }
             Spacer(Modifier.height(20.dp))
-            Text("No Prescriptions Found", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextDark)
+            Text(stringResource(R.string.report_no_prescriptions_found), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextDark)
             Spacer(Modifier.height(6.dp))
             Text(
-                "No OPD history is available for this patient.",
+                stringResource(R.string.report_no_opd_history),
                 fontSize = 13.sp,
                 color = TextLight
             )
@@ -1162,7 +1165,7 @@ private fun PrescriptionEmptyState(bgColor: Color, onRefresh: () -> Unit) {
             ) {
                 Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Refresh", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.report_refresh), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -1179,22 +1182,24 @@ private fun getMedicineIcon(dosageForm: String): ImageVector {
 }
 
 // ─── Helper: Investigation Name ────────────────────────────────────────────────
+@Composable
 private fun getInvestigationName(itemId: Int): String = when (itemId) {
     71 -> "Complete Blood Count (CBC)"
     260 -> "Urinalysis / Urine Routine"
     958 -> "Brain MRI / Neurological Scan"
-    else -> "Lab Test #$itemId"
+    else -> stringResource(R.string.report_lab_test_number, itemId)
 }
 
 // ─── Helper: Vital Frequency ───────────────────────────────────────────────────
+@Composable
 private fun getFreqParameterName(parameterId: Int, parameterTypeId: Int): String = when {
-    parameterId == 2 -> "Water Intake / Hydration"
+    parameterId == 2 -> stringResource(R.string.report_freq_water_intake)
     parameterId == 1 -> when (parameterTypeId) {
-        4 -> "Blood Pressure Monitoring"
-        7 -> "Respiratory Rate Monitoring"
-        else -> "Vital Monitoring"
+        4 -> stringResource(R.string.report_freq_bp_monitoring)
+        7 -> stringResource(R.string.report_freq_rr_monitoring)
+        else -> stringResource(R.string.report_freq_vital_monitoring)
     }
-    else -> "Parameter Monitoring"
+    else -> stringResource(R.string.report_freq_parameter_monitoring)
 }
 
 private fun getFreqIcon(parameterId: Int, parameterTypeId: Int): ImageVector = when {
@@ -1206,10 +1211,11 @@ private fun getFreqIcon(parameterId: Int, parameterTypeId: Int): ImageVector = w
     else -> Icons.Default.MonitorHeart
 }
 
+@Composable
 private fun getFreqName(frequencyTypeId: Int): String = when (frequencyTypeId) {
-    2 -> "AC — Before Meals"
-    5 -> "OD — Once Daily"
-    else -> "Daily"
+    2 -> stringResource(R.string.report_freq_before_meals)
+    5 -> stringResource(R.string.report_freq_once_daily)
+    else -> stringResource(R.string.report_freq_daily)
 }
 
 // ─── Helper: Display Vitals Mapping ───────────────────────────────────────────
@@ -1219,22 +1225,22 @@ private fun getDisplayVitals(rawVitals: List<PatientVitalDetail>): List<DisplayV
     val sys = rawVitals.firstOrNull { it.vmId == 4 }?.vmValue
     val dia = rawVitals.firstOrNull { it.vmId == 6 }?.vmValue
     if (sys != null && dia != null) {
-        list.add(DisplayVitalItem("Blood Pressure", "${sys.toInt()}/${dia.toInt()}", "mmHg", Green, GreenSoft, Icons.Default.Favorite))
+        list.add(DisplayVitalItem(stringResource(R.string.report_vital_blood_pressure), "${sys.toInt()}/${dia.toInt()}", "mmHg", Green, GreenSoft, Icons.Default.Favorite))
     } else {
-        sys?.let { list.add(DisplayVitalItem("Systolic BP", "${it.toInt()}", "mmHg", Green, GreenSoft, Icons.Default.Favorite)) }
-        dia?.let { list.add(DisplayVitalItem("Diastolic BP", "${it.toInt()}", "mmHg", Green, GreenSoft, Icons.Default.Favorite)) }
+        sys?.let { list.add(DisplayVitalItem(stringResource(R.string.report_vital_systolic_bp), "${it.toInt()}", "mmHg", Green, GreenSoft, Icons.Default.Favorite)) }
+        dia?.let { list.add(DisplayVitalItem(stringResource(R.string.report_vital_diastolic_bp), "${it.toInt()}", "mmHg", Green, GreenSoft, Icons.Default.Favorite)) }
     }
     rawVitals.firstOrNull { it.vmId == 7 }?.let {
-        list.add(DisplayVitalItem("Temperature", String.format("%.1f", it.vmValue), "°C", Orange, OrangeSoft, Icons.Default.MonitorHeart))
+        list.add(DisplayVitalItem(stringResource(R.string.report_vital_temperature), String.format("%.1f", it.vmValue), "°C", Orange, OrangeSoft, Icons.Default.MonitorHeart))
     }
     rawVitals.firstOrNull { it.vmId == 5 }?.let {
-        list.add(DisplayVitalItem("Pulse Rate", "${it.vmValue.toInt()}", "bpm", Red, RedSoft, Icons.Default.Favorite))
+        list.add(DisplayVitalItem(stringResource(R.string.report_vital_pulse_rate), "${it.vmValue.toInt()}", "bpm", Red, RedSoft, Icons.Default.Favorite))
     }
     rawVitals.firstOrNull { it.vmId == 3 }?.let {
-        list.add(DisplayVitalItem("Oxygen (SpO2)", "${it.vmValue.toInt()}", "%", Blue, BlueSoft, Icons.Default.WaterDrop))
+        list.add(DisplayVitalItem(stringResource(R.string.report_vital_oxygen), "${it.vmValue.toInt()}", "%", Blue, BlueSoft, Icons.Default.WaterDrop))
     }
     rawVitals.firstOrNull { it.vmId == 56 }?.let {
-        list.add(DisplayVitalItem("Heart Rate", "${it.vmValue.toInt()}", "bpm", Red, RedSoft, Icons.Default.MonitorHeart))
+        list.add(DisplayVitalItem(stringResource(R.string.report_vital_heart_rate), "${it.vmValue.toInt()}", "bpm", Red, RedSoft, Icons.Default.MonitorHeart))
     }
     val skipIds = setOf(3, 4, 5, 6, 7, 56)
     rawVitals.filter { it.vmId !in skipIds }.forEach { v ->
@@ -1242,10 +1248,10 @@ private fun getDisplayVitals(rawVitals: List<PatientVitalDetail>): List<DisplayV
         else String.format("%.1f", v.vmValue)
         when (v.vmId) {
             10 -> list.add(DisplayVitalItem("RBS", valStr, "mg/dL", Red, RedSoft, Icons.Default.WaterDrop))
-            2, 57 -> list.add(DisplayVitalItem("Weight", valStr, "kg", Teal, TealSoft, Icons.Default.DirectionsRun))
-            1 -> list.add(DisplayVitalItem("Height", valStr, "cm", Purple, PurpleSoft, Icons.Default.DirectionsRun))
-            74 -> list.add(DisplayVitalItem("Heart Rate", valStr, "bpm", Red, RedSoft, Icons.Default.MonitorHeart))
-            else -> list.add(DisplayVitalItem("Vital #${v.vmId}", valStr, "", TextLight, DividerColor, Icons.Default.MonitorHeart))
+            2, 57 -> list.add(DisplayVitalItem(stringResource(R.string.report_vital_weight), valStr, "kg", Teal, TealSoft, Icons.Default.DirectionsRun))
+            1 -> list.add(DisplayVitalItem(stringResource(R.string.report_vital_height), valStr, "cm", Purple, PurpleSoft, Icons.Default.DirectionsRun))
+            74 -> list.add(DisplayVitalItem(stringResource(R.string.report_vital_heart_rate), valStr, "bpm", Red, RedSoft, Icons.Default.MonitorHeart))
+            else -> list.add(DisplayVitalItem(stringResource(R.string.report_vital_number, v.vmId), valStr, "", TextLight, DividerColor, Icons.Default.MonitorHeart))
         }
     }
     return list

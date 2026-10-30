@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,7 +32,7 @@ fun <T> ShowNoData(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No Data Found")
+                Text(stringResource(R.string.auth_common_no_data_found))
             }
         }
 

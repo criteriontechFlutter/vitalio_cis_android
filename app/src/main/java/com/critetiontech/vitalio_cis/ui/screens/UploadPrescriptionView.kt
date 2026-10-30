@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
 
@@ -68,7 +71,7 @@ fun UploadPrescriptionScreen(
         }
     }
 
-    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, "to scan your prescription") {
+    val cameraPermission = rememberPermissionRequest(AppPermission.Camera, stringResource(R.string.perm_reason_scan_prescription)) {
         val uri = createImageUri(context)
         cameraUri = uri
         cameraLauncher.launch(uri)
@@ -79,13 +82,13 @@ fun UploadPrescriptionScreen(
     ) { uri ->
         uri?.let {
             copyUriToCache(context, it)?.let { (file, mime) -> viewModel.setSelectedFile(file, mime) }
-                ?: showToast(context, "Could not access file")
+                ?: showToast(context, context.getString(R.string.report_toast_could_not_access_file))
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        CommonAppBar(title = "Upload Prescription") {
+        CommonAppBar(title = stringResource(R.string.report_upload_prescription_title)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -101,13 +104,13 @@ fun UploadPrescriptionScreen(
 
                     Spacer(Modifier.height(22.dp))
 
-                    LabSectionHeader(title = "Select Document", colors = colors)
+                    LabSectionHeader(title = stringResource(R.string.report_select_document), colors = colors)
                     Spacer(Modifier.height(14.dp))
 
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         UploadOptionCard(
-                            title = "Camera",
-                            subtitle = "Take a photo of prescription",
+                            title = stringResource(R.string.report_camera),
+                            subtitle = stringResource(R.string.report_camera_prescription_subtitle),
                             icon = Icons.Default.CameraAlt,
                             isSelected = false,
                             colors = colors,
@@ -116,8 +119,8 @@ fun UploadPrescriptionScreen(
                         ) { cameraPermission.launch() }
 
                         UploadOptionCard(
-                            title = "Gallery / Files",
-                            subtitle = "Upload image or PDF file",
+                            title = stringResource(R.string.report_gallery_files),
+                            subtitle = stringResource(R.string.report_gallery_files_subtitle),
                             icon = Icons.Default.Photo,
                             isSelected = selectedFile != null,
                             colors = colors,
@@ -152,13 +155,13 @@ fun UploadPrescriptionScreen(
                 ) {
                     Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Analyse Prescription", style = AppTextStyles.style16WCB())
+                    Text(stringResource(R.string.report_analyse_prescription), style = AppTextStyles.style16WCB())
                 }
             }
         }
 
         if (uploadingFile) {
-            AnalyzingOverlay(colors = colors, message = "Reading your prescription…")
+            AnalyzingOverlay(colors = colors, message = stringResource(R.string.report_reading_prescription))
         }
     }
 }
@@ -187,10 +190,10 @@ private fun PrescriptionGuidanceCard(colors: MyColorScheme) {
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text("AI Prescription Reader", style = AppTextStyles.style16BCB())
+                Text(stringResource(R.string.report_ai_prescription_reader), style = AppTextStyles.style16BCB())
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "Upload a clear photo or PDF of your doctor's prescription to automatically extract medicines, dosage schedules, and advice.",
+                    stringResource(R.string.report_ai_prescription_reader_desc),
                     style = AppTextStyles.style12GCN()
                 )
             }
@@ -202,7 +205,7 @@ private fun PrescriptionGuidanceCard(colors: MyColorScheme) {
 private fun SelectedPrescriptionCard(file: File, colors: MyColorScheme, onRemove: () -> Unit) {
     val isPdf = file.extension.equals("pdf", ignoreCase = true)
     Column {
-        Text("Selected File", style = AppTextStyles.style14BCB())
+        Text(stringResource(R.string.report_selected_file), style = AppTextStyles.style14BCB())
         Spacer(Modifier.height(8.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -244,7 +247,7 @@ private fun SelectedPrescriptionCard(file: File, colors: MyColorScheme, onRemove
                         Text("${file.extension.uppercase()} • ${file.length() / 1024} KB", style = AppTextStyles.style12GCN())
                     }
                     HapticIconButton(onClick = onRemove) {
-                        Icon(Icons.Default.Close, contentDescription = "Remove", tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.report_remove), tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -255,7 +258,7 @@ private fun SelectedPrescriptionCard(file: File, colors: MyColorScheme, onRemove
 @Composable
 private fun PrescriptionTipsSection(colors: MyColorScheme) {
     Column {
-        Text("Tips for Best Results", style = AppTextStyles.style14BCB())
+        Text(stringResource(R.string.report_tips_best_results), style = AppTextStyles.style14BCB())
         Spacer(Modifier.height(10.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -264,9 +267,9 @@ private fun PrescriptionTipsSection(colors: MyColorScheme) {
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PrescriptionTipRow(Icons.Default.WbSunny, "Ensure good lighting and avoid shadows on paper.", colors)
-                PrescriptionTipRow(Icons.Default.CropFree, "Capture the entire page including doctor notes and header.", colors)
-                PrescriptionTipRow(Icons.Default.TextFields, "Ensure handwriting or printed text is sharply focused.", colors)
+                PrescriptionTipRow(Icons.Default.WbSunny, stringResource(R.string.report_tip_lighting), colors)
+                PrescriptionTipRow(Icons.Default.CropFree, stringResource(R.string.report_tip_entire_page), colors)
+                PrescriptionTipRow(Icons.Default.TextFields, stringResource(R.string.report_tip_focus), colors)
             }
         }
     }

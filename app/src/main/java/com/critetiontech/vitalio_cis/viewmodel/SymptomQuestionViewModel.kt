@@ -3,6 +3,8 @@ package com.critetiontech.ctvitalio.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.domain.model.SymptomToReview
@@ -52,14 +54,14 @@ class SymptomQuestionViewModel : ViewModel() {
             answers.clear()
             _state.value = SymptomQuestionUiState(loading = true)
             val patient = deps.prefs.getPatient() ?: run {
-                _state.value = SymptomQuestionUiState(loading = false, error = "Your session has expired. Please log in again.")
+                _state.value = SymptomQuestionUiState(loading = false, error = MyApplication.appContext.getString(R.string.track_session_expired))
                 return@launch
             }
             _state.value = when (val r = deps.getSymptomsToReview()(patient.uhId, patient.clientId.toString())) {
                 is DomainResult.Success -> SymptomQuestionUiState(loading = false, questions = r.data)
                 is DomainResult.Error -> {
                     Log.e("SymptomQuestionVM", r.exception.message.orEmpty())
-                    SymptomQuestionUiState(loading = false, error = "Check your connection and try again.")
+                    SymptomQuestionUiState(loading = false, error = MyApplication.appContext.getString(R.string.track_check_connection))
                 }
             }
         }
@@ -79,7 +81,7 @@ class SymptomQuestionViewModel : ViewModel() {
 
         viewModelScope.launch {
             val patient = deps.prefs.getPatient() ?: run {
-                _message.emit("Your session has expired. Please log in again.")
+                _message.emit(MyApplication.appContext.getString(R.string.track_session_expired))
                 return@launch
             }
             _state.update { it.copy(saving = true) }
@@ -87,7 +89,7 @@ class SymptomQuestionViewModel : ViewModel() {
                 is DomainResult.Success -> { Haptics.success(); _completed.emit(Unit) }
                 is DomainResult.Error -> {
                     Haptics.error()
-                    _message.emit("Couldn't update your symptoms. Please try again.")
+                    _message.emit(MyApplication.appContext.getString(R.string.track_symptoms_update_failed))
                     Log.e("SymptomQuestionVM", r.exception.message.orEmpty())
                 }
             }

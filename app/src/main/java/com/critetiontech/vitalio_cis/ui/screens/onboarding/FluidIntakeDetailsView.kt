@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 
@@ -32,6 +36,7 @@ import com.critetiontech.ctvitalio.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FluidIntakeDetailsScreen() {
+    val colors = LocalMyColorScheme.current
 
     var expanded by remember {
         mutableStateOf(false)
@@ -54,7 +59,7 @@ fun FluidIntakeDetailsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(horizontal = 16.dp)
     ) {
 
@@ -65,10 +70,10 @@ fun FluidIntakeDetailsScreen() {
         /// =========================
 
         Text(
-            text = "Create Account",
+            text = stringResource(R.string.auth_onb_create_account),
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium,
-            color = Color.Black
+            color = colors.textDarkColor
         )
 
         Spacer(modifier = Modifier.height(18.dp))
@@ -83,7 +88,7 @@ fun FluidIntakeDetailsScreen() {
             shape = RoundedCornerShape(14.dp),
 
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF5F7FB)
+                containerColor = if (isAppDark) colors.dashboardBackgroundColor else Color(0xFFF5F7FB)
             )
         ) {
 
@@ -109,13 +114,13 @@ fun FluidIntakeDetailsScreen() {
 
                     color = Color(0xFF2563EB),
 
-                    trackColor = Color(0xFFD9E5FF)
+                    trackColor = softTint(Color(0xFF2563EB), Color(0xFFD9E5FF))
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "One Step Away",
+                    text = stringResource(R.string.auth_onb_progress_one_step_title),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -123,9 +128,9 @@ fun FluidIntakeDetailsScreen() {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "You're nearly done — let's finish up!",
+                    text = stringResource(R.string.auth_onb_progress_one_step_subtitle),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = colors.textGreyColor
                 )
             }
         }
@@ -155,7 +160,7 @@ fun FluidIntakeDetailsScreen() {
         /// =========================
 
         Text(
-            text = "Fluid Intake Details",
+            text = stringResource(R.string.auth_onb_fluid_title),
 
             modifier = Modifier.align(Alignment.CenterHorizontally),
 
@@ -169,7 +174,7 @@ fun FluidIntakeDetailsScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "To help you stay hydrated, please specify your daily fluid intake goal.",
+            text = stringResource(R.string.auth_onb_fluid_goal_subtitle),
 
             modifier = Modifier.align(Alignment.CenterHorizontally),
 
@@ -177,7 +182,7 @@ fun FluidIntakeDetailsScreen() {
 
             lineHeight = 20.sp,
 
-            color = Color.Gray
+            color = colors.textGreyColor
         )
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -187,7 +192,7 @@ fun FluidIntakeDetailsScreen() {
         /// =========================
 
         Text(
-            text = "Fluid Intake Goal",
+            text = stringResource(R.string.auth_onb_fluid_goal_label),
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
@@ -215,7 +220,7 @@ fun FluidIntakeDetailsScreen() {
                 modifier = Modifier.weight(1f),
 
                 placeholder = {
-                    Text("Enter")
+                    Text(stringResource(R.string.auth_onb_fluid_goal_hint))
                 },
 
                 singleLine = true,
@@ -224,7 +229,7 @@ fun FluidIntakeDetailsScreen() {
 
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF2563EB),
-                    unfocusedBorderColor = Color(0xFFE5E7EB)
+                    unfocusedBorderColor = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB))
                 )
             )
 
@@ -261,7 +266,7 @@ fun FluidIntakeDetailsScreen() {
 
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF2563EB),
-                        unfocusedBorderColor = Color(0xFFE5E7EB)
+                        unfocusedBorderColor = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB))
                     )
                 )
 
@@ -314,12 +319,12 @@ fun FluidIntakeDetailsScreen() {
 
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF2563EB),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
 
             Text(
-                text = "Next",
+                text = stringResource(R.string.auth_common_next),
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold

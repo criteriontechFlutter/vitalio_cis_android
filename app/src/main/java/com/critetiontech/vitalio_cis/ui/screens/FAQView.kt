@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
@@ -34,18 +36,18 @@ fun FAQScreen() {
     var search by remember { mutableStateOf("") }
 
     val faqList = listOf(
-        FAQItem("How often should I work out?", "You should work out at least 3-5 times per week."),
-        FAQItem("What’s the best diet for my fitness goals?", "A balanced diet with protein, carbs and fats."),
-        FAQItem("How much cardio should I be doing?", "150 minutes of moderate cardio weekly."),
-        FAQItem("How To Lose Weight And Tone Up Fast?", "Combine strength + calorie deficit."),
-        FAQItem("Should I work out my abs every day?", "No, 2-3 times per week is enough."),
-        FAQItem("How much weight should I be lifting when I strength train?", "Start light and increase gradually."),
-        FAQItem("How much cardio should I be doing?", "Depends on your goal.")
+        FAQItem(stringResource(R.string.profile_faq_q_workout_frequency), stringResource(R.string.profile_faq_a_workout_frequency)),
+        FAQItem(stringResource(R.string.profile_faq_q_best_diet), stringResource(R.string.profile_faq_a_best_diet)),
+        FAQItem(stringResource(R.string.profile_faq_q_cardio_amount), stringResource(R.string.profile_faq_a_cardio_weekly)),
+        FAQItem(stringResource(R.string.profile_faq_q_lose_weight), stringResource(R.string.profile_faq_a_lose_weight)),
+        FAQItem(stringResource(R.string.profile_faq_q_abs_daily), stringResource(R.string.profile_faq_a_abs_daily)),
+        FAQItem(stringResource(R.string.profile_faq_q_lifting_weight), stringResource(R.string.profile_faq_a_lifting_weight)),
+        FAQItem(stringResource(R.string.profile_faq_q_cardio_amount), stringResource(R.string.profile_faq_a_cardio_goal))
     )
 
     val colors = LocalMyColorScheme.current
     CommonAppBar(
-        title =  "Frequently asked questions",)
+        title =  stringResource(R.string.profile_faq_title),)
      {
         Column(
             modifier = Modifier
@@ -57,7 +59,7 @@ fun FAQScreen() {
             MyTextField(
                 value = search,
                 onValueChange = {search = it },
-                placeholderText = "Search Symptoms i.e cold, cough"
+                placeholderText = stringResource(R.string.profile_faq_search_hint)
             )
             // 🔹 Search Box
 

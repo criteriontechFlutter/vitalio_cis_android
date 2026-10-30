@@ -2,6 +2,8 @@ package com.critetiontech.ctvitalio.ui.screens
 
 import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.text.style.TextAlign
+import com.critetiontech.ctvitalio.BuildConfig
 import androidx.compose.foundation.border
 import androidx.compose.ui.text.font.FontWeight
 
@@ -79,6 +81,11 @@ import coil.compose.AsyncImage
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.R
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.components.AppBottomSheet
+import com.critetiontech.ctvitalio.utils.AppLanguage
+import com.critetiontech.ctvitalio.utils.LocaleHelper
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.ui.adaptive.AdaptiveTwoPane
 import com.critetiontech.ctvitalio.ui.adaptive.isTablet
@@ -99,12 +106,12 @@ fun DrawerScreen() {
 
     if (showLogoutDialog) {
         com.critetiontech.ctvitalio.ui.components.AppDialog(
-            title = "Log out?",
-            message = "You'll need to sign in again to see your vitals, appointments and reports. Medicine reminders on this phone will stop.",
+            title = stringResource(R.string.profile_logout_dialog_title),
+            message = stringResource(R.string.profile_logout_dialog_message),
             icon = androidx.compose.material.icons.Icons.AutoMirrored.Rounded.Logout,
             destructive = true,
-            confirmText = "Log out",
-            dismissText = "Cancel",
+            confirmText = stringResource(R.string.profile_logout_confirm),
+            dismissText = stringResource(R.string.profile_cancel),
             onDismiss = { showLogoutDialog = false },
             onConfirm = {
                 showLogoutDialog = false
@@ -133,7 +140,7 @@ fun DrawerScreen() {
                     onDismissRequest = { expanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Logout") },
+                        text = { Text(stringResource(R.string.profile_logout_menu)) },
                         onClick = {
                             expanded = false
                             showLogoutDialog = true
@@ -189,6 +196,8 @@ fun DrawerScreen() {
                     Spacer(modifier = Modifier.height(12.dp))
                     ThemeSwitchItem()
                     Spacer(modifier = Modifier.height(12.dp))
+                    LanguageItem()
+                    Spacer(modifier = Modifier.height(12.dp))
                     HapticsSwitchItem()
                     Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
@@ -198,6 +207,8 @@ fun DrawerScreen() {
                             "Feedback" to "4"
                         )
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    AppVersionText()
                 }
             }
         )
@@ -254,6 +265,8 @@ fun DrawerScreen() {
             Spacer(modifier = Modifier.height(12.dp))
             ThemeSwitchItem()
             Spacer(modifier = Modifier.height(12.dp))
+            LanguageItem()
+            Spacer(modifier = Modifier.height(12.dp))
             HapticsSwitchItem()
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -264,9 +277,28 @@ fun DrawerScreen() {
                     "Feedback" to "4"
                 )
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            AppVersionText()
         }
     }
     }
+}
+
+/** App version from version.properties, e.g. "Version 2.0.27 (34)"; debug builds are tagged. */
+@Composable
+fun AppVersionText() {
+    val colors = LocalMyColorScheme.current
+    val versionRes = if (BuildConfig.DEBUG) R.string.profile_app_version_debug else R.string.profile_app_version
+
+    Text(
+        text = stringResource(versionRes, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
+        color = colors.textGreyColor,
+        fontSize = 12.sp,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+    )
 }
 
 
@@ -277,10 +309,84 @@ fun ThemeSwitchItem() {
 
     SettingSwitchRow(
         icon = Icons.Default.DarkMode,
-        title = "Dark Mode",
+        title = stringResource(R.string.profile_dark_mode),
         checked = selectedTheme == AppTheme.DARK,
         onCheckedChange = { themeViewModel.toggleTheme() },
     )
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun LanguageItem() {
+    val colors = LocalMyColorScheme.current
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+    val current = remember { LocaleHelper.current(context) }
+    var showSheet by remember { mutableStateOf(false) }
+
+    if (showSheet) {
+        AppBottomSheet(
+            onDismissRequest = { showSheet = false },
+            title = stringResource(R.string.language_title),
+            subtitle = stringResource(R.string.language_subtitle),
+            icon = Icons.Default.Language
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                AppLanguage.entries.forEach { lang ->
+                    val selected = lang == current
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (selected) colors.primaryBlueColor.copy(alpha = 0.12f) else colors.dashboardBackgroundColor)
+                            .border(
+                                1.dp,
+                                if (selected) colors.primaryBlueColor else colors.borderGreyLightColor.copy(alpha = 0.5f),
+                                RoundedCornerShape(14.dp)
+                            )
+                            .clickable {
+                                showSheet = false
+                                if (!selected && activity != null) LocaleHelper.setLanguage(activity, lang)
+                            }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            lang.nativeName,
+                            color = if (selected) colors.primaryBlueColor else colors.textDarkColor,
+                            fontSize = 16.sp,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (selected) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(colors.dashboardContainerColor),
+        modifier = Modifier.fillMaxWidth().clickable { showSheet = true }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Language, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(stringResource(R.string.language_title), color = colors.textDarkColor, fontSize = 16.sp, modifier = Modifier.weight(1f))
+            Text(current.nativeName, color = colors.textGreyColor, fontSize = 14.sp)
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
+        }
+    }
 }
 
 @Composable
@@ -291,8 +397,8 @@ fun HapticsSwitchItem() {
 
     SettingSwitchRow(
         icon = Icons.Default.Vibration,
-        title = "Haptic feedback",
-        subtitle = "Gentle vibration on taps and actions",
+        title = stringResource(R.string.profile_haptic_feedback),
+        subtitle = stringResource(R.string.profile_haptic_feedback_subtitle),
         checked = enabled,
         onCheckedChange = { on ->
             Haptics.setEnabled(context, on)
@@ -349,7 +455,7 @@ fun SettingSwitchRow(
                     checkedThumbColor = Color.White,
                     checkedTrackColor = colors.primaryBlueColor,
                     uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Color.LightGray
+                    uncheckedTrackColor = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) colors.borderGreyLightColor else Color.LightGray
                 ),
                 checked = checked,
                 onCheckedChange = onCheckedChange
@@ -392,12 +498,12 @@ fun ProfileCard(
 
     fun upload(uri: android.net.Uri) {
         val p = PrefsManager(context).getPatient() ?: run {
-            android.widget.Toast.makeText(context, "Session expired. Please log in again.", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.profile_session_expired), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
         val file = runCatching { FileUtils.getFile(context, uri) }.getOrNull()
         if (file == null || !file.exists()) {
-            android.widget.Toast.makeText(context, "Couldn't read that image. Please try another one.", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.profile_image_read_failed), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
         previewUri = uri
@@ -420,14 +526,14 @@ fun ProfileCard(
     LaunchedEffect(uploaded) {
         if (uploaded) {
             patient = PrefsManager(context).getPatient()
-            android.widget.Toast.makeText(context, "Profile photo updated", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.profile_photo_updated), android.widget.Toast.LENGTH_SHORT).show()
             photoViewModel.resetSuccess()
         }
     }
     LaunchedEffect(uploadError) {
         uploadError?.let {
             previewUri = null
-            android.widget.Toast.makeText(context, "Photo not updated: $it", android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.profile_photo_not_updated, it), android.widget.Toast.LENGTH_LONG).show()
             photoViewModel.resetError()
         }
     }
@@ -446,7 +552,7 @@ fun ProfileCard(
     }
 
     val cameraPermission = com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest(
-        com.critetiontech.ctvitalio.permissions.AppPermission.Camera, "to take your profile photo"
+        com.critetiontech.ctvitalio.permissions.AppPermission.Camera, stringResource(R.string.profile_camera_permission_reason)
     ) { launchCamera() }
 
     Column(
@@ -469,7 +575,7 @@ fun ProfileCard(
                     placeholder = painterResource(R.drawable.img),
                     error = painterResource(R.drawable.img),
 
-                    contentDescription = "Profile",
+                    contentDescription = stringResource(R.string.profile_cd_profile_photo),
 
                     contentScale = ContentScale.Crop,
 
@@ -506,7 +612,7 @@ fun ProfileCard(
             ) {
                 Icon(
                     imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "Change photo",
+                    contentDescription = stringResource(R.string.profile_cd_change_photo),
                     tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )
@@ -519,7 +625,7 @@ fun ProfileCard(
 
         if (uhid != null) {
             Text(
-                "UHID: $uhid",
+                stringResource(R.string.profile_uhid, uhid),
                 style = AppTextStyles.style14GCN(),
                 modifier = Modifier.padding(top = 4.dp)
             )
@@ -626,7 +732,7 @@ fun MedicalProfileCard(
                     Spacer(modifier = Modifier.width(6.dp))
 
                     Text(
-                        text = "Medical Profile",
+                        text = stringResource(R.string.profile_medical_profile),
                         style = AppTextStyles.style14BCB()
                     )
                 }
@@ -634,7 +740,7 @@ fun MedicalProfileCard(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Keep your health profile up to date for better care",
+                    text = stringResource(R.string.profile_medical_profile_subtitle),
 
                     style = AppTextStyles.style12BCB()
                 )
@@ -649,7 +755,7 @@ fun MedicalProfileCard(
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "Complete profile",
+                        text = stringResource(R.string.profile_complete_profile),
 
                         style = AppTextStyles.style12BCB().copy(color=colors.primaryBlueColor)
                     )
@@ -700,6 +806,7 @@ fun MenuRow(
 
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     val route = when (title) {
 
         "Profile" -> Routes.PERSONALIFSCREEN
@@ -731,7 +838,7 @@ fun MenuRow(
     ) {
 
         Text(
-            text = title,
+            text = menuTitleRes(title)?.let { stringResource(it) } ?: title,
             modifier = Modifier.weight(1f),
             style = AppTextStyles.style14BCB()
         )
@@ -747,9 +854,29 @@ fun MenuRow(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = Color.Gray
+            tint = colors.textGreyColor
         )
     }
+}
+
+/** Display label for a drawer menu identifier; the identifier itself drives navigation. */
+@androidx.annotation.StringRes
+private fun menuTitleRes(title: String): Int? = when (title) {
+    "Profile" -> R.string.profile_menu_profile
+    "Breathing Therapy" -> R.string.profile_menu_breathing_therapy
+    "Allergies" -> R.string.profile_menu_allergies
+    "Appointments" -> R.string.profile_menu_appointments
+    "Prescriptions" -> R.string.profile_menu_prescriptions
+    "Reports" -> R.string.profile_menu_reports
+    "My Observer" -> R.string.profile_menu_my_observer
+    "Family Health History" -> R.string.profile_menu_family_health_history
+    "Shared Accounts" -> R.string.profile_menu_shared_accounts
+    "Connect Smart Watch" -> R.string.profile_menu_connect_smart_watch
+    "Emergency Contacts" -> R.string.profile_menu_emergency_contacts
+    "Permissions & Privacy" -> R.string.profile_menu_permissions_privacy
+    "FAQ" -> R.string.profile_menu_faq
+    "Feedback" -> R.string.profile_menu_feedback
+    else -> null
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -762,8 +889,8 @@ fun ImagePickerBottomSheet(
 ) {
     com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
         onDismissRequest = onDismiss,
-        title = "Profile photo",
-        subtitle = "Take a new photo or choose one from your gallery",
+        title = stringResource(R.string.profile_photo_sheet_title),
+        subtitle = stringResource(R.string.profile_photo_sheet_subtitle),
         icon = Icons.Default.CameraAlt,
     ) {
         Row(
@@ -773,10 +900,10 @@ fun ImagePickerBottomSheet(
                 .padding(top = 4.dp, bottom = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            BottomItem("Take Photo", Icons.Default.CameraAlt, onCameraClick, Modifier.weight(1f))
-            BottomItem("Upload Image", Icons.Default.Upload, onUploadClick, Modifier.weight(1f))
+            BottomItem(stringResource(R.string.profile_take_photo), Icons.Default.CameraAlt, onCameraClick, Modifier.weight(1f))
+            BottomItem(stringResource(R.string.profile_upload_image), Icons.Default.Upload, onUploadClick, Modifier.weight(1f))
             if (onRemoveClick != null) {
-                BottomItem("Remove", Icons.Default.Delete, onRemoveClick, Modifier.weight(1f), tint = com.critetiontech.ctvitalio.ui.components.DialogDangerColor)
+                BottomItem(stringResource(R.string.profile_remove), Icons.Default.Delete, onRemoveClick, Modifier.weight(1f), tint = com.critetiontech.ctvitalio.ui.components.DialogDangerColor)
             }
         }
     }

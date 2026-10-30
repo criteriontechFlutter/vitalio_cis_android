@@ -24,7 +24,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -45,10 +50,10 @@ fun heroKindFor(vitalName: String, isBP: Boolean): HeroKind = when {
 
 /** Page title for a vital, as in the designs ("Blood Oxygen (SpO2)", "Body Temperature"…). */
 fun heroTitleFor(vitalName: String): String = when (vitalName.trim().lowercase()) {
-    "spo2" -> "Blood Oxygen (SpO2)"
-    "temperature" -> "Body Temperature"
-    "weight" -> "Body Weight"
-    else -> vitalName
+    "spo2" -> MyApplication.appContext.getString(R.string.home_vital_blood_oxygen)
+    "temperature" -> MyApplication.appContext.getString(R.string.home_vital_body_temperature)
+    "weight" -> MyApplication.appContext.getString(R.string.home_vital_body_weight)
+    else -> vitalLabelRes(vitalName)?.let { MyApplication.appContext.getString(it) } ?: vitalName
 }
 
 private val OutlineGrey = Color(0xFFC5CBD6)
@@ -70,7 +75,7 @@ fun VitalHero(
 ) {
     val colors = LocalMyColorScheme.current
     val statusText = when {
-        status == null -> "NO DATA"
+        status == null -> stringResource(R.string.home_no_data_caps)
         status == VitalStatus.None -> null
         else -> status.label
     }
@@ -130,7 +135,7 @@ fun VitalHero(
                         fontWeight = FontWeight.SemiBold,
                     )
                 },
-                badgeColor = if (kind == HeroKind.Oxygen) BadgeBlue else Color(0xFFFECACA),
+                badgeColor = if (kind == HeroKind.Oxygen) softTint(Color(0xFF1F5BE0), BadgeBlue) else softTint(Color(0xFFDC2626), Color(0xFFFECACA)),
                 content = { Reading(withCaption = false) },
                 width = 190, height = 240, contentOffsetY = 26,
             ).also { CaptionBelow() }
@@ -155,7 +160,7 @@ private fun ShapeWithBadge(
     width: Int,
     height: Int,
     contentOffsetY: Int = 0,
-    badgeColor: Color = BadgeBlue,
+    badgeColor: Color = softTint(Color(0xFF1F5BE0), BadgeBlue),
 ) {
     Box(Modifier.size(width = width.dp, height = height.dp)) {
         Canvas(Modifier.fillMaxSize(), onDraw = draw)
@@ -182,13 +187,13 @@ private fun PulsePill(pulse: String) {
             .background(colors.dashboardContainerColor)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Text("PULSE", color = colors.textGreyColor, fontSize = 12.sp)
+        Text(stringResource(R.string.home_pulse_caps), color = colors.textGreyColor, fontSize = 12.sp)
         Spacer(Modifier.width(8.dp))
         EcgLine(colors.textGreyColor, Modifier.size(width = 28.dp, height = 14.dp))
         Spacer(Modifier.width(8.dp))
         Text(pulse, color = colors.textDarkColor, fontSize = 22.sp, fontWeight = FontWeight.Medium)
         Spacer(Modifier.width(4.dp))
-        Text("/min", color = colors.textGreyColor, fontSize = 12.sp)
+        Text(stringResource(R.string.home_per_min), color = colors.textGreyColor, fontSize = 12.sp)
     }
 }
 
@@ -280,6 +285,7 @@ private fun Thermometer(
     val asF = reading?.let { if (it <= 45) it * 9 / 5 + 32 else it }
     val target = asF?.let { ((it - 94) / (108 - 94)).toFloat().coerceIn(0.05f, 1f) } ?: 0f
     val level by animateFloatAsState(target, tween(900), label = "mercury")
+    val glassTrack = if (isAppDark) colors.borderGreyLightColor else Color(0xFFE2E8F0)
     val mercury = if (status == null || status == VitalStatus.None) Color(0xFF2F6BFF) else status.color
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -299,7 +305,7 @@ private fun Thermometer(
             val bulbCy = size.height - bulbR
             val tubeTop = 4.dp.toPx()
             val tubeBottom = bulbCy - bulbR * 0.6f
-            val track = Color(0xFFE2E8F0)
+            val track = glassTrack
             // Glass.
             drawRoundRect(track, topLeft = Offset(cx - tubeW / 2, tubeTop), size = Size(tubeW, bulbCy - tubeTop), cornerRadius = CornerRadius(tubeW / 2))
             drawCircle(track, radius = bulbR, center = Offset(cx, bulbCy))

@@ -7,7 +7,9 @@ import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.Vital
 import com.critetiontech.ctvitalio.model.VitalGraphEntry
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.feedback.Haptics
+import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -73,7 +75,7 @@ class VitalDetailViewModel : ViewModel() {
             _addLoading.value = true
             _addError.value = null
             val patient = prefs.getPatient() ?: run {
-                _addError.value = "Your session has expired. Please log in again."
+                _addError.value = MyApplication.appContext.getString(R.string.home_session_expired)
                 _addLoading.value = false
                 return@launch
             }
@@ -83,7 +85,7 @@ class VitalDetailViewModel : ViewModel() {
             when (val r = addVitalUseCase(body)) {
                 is DomainResult.Success -> { Haptics.success(); fetchLastVital(); onSuccess() }
                 is DomainResult.Error -> {
-                    _addError.value = r.exception.message ?: "Couldn't save the vital. Please try again."
+                    _addError.value = r.exception.message ?: MyApplication.appContext.getString(R.string.home_vital_save_failed)
                     Haptics.error()
                     Log.e("VitalDetailVM", r.exception.message.orEmpty())
                 }

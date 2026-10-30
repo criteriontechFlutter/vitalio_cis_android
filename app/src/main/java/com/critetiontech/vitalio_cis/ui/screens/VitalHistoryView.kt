@@ -28,6 +28,10 @@ import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.model.VitalGraphEntry
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.viewmodel.VitalDetailViewModel
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -89,7 +93,7 @@ fun toDisplayEntries(
             dateTime = dateTime,
             time = time,
             primaryValue = "${sys?.roundToInt() ?: "–"}/${dia?.roundToInt() ?: "–"}",
-            primaryLabel = "Systolic / Diastolic",
+            primaryLabel = MyApplication.appContext.getString(R.string.track_systolic_diastolic),
             unit = unit,
             numericValue = sys ?: 0.0,
             secondaryValue = dia,
@@ -175,6 +179,7 @@ fun VitalHistoryScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val navController = com.critetiontech.myapplication.utils.LocalNavController.current
     val colors = LocalMyColorScheme.current
+    val latestCaptionFormat = stringResource(R.string.track_latest_caption)
 
     // Blood pressure shows the latest pulse beside it, as in the design.
     val lastVitals by viewModel.vitalList.collectAsState()
@@ -188,12 +193,12 @@ fun VitalHistoryScreen(
                 append(": ${latest.primaryValue} ${latest.unit}".trimEnd())
                 if (latest.status != VitalStatus.None) append(" (${latest.status.label.lowercase().replaceFirstChar { it.uppercase() }})")
                 append(" · ${latest.time}")
-                if (displayEntries.size > 1) append("\n${displayEntries.size} readings in this period")
-            } else append(": no readings in this period")
+                if (displayEntries.size > 1) append("\n" + context.getString(R.string.track_share_readings_count, displayEntries.size))
+            } else append(": " + context.getString(R.string.track_share_no_readings))
         }
         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
             .putExtra(android.content.Intent.EXTRA_TEXT, text)
-        runCatching { context.startActivity(android.content.Intent.createChooser(intent, "Share ${heroTitleFor(vitalName)}")) }
+        runCatching { context.startActivity(android.content.Intent.createChooser(intent, context.getString(R.string.track_share_title, heroTitleFor(vitalName)))) }
     }
 
     Column(Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
@@ -208,7 +213,7 @@ fun VitalHistoryScreen(
                         .background(colors.dashboardContainerColor)
                         .clickable { share() },
                 ) {
-                    Icon(androidx.compose.material.icons.Icons.Outlined.IosShare, contentDescription = "Share", tint = colors.textDarkColor, modifier = Modifier.size(20.dp))
+                    Icon(androidx.compose.material.icons.Icons.Outlined.IosShare, contentDescription = stringResource(R.string.track_share), tint = colors.textDarkColor, modifier = Modifier.size(20.dp))
                 }
             },
         )
@@ -249,14 +254,14 @@ fun VitalHistoryScreen(
                     value = latest?.primaryValue ?: "--",
                     unit = latest?.unit.orEmpty(),
                     status = latest?.status,
-                    caption = latest?.time?.let { "Latest · $it" },
+                    caption = latest?.time?.let { String.format(latestCaptionFormat, it) },
                     pulse = latestPulse,
                 )
             }
 
             if (canAddVitalManually(vitalName)) {
                 Text(
-                    "Add Vital",
+                    stringResource(R.string.track_add_vital),
                     color = colors.primaryBlueColor,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
@@ -285,20 +290,20 @@ fun VitalHistoryScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("$vitalName Log", style = AppTextStyles.style16BCN())
+                Text(stringResource(R.string.track_vital_log, vitalName), style = AppTextStyles.style16BCN())
                 Row {
                     HapticIconButton(onClick = { viewMode = ViewMode.LIST }) {
                         Icon(
                             Icons.AutoMirrored.Filled.List,
-                            contentDescription = "List",
-                            tint = if (viewMode == ViewMode.LIST) Color(0xFF2F6BFF) else Color.Gray
+                            contentDescription = stringResource(R.string.track_list),
+                            tint = if (viewMode == ViewMode.LIST) Color(0xFF2F6BFF) else colors.textGreyColor
                         )
                     }
                     HapticIconButton(onClick = { viewMode = ViewMode.GRAPH }) {
                         Icon(
                             Icons.Default.ShowChart,
-                            contentDescription = "Graph",
-                            tint = if (viewMode == ViewMode.GRAPH) Color(0xFF2F6BFF) else Color.Gray
+                            contentDescription = stringResource(R.string.track_graph),
+                            tint = if (viewMode == ViewMode.GRAPH) Color(0xFF2F6BFF) else colors.textGreyColor
                         )
                     }
                 }
@@ -311,7 +316,7 @@ fun VitalHistoryScreen(
                     modifier = Modifier.fillMaxWidth().padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("No readings in this period", color = Color.Gray)
+                    Text(stringResource(R.string.track_no_readings_period), color = colors.textGreyColor)
                 }
             } else {
                 when (viewMode) {
@@ -337,23 +342,27 @@ private fun periodRange(date: LocalDate, mode: DateMode): Pair<LocalDate, LocalD
 @Composable
 private fun VitalStatsRow(entries: List<VitalDisplayEntry>, isBP: Boolean) {
     val colors = LocalMyColorScheme.current
+    val lblReadings = stringResource(R.string.track_readings)
+    val lblLowest = stringResource(R.string.track_lowest)
+    val lblAverage = stringResource(R.string.track_average)
+    val lblHighest = stringResource(R.string.track_highest)
     val stats: List<Pair<String, String>> = if (isBP) {
         val sys = entries.filter { it.numericValue > 0 }.map { it.numericValue }
         val dia = entries.mapNotNull { it.secondaryValue }
         fun pair(a: Double?, b: Double?) = "${a?.roundToInt() ?: "–"}/${b?.roundToInt() ?: "–"}"
         listOf(
-            "Readings" to entries.size.toString(),
-            "Lowest" to pair(sys.minOrNull(), dia.minOrNull()),
-            "Average" to pair(sys.takeIf { it.isNotEmpty() }?.average(), dia.takeIf { it.isNotEmpty() }?.average()),
-            "Highest" to pair(sys.maxOrNull(), dia.maxOrNull()),
+            lblReadings to entries.size.toString(),
+            lblLowest to pair(sys.minOrNull(), dia.minOrNull()),
+            lblAverage to pair(sys.takeIf { it.isNotEmpty() }?.average(), dia.takeIf { it.isNotEmpty() }?.average()),
+            lblHighest to pair(sys.maxOrNull(), dia.maxOrNull()),
         )
     } else {
         val values = entries.map { it.numericValue }
         listOf(
-            "Readings" to entries.size.toString(),
-            "Lowest" to oneDecimal(values.min()),
-            "Average" to oneDecimal(values.average()),
-            "Highest" to oneDecimal(values.max()),
+            lblReadings to entries.size.toString(),
+            lblLowest to oneDecimal(values.min()),
+            lblAverage to oneDecimal(values.average()),
+            lblHighest to oneDecimal(values.max()),
         )
     }
     val outOfRange = entries.count { it.status == VitalStatus.Borderline || it.status == VitalStatus.Abnormal }
@@ -376,8 +385,9 @@ private fun VitalStatsRow(entries: List<VitalDisplayEntry>, isBP: Boolean) {
         if (entries.any { it.status != VitalStatus.None }) {
             Spacer(Modifier.height(8.dp))
             Text(
-                if (outOfRange == 0) "All readings in the normal range"
-                else "$outOfRange of ${entries.size} ${if (entries.size == 1) "reading" else "readings"} outside the normal range",
+                if (outOfRange == 0) stringResource(R.string.track_all_readings_normal)
+                else if (entries.size == 1) stringResource(R.string.track_readings_out_of_range_one, outOfRange, entries.size)
+                else stringResource(R.string.track_readings_out_of_range_many, outOfRange, entries.size),
                 color = if (outOfRange == 0) VitalStatus.Normal.color else VitalStatus.Abnormal.color,
                 fontSize = 12.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -427,12 +437,12 @@ fun DynamicSummaryCircle(
                 color = valueColor
             )
             if (unit.isNotEmpty()) {
-                Text(unit, color = Color.Gray, fontSize = 12.sp)
+                Text(unit, color = LocalMyColorScheme.current.textGreyColor, fontSize = 12.sp)
             }
             Spacer(Modifier.height(4.dp))
             if (status.isNotEmpty()) Text(status, color = valueColor, fontWeight = FontWeight.SemiBold)
             if (caption != null) {
-                Text(caption, color = Color.Gray, fontSize = 11.sp)
+                Text(caption, color = LocalMyColorScheme.current.textGreyColor, fontSize = 11.sp)
             }
         }
     }
@@ -455,11 +465,11 @@ fun DynamicLogItem(entry: VitalDisplayEntry) {
                     Icon(
                         Icons.Default.AccessTime,
                         contentDescription = null,
-                        tint = Color.Gray,
+                        tint = LocalMyColorScheme.current.textGreyColor,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(entry.time, fontSize = 12.sp, color = Color.Gray)
+                    Text(entry.time, fontSize = 12.sp, color = LocalMyColorScheme.current.textGreyColor)
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -468,7 +478,7 @@ fun DynamicLogItem(entry: VitalDisplayEntry) {
                     fontWeight = FontWeight.SemiBold,
                     color = entry.valueColor
                 )
-                Text(entry.primaryLabel, fontSize = 10.sp, color = Color.Gray)
+                Text(entry.primaryLabel, fontSize = 10.sp, color = LocalMyColorScheme.current.textGreyColor)
             }
 
             // Height and weight have no normal range of their own, so no tag.
@@ -488,7 +498,7 @@ fun DynamicLogItem(entry: VitalDisplayEntry) {
             }
         }
         Spacer(Modifier.height(8.dp))
-        HorizontalDivider(color = Color(0xFFE0E0E0))
+        HorizontalDivider(color = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE0E0E0))
     }
 }
 
@@ -501,7 +511,7 @@ fun DynamicVitalGraph(entries: List<VitalDisplayEntry>, isBP: Boolean = false) {
         Box(
             modifier = Modifier.fillMaxWidth().height(220.dp),
             contentAlignment = Alignment.Center
-        ) { Text("At least 2 readings are needed for a graph", color = Color.Gray) }
+        ) { Text(stringResource(R.string.track_graph_min_readings), color = LocalMyColorScheme.current.textGreyColor) }
         return
     }
     val chronological = entries.reversed()
@@ -511,12 +521,14 @@ fun DynamicVitalGraph(entries: List<VitalDisplayEntry>, isBP: Boolean = false) {
     val range = if (max == min) 1.0 else max - min
     val lineColor = Color(0xFF2F6BFF)
     val diaColor = Color(0xFF8B5CF6)
+    val axisColor = LocalMyColorScheme.current.textGreyColor
+    val haloColor = if (isAppDark) LocalMyColorScheme.current.dashboardBackgroundColor else Color.White
 
     Column {
         if (isBP) {
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(start = 16.dp)) {
-                LegendDot(lineColor, "Systolic")
-                LegendDot(diaColor, "Diastolic")
+                LegendDot(lineColor, stringResource(R.string.track_systolic))
+                LegendDot(diaColor, stringResource(R.string.track_diastolic))
             }
         }
         Row {
@@ -525,8 +537,8 @@ fun DynamicVitalGraph(entries: List<VitalDisplayEntry>, isBP: Boolean = false) {
                 Modifier.height(220.dp).padding(vertical = 16.dp),
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(oneDecimal(max), fontSize = 10.sp, color = Color.Gray)
-                Text(oneDecimal(min), fontSize = 10.sp, color = Color.Gray)
+                Text(oneDecimal(max), fontSize = 10.sp, color = axisColor)
+                Text(oneDecimal(min), fontSize = 10.sp, color = axisColor)
             }
             Canvas(
                 modifier = Modifier.weight(1f).height(220.dp).padding(16.dp)
@@ -539,7 +551,7 @@ fun DynamicVitalGraph(entries: List<VitalDisplayEntry>, isBP: Boolean = false) {
                     points.forEachIndexed { i, p ->
                         if (p != null) {
                             val dot = if (statuses[i] == VitalStatus.None) color else statuses[i].color
-                            drawCircle(Color.White, radius = 9f, center = p)
+                            drawCircle(haloColor, radius = 9f, center = p)
                             drawCircle(dot, radius = 6f, center = p)
                         }
                     }
@@ -551,8 +563,8 @@ fun DynamicVitalGraph(entries: List<VitalDisplayEntry>, isBP: Boolean = false) {
         }
         // X axis: first and last reading.
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(chronological.first().time, fontSize = 10.sp, color = Color.Gray)
-            Text(chronological.last().time, fontSize = 10.sp, color = Color.Gray)
+            Text(chronological.first().time, fontSize = 10.sp, color = axisColor)
+            Text(chronological.last().time, fontSize = 10.sp, color = axisColor)
         }
     }
 }
@@ -562,7 +574,7 @@ private fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(color))
         Spacer(Modifier.width(4.dp))
-        Text(label, fontSize = 11.sp, color = Color.Gray)
+        Text(label, fontSize = 11.sp, color = LocalMyColorScheme.current.textGreyColor)
     }
 }
 
@@ -579,7 +591,11 @@ fun changeDate(current: LocalDate, mode: DateMode, isNext: Boolean): LocalDate =
 
 @Composable
 fun VitalTabSection(selected: Int, onTabChange: (Int) -> Unit) {
-    val tabs = listOf("Daily", "Weekly", "Monthly")
+    val tabs = listOf(
+        stringResource(R.string.track_daily),
+        stringResource(R.string.track_weekly),
+        stringResource(R.string.track_monthly)
+    )
     val colors = LocalMyColorScheme.current
     Row(
         modifier = Modifier
@@ -598,7 +614,7 @@ fun VitalTabSection(selected: Int, onTabChange: (Int) -> Unit) {
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = text, color = if (selected == i) Color.White else Color.Gray)
+                Text(text = text, color = if (selected == i) Color.White else colors.textGreyColor)
             }
         }
     }
@@ -617,10 +633,12 @@ fun vitalDateRow(
 ) {
     val colors = LocalMyColorScheme.current
     val today = LocalDate.now()
+    val todayLabel = stringResource(R.string.track_today)
+    val yesterdayLabel = stringResource(R.string.track_yesterday)
     val text = when (mode) {
         DateMode.DAILY -> when (currentDate) {
-            today -> "Today"
-            today.minusDays(1) -> "Yesterday"
+            today -> todayLabel
+            today.minusDays(1) -> yesterdayLabel
             else -> currentDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
         }
         DateMode.WEEKLY -> {
@@ -638,7 +656,7 @@ fun vitalDateRow(
         HapticIconButton(
             onClick = { onPrevious() },
             colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
-        ) { Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Previous") }
+        ) { Icon(Icons.Default.KeyboardArrowLeft, contentDescription = stringResource(R.string.track_previous)) }
 
         Text(text, color = colors.textDarkColor, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
 
@@ -649,6 +667,6 @@ fun vitalDateRow(
                 contentColor = colors.btnDarkColor,
                 disabledContentColor = colors.btnDarkColor.copy(alpha = 0.25f),
             )
-        ) { Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Next") }
+        ) { Icon(Icons.Default.KeyboardArrowRight, contentDescription = stringResource(R.string.track_next)) }
     }
 }

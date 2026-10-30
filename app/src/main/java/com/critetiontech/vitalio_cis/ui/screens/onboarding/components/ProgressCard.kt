@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
 
 @Composable
 fun ProgressCard(
@@ -24,10 +27,12 @@ fun ProgressCard(
     subtitle: String
 ) {
     val percentage = (progress * 100).toInt()
+    val colors = LocalMyColorScheme.current
+    val dark = isAppDark
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
+        colors = CardDefaults.cardColors(containerColor = softTint(Color(0xFF3B82F6), Color(0xFFEFF6FF))),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -46,7 +51,7 @@ fun ProgressCard(
                     .fillMaxWidth()
                     .height(6.dp),
                 color = Color(0xFF3B82F6),
-                trackColor = Color(0xFFD1D5DB)
+                trackColor = if (dark) colors.borderGreyLightColor else Color(0xFFD1D5DB)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -54,13 +59,14 @@ fun ProgressCard(
             Text(
                 title,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                color = colors.textDarkColor
             )
 
             Text(
                 subtitle,
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = if (dark) colors.textGreyColor else Color.Gray
             )
         }
     }

@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,7 +77,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
     val medsPending by viewModel.pendingMedicinesCount.collectAsState()
     val vitalsOk by viewModel.vitalsNormal.collectAsState()
 
-    CommonAppBar(title = "Digital Twin (Beta)") {
+    CommonAppBar(title = stringResource(R.string.home_digital_twin_title)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -84,14 +87,14 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Your Health Avatar",
+                text = stringResource(R.string.home_twin_health_avatar),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = colors.textDarkColor
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "The avatar responds to your daily logs in real-time.",
+                text = stringResource(R.string.home_twin_avatar_subtitle),
                 fontSize = 14.sp,
                 color = colors.textGreyColor
             )
@@ -114,7 +117,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Current State: ${state.name}",
+                        text = stringResource(R.string.home_twin_current_state, stringResource(twinStateLabelRes(state))),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = when (state) {
@@ -126,7 +129,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = getStatusMessage(state),
+                        text = stringResource(getStatusMessage(state)),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         color = colors.textDarkColor
                     )
@@ -137,7 +140,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
 
             // Control Panel (For testing the logic)
             Text(
-                text = "Developer Control Panel",
+                text = stringResource(R.string.home_twin_dev_panel),
                 fontWeight = FontWeight.Bold,
                 color = colors.textDarkColor,
                 modifier = Modifier.align(Alignment.Start)
@@ -145,7 +148,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // Fluid Slider
-            Text(text = "Fluid Intake: ${fluidLevel.toInt()}%", color = colors.textDarkColor)
+            Text(text = stringResource(R.string.home_twin_fluid_intake, fluidLevel.toInt()), color = colors.textDarkColor)
             Slider(
                 value = fluidLevel,
                 onValueChange = { viewModel.fluidIntakePercentage.value = it },
@@ -160,7 +163,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Pending Medicines: $medsPending", color = colors.textDarkColor)
+                Text(text = stringResource(R.string.home_twin_pending_medicines, medsPending), color = colors.textDarkColor)
                 Row {
                     HapticButton(onClick = { if (medsPending > 0) viewModel.pendingMedicinesCount.value -= 1 }) { Text("-") }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -176,7 +179,7 @@ fun DigitalTwinScreen(viewModel: DigitalTwinViewModel = viewModel()) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Vitals Normal?", color = colors.textDarkColor)
+                Text(text = stringResource(R.string.home_twin_vitals_normal), color = colors.textDarkColor)
                 HapticSwitch(
                     checked = vitalsOk,
                     onCheckedChange = { viewModel.vitalsNormal.value = it }
@@ -267,7 +270,7 @@ fun AvatarVisualizer(state: TwinState) {
         // We use the Person icon but scale it up and tint it dynamically to look like a digital twin
         Icon(
             imageVector = androidx.compose.material.icons.Icons.Default.Person,
-            contentDescription = "Human Digital Twin",
+            contentDescription = stringResource(R.string.home_cd_human_digital_twin),
             tint = coreColor.copy(alpha = 0.9f),
             modifier = Modifier
                 .size(160.dp)
@@ -308,11 +311,20 @@ fun AvatarVisualizer(state: TwinState) {
     }
 }
 
-fun getStatusMessage(state: TwinState): String {
+@StringRes
+fun getStatusMessage(state: TwinState): Int {
     return when (state) {
-        TwinState.PERFECT -> "Your twin is glowing! You are hydrated, taking your meds on time, and vitals are normal. Keep it up!"
-        TwinState.DEHYDRATED -> "Your twin looks dull. You haven't reached your fluid goal today. Please drink some water."
-        TwinState.NEEDS_MEDICINE -> "Your twin's heart rate is erratic. You have pending medications to take. Please check your schedule."
-        TwinState.CRITICAL -> "Your twin is fading. Critical vitals detected or multiple missed health goals. Please attend to your health."
+        TwinState.PERFECT -> R.string.home_twin_msg_perfect
+        TwinState.DEHYDRATED -> R.string.home_twin_msg_dehydrated
+        TwinState.NEEDS_MEDICINE -> R.string.home_twin_msg_needs_medicine
+        TwinState.CRITICAL -> R.string.home_twin_msg_critical
     }
+}
+
+@StringRes
+private fun twinStateLabelRes(state: TwinState): Int = when (state) {
+    TwinState.PERFECT -> R.string.home_twin_state_perfect
+    TwinState.DEHYDRATED -> R.string.home_twin_state_dehydrated
+    TwinState.NEEDS_MEDICINE -> R.string.home_twin_state_needs_medicine
+    TwinState.CRITICAL -> R.string.home_twin_state_critical
 }

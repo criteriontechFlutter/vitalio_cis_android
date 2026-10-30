@@ -50,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -92,7 +94,7 @@ fun NutrientSearchScreen(viewModel: NutrientViewModel = viewModel()) {
             .imePadding()
     ) {
         RoundBackTopBar(
-            title = "Nutrition Facts",
+            title = stringResource(R.string.med_nutri_title),
             onBack = if (selected != null) ({ viewModel.clearSelection() }) else null,
         )
         AnimatedContent(
@@ -121,13 +123,13 @@ private fun SearchPage(viewModel: NutrientViewModel) {
         MyTextField(
             value = query,
             onValueChange = viewModel::onQueryChange,
-            placeholderText = "Search a food, e.g. roti, dal, apple",
+            placeholderText = stringResource(R.string.med_nutri_search_placeholder),
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
             trailingIcon = {
                 when {
                     searching -> CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = colors.primaryBlueColor)
                     query.isNotEmpty() -> Icon(
-                        Icons.Rounded.Close, contentDescription = "Clear",
+                        Icons.Rounded.Close, contentDescription = stringResource(R.string.med_clear),
                         modifier = Modifier.size(32.dp).clip(CircleShape).bounceClick { viewModel.onQueryChange("") }.padding(6.dp),
                     )
                 }
@@ -138,21 +140,21 @@ private fun SearchPage(viewModel: NutrientViewModel) {
         when {
             !viewModel.isConfigured -> NutriMessage(
                 Icons.Rounded.Restaurant,
-                "Nutrition lookup isn't set up",
-                "The NutriAnalyser API key is missing from this build.",
+                stringResource(R.string.med_nutri_not_configured_title),
+                stringResource(R.string.med_nutri_not_configured_body),
             )
             !typed -> NutriMessage(
                 Icons.Rounded.Restaurant,
-                "Check what's in your food",
-                "Search a food to see its calories, carbs, protein, fat and more for the serving you eat.",
+                stringResource(R.string.med_nutri_intro_title),
+                stringResource(R.string.med_nutri_intro_body),
             )
-            error != null -> NutriMessage(Icons.Rounded.SearchOff, "Search didn't work", error!!, "Try again") {
+            error != null -> NutriMessage(Icons.Rounded.SearchOff, stringResource(R.string.med_nutri_search_failed), error!!, stringResource(R.string.med_try_again)) {
                 viewModel.onQueryChange(query)
             }
             !searching && results.isEmpty() -> NutriMessage(
                 Icons.Rounded.SearchOff,
-                "No foods found",
-                "Nothing matches \"${query.trim()}\". Try a shorter or different name.",
+                stringResource(R.string.med_nutri_no_foods),
+                stringResource(R.string.med_nutri_no_match, query.trim()),
             )
             else -> LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -253,7 +255,7 @@ private fun DetailPage(food: NutriFood, viewModel: NutrientViewModel) {
                     unit?.let {
                         if (it.unitName.trim().equals("gm", true)) "${formatQty(quantity)} g"
                         else "${formatQty(quantity)} × ${it.unitName.trim()}"
-                    } ?: "Choose a serving",
+                    } ?: stringResource(R.string.med_nutri_choose_serving),
                     color = colors.textGreyColor, fontSize = 13.sp,
                 )
             }
@@ -268,7 +270,7 @@ private fun DetailPage(food: NutriFood, viewModel: NutrientViewModel) {
                     .background(colors.dashboardContainerColor)
                     .padding(16.dp),
             ) {
-                Text("Serving", color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.med_nutri_serving), color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(10.dp))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -280,8 +282,8 @@ private fun DetailPage(food: NutriFood, viewModel: NutrientViewModel) {
                 val grams = unit?.unitName?.trim()?.equals("gm", true) == true
                 val step = if (grams) 10.0 else 0.5
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Quantity", color = colors.textGreyColor, fontSize = 14.sp, modifier = Modifier.weight(1f))
-                    StepButton(Icons.Rounded.Remove, "Less", enabled = quantity - step >= NutrientViewModel.MIN_QTY) {
+                    Text(stringResource(R.string.med_nutri_quantity), color = colors.textGreyColor, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    StepButton(Icons.Rounded.Remove, stringResource(R.string.med_nutri_less), enabled = quantity - step >= NutrientViewModel.MIN_QTY) {
                         viewModel.setQuantity(quantity - step)
                     }
                     Text(
@@ -289,7 +291,7 @@ private fun DetailPage(food: NutriFood, viewModel: NutrientViewModel) {
                         color = colors.textDarkColor, fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center, modifier = Modifier.width(84.dp),
                     )
-                    StepButton(Icons.Rounded.Add, "More", enabled = quantity + step <= NutrientViewModel.MAX_QTY) {
+                    StepButton(Icons.Rounded.Add, stringResource(R.string.med_nutri_more), enabled = quantity + step <= NutrientViewModel.MAX_QTY) {
                         viewModel.setQuantity(quantity + step)
                     }
                 }
@@ -298,7 +300,7 @@ private fun DetailPage(food: NutriFood, viewModel: NutrientViewModel) {
 
         when {
             error != null && nutrients.isEmpty() -> NutriMessage(
-                Icons.Rounded.SearchOff, "Couldn't load nutrients", error!!, "Try again",
+                Icons.Rounded.SearchOff, stringResource(R.string.med_nutri_load_failed), error!!, stringResource(R.string.med_try_again),
             ) { viewModel.retryDetail() }
             nutrients.isEmpty() -> Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = colors.primaryBlueColor)
@@ -370,7 +372,7 @@ private fun NutrientSummary(nutrients: List<NutriNutrient>, refreshing: Boolean)
                 ) { Icon(Icons.Rounded.LocalFireDepartment, null, tint = EnergyColor, modifier = Modifier.size(28.dp)) }
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("Energy", color = colors.textGreyColor, fontSize = 13.sp)
+                    Text(stringResource(R.string.med_nutri_energy), color = colors.textGreyColor, fontSize = 13.sp)
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             energy?.amount?.let { formatAmount(it, whole = true) } ?: "--",
@@ -407,7 +409,7 @@ private fun NutrientSummary(nutrients: List<NutriNutrient>, refreshing: Boolean)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) {
                     Text(
-                        "All nutrients", color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                        stringResource(R.string.med_nutri_all_nutrients), color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(vertical = 8.dp),
                     )
                     rest.forEachIndexed { i, n ->
@@ -425,7 +427,7 @@ private fun NutrientSummary(nutrients: List<NutriNutrient>, refreshing: Boolean)
         }
 
         Text(
-            "Values are estimates from NutriAnalyser for the serving chosen above.",
+            stringResource(R.string.med_nutri_disclaimer),
             color = colors.textGreyColor, fontSize = 11.sp, textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -448,7 +450,7 @@ private fun MacroCard(carb: NutriNutrient?, protein: NutriNutrient?, fat: NutriN
             .background(colors.dashboardContainerColor)
             .padding(16.dp),
     ) {
-        Text("Macronutrients", color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.med_nutri_macronutrients), color = colors.textDarkColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(12.dp))
         if (total != null) {
             Row(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp))) {
@@ -460,9 +462,9 @@ private fun MacroCard(carb: NutriNutrient?, protein: NutriNutrient?, fat: NutriN
             Spacer(Modifier.height(14.dp))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            MacroTile("Carbs", carb, CarbColor, total?.let { c / it }, Modifier.weight(1f))
-            MacroTile("Protein", protein, ProteinColor, total?.let { p / it }, Modifier.weight(1f))
-            MacroTile("Fat", fat, FatColor, total?.let { f / it }, Modifier.weight(1f))
+            MacroTile(stringResource(R.string.med_nutri_carbs), carb, CarbColor, total?.let { c / it }, Modifier.weight(1f))
+            MacroTile(stringResource(R.string.med_nutri_protein), protein, ProteinColor, total?.let { p / it }, Modifier.weight(1f))
+            MacroTile(stringResource(R.string.med_nutri_fat), fat, FatColor, total?.let { f / it }, Modifier.weight(1f))
         }
     }
 }
@@ -488,7 +490,7 @@ private fun MacroTile(label: String, n: NutriNutrient?, color: Color, share: Dou
             color = colors.textDarkColor, fontSize = 16.sp, fontWeight = FontWeight.Bold,
         )
         if (share != null) {
-            Text("${(share * 100).toInt()}% kcal", color = colors.textGreyColor, fontSize = 11.sp)
+            Text(stringResource(R.string.med_nutri_share_kcal, (share * 100).toInt()), color = colors.textGreyColor, fontSize = 11.sp)
         }
     }
 }

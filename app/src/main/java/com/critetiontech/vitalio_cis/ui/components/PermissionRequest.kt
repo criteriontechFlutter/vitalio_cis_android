@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -137,13 +139,13 @@ private enum class SheetMode { Explain, Blocked }
 
 /** The name Android shows for this permission in Settings → Permissions. */
 private val AppPermission.systemName: String
-    get() = if (this == AppPermission.NearbyDevices && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) "Location" else title
+    @Composable get() = if (this == AppPermission.NearbyDevices && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) stringResource(R.string.auth_perm_location) else title
 
 private val AppPermission.askTitle: String
-    get() = when (this) {
-        AppPermission.Notifications -> "Turn on notifications"
-        AppPermission.NearbyDevices -> "Allow nearby devices"
-        else -> "Allow ${title.lowercase()} access"
+    @Composable get() = when (this) {
+        AppPermission.Notifications -> stringResource(R.string.auth_perm_ask_notifications)
+        AppPermission.NearbyDevices -> stringResource(R.string.auth_perm_ask_nearby)
+        else -> stringResource(R.string.auth_perm_ask_generic, title.lowercase())
     }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,7 +160,7 @@ fun PermissionSheet(
     val colors = LocalMyColorScheme.current
     AppBottomSheet(
         onDismissRequest = onDismiss,
-        title = if (blocked) "${permission.systemName} is turned off" else permission.askTitle,
+        title = if (blocked) stringResource(R.string.auth_perm_turned_off, permission.systemName) else permission.askTitle,
         icon = permission.icon,
     ) {
         Column(
@@ -166,7 +168,7 @@ fun PermissionSheet(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
-                "Vitalio needs ${permission.systemName.lowercase()} access $reason.",
+                stringResource(R.string.auth_perm_needs_access, permission.systemName.lowercase(), reason),
                 color = colors.textDarkColor,
                 fontSize = 15.sp,
                 lineHeight = 21.sp,
@@ -181,13 +183,13 @@ fun PermissionSheet(
                         .background(colors.dashboardBackgroundColor, RoundedCornerShape(16.dp))
                         .padding(14.dp),
                 ) {
-                    Text("To turn it on", color = colors.textGreyColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                    listOf("Tap Open Settings below", "Go to Permissions", "Tap ${permission.systemName} and choose Allow")
+                    Text(stringResource(R.string.auth_perm_to_turn_on), color = colors.textGreyColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    listOf(stringResource(R.string.auth_perm_step_open_settings), stringResource(R.string.auth_perm_step_permissions), stringResource(R.string.auth_perm_step_allow, permission.systemName))
                         .forEachIndexed { i, step -> Step(i + 1, step) }
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Used for", color = colors.textGreyColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.auth_perm_used_for), color = colors.textGreyColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     permission.usedFor.forEach { Bullet(it) }
                 }
             }
@@ -215,18 +217,18 @@ fun PermissionSheet(
                     Icon(Icons.Rounded.Settings, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                 }
-                Text(if (blocked) "Open Settings" else "Continue", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(if (blocked) stringResource(R.string.auth_perm_open_settings) else stringResource(R.string.auth_common_continue), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
             HapticTextButton(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(vertical = 10.dp),
             ) {
-                Text("Not now", color = colors.textGreyColor, fontSize = 15.sp)
+                Text(stringResource(R.string.auth_common_not_now), color = colors.textGreyColor, fontSize = 15.sp)
             }
             if (!blocked) {
                 Text(
-                    "You can change this anytime in Menu → Permissions & Privacy.",
+                    stringResource(R.string.auth_perm_change_anytime),
                     color = colors.textGreyColor,
                     fontSize = 12.sp,
                     modifier = Modifier.align(Alignment.CenterHorizontally),

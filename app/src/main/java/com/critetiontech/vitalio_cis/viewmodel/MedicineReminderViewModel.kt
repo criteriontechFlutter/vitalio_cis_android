@@ -64,14 +64,14 @@ class MedicineReminderViewModel : ViewModel() {
         viewModelScope.launch {
             when (val r = markMedicineIntakeUseCase(id, scheduledDateTime)) {
                 is DomainResult.Success -> {
-                    _toast.value = ToastData("Taken", "Medication marked as taken successfully.", true)
+                    _toast.value = ToastData(MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_taken), MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_toast_marked_taken_success), true)
                     Haptics.success()
                     fetchMedicineIntake()
                     // Drop the alarm for the dose that was just taken.
                     MedicineReminderScheduler.requestSync(MyApplication.appContext)
                 }
                 is DomainResult.Error -> {
-                    _toast.value = ToastData("Error", r.exception.message ?: "Unknown error", false)
+                    _toast.value = ToastData(MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_error_title), r.exception.message ?: MyApplication.appContext.getString(com.critetiontech.ctvitalio.R.string.med_error_unknown), false)
                     Haptics.error()
                     Log.e("MedicineReminderVM", r.exception.message.orEmpty())
                 }

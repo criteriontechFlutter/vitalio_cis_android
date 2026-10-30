@@ -17,7 +17,7 @@ fun RequestNotificationPermission() {
     val context = LocalContext.current
     val request = rememberPermissionRequest(
         AppPermission.Notifications,
-        "so your medicine alarms can ring and your care team's updates reach you",
+        AppPermission.Notifications.defaultReason,
     ) {}
 
     LaunchedEffect(Unit) {

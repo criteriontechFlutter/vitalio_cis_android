@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +23,7 @@ import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.model.PatientActivityItem
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.viewmodel.ActivityViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -36,7 +38,7 @@ fun ActivityHistoryScreen(viewModel: ActivityViewModel = viewModel()) {
         viewModel.fetchPatientActivity()
     }
 
-    CommonAppBar(title = "History") {
+    CommonAppBar(title = stringResource(R.string.track_history)) {
         if (isLoading && recentList.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor),
@@ -49,7 +51,7 @@ fun ActivityHistoryScreen(viewModel: ActivityViewModel = viewModel()) {
                 modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No activity history yet", color = Color.Gray)
+                Text(stringResource(R.string.track_no_activity_history), color = colors.textGreyColor)
             }
         } else {
             LazyColumn(
@@ -92,7 +94,7 @@ private fun ActivityHistoryCard(item: PatientActivityItem) {
                 Icon(
                     painter = painterResource(R.drawable.reminders),
                     contentDescription = null,
-                    tint = Color(0xFF475569),
+                    tint = if (isAppDark) colors.textGreyColor else Color(0xFF475569),
                     modifier = Modifier.size(17.dp)
                 )
                 Spacer(Modifier.width(10.dp))
@@ -105,7 +107,7 @@ private fun ActivityHistoryCard(item: PatientActivityItem) {
                 Spacer(Modifier.weight(1f))
                 Icon(
                     painter = painterResource(R.drawable.fluid_edit),
-                    contentDescription = "Edit",
+                    contentDescription = stringResource(R.string.track_edit),
                     tint = Color(0xFF94A3B8),
                     modifier = Modifier.size(16.dp)
                 )
@@ -115,14 +117,14 @@ private fun ActivityHistoryCard(item: PatientActivityItem) {
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 thickness = 1.dp,
-                color = Color(0xFFF1F5F9)
+                color = if (isAppDark) colors.borderGreyLightColor else Color(0xFFF1F5F9)
             )
 
             // Bottom: activity name
             Text(
-                text = item.activityName.ifEmpty { "Activity" },
+                text = item.activityName.ifEmpty { stringResource(R.string.track_activity) },
                 fontSize = 14.sp,
-                color = Color(0xFF64748B),
+                color = colors.textGreyColor,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
             )
         }

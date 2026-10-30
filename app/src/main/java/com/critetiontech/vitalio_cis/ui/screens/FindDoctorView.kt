@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.model.Doctor
 import com.critetiontech.ctvitalio.model.DoctorDetails
@@ -50,6 +52,7 @@ import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import com.critetiontech.ctvitalio.ui.feedback.contentStateOf
 import com.critetiontech.ctvitalio.ui.feedback.rememberHaptics
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.viewmodel.FindDoctorViewModel
 import com.critetiontech.myapplication.utils.LocalNavController
 import kotlin.math.absoluteValue
@@ -58,7 +61,8 @@ import kotlin.math.absoluteValue
 private val DepartmentBadge = Color(0xFFF97316)
 
 /** Light outline used by the search bar and day chips. */
-internal val DoctorOutline = Color(0xFFE5E7EB)
+internal val DoctorOutline: Color
+    @Composable get() = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE5E7EB)
 
 // -------------------- Shared doctor pieces --------------------
 
@@ -116,7 +120,13 @@ fun DoctorDaysChip(days: String, modifier: Modifier = Modifier) {
     ) {
         Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(13.dp))
         Spacer(Modifier.width(5.dp))
-        Text(days, color = colors.textGreyColor, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // "N/A" / "Daily" also travel in the route as identifiers, so only translate them here.
+        val label = when (days) {
+            "N/A" -> stringResource(R.string.consult_days_na)
+            "Daily" -> stringResource(R.string.consult_days_daily)
+            else -> days
+        }
+        Text(label, color = colors.textGreyColor, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -137,7 +147,8 @@ internal fun Doctor.shortDays(): String {
 // -------------------- Shimmer --------------------
 @Composable
 private fun doctorShimmerBrush(): Brush {
-    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val shimmerColors = if (isAppDark) listOf(Color(0xFF2A3138), Color(0xFF1C2228), Color(0xFF2A3138))
+    else listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
     val transition = rememberInfiniteTransition(label = "docShimmer")
     val translateX by transition.animateFloat(
         initialValue = -600f, targetValue = 600f,
@@ -175,7 +186,7 @@ fun DoctorCard(doctor: Doctor, profile: DoctorDetails? = null) {
 
     val displayName = profile?.name?.trim()?.ifEmpty { null }
         ?: doctor.doctorName?.trim()?.ifEmpty { null }
-        ?: "Doctor ${doctor.assignedUserId}"
+        ?: stringResource(R.string.consult_doctor_with_id, doctor.assignedUserId.toString())
     val displayQualification = profile?.highestQualificationName?.ifEmpty { null }
         ?: doctor.qualification
         ?: ""
@@ -263,7 +274,7 @@ private fun DoctorSearchField(query: String, onQueryChange: (String) -> Unit, mo
         Box(Modifier.weight(1f)) {
             if (query.isEmpty()) {
                 Text(
-                    "Search doctor by name or role",
+                    stringResource(R.string.consult_search_doctor_hint),
                     color = colors.textGreyColor.copy(alpha = 0.6f),
                     fontSize = 14.sp,
                     fontStyle = FontStyle.Italic,
@@ -281,7 +292,7 @@ private fun DoctorSearchField(query: String, onQueryChange: (String) -> Unit, mo
         }
         if (query.isNotEmpty()) {
             HapticIconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(22.dp)) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear search", tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.consult_clear_search), tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
             }
         }
     }
@@ -299,7 +310,7 @@ private fun AppointmentsPill(onClick: () -> Unit) {
             .bounceClick(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 9.dp),
     ) {
-        Text("Appointments", color = colors.textDarkColor, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(stringResource(R.string.consult_appointments), color = colors.textDarkColor, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         Spacer(Modifier.width(8.dp))
         Icon(Icons.Rounded.EventNote, contentDescription = null, tint = colors.textDarkColor, modifier = Modifier.size(18.dp))
     }
@@ -357,7 +368,7 @@ fun FindDoctorsScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
             ) {
                 item {
-                    DepartmentChip("All", selectedDept == null) {
+                    DepartmentChip(stringResource(R.string.consult_all), selectedDept == null) {
                         if (selectedDept != null) haptic(HapticEvent.Selection)
                         viewModel.onDepartmentSelected(null)
                     }
@@ -389,7 +400,7 @@ fun FindDoctorsScreen(
             empty = {
                 Box(Modifier.fillMaxWidth().padding(top = 80.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        if (viewModel.searchText.isNotBlank()) "No doctors match \"${viewModel.searchText.trim()}\"" else "No doctors found",
+                        if (viewModel.searchText.isNotBlank()) stringResource(R.string.consult_no_doctors_match, viewModel.searchText.trim()) else stringResource(R.string.consult_no_doctors_found),
                         color = colors.textGreyColor,
                     )
                 }
@@ -428,7 +439,7 @@ fun PreviewFindDoctors(viewModel: FindDoctorViewModel = viewModel()) {
 
     Column(Modifier.fillMaxSize().background(colors.dashboardContainerColor)) {
         RoundBackTopBar(
-            title = "Find Doctors",
+            title = stringResource(R.string.consult_find_doctors),
             // Return to My Appointments if we came from there, instead of stacking another copy.
             actions = {
                 AppointmentsPill {

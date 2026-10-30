@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,6 +45,7 @@ fun ChronicDiseaseScreen() {
     }
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     val diseaseList = listOf(
         "High Blood Pressure (Hypertension)",
         "Blood Cancer (Leukemia)",
@@ -50,14 +55,16 @@ fun ChronicDiseaseScreen() {
         "Hemophilia (Blood Clotting Disorder)"
     )
 
+    // Values stay English (what gets stored/sent); only the shown label is translated
+    val diseaseLabels = chronicDiseaseLabels()
     val filteredList = diseaseList.filter {
-        it.contains(searchText, ignoreCase = true)
+        (diseaseLabels[it] ?: it).contains(searchText, ignoreCase = true)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(20.dp)
     ) {
 
@@ -74,14 +81,14 @@ fun ChronicDiseaseScreen() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -92,8 +99,8 @@ fun ChronicDiseaseScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "Final Stretch in Sight",
-            subtitle = "You're making great progress-just a little more to go!"
+            title = stringResource(R.string.auth_onb_progress_final_stretch_title),
+            subtitle = stringResource(R.string.auth_onb_progress_final_stretch_subtitle)
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -107,7 +114,7 @@ fun ChronicDiseaseScreen() {
         )
 
         Text(
-            text = "Inform us if you have\nany chronic conditions.",
+            text = stringResource(R.string.auth_onb_chronic_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB),
@@ -117,8 +124,8 @@ fun ChronicDiseaseScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Sharing any chronic conditions helps us provide\nmore tailored health advice and care.",
-            color = Color.Gray,
+            text = stringResource(R.string.auth_onb_chronic_subtitle),
+            color = colors.textGreyColor,
             fontSize = 16.sp,
             lineHeight = 18.sp
         )
@@ -126,8 +133,8 @@ fun ChronicDiseaseScreen() {
         Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = "Chronic Disease",
-            color = Color.Gray,
+            text = stringResource(R.string.auth_onb_chronic_label),
+            color = colors.textGreyColor,
             fontSize = 14.sp
         )
 
@@ -146,7 +153,7 @@ fun ChronicDiseaseScreen() {
                 },
             placeholder = {
                 Text(
-                    text = "Select Chronic Diseases",
+                    text = stringResource(R.string.auth_onb_chronic_hint),
                     fontSize = 13.sp
                 )
             },
@@ -159,9 +166,9 @@ fun ChronicDiseaseScreen() {
             },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                disabledBorderColor = Color(0xFFE5E7EB),
-                disabledContainerColor = Color.White,
-                disabledTextColor = Color.Black
+                disabledBorderColor = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB)),
+                disabledContainerColor = colors.dashboardContainerColor,
+                disabledTextColor = colors.textDarkColor
             )
         )
 
@@ -177,7 +184,7 @@ fun ChronicDiseaseScreen() {
             selectedDiseaseList.forEach { disease ->
 
                 SelectedChip(
-                    text = disease,
+                    text = diseaseLabels[disease] ?: disease,
                     onRemove = {
                         selectedDiseaseList =
                             selectedDiseaseList - disease
@@ -198,10 +205,10 @@ fun ChronicDiseaseScreen() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 
@@ -218,7 +225,7 @@ fun ChronicDiseaseScreen() {
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colors.dashboardContainerColor
                 )
             ) {
 
@@ -227,10 +234,10 @@ fun ChronicDiseaseScreen() {
                 ) {
 
                     Text(
-                        text = "Select Disease",
+                        text = stringResource(R.string.auth_onb_select_disease),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF202529)
+                        color = colors.textDarkColor
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -244,7 +251,7 @@ fun ChronicDiseaseScreen() {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = {
-                            Text("Search")
+                            Text(stringResource(R.string.auth_common_search))
                         },
                         leadingIcon = {
                             Icon(
@@ -267,7 +274,7 @@ fun ChronicDiseaseScreen() {
                         items(filteredList) { disease ->
 
                             Text(
-                                text = disease,
+                                text = diseaseLabels[disease] ?: disease,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
@@ -285,7 +292,7 @@ fun ChronicDiseaseScreen() {
                             )
 
                             HorizontalDivider(
-                                color = Color(0xFFF1F1F1)
+                                color = softTint(colors.textGreyColor, Color(0xFFF1F1F1))
                             )
                         }
                     }
@@ -295,16 +302,28 @@ fun ChronicDiseaseScreen() {
     }
 }
 
+/** Display labels for the chronic-disease values; the English value is what gets stored/sent. */
+@Composable
+internal fun chronicDiseaseLabels(): Map<String, String> = mapOf(
+    "High Blood Pressure (Hypertension)" to stringResource(R.string.auth_onb_disease_hypertension),
+    "Blood Cancer (Leukemia)" to stringResource(R.string.auth_onb_disease_leukemia),
+    "Blood Clots (Deep Vein Thrombosis)" to stringResource(R.string.auth_onb_disease_dvt),
+    "Blood Disorders (Anemia)" to stringResource(R.string.auth_onb_disease_anemia),
+    "Thalassemia (Blood Disorder)" to stringResource(R.string.auth_onb_disease_thalassemia),
+    "Hemophilia (Blood Clotting Disorder)" to stringResource(R.string.auth_onb_disease_hemophilia),
+)
+
 @Composable
 fun SelectedChip(
     text: String,
     onRemove: () -> Unit
 ) {
+    val colors = LocalMyColorScheme.current
 
     Row(
         modifier = Modifier
             .background(
-                Color(0xFFF3F6FF),
+                softTint(Color(0xFF2563EB), Color(0xFFF3F6FF)),
                 RoundedCornerShape(20.dp)
             )
             .padding(horizontal = 12.dp, vertical = 8.dp),

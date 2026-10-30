@@ -9,6 +9,9 @@ data class IntakeResponse(
     val responseValue: List<IntakeItem>? = null
 )
 
+// Standard adult daily fluid intake (~8 glasses), shown when the server sends no fluidRecommended
+const val STANDARD_FLUID_INTAKE_ML = 2000
+
 data class IntakeItem(
     val dietId: Int = 0,
     val foodId: Int = 0,
@@ -25,8 +28,13 @@ data class IntakeItem(
     val intakeTimeFormat: String? = null,
     val intakeDateFormat: String? = null,
     val isGiven: Int = 0,
-    val translation: String? = null
-)
+    val translation: String? = null,
+    // Server sends this as a decimal string, e.g. "3000.000000"
+    val fluidRecommended: String? = null
+) {
+    val fluidRecommendedMl: Int?
+        get() = fluidRecommended?.toDoubleOrNull()?.toInt()?.takeIf { it > 0 }
+}
 
 data class ManualFoodAssignResponse(
     val status: Int = 0,

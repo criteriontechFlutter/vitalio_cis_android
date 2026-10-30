@@ -34,10 +34,12 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.ui.components.RoundBackTopBar
 import com.critetiontech.ctvitalio.ui.feedback.AnimatedCheckMark
@@ -45,6 +47,7 @@ import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
 import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import com.critetiontech.ctvitalio.ui.feedback.successPulse
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.utils.CommonButton
 import com.critetiontech.myapplication.utils.LocalNavController
 import java.time.ZoneId
@@ -77,7 +80,7 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
     BackHandler { goHome() }
 
     Column(Modifier.fillMaxSize().background(colors.dashboardContainerColor)) {
-        RoundBackTopBar(title = "Booking Details", onBack = { goHome() })
+        RoundBackTopBar(title = stringResource(R.string.consult_booking_details), onBack = { goHome() })
 
         Column(
             Modifier
@@ -89,10 +92,10 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
             Spacer(Modifier.height(16.dp))
             SuccessBadge()
             Spacer(Modifier.height(18.dp))
-            Text("Appointment Booked!", color = colors.textDarkColor, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.consult_appointment_booked), color = colors.textDarkColor, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))
             Text(
-                "Your appointment with ${details?.pName?.ifEmpty { null } ?: "the doctor"} is confirmed.",
+                stringResource(R.string.consult_appointment_confirmed_with, details?.pName?.ifEmpty { null } ?: stringResource(R.string.consult_the_doctor)),
                 color = colors.textGreyColor,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
@@ -103,7 +106,7 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     WhenTile(
                         icon = Icons.Rounded.CalendarMonth,
-                        label = "Date",
+                        label = stringResource(R.string.consult_date),
                         value = date?.format(DateTimeFormatter.ofPattern("EEE, dd MMM yyyy", Locale.getDefault()))
                             ?: details?.onDate.orEmpty().ifEmpty { "—" },
                         modifier = Modifier.weight(1f),
@@ -111,9 +114,9 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
                     WhenTile(
                         icon = Icons.Rounded.Schedule,
                         label = when {
-                            minutes > 0 -> "Time · $minutes min"
-                            !details?.shiftName.isNullOrEmpty() -> "Shift · ${details!!.shiftName}"
-                            else -> "Time"
+                            minutes > 0 -> stringResource(R.string.consult_time_with_minutes, minutes)
+                            !details?.shiftName.isNullOrEmpty() -> stringResource(R.string.consult_shift_with_name, details!!.shiftName)
+                            else -> stringResource(R.string.consult_time)
                         },
                         value = details?.timeRange().orEmpty().ifEmpty { "—" },
                         modifier = Modifier.weight(1f),
@@ -145,20 +148,20 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
                             }
                         }
                     }
-                    HorizontalDivider(Modifier.padding(vertical = 14.dp), thickness = 1.dp, color = Color(0xFFE6EAF0))
+                    HorizontalDivider(Modifier.padding(vertical = 14.dp), thickness = 1.dp, color = if (isAppDark) colors.borderGreyLightColor else Color(0xFFE6EAF0))
                     DetailLine(
                         icon = if (virtual) Icons.Rounded.Videocam else Icons.Rounded.LocalHospital,
-                        label = details?.mode?.ifEmpty { null } ?: "Walk-in",
-                        value = details?.atHospital?.ifEmpty { null }?.let { "$it Department" }
-                            ?: if (virtual) "Online consultation" else "In-clinic visit",
+                        label = consultModeLabel(details?.mode?.ifEmpty { null } ?: "Walk-in"),
+                        value = details?.atHospital?.ifEmpty { null }?.let { stringResource(R.string.consult_department_name, it) }
+                            ?: if (virtual) stringResource(R.string.consult_online_consultation) else stringResource(R.string.consult_in_clinic_visit),
                     )
                     details?.visitNo?.let {
                         Spacer(Modifier.height(12.dp))
-                        DetailLine(icon = Icons.Rounded.Tag, label = "Visit No.", value = it)
+                        DetailLine(icon = Icons.Rounded.Tag, label = stringResource(R.string.consult_visit_no), value = it)
                     }
                     details?.queueNo?.let {
                         Spacer(Modifier.height(12.dp))
-                        DetailLine(icon = Icons.Rounded.ConfirmationNumber, label = "Token No.", value = it.toString())
+                        DetailLine(icon = Icons.Rounded.ConfirmationNumber, label = stringResource(R.string.consult_token_no_label), value = it.toString())
                     }
                 }
             }
@@ -172,7 +175,7 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
                     }.getOrNull()
                     if (start != null) {
                         val intent = Intent(Intent.ACTION_INSERT, CalendarContract.Events.CONTENT_URI)
-                            .putExtra(CalendarContract.Events.TITLE, "Appointment with ${details?.pName.orEmpty()}")
+                            .putExtra(CalendarContract.Events.TITLE, context.getString(R.string.consult_calendar_appointment_with, details?.pName.orEmpty()))
                             .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, start)
                             .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, start + (if (minutes > 0) minutes else 30) * 60_000L)
                         runCatching { context.startActivity(intent) }
@@ -189,7 +192,7 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
                 .padding(start = 20.dp, end = 20.dp, bottom = 12.dp, top = 8.dp)
         ) {
             CommonButton(
-                text = "View My Appointments",
+                text = stringResource(R.string.consult_view_my_appointments),
                 cornerRadius = 14.dp,
                 containerColor = colors.primaryBlueColor,
                 modifier = Modifier.height(54.dp),
@@ -201,7 +204,7 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "Back to Home",
+                stringResource(R.string.consult_back_to_home),
                 color = colors.primaryBlueColor,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -300,6 +303,6 @@ private fun AddToCalendarPill(onClick: () -> Unit) {
     ) {
         Icon(Icons.Rounded.EventAvailable, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
-        Text("Add to Calendar", color = colors.primaryBlueColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.consult_add_to_calendar), color = colors.primaryBlueColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
 }

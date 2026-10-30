@@ -18,6 +18,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.model.IncomingCall
+import com.critetiontech.ctvitalio.utils.LocaleHelper
 
 /**
  * Keeps a video consultation alive while the call screen isn't in front (PiP, home, other apps):
@@ -25,6 +26,11 @@ import com.critetiontech.ctvitalio.model.IncomingCall
  * service is running. Its ongoing-call notification leads back to the call and can hang up.
  */
 class CallService : Service() {
+
+    // Notification text follows the in-app language on Android 12 and older too
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -56,8 +62,8 @@ class CallService : Service() {
 
     private fun notification(call: IncomingCall, connectedAt: Long): android.app.Notification {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL, "Ongoing video call", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Shown while you're in a video consultation"
+            NotificationChannel(CHANNEL, getString(R.string.consult_channel_ongoing_call), NotificationManager.IMPORTANCE_LOW).apply {
+                description = getString(R.string.consult_channel_ongoing_call_desc)
                 setSound(null, null)
             }
         )
@@ -73,7 +79,7 @@ class CallService : Service() {
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(call.doctorName)
-            .setContentText("Video consultation in progress")
+            .setContentText(getString(R.string.consult_video_consultation_in_progress))
             .setStyle(NotificationCompat.CallStyle.forOngoingCall(doctor, hangUp).setIsVideo(true))
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setContentIntent(open)

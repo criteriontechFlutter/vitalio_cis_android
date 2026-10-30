@@ -9,6 +9,8 @@ import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.domain.model.FamilyHealthCondition
 import com.critetiontech.ctvitalio.domain.model.FamilyRelation
 import com.critetiontech.ctvitalio.ui.feedback.Haptics
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -49,14 +51,14 @@ class FamilyHealthHistoryViewModel : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             val patient = deps.prefs.getPatient() ?: run {
-                _state.update { it.copy(loading = false, error = "Your session has expired. Please log in again.") }
+                _state.update { it.copy(loading = false, error = MyApplication.appContext.getString(R.string.profile_session_expired_long)) }
                 return@launch
             }
             when (val r = deps.getFamilyHealthHistory()(patient.pid, patient.clientId)) {
                 is DomainResult.Success -> _state.update { it.copy(loading = false, conditions = r.data) }
                 is DomainResult.Error -> {
                     Log.e("FamilyHealthVM", r.exception.message.orEmpty())
-                    _state.update { it.copy(loading = false, error = "Check your connection and try again.") }
+                    _state.update { it.copy(loading = false, error = MyApplication.appContext.getString(R.string.profile_check_connection)) }
                 }
             }
         }
@@ -70,7 +72,7 @@ class FamilyHealthHistoryViewModel : ViewModel() {
                 is DomainResult.Success -> _diseases.value = r.data
                 is DomainResult.Error -> {
                     Log.e("FamilyHealthVM", r.exception.message.orEmpty())
-                    _message.emit("Couldn't load the disease list. Check your connection.")
+                    _message.emit(MyApplication.appContext.getString(R.string.profile_disease_list_load_failed))
                 }
             }
         }
@@ -81,7 +83,7 @@ class FamilyHealthHistoryViewModel : ViewModel() {
         if (_state.value.saving || diseases.isEmpty()) return
         viewModelScope.launch {
             val patient = deps.prefs.getPatient() ?: run {
-                _message.emit("Your session has expired. Please log in again.")
+                _message.emit(MyApplication.appContext.getString(R.string.profile_session_expired_long))
                 return@launch
             }
             _state.update { it.copy(saving = true) }
@@ -96,17 +98,17 @@ class FamilyHealthHistoryViewModel : ViewModel() {
             when {
                 failed.isEmpty() -> {
                     Haptics.success()
-                    _message.emit("Family health history added")
+                    _message.emit(MyApplication.appContext.getString(R.string.profile_family_history_added))
                     _done.emit(Unit)
                 }
                 failed.size == diseases.size -> {
                     Haptics.error()
-                    _message.emit("Couldn't save. Please try again.")
+                    _message.emit(MyApplication.appContext.getString(R.string.profile_save_failed))
                 }
                 // Some went through: close the sheet and say which didn't.
                 else -> {
                     Haptics.error()
-                    _message.emit("Couldn't save ${failed.joinToString { it.name }}. Please add again.")
+                    _message.emit(MyApplication.appContext.getString(R.string.profile_save_some_failed, failed.joinToString { it.name }))
                     _done.emit(Unit)
                 }
             }
@@ -118,7 +120,7 @@ class FamilyHealthHistoryViewModel : ViewModel() {
         if (_state.value.saving) return
         viewModelScope.launch {
             val patient = deps.prefs.getPatient() ?: run {
-                _message.emit("Your session has expired. Please log in again.")
+                _message.emit(MyApplication.appContext.getString(R.string.profile_session_expired_long))
                 return@launch
             }
             _state.update { it.copy(saving = true) }
@@ -126,15 +128,15 @@ class FamilyHealthHistoryViewModel : ViewModel() {
                 is DomainResult.Success -> {
                     Haptics.success()
                     _state.update { s -> s.copy(conditions = s.conditions.filterNot { it.diseaseId == condition.diseaseId }) }
-                    _message.emit("Removed")
+                    _message.emit(MyApplication.appContext.getString(R.string.profile_removed))
                     _done.emit(Unit)
                 }
                 is DomainResult.Error -> {
                     Haptics.error()
                     Log.e("FamilyHealthVM", r.exception.message.orEmpty())
                     _message.emit(
-                        if (condition.recordId == null) "This entry can't be removed right now."
-                        else "Couldn't remove. Please try again."
+                        if (condition.recordId == null) MyApplication.appContext.getString(R.string.profile_entry_cannot_remove)
+                        else MyApplication.appContext.getString(R.string.profile_remove_failed)
                     )
                 }
             }

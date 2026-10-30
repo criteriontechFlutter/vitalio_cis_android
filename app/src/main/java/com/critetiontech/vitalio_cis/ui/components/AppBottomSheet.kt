@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -124,7 +126,7 @@ fun AppBottomSheet(
                                     scope.launch { sheetState.hide() }.invokeOnCompletion { onDismissRequest() }
                                 },
                         ) {
-                            Icon(Icons.Rounded.Close, contentDescription = "Close", tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.auth_common_close), tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
                         }
                     }
                 }

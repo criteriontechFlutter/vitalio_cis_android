@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,7 +51,7 @@ fun DietChecklistScreen() {
     val colors = LocalMyColorScheme.current
     val navController = com.critetiontech.myapplication.utils.LocalNavController.current
     CommonAppBar(
-        title = "Diet Checklist",
+        title = stringResource(R.string.track_diet_checklist),
         actions = {
             // Food search → nutrients (NutriAnalyser).
             androidx.compose.foundation.layout.Row(
@@ -67,7 +68,7 @@ fun DietChecklistScreen() {
                     tint = colors.primaryBlueColor, modifier = Modifier.size(16.dp),
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Nutrients", color = colors.primaryBlueColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.track_nutrients), color = colors.primaryBlueColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         },
     ) {
@@ -85,21 +86,21 @@ fun DietChecklistScreen() {
 
             // 🔹 Sections
             DietSection(
-                "Morning", listOf(
-                    Diet("1 cup tea", "112 mg • Before meals", "08:00 AM", true)
+                stringResource(R.string.track_morning), listOf(
+                    Diet(stringResource(R.string.track_diet_cup_tea), stringResource(R.string.track_diet_before_meals, "112 mg"), "08:00 AM", true)
                 ), id = R.drawable.morning_medicine
             )
 
             DietSection(
-                "Afternoon", listOf(
-                    Diet("Vitamin D3", "1000 IU • After lunch", "02:00 PM"),
-                    Diet("Aspirin", "75 mg • After lunch", "02:00 PM")
+                stringResource(R.string.track_afternoon), listOf(
+                    Diet("Vitamin D3", stringResource(R.string.track_diet_after_lunch, "1000 IU"), "02:00 PM"),
+                    Diet("Aspirin", stringResource(R.string.track_diet_after_lunch, "75 mg"), "02:00 PM")
                 ), id = R.drawable.afternoon_medicine
             )
 
             DietSection(
-                "Night", listOf(
-                    Diet("Atorvastatin", "20 mg • After dinner", "09:00 PM")
+                stringResource(R.string.track_night), listOf(
+                    Diet("Atorvastatin", stringResource(R.string.track_diet_after_dinner, "20 mg"), "09:00 PM")
                 ), id = R.drawable.night_medicine
             )
         }
@@ -129,7 +130,7 @@ fun DietSection(title: String, medicines: List<Diet>,id:Int) {
                 title,
                 modifier = Modifier.padding(end = 4.dp),
                 textAlign = TextAlign.End,
-                color = Color.Gray,
+                color = LocalMyColorScheme.current.textGreyColor,
                 fontSize = 14.sp
             )
         }
@@ -196,13 +197,13 @@ fun DietCard(medicine: Diet) {
                     ),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Taken")
+                    Text(stringResource(R.string.track_taken))
                 }
             } else {
                 Icon(
                     imageVector = Icons.Default.Notifications,
                     contentDescription = null,
-                    tint = Color.Gray
+                    tint = colors.textGreyColor
                 )
             }
         }

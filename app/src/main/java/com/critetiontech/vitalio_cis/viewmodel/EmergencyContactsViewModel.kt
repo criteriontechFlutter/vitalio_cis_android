@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.EmergencyContact
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.ui.feedback.Haptics
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,14 +45,14 @@ class EmergencyContactsViewModel : ViewModel() {
             _loading.value = true
             _loadError.value = null
             val patient = deps.prefs.getPatient() ?: run {
-                _loadError.value = "Your session has expired. Please log in again."
+                _loadError.value = MyApplication.appContext.getString(R.string.profile_session_expired_long)
                 _loading.value = false
                 return@launch
             }
             when (val r = repository.fetchContacts(patient.pid, patient.clientId)) {
                 is DomainResult.Success -> _contacts.value = r.data
                 is DomainResult.Error -> {
-                    _loadError.value = "Couldn't load your emergency contacts. Check your connection and try again."
+                    _loadError.value = MyApplication.appContext.getString(R.string.profile_emergency_contacts_load_failed)
                     Log.e("EmergencyContactsVM", r.exception.message.orEmpty())
                 }
             }
@@ -62,7 +64,7 @@ class EmergencyContactsViewModel : ViewModel() {
     fun saveContact(existing: EmergencyContact?, name: String, number: String, relationship: String, onDone: () -> Unit) {
         viewModelScope.launch {
             val patient = deps.prefs.getPatient() ?: run {
-                _message.value = "Your session has expired. Please log in again."
+                _message.value = MyApplication.appContext.getString(R.string.profile_session_expired_long)
                 return@launch
             }
             _saving.value = true
@@ -76,13 +78,13 @@ class EmergencyContactsViewModel : ViewModel() {
             when (val r = repository.saveContact(contact)) {
                 is DomainResult.Success -> {
                     Haptics.success()
-                    _message.value = if (existing == null) "Contact added" else "Contact updated"
+                    _message.value = MyApplication.appContext.getString(if (existing == null) R.string.profile_contact_added else R.string.profile_contact_updated)
                     onDone()
                     loadContacts()
                 }
                 is DomainResult.Error -> {
                     Haptics.error()
-                    _message.value = "Couldn't save the contact. Please try again."
+                    _message.value = MyApplication.appContext.getString(R.string.profile_contact_save_failed)
                     Log.e("EmergencyContactsVM", r.exception.message.orEmpty())
                 }
             }
@@ -97,12 +99,12 @@ class EmergencyContactsViewModel : ViewModel() {
                 is DomainResult.Success -> {
                     Haptics.success()
                     _contacts.value = _contacts.value.filterNot { it.id == contact.id }
-                    _message.value = "Contact removed"
+                    _message.value = MyApplication.appContext.getString(R.string.profile_contact_removed)
                     onDone()
                 }
                 is DomainResult.Error -> {
                     Haptics.error()
-                    _message.value = "Couldn't remove the contact. Please try again."
+                    _message.value = MyApplication.appContext.getString(R.string.profile_contact_remove_failed)
                     Log.e("EmergencyContactsVM", r.exception.message.orEmpty())
                 }
             }

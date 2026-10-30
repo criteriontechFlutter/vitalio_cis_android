@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -272,7 +274,7 @@ fun RadarBusyCard(title: String, subtitle: String, icon: ImageVector = Icons.Fil
         onCancel?.let {
             Spacer(Modifier.height(6.dp))
             Text(
-                "Cancel", color = p, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
+                stringResource(R.string.device_cancel), color = p, fontWeight = FontWeight.SemiBold, fontSize = 13.sp,
                 modifier = Modifier.clip(RoundedCornerShape(50)).bounceClick(onClick = it).padding(horizontal = 14.dp, vertical = 8.dp)
             )
         }
@@ -387,7 +389,7 @@ fun rememberCountUp(target: Int): Int {
 /** "just now", "9 min. ago", "2 hr. ago" — short enough for a status pill. */
 fun syncedAgo(millis: Long): String {
     val now = System.currentTimeMillis()
-    if (now - millis < 60_000) return "just now"
+    if (now - millis < 60_000) return com.critetiontech.ctvitalio.utils.MyApplication.appContext.getString(R.string.device_just_now)
     return android.text.format.DateUtils.getRelativeTimeSpanString(
         millis, now, android.text.format.DateUtils.MINUTE_IN_MILLIS, android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE
     ).toString()

@@ -17,6 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.ctvitalio.model.AllergyItem as ApiAllergyItem
@@ -32,11 +37,12 @@ import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
 enum class AllergySeverity(
     val label: String,
     val backgroundColor: Color,
-    val textColor: Color
+    val textColor: Color,
+    @androidx.annotation.StringRes val labelRes: Int
 ) {
-    MILD("Mild", Color(0xFFEEEEFF), Color(0xFF7B7FD4)),
-    MODERATE("Moderate", Color(0xFFFFF3E8), Color(0xFFE8883A)),
-    SEVERE("Severe", Color(0xFFFFEAEA), Color(0xFFE84040))
+    MILD("Mild", Color(0xFFEEEEFF), Color(0xFF7B7FD4), R.string.profile_severity_mild),
+    MODERATE("Moderate", Color(0xFFFFF3E8), Color(0xFFE8883A), R.string.profile_severity_moderate),
+    SEVERE("Severe", Color(0xFFFFEAEA), Color(0xFFE84040), R.string.profile_severity_severe)
 }
 
 private fun String.toAllergySeverity(): AllergySeverity = when (lowercase()) {
@@ -95,7 +101,7 @@ fun AllergiesScreen(
         )
     }
 
-    CommonAppBar(title = "Allergies") {
+    CommonAppBar(title = stringResource(R.string.profile_menu_allergies)) {
         val colors = LocalMyColorScheme.current
         val allergyDimens = rememberResponsiveDimens()
 
@@ -108,7 +114,7 @@ fun AllergiesScreen(
                         modifier = Modifier.padding(vertical = 8.dp),
                         action = {
                             HapticTextButton(onClick = { viewModel.clearError() }) {
-                                Text("Dismiss", color = Color.White)
+                                Text(stringResource(R.string.profile_dismiss), color = Color.White)
                             }
                         }
                     ) {
@@ -126,7 +132,7 @@ fun AllergiesScreen(
                         CircularProgressIndicator()
                     }
                 } else {
-                    val groups = buildAllergyGroups(medicineAllergies, foodAllergies)
+                    val groups = buildAllergyGroups(LocalContext.current, medicineAllergies, foodAllergies)
 
                     if (groups.isEmpty()) {
                         Box(
@@ -136,7 +142,7 @@ fun AllergiesScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No allergies recorded yet.",
+                                text = stringResource(R.string.profile_no_allergies),
                                 style = AppTextStyles.style14GCB()
                             )
                         }
@@ -166,7 +172,7 @@ fun AllergiesScreen(
                 }
 
                 AddPillButton(
-                    text = "+ Add Allergies",
+                    text = stringResource(R.string.profile_add_allergies),
                     loading = addLoading,
                     onClick = { showSheet = true },
                     modifier = Modifier
@@ -179,6 +185,7 @@ fun AllergiesScreen(
 }
 
 private fun buildAllergyGroups(
+    context: android.content.Context,
     medicineAllergies: List<ApiAllergyItem>,
     foodAllergies: List<ApiAllergyItem>
 ): List<AllergyGroup> {
@@ -186,24 +193,24 @@ private fun buildAllergyGroups(
     if (medicineAllergies.isNotEmpty()) {
         groups.add(
             AllergyGroup(
-                category = "Medicine Allergies",
-                allergies = medicineAllergies.map { it.toUiAllergy() }
+                category = context.getString(R.string.profile_medicine_allergies),
+                allergies = medicineAllergies.map { it.toUiAllergy(context) }
             )
         )
     }
     if (foodAllergies.isNotEmpty()) {
         groups.add(
             AllergyGroup(
-                category = "Food Allergies",
-                allergies = foodAllergies.map { it.toUiAllergy() }
+                category = context.getString(R.string.profile_food_allergies),
+                allergies = foodAllergies.map { it.toUiAllergy(context) }
             )
         )
     }
     return groups
 }
 
-private fun ApiAllergyItem.toUiAllergy() = Allergy(
-    name = substanceName.ifBlank { "Unknown" },
+private fun ApiAllergyItem.toUiAllergy(context: android.content.Context) = Allergy(
+    name = substanceName.ifBlank { context.getString(R.string.profile_unknown) },
     symptoms = reaction.ifBlank { details.take(60) },
     severity = allergy.toAllergySeverity()
 )
@@ -226,7 +233,7 @@ fun AllergyGroupCard(allergies: List<Allergy>) {
                     if (index < allergies.lastIndex) {
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            color = Color(0xFFF0F1F5),
+                            color = if (isAppDark) colors.borderGreyLightColor else Color(0xFFF0F1F5),
                             thickness = 1.dp
                         )
                     }
@@ -259,7 +266,7 @@ fun AllergyItem(allergy: Allergy) {
         ) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
-                contentDescription = "More options",
+                contentDescription = stringResource(R.string.profile_cd_more_options),
                 tint = Color(0xFFB0B5C0),
                 modifier = Modifier.size(18.dp)
             )
@@ -273,11 +280,11 @@ fun AllergyItem(allergy: Allergy) {
 fun SeverityBadge(severity: AllergySeverity) {
     Box(
         modifier = Modifier
-            .background(color = severity.backgroundColor, shape = RoundedCornerShape(20.dp))
+            .background(color = softTint(severity.textColor, severity.backgroundColor), shape = RoundedCornerShape(20.dp))
             .padding(horizontal = 12.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(text = severity.label, style = AppTextStyles.style12GCN(), color = severity.textColor)
+        Text(text = stringResource(severity.labelRes), style = AppTextStyles.style12GCN(), color = severity.textColor)
     }
 }
 
@@ -287,7 +294,7 @@ fun SeverityBadge(severity: AllergySeverity) {
 fun AddAllergiesBar(onClick: () -> Unit) {
     Surface(
         tonalElevation = 4.dp,
-        color = Color.White,
+        color = LocalMyColorScheme.current.dashboardContainerColor,
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(
@@ -297,7 +304,7 @@ fun AddAllergiesBar(onClick: () -> Unit) {
                 .padding(vertical = 18.dp)
         ) {
             HapticTextButton(onClick = onClick) {
-                Text(text = "+ Add Allergies", style = AppTextStyles.style16GCN())
+                Text(text = stringResource(R.string.profile_add_allergies), style = AppTextStyles.style16GCN())
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.vitalio_cis.ui.screens
 
 import com.critetiontech.ctvitalio.ui.screens.displayUnit
+import com.critetiontech.ctvitalio.ui.screens.localizedVitalName
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
@@ -64,6 +65,8 @@ import kotlinx.coroutines.delay
 import java.util.Locale
 import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.utils.MyApplication
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -140,7 +143,7 @@ fun DashboardScreen(
 
     // Voice assistant: explain the mic, then start listening once it's allowed
     val micPermission = com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest(
-        com.critetiontech.ctvitalio.permissions.AppPermission.Microphone, "to hear your voice commands"
+        com.critetiontech.ctvitalio.permissions.AppPermission.Microphone, stringResource(R.string.home_mic_permission_reason)
     ) {
         VoiceNavigationManager.startListening { route -> navController.navigate(route) }
     }
@@ -160,7 +163,7 @@ fun DashboardScreen(
             (context as? Activity)?.finish()
         } else {
             backPressedOnce = true
-            Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.home_press_back_again), Toast.LENGTH_SHORT).show()
         }
     }
     LaunchedEffect(backPressedOnce) {
@@ -253,9 +256,9 @@ fun DashboardScreen(
                     ) {
                         Spacer(Modifier.height(12.dp))
                         val items = listOf(
-                            Triple(R.drawable.home, "Home", 0),
-                            Triple(R.drawable.activity, "Activity", 1),
-                            Triple(R.drawable.ring, "Ring", 2)
+                            Triple(R.drawable.home, stringResource(R.string.home), 0),
+                            Triple(R.drawable.activity, stringResource(R.string.activity), 1),
+                            Triple(R.drawable.ring, stringResource(R.string.ring), 2)
                             // Chat is hidden until its screen is built.
                         )
                         items.forEach { (iconRes, label, index) ->
@@ -436,7 +439,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
         AnimatedSection(delayMillis = 150) { HomeScreen(appointments = appointments, loading = loading) }
 
         AnimatedSection(delayMillis = 200) {
-            Text(text = "Primary Actions", style = AppTextStyles.style18BCB())
+            Text(text = stringResource(R.string.home_primary_actions), style = AppTextStyles.style18BCB())
         }
 
         Spacer(Modifier.height(12.dp))
@@ -712,7 +715,7 @@ fun VoiceAssistantSheet(
             ListeningState.MATCHED -> {
                 // Speak the destination name before navigating so the user hears confirmation
                 ttsEngine.value?.speak(
-                    "Opening $matchedLabel",
+                    context.getString(R.string.home_voice_opening, matchedLabel.orEmpty()),
                     TextToSpeech.QUEUE_FLUSH,
                     null,
                     "voice_nav_confirm"
@@ -725,7 +728,7 @@ fun VoiceAssistantSheet(
 
             ListeningState.NO_MATCH -> {
                 ttsEngine.value?.speak(
-                    "Sorry, I didn't catch that. Try saying vitals, medicine, or diet.",
+                    context.getString(R.string.home_voice_no_match_tts),
                     TextToSpeech.QUEUE_FLUSH,
                     null,
                     "voice_no_match"
@@ -737,7 +740,7 @@ fun VoiceAssistantSheet(
 
             ListeningState.ERROR -> {
                 ttsEngine.value?.speak(
-                    "Microphone error. Retrying.",
+                    context.getString(R.string.home_voice_mic_error_tts),
                     TextToSpeech.QUEUE_FLUSH,
                     null,
                     "voice_mic_error"
@@ -778,7 +781,7 @@ fun VoiceAssistantSheet(
 
             // ── Brand label ───────────────────────────────────────────────────
             Text(
-                text = "VITALIO VOICE",
+                text = stringResource(R.string.home_voice_brand_label),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF4B6EFF),
@@ -795,12 +798,12 @@ fun VoiceAssistantSheet(
             // ── Primary state text ────────────────────────────────────────────
             Text(
                 text = when (listeningState) {
-                    ListeningState.IDLE       -> "Tap to speak"
-                    ListeningState.LISTENING  -> "Listening..."
-                    ListeningState.PROCESSING -> "Understanding..."
-                    ListeningState.MATCHED    -> "Opening $matchedLabel"
-                    ListeningState.NO_MATCH   -> "Didn't catch that"
-                    ListeningState.ERROR      -> "Mic unavailable"
+                    ListeningState.IDLE       -> stringResource(R.string.home_voice_tap_to_speak)
+                    ListeningState.LISTENING  -> stringResource(R.string.home_voice_listening)
+                    ListeningState.PROCESSING -> stringResource(R.string.home_voice_understanding)
+                    ListeningState.MATCHED    -> stringResource(R.string.home_voice_opening, matchedLabel.orEmpty())
+                    ListeningState.NO_MATCH   -> stringResource(R.string.home_voice_didnt_catch)
+                    ListeningState.ERROR      -> stringResource(R.string.home_voice_mic_unavailable)
                 },
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -849,7 +852,7 @@ fun VoiceAssistantSheet(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Try saying",
+                    text = stringResource(R.string.home_voice_try_saying),
                     fontSize = 12.sp,
                     color = Color(0xFF6B7280),
                     fontWeight = FontWeight.Medium
@@ -889,7 +892,7 @@ fun VoiceAssistantSheet(
                     contentColor = Color(0xFF6B7280)
                 )
             ) {
-                Text("Cancel", fontSize = 14.sp)
+                Text(stringResource(R.string.home_cancel), fontSize = 14.sp)
             }
         }
     }
@@ -981,7 +984,7 @@ fun Header() {
                     ?.takeIf { it.isNotBlank() },
                 placeholder = painterResource(R.drawable.img),
                 error = painterResource(R.drawable.img),
-                contentDescription = "Patient Profile",
+                contentDescription = stringResource(R.string.home_cd_patient_profile),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(43.dp)
@@ -1048,7 +1051,7 @@ fun ToTakeCard() {
 
         navController.navigate("welcome")
     }) {
-        Text("To Take",
+        Text(stringResource(R.string.home_to_take),
             style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(8.dp))
 
@@ -1062,11 +1065,11 @@ fun ToTakeCard() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("1 capsule",
+                    Text(stringResource(R.string.home_one_capsule),
                         style = AppTextStyles.style12BCN())
                     Text("Pan D",
                             style = AppTextStyles.style12BCN() )
-                    Text("Take on an empty stomach",
+                    Text(stringResource(R.string.home_take_empty_stomach),
                                     style = AppTextStyles.style12GCN())
                 }
 
@@ -1090,10 +1093,10 @@ fun getTimeAgo(dateTime: String): String {
         val days = hours / 24
 
         when {
-            days > 0 -> "${days}d ago"
-            hours > 0 -> "${hours}h ago"
-            minutes > 0 -> "${minutes}m ago"
-            else -> "Just now"
+            days > 0 -> MyApplication.appContext.getString(R.string.home_time_days_short_ago, days)
+            hours > 0 -> MyApplication.appContext.getString(R.string.home_time_hours_short_ago, hours)
+            minutes > 0 -> MyApplication.appContext.getString(R.string.home_time_minutes_short_ago, minutes)
+            else -> MyApplication.appContext.getString(R.string.home_time_just_now)
         }
 
     } catch (e: Exception) {
@@ -1125,7 +1128,12 @@ fun mergeVitals(vitals: List<Vital>): List<Vital> {
 // ------------------- Shimmer -------------------
 @Composable
 fun shimmerBrush(): Brush {
-    val shimmerColors = listOf(
+    val shimmerBase = LocalMyColorScheme.current.borderGreyLightColor
+    val shimmerColors = if (isAppDark) listOf(
+        shimmerBase.copy(alpha = 0.35f),
+        shimmerBase.copy(alpha = 0.15f),
+        shimmerBase.copy(alpha = 0.35f),
+    ) else listOf(
         Color(0xFFE0E0E0),
         Color(0xFFF5F5F5),
         Color(0xFFE0E0E0),
@@ -1159,7 +1167,7 @@ fun VitalsCardShimmer() {
         )
         Spacer(Modifier.height(8.dp))
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0)),
+            colors = CardDefaults.cardColors(containerColor = if (isAppDark) LocalMyColorScheme.current.dashboardContainerColor else Color(0xFFF0F0F0)),
             modifier = Modifier.fillMaxWidth().padding(5.dp)
         ) {
             Row(
@@ -1265,7 +1273,7 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
     Column(modifier = Modifier.graphicsLayer { alpha = cardAlpha; scaleX = cardScale; scaleY = cardScale }) {
 
         Text(
-            "Vitals",
+            stringResource(R.string.home_vitals_title),
             style = AppTextStyles.style18BCB()
         )
 
@@ -1325,7 +1333,7 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = vital.vitalName,
+                            text = if (vital.vitalName == "BP") stringResource(R.string.home_vital_bp_short) else localizedVitalName(vital.vitalName),
                             style = AppTextStyles.style14BCB().copy(color = colors.textDarkColor, fontWeight = FontWeight.Bold)
                         )
                         Spacer(Modifier.height(4.dp))
@@ -1365,13 +1373,13 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                                 .padding(horizontal = 4.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Update",
+                                text = stringResource(R.string.home_update),
                                 style = AppTextStyles.style12BCN().copy(color = colors.textGreyColor)
                             )
                             Spacer(Modifier.width(4.dp))
                             Icon(
                                 Icons.Default.Refresh,
-                                contentDescription = "Refresh",
+                                contentDescription = stringResource(R.string.home_cd_refresh),
                                 tint = colors.textGreyColor,
                                 modifier = Modifier.size(14.dp)
                             )
@@ -1713,7 +1721,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Upcoming Appointments", style = AppTextStyles.style18BCB())
+                    Text(stringResource(R.string.home_upcoming_appointments), style = AppTextStyles.style18BCB())
                 }
                 Spacer(Modifier.height(12.dp))
                 AppointmentCardShimmer()
@@ -1725,9 +1733,9 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Upcoming Appointments", style = AppTextStyles.style18BCB())
+                    Text(stringResource(R.string.home_upcoming_appointments), style = AppTextStyles.style18BCB())
                     Text(
-                        "View All",
+                        stringResource(R.string.home_view_all),
                         style = AppTextStyles.style12GCN(),
                         color = Color(0xFF2F6FE4),
                         modifier = Modifier.clickable { navController.navigate(Routes.APPOINTMENTS) }
@@ -1886,7 +1894,7 @@ fun ArticleCard(title: String, author: String, date: String) {
 @Composable
 fun OtherSection() {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Quick Actions", style = AppTextStyles.style18BCB())
+        Text(stringResource(R.string.home_quick_actions), style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(12.dp))
         Row(
             modifier = Modifier
@@ -1907,9 +1915,9 @@ fun ChronicleCard(modifier: Modifier) {
         shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor)) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Column {
-                Text("Activities",
+                Text(stringResource(R.string.home_activities),
                         style = AppTextStyles.style12GCN())
-                Text("Chronicle",
+                Text(stringResource(R.string.home_chronicle),
                     style = AppTextStyles.style18BCB())
             }
 
@@ -1922,7 +1930,7 @@ fun ChronicleCard(modifier: Modifier) {
             )
 
             Column {
-                Text("Share today's activities with us to understand your health pattern."
+                Text(stringResource(R.string.home_chronicle_desc)
                     ,
                     style = AppTextStyles.style12GCN())
                 Spacer(Modifier.height(8.dp))
@@ -1930,7 +1938,7 @@ fun ChronicleCard(modifier: Modifier) {
                     onClick = {},
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2F6FE4))
-                ) { Text("Add Now",
+                ) { Text(stringResource(R.string.home_add_now),
                         style = AppTextStyles.style12GCN())  }
             }
         }
@@ -1941,8 +1949,8 @@ fun ChronicleCard(modifier: Modifier) {
 fun UploadReportCard(modifier: Modifier = Modifier) {
     val navController = LocalNavController.current
     QuickActionCard(
-        title = "Upload Report",
-        subtitle = "Add your lab reports & documents",
+        title = stringResource(R.string.home_upload_report),
+        subtitle = stringResource(R.string.home_upload_report_desc),
         accent = Color(0xFF2F6FE4),
         modifier = modifier,
         onClick = { navController.navigate(Routes.LABREPORTS) }
@@ -1960,8 +1968,8 @@ fun UploadReportCard(modifier: Modifier = Modifier) {
 fun UploadPrescriptionCard(modifier: Modifier = Modifier) {
     val navController = LocalNavController.current
     QuickActionCard(
-        title = "Upload Prescription",
-        subtitle = "AI reads medicines & sets reminders",
+        title = stringResource(R.string.home_upload_prescription),
+        subtitle = stringResource(R.string.home_upload_prescription_desc),
         accent = Color(0xFF0E9384),
         modifier = modifier,
         onClick = { navController.navigate(Routes.UPLOADPRESCRIPTION) }
@@ -2026,7 +2034,7 @@ fun LifestyleCard() {
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(painter = painterResource(R.drawable.intervention), contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.Unspecified)
             Spacer(Modifier.height(6.dp))
-            Text("Lifestyle Intervention",
+            Text(stringResource(R.string.home_lifestyle_intervention),
                 style = AppTextStyles.style14BCN())
         }
     }
@@ -2076,7 +2084,7 @@ fun UpcomingMedicationsSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Today's Medications", style = AppTextStyles.style18BCB())
+            Text(stringResource(R.string.home_todays_medications), style = AppTextStyles.style18BCB())
             if (extra > 0) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -2086,7 +2094,7 @@ fun UpcomingMedicationsSection(
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        if (expanded) "Show Less" else "+$extra More",
+                        if (expanded) stringResource(R.string.home_show_less) else stringResource(R.string.home_more_count, extra),
                         style = AppTextStyles.style12BCN().copy(color = MedBlue, fontWeight = FontWeight.SemiBold)
                     )
                     Spacer(Modifier.width(2.dp))
@@ -2190,7 +2198,7 @@ fun MedicineCardItem(
         when (status) {
             IntakeStatus.Due -> onMarkIntake(medicine)
             IntakeStatus.Upcoming -> android.widget.Toast.makeText(
-                context, "Scheduled for $timeText. You can mark it once it is due.", android.widget.Toast.LENGTH_SHORT
+                context, context.getString(R.string.home_med_scheduled_for, timeText), android.widget.Toast.LENGTH_SHORT
             ).show()
             else -> Unit
         }
@@ -2225,9 +2233,9 @@ fun MedicineCardItem(
                     Spacer(Modifier.width(8.dp))
                 }
                 val (label, labelColor) = when (status) {
-                    IntakeStatus.Taken -> "Taken" to Color(0xFF2DBE7E)
-                    IntakeStatus.Skipped -> "Skipped" to Color(0xFFE65100)
-                    IntakeStatus.Due -> "Take now · $timeText" to MedBlue
+                    IntakeStatus.Taken -> stringResource(R.string.home_med_taken) to Color(0xFF2DBE7E)
+                    IntakeStatus.Skipped -> stringResource(R.string.home_med_skipped) to Color(0xFFE65100)
+                    IntakeStatus.Due -> stringResource(R.string.home_med_take_now, timeText) to MedBlue
                     IntakeStatus.Upcoming -> timeText to Color(0xFF94A3B8)
                 }
                 if (label.isNotBlank()) {
@@ -2243,7 +2251,7 @@ fun MedicineCardItem(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                medicine.instructions.orEmpty().ifBlank { "As prescribed" },
+                medicine.instructions.orEmpty().ifBlank { stringResource(R.string.home_med_as_prescribed) },
                 style = AppTextStyles.style12BCN().copy(color = MedBlue, fontSize = 13.sp),
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -2254,17 +2262,17 @@ fun MedicineCardItem(
             IntakeCheckbox(status = status, isMarking = isMarking, onClick = onCheck)
             Box {
                 HapticIconButton(onClick = { menuOpen = true }, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.MoreVert, "More", tint = colors.textDarkColor, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.MoreVert, stringResource(R.string.home_cd_more), tint = colors.textDarkColor, modifier = Modifier.size(20.dp))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     if (status == IntakeStatus.Due) {
                         DropdownMenuItem(
-                            text = { Text("Mark as taken") },
+                            text = { Text(stringResource(R.string.home_med_mark_as_taken)) },
                             onClick = { menuOpen = false; onMarkIntake(medicine) }
                         )
                     }
                     DropdownMenuItem(
-                        text = { Text("Manage medications") },
+                        text = { Text(stringResource(R.string.home_med_manage_medications)) },
                         onClick = { menuOpen = false; navController.navigate(Routes.MANAGE_MEDICINE) }
                     )
                 }

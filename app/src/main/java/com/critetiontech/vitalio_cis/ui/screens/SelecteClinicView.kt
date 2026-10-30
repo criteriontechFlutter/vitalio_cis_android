@@ -18,6 +18,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.unit.dp
 import com.critetiontech.ctvitalio.ui.components.MyTextField
 import com.critetiontech.ctvitalio.utils.AppTextStyles
@@ -54,7 +56,7 @@ fun SelectClinicScreen() {
 
 
     CommonAppBar(
-        title = "Select Clinic",
+        title = stringResource(R.string.consult_select_clinic),
     ) {
         Column(
             modifier = Modifier
@@ -68,7 +70,7 @@ fun SelectClinicScreen() {
             MyTextField(
                 value = search,
                 onValueChange = { search = it},
-                placeholderText = "Search clinic by name or location"
+                placeholderText = stringResource(R.string.consult_search_clinic_hint)
             )
 
             Spacer(modifier = Modifier.height(16.dp))

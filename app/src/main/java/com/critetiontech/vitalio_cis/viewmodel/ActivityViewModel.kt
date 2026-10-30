@@ -15,6 +15,7 @@ import com.critetiontech.ctvitalio.model.ActivityMasterResponse
 import com.critetiontech.ctvitalio.model.ActivityModel
 import com.critetiontech.ctvitalio.model.PatientActivityItem
 import com.critetiontech.ctvitalio.model.PatientActivityResponse
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
@@ -77,9 +78,9 @@ class ActivityViewModel : ViewModel() {
             val hrs = diff / 60
             val mins = diff % 60
             return when {
-                hrs == 0L -> "$mins mins"
-                mins == 0L -> "$hrs hrs"
-                else -> "$hrs hrs $mins mins"
+                hrs == 0L -> context.getString(R.string.track_duration_mins, mins)
+                mins == 0L -> context.getString(R.string.track_duration_hrs, hrs)
+                else -> context.getString(R.string.track_duration_hrs_mins, hrs, mins)
             }
         }
 

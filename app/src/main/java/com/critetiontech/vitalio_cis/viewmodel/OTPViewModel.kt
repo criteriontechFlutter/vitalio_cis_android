@@ -1,5 +1,6 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.R
 import android.provider.Settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -24,11 +25,18 @@ class OTPViewModel : ViewModel() {
     val loading: StateFlow<Boolean> = _loading
 
     private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun clearError() { _errorMessage.value = null }
 
     private val _navigationEvent = MutableSharedFlow<String>()
     val navigationEvent: SharedFlow<String> = _navigationEvent
 
     fun verifyOtp(uhid: String, otp: String) {
+        // Auto-submit on the 6th digit and the Verify button can both fire; run only one at a time
+        if (_loading.value) return
+        // Show the loader right away — the FCM token fetch below can take a moment before the API call starts
+        _loading.value = true
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             val prefs = PrefsManager(MyApplication.appContext)
             val fcmToken = if (task.isSuccessful) task.result else {
@@ -42,12 +50,11 @@ class OTPViewModel : ViewModel() {
                 ?: Settings.Secure.getString(MyApplication.appContext.contentResolver, Settings.Secure.ANDROID_ID)
                 ?: "unknown"
             viewModelScope.launch {
-                _loading.value = true
                 _errorMessage.value = null
                 when (val result = verifyOtpUseCase(uhid, otp, deviceToken)) {
                     is DomainResult.Success -> _navigationEvent.emit(Routes.DASHBOARD)
                     is DomainResult.Error -> {
-                        _errorMessage.value = result.exception.message ?: "OTP verification failed"
+                        _errorMessage.value = result.exception.message ?: MyApplication.appContext.getString(R.string.auth_otp_error_failed)
                         Log.e("OTPViewModel", "verifyOtp error", result.exception)
                     }
                 }

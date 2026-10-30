@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
 
@@ -54,10 +58,11 @@ fun LocationScreen() {
     var country by remember { mutableStateOf("") }
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(16.dp)
     ) {
 
@@ -75,14 +80,14 @@ fun LocationScreen() {
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                "Create Account",
+                stringResource(R.string.auth_onb_create_account),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                "Skip",
+                stringResource(R.string.auth_common_skip),
                 color = Color(0xFF3B82F6),
                 fontSize = 14.sp
             )
@@ -93,8 +98,8 @@ fun LocationScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "Almost There to Halfway",
-            subtitle = "You're getting closer-just a little more to reach halfway!"
+            title = stringResource(R.string.auth_onb_progress_near_halfway_title),
+            subtitle = stringResource(R.string.auth_onb_progress_near_halfway_subtitle)
         )
         Spacer(modifier = Modifier.weight(1f))
 
@@ -107,7 +112,7 @@ fun LocationScreen() {
         )
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "Where do you live?",
+            stringResource(R.string.auth_onb_location_title),
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
@@ -116,18 +121,18 @@ fun LocationScreen() {
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            "Your address helps us provide location based services and personalized care.",
+            stringResource(R.string.auth_onb_location_subtitle),
             fontSize = 16.sp,
-            color = Color.Gray )
+            color = colors.textGreyColor )
 
 
 
         Spacer(modifier = Modifier.height(30.dp))
         // 🔹 Street Address
-        Label("Street Address")
+        Label(stringResource(R.string.auth_onb_street_address))
         CustomTextField(
             value = street,
-            placeholder = "Street Address",
+            placeholder = stringResource(R.string.auth_onb_street_address),
             onValueChange = { street = it }
         )
 
@@ -137,19 +142,19 @@ fun LocationScreen() {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Column(modifier = Modifier.weight(1f)) {
-                Label("Zip Code")
+                Label(stringResource(R.string.auth_onb_zip_code))
                 CustomTextField(
                     value = zip,
-                    placeholder = "Enter Zip Code",
+                    placeholder = stringResource(R.string.auth_onb_zip_code_hint),
                     onValueChange = { zip = it }
                 )
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Label("City")
+                Label(stringResource(R.string.auth_onb_city))
                 CustomDropdown(
                     value = city,
-                    placeholder = "Select City",
+                    placeholder = stringResource(R.string.auth_onb_city_hint),
                     onSelect = { city = it }
                 )
             }
@@ -161,19 +166,19 @@ fun LocationScreen() {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Column(modifier = Modifier.weight(1f)) {
-                Label("State")
+                Label(stringResource(R.string.auth_onb_state))
                 CustomDropdown(
                     value = state,
-                    placeholder = "Select State",
+                    placeholder = stringResource(R.string.auth_onb_state_hint),
                     onSelect = { state = it }
                 )
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Label("Country")
+                Label(stringResource(R.string.auth_onb_country))
                 CustomDropdown(
                     value = country,
-                    placeholder = "Select Country",
+                    placeholder = stringResource(R.string.auth_onb_country_hint),
                     onSelect = { country = it }
                 )
             }
@@ -190,10 +195,10 @@ fun LocationScreen() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
 
     }
@@ -204,7 +209,7 @@ fun Label(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = Color.Gray,
+        color = LocalMyColorScheme.current.textGreyColor,
         modifier = Modifier.padding(bottom = 6.dp)
     )
 }
@@ -222,7 +227,7 @@ fun CustomTextField(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = Color(0xFFE5E7EB),
+            unfocusedBorderColor = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE5E7EB),
             focusedBorderColor = Color(0xFF1E5CCB)
         )
     )
@@ -252,7 +257,7 @@ fun CustomDropdown(
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color(0xFFE5E7EB),
+                unfocusedBorderColor = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFE5E7EB),
                 focusedBorderColor = Color(0xFF1E5CCB)
             )
         )

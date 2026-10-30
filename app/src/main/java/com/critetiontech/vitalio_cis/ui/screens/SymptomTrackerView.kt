@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -73,7 +74,7 @@ fun SymptomTrackerScreen(viewModel: SymptomQuestionViewModel = viewModel()) {
     LaunchedEffect(Unit) { viewModel.completed.collect { navController.openSymptomSelection() } }
     LaunchedEffect(Unit) { viewModel.message.collect { showToast(context, it) } }
 
-    CommonAppBar(title = "Symptom Tracker") {
+    CommonAppBar(title = stringResource(R.string.track_symptom_tracker)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,22 +90,22 @@ fun SymptomTrackerScreen(viewModel: SymptomQuestionViewModel = viewModel()) {
                     ) {
                         CircularProgressIndicator(color = colors.primaryBlueColor)
                         Spacer(Modifier.height(12.dp))
-                        Text("Loading symptoms...", color = colors.textGreyColor, fontSize = 14.sp)
+                        Text(stringResource(R.string.track_loading_symptoms), color = colors.textGreyColor, fontSize = 14.sp)
                     }
                     state.error != null -> QuestionStateMessage(
                         icon = Icons.Rounded.WarningAmber,
                         iconTint = Color(0xFFF59E0B),
-                        title = "Unable to Load Symptoms",
+                        title = stringResource(R.string.track_unable_load_symptoms),
                         text = state.error!!,
-                        actionText = "Try Again",
+                        actionText = stringResource(R.string.track_try_again),
                         onAction = viewModel::load,
                     )
                     current == null -> QuestionStateMessage(
                         icon = Icons.Rounded.MedicalServices,
                         iconTint = colors.textGreyColor,
-                        title = "No Symptoms Recorded",
-                        text = "You don't have any symptoms to review.",
-                        actionText = "Add Symptoms",
+                        title = stringResource(R.string.track_no_symptoms_recorded),
+                        text = stringResource(R.string.track_no_symptoms_to_review),
+                        actionText = stringResource(R.string.track_add_symptoms),
                         onAction = { navController.openSymptomSelection() },
                     )
                     else -> AnimatedContent(
@@ -121,14 +122,14 @@ fun SymptomTrackerScreen(viewModel: SymptomQuestionViewModel = viewModel()) {
                     modifier = Modifier.fillMaxWidth().padding(20.dp),
                 ) {
                     AnswerButton(
-                        text = "Yes",
+                        text = stringResource(R.string.track_yes),
                         textColor = colors.textDarkColor,
                         background = Color.Gray.copy(alpha = 0.2f),
                         enabled = !state.saving,
                         modifier = Modifier.weight(1f),
                     ) { viewModel.answer(stillFeeling = true) }
                     AnswerButton(
-                        text = "No",
+                        text = stringResource(R.string.track_no),
                         textColor = colors.primaryBlueColor,
                         background = colors.primaryBlueColor.copy(alpha = if (isAppDark) 0.25f else 0.15f),
                         enabled = !state.saving,
@@ -164,9 +165,9 @@ private fun QuestionContent(symptom: SymptomToReview) {
             verticalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 10.dp),
         ) {
-            Text("Do you still have", color = colors.textDarkColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.track_do_you_still_have), color = colors.textDarkColor, fontSize = 24.sp, fontWeight = FontWeight.Medium)
             Text(
-                "${symptom.details.trim()}?",
+                stringResource(R.string.track_symptom_question, symptom.details.trim()),
                 color = colors.primaryBlueColor,
                 fontSize = 30.sp,
                 lineHeight = 36.sp,

@@ -26,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,6 +50,21 @@ import com.critetiontech.ctvitalio.utils.CommonTextField
 import com.critetiontech.ctvitalio.viewmodel.EmergencyContactsViewModel
 
 private val Relationships = listOf("Father", "Mother", "Spouse", "Brother", "Sister", "Son", "Daughter", "Friend", "Other")
+
+/** Display label for a relationship value; the English value is what is stored on the server. */
+@androidx.annotation.StringRes
+internal fun profileRelationLabelRes(value: String): Int? = when (value.trim().lowercase()) {
+    "father" -> R.string.profile_relation_father
+    "mother" -> R.string.profile_relation_mother
+    "spouse" -> R.string.profile_relation_spouse
+    "brother" -> R.string.profile_relation_brother
+    "sister" -> R.string.profile_relation_sister
+    "son" -> R.string.profile_relation_son
+    "daughter" -> R.string.profile_relation_daughter
+    "friend" -> R.string.profile_relation_friend
+    "other" -> R.string.profile_relation_other
+    else -> null
+}
 
 /** "+91 98765 43210", "9876543210": an optional +, then 7 to 15 digits. */
 private fun isValidPhone(raw: String): Boolean {
@@ -75,7 +92,7 @@ fun EmergencyContactsScreen(viewModel: EmergencyContactsViewModel = viewModel())
     }
 
     CommonAppBar(
-        title = "Emergency Contacts",
+        title = stringResource(R.string.profile_menu_emergency_contacts),
     )
     {
         Column(
@@ -88,14 +105,14 @@ fun EmergencyContactsScreen(viewModel: EmergencyContactsViewModel = viewModel())
                     loading && contacts.isEmpty() ->
                         CircularProgressIndicator(color = colors.primaryBlueColor, modifier = Modifier.align(Alignment.Center))
                     loadError != null && contacts.isEmpty() -> ContactsMessage(
-                        title = "Couldn't load your contacts",
+                        title = stringResource(R.string.profile_contacts_load_failed_title),
                         text = loadError!!,
-                        actionText = "Try again",
+                        actionText = stringResource(R.string.profile_try_again),
                         onAction = viewModel::loadContacts,
                     )
                     contacts.isEmpty() -> ContactsMessage(
-                        title = "No emergency contacts yet",
-                        text = "Add the people we should reach if something goes wrong.",
+                        title = stringResource(R.string.profile_no_emergency_contacts),
+                        text = stringResource(R.string.profile_no_emergency_contacts_text),
                     )
                     else -> LazyColumn(
                         contentPadding = PaddingValues(16.dp),
@@ -103,7 +120,7 @@ fun EmergencyContactsScreen(viewModel: EmergencyContactsViewModel = viewModel())
                     ) {
                         items(contacts, key = { it.id }) { contact ->
                             ContactItem(
-                                relation = contact.relationship?.trim().orEmpty().ifEmpty { "Contact" },
+                                relation = contact.relationship?.trim().orEmpty().let { r -> profileRelationLabelRes(r)?.let { stringResource(it) } ?: r }.ifEmpty { stringResource(R.string.profile_contact) },
                                 name = contact.contactName?.trim().orEmpty(),
                                 phone = contact.contactNumber?.trim().orEmpty(),
                                 onEdit = { editing = contact },
@@ -115,7 +132,7 @@ fun EmergencyContactsScreen(viewModel: EmergencyContactsViewModel = viewModel())
             }
 
             AddPillButton(
-                text = "+ Add Emergency Contact",
+                text = stringResource(R.string.profile_add_emergency_contact_button),
                 enabled = !loading || contacts.isNotEmpty(),
                 modifier = Modifier
                     .navigationBarsPadding()
@@ -138,11 +155,11 @@ fun EmergencyContactsScreen(viewModel: EmergencyContactsViewModel = viewModel())
 
     removing?.let { contact ->
         AppDialog(
-            title = "Remove contact?",
-            message = "${contact.contactName?.trim().orEmpty().ifEmpty { "This contact" }} will no longer be listed as an emergency contact.",
+            title = stringResource(R.string.profile_remove_contact_title),
+            message = stringResource(R.string.profile_remove_contact_message, contact.contactName?.trim().orEmpty().ifEmpty { stringResource(R.string.profile_this_contact) }),
             icon = Icons.Rounded.DeleteOutline,
-            confirmText = "Remove",
-            dismissText = "Cancel",
+            confirmText = stringResource(R.string.profile_remove),
+            dismissText = stringResource(R.string.profile_cancel),
             destructive = true,
             loading = saving,
             onConfirm = { viewModel.removeContact(contact) { removing = null } },
@@ -202,15 +219,15 @@ fun ContactItem(
                 HapticIconButton(onClick = {
                     runCatching { context.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${phone.replace(" ", "")}"))) }
                 }) {
-                    Icon(Icons.Default.Call, contentDescription = "Call $name", tint = Color(0xFF2962FF))
+                    Icon(Icons.Default.Call, contentDescription = stringResource(R.string.profile_cd_call, name), tint = Color(0xFF2962FF))
                 }
             }
 
             Box {
                 Icon(
                     Icons.Default.MoreVert,
-                    contentDescription = "More options",
-                    tint = Color.Gray,
+                    contentDescription = stringResource(R.string.profile_cd_more_options),
+                    tint = colors.textGreyColor,
                     modifier = Modifier.clip(CircleShape).clickable { expanded = true }.padding(4.dp)
                 )
 
@@ -219,11 +236,11 @@ fun ContactItem(
                     onDismissRequest = { expanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Edit") },
+                        text = { Text(stringResource(R.string.profile_edit)) },
                         onClick = { expanded = false; onEdit() }
                     )
                     DropdownMenuItem(
-                        text = { Text("Remove") },
+                        text = { Text(stringResource(R.string.profile_remove)) },
                         onClick = { expanded = false; onRemove() }
                     )
                 }
@@ -264,8 +281,8 @@ private fun ContactFormSheet(
 
     AppBottomSheet(
         onDismissRequest = onDismiss,
-        title = if (isNew) "Add Emergency Contact" else "Edit Emergency Contact",
-        subtitle = "We'll reach this person in an emergency.",
+        title = stringResource(if (isNew) R.string.profile_add_emergency_contact else R.string.profile_edit_emergency_contact),
+        subtitle = stringResource(R.string.profile_emergency_contact_sheet_subtitle),
         icon = Icons.Rounded.ContactPhone,
     ) {
         Column(
@@ -275,29 +292,29 @@ private fun ContactFormSheet(
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 16.dp),
         ) {
-            FieldLabel("Name")
+            FieldLabel(stringResource(R.string.profile_name))
             CommonTextField(
                 value = name,
                 onValueChange = { name = it.take(60) },
-                hint = "Contact's full name",
+                hint = stringResource(R.string.profile_contact_name_hint),
                 isError = showErrors && !nameOk,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
             )
-            if (showErrors && !nameOk) FieldError("Enter the contact's name")
+            if (showErrors && !nameOk) FieldError(stringResource(R.string.profile_contact_name_error))
 
             Spacer(Modifier.height(14.dp))
-            FieldLabel("Mobile number")
+            FieldLabel(stringResource(R.string.profile_mobile_number_label))
             CommonTextField(
                 value = number,
                 onValueChange = { v -> number = v.filter { it.isDigit() || it == '+' || it == ' ' }.take(18) },
-                hint = "e.g. 9876543210",
+                hint = stringResource(R.string.profile_mobile_hint),
                 isError = showErrors && !numberOk,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )
-            if (showErrors && !numberOk) FieldError("Enter a valid mobile number")
+            if (showErrors && !numberOk) FieldError(stringResource(R.string.profile_mobile_invalid))
 
             Spacer(Modifier.height(14.dp))
-            FieldLabel("Relationship")
+            FieldLabel(stringResource(R.string.profile_relationship))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -305,7 +322,7 @@ private fun ContactFormSheet(
                 Relationships.forEach { option ->
                     val selected = relation == option
                     Text(
-                        option,
+                        profileRelationLabelRes(option)?.let { stringResource(it) } ?: option,
                         color = if (selected) Color.White else colors.textDarkColor,
                         fontSize = 13.sp,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
@@ -326,16 +343,16 @@ private fun ContactFormSheet(
                 CommonTextField(
                     value = otherRelation,
                     onValueChange = { otherRelation = it.take(30) },
-                    hint = "e.g. Neighbour, Uncle",
+                    hint = stringResource(R.string.profile_other_relation_hint),
                     isError = showErrors && !relationOk,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 )
             }
-            if (showErrors && !relationOk) FieldError("Choose how this person is related to you")
+            if (showErrors && !relationOk) FieldError(stringResource(R.string.profile_relationship_error))
 
             Spacer(Modifier.height(20.dp))
             CommonButton(
-                text = if (isNew) "Save Contact" else "Update Contact",
+                text = stringResource(if (isNew) R.string.profile_save_contact else R.string.profile_update_contact),
                 isLoading = saving,
                 cornerRadius = 14.dp,
                 containerColor = colors.primaryBlueColor,

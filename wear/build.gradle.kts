@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // Wear OS companion app. Shares the phone app's applicationId and signing key so the
 // Wearable Data Layer can pair the two installs.
 plugins {
@@ -14,8 +16,12 @@ android {
         applicationId = "com.critetiontech.ctvitalio"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        // Version lives in version.properties at the repo root (shared with :app)
+        val versionProps = Properties().apply {
+            rootProject.file("version.properties").inputStream().use { load(it) }
+        }
+        versionCode = versionProps.getProperty("WEAR_VERSION_CODE").trim().toInt()
+        versionName = versionProps.getProperty("WEAR_VERSION_NAME").trim()
     }
 
     buildTypes {

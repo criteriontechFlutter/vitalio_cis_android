@@ -106,6 +106,11 @@ import androidx.compose.runtime.getValue
 
 class MainActivity : ComponentActivity() {
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.critetiontech.ctvitalio.utils.LocaleHelper.wrap(newBase))
+    }
+
+
     override fun onResume() {
         super.onResume()
         // Pull new readings from the user's watch/health apps (throttled inside)

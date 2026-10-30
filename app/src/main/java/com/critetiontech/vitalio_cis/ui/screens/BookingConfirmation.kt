@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -24,10 +25,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.ui.components.RoundBackTopBar
 import com.critetiontech.ctvitalio.ui.feedback.HapticCheckbox
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.utils.CommonButton
 import com.critetiontech.ctvitalio.viewmodel.DoctorDetailsViewModel
 import com.critetiontech.myapplication.utils.LocalNavController
@@ -85,6 +89,14 @@ internal fun parseBookingDate(raw: String): LocalDate? = try {
 private fun formatBookingDate(raw: String): String =
     parseBookingDate(raw)?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: raw
 
+/** Display label for a booking mode; "Walk-in" / "Virtual" stay the identifiers everywhere else. */
+@Composable
+internal fun consultModeLabel(mode: String): String = when (mode) {
+    "Walk-in" -> stringResource(R.string.consult_mode_walk_in)
+    "Virtual" -> stringResource(R.string.consult_mode_virtual)
+    else -> mode
+}
+
 /** "1600" → "₹1,600.00"; null when there is no fee to show. */
 private fun formatFee(raw: String?): String? {
     val amount = raw?.replace(",", "")?.trim()?.toDoubleOrNull() ?: return null
@@ -131,7 +143,7 @@ fun BookingConfirmationScreen(
     val minutes = details?.slotMinutes ?: 0
 
     Column(Modifier.fillMaxSize().background(colors.dashboardContainerColor)) {
-        RoundBackTopBar(title = "Appointment Confirmation")
+        RoundBackTopBar(title = stringResource(R.string.consult_appointment_confirmation))
 
         Column(
             modifier = Modifier
@@ -141,26 +153,28 @@ fun BookingConfirmationScreen(
         ) {
             Spacer(Modifier.height(8.dp))
             ConfirmRow(
-                label = "Doctor:",
+                label = stringResource(R.string.consult_doctor_label),
                 primary = details?.pName.orEmpty(),
                 secondary = details?.qly.orEmpty(),
             )
             ConfirmDivider()
             ConfirmRow(
-                label = "$mode :",
-                primary = department?.let { "$it Department" } ?: if (virtual) "Online consultation" else "In-clinic visit",
-                secondary = if (virtual) "Online consultation with the doctor" else "Visit the clinic at your appointment time",
+                label = stringResource(R.string.consult_label_colon, consultModeLabel(mode)),
+                primary = department?.let { stringResource(R.string.consult_department_name, it) }
+                    ?: if (virtual) stringResource(R.string.consult_online_consultation) else stringResource(R.string.consult_in_clinic_visit),
+                secondary = if (virtual) stringResource(R.string.consult_online_consultation_desc) else stringResource(R.string.consult_in_clinic_visit_desc),
             )
             ConfirmDivider()
-            ConfirmRow(label = "Appointment Date :", primary = formatBookingDate(details?.onDate.orEmpty()))
+            ConfirmRow(label = stringResource(R.string.consult_appointment_date_label), primary = formatBookingDate(details?.onDate.orEmpty()))
             ConfirmDivider()
 
-            Text(if (details?.queueNo != null) "Shift :" else "Select Time Slot :", color = colors.textGreyColor, fontSize = 13.sp)
+            Text(if (details?.queueNo != null) stringResource(R.string.consult_shift_label) else stringResource(R.string.consult_select_time_slot_label), color = colors.textGreyColor, fontSize = 13.sp)
             Spacer(Modifier.height(8.dp))
+            val minutesNote = stringResource(R.string.consult_minutes_short, minutes)
             Text(
                 buildAnnotatedString {
                     append(details?.timeRange().orEmpty().ifEmpty { formatSlotTime(time) })
-                    val note = if (minutes > 0) "$minutes Min" else details?.shiftName.orEmpty()
+                    val note = if (minutes > 0) minutesNote else details?.shiftName.orEmpty()
                     if (note.isNotEmpty()) {
                         withStyle(SpanStyle(color = colors.textGreyColor, fontWeight = FontWeight.Normal)) { append("   ($note)") }
                     }
@@ -171,7 +185,7 @@ fun BookingConfirmationScreen(
             )
             details?.queueNo?.let {
                 Spacer(Modifier.height(4.dp))
-                Text("Token No. $it", color = colors.primaryBlueColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.consult_token_no, it), color = colors.primaryBlueColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
 
             if (bookingError != null) {
@@ -180,21 +194,21 @@ fun BookingConfirmationScreen(
                     Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFEE2E2))
+                        .background(softTint(Color(0xFFB91C1C), Color(0xFFFEE2E2)))
                         .padding(14.dp)
                 ) {
-                    Text("Appointment not booked", color = Color(0xFFB91C1C), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.consult_appointment_not_booked), color = Color(0xFFB91C1C), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(4.dp))
                     Text(bookingError!!, color = Color(0xFFB91C1C), fontSize = 13.sp, lineHeight = 18.sp)
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        "Choose another time",
+                        stringResource(R.string.consult_choose_another_time),
                         color = Color(0xFFB91C1C),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(Color.White)
+                            .background(colors.dashboardContainerColor)
                             .clickable { navController.popBackStack() }
                             .padding(horizontal = 14.dp, vertical = 7.dp),
                     )
@@ -229,7 +243,7 @@ fun BookingConfirmationScreen(
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    "I consent to my current prescription details being shared with the clinic and doctor for care coordination.",
+                    stringResource(R.string.consult_prescription_consent),
                     color = colors.textGreyColor,
                     fontSize = 13.sp,
                     lineHeight = 18.sp,
@@ -239,14 +253,14 @@ fun BookingConfirmationScreen(
             if (fee != null) {
                 ConfirmDivider()
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Fee to be paid :", color = colors.textGreyColor, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.consult_fee_to_be_paid), color = colors.textGreyColor, fontSize = 15.sp, modifier = Modifier.weight(1f))
                     Text(fee, color = colors.textDarkColor, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
             Spacer(Modifier.height(16.dp))
             CommonButton(
-                text = "Continue",
+                text = stringResource(R.string.consult_continue),
                 isLoading = bookingLoading,
                 enabled = !bookingLoading && details != null,
                 cornerRadius = 14.dp,
@@ -283,5 +297,5 @@ private fun ConfirmRow(label: String, primary: String, secondary: String = "") {
 
 @Composable
 private fun ConfirmDivider() {
-    HorizontalDivider(Modifier.padding(vertical = 16.dp), thickness = 1.dp, color = Color(0xFFEEF0F3))
+    HorizontalDivider(Modifier.padding(vertical = 16.dp), thickness = 1.dp, color = if (isAppDark) LocalMyColorScheme.current.borderGreyLightColor else Color(0xFFEEF0F3))
 }

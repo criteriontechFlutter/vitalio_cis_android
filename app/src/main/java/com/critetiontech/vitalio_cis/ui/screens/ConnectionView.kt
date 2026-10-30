@@ -46,6 +46,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -67,6 +70,8 @@ import com.critetiontech.ctvitalio.ui.feedback.HapticEvent
 import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import com.critetiontech.ctvitalio.ui.feedback.rememberHaptics
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.ui.theme.softTint
 import com.critetiontech.ctvitalio.viewmodel.VitalDetailViewModel
 import com.critetiontech.ctvitalio.yonker.YonkerKind
 import com.critetiontech.myapplication.utils.LocalNavController
@@ -92,7 +97,26 @@ internal fun omronKindFor(vitalName: String): OmronKind? {
 
 /** One "add" row per kind: pairing detects the model, so there's no list of models to pick from. */
 internal fun omronDevicesFor(vitalName: String): List<Device> =
-    omronKindFor(vitalName)?.let { listOf(Device("Omron ${it.label}", "Any supported model", OmronModels.autoCode(it))) }.orEmpty()
+    omronKindFor(vitalName)?.let { listOf(Device("Omron ${it.label}", ANY_MODEL, OmronModels.autoCode(it))) }.orEmpty()
+
+/** Device type shown for the "pair any model" row; also an identifier, so it's translated only at display. */
+private const val ANY_MODEL = "Any supported model"
+
+/** Translation for a device kind/type label (kept in English as an identifier), or null to show it as is. */
+@StringRes
+internal fun deviceKindLabelRes(label: String): Int? = when (label) {
+    ANY_MODEL -> R.string.device_any_supported_model
+    "BP Machine" -> R.string.device_kind_bp_machine
+    "Wrist BP Machine" -> R.string.device_kind_wrist_bp_machine
+    "Weight Scale" -> R.string.device_kind_weight_scale
+    "Body Composition Monitor" -> R.string.device_kind_body_composition_monitor
+    "Pulse Oximeter" -> R.string.device_kind_pulse_oximeter
+    else -> null
+}
+
+/** [label] translated for display, when it's one of the known device kinds. */
+@Composable
+internal fun deviceKindLabel(label: String): String = deviceKindLabelRes(label)?.let { stringResource(it) } ?: label
 
 /** Yonker devices that measure this vital: the BP machine for BP/pulse, the oximeter for SpO2/pulse. */
 internal fun yonkerDevicesFor(vitalName: String): List<Device> {
@@ -112,8 +136,8 @@ internal fun yonkerDevicesFor(vitalName: String): List<Device> {
  */
 private data class VitalField(
     val key: String,
-    val label: String,
-    val fullName: String,
+    @StringRes val label: Int,
+    @StringRes val fullName: Int,
     val unit: String,
     val min: Double,
     val max: Double,
@@ -163,29 +187,29 @@ private fun specFor(vitalName: String, unit: String): VitalSpec? {
     return when (vitalName.trim().lowercase()) {
         "blood pressure" -> VitalSpec(
             listOf(UnitMode("", "", listOf(
-                VitalField("sys", "SYS", "Systolic pressure", backendUnit.ifBlank { "mmHg" }, 50.0, 250.0),
-                VitalField("dia", "DIA", "Diastolic pressure", backendUnit.ifBlank { "mmHg" }, 30.0, 150.0),
-                VitalField("pulse", "Pulse", "Pulse", "/min", 30.0, 220.0, required = false),
+                VitalField("sys", R.string.device_field_sys, R.string.device_field_systolic_pressure, backendUnit.ifBlank { "mmHg" }, 50.0, 250.0),
+                VitalField("dia", R.string.device_field_dia, R.string.device_field_diastolic_pressure, backendUnit.ifBlank { "mmHg" }, 30.0, 150.0),
+                VitalField("pulse", R.string.device_field_pulse, R.string.device_field_pulse, "/min", 30.0, 220.0, required = false),
             ))),
             backendUnit = backendUnit.ifBlank { "mmHg" },
         )
-        "pulse" -> single(VitalField("value", "Pulse", "Pulse", unit, 30.0, 220.0))
-        "heart rate", "heartrate" -> single(VitalField("value", "Heart Rate", "Heart rate", unit, 30.0, 220.0))
-        "spo2" -> single(VitalField("value", "SpO2", "SpO2", unit, 50.0, 100.0))
-        "respiratory rate", "resprate" -> single(VitalField("value", "Resp. Rate", "Respiratory rate", unit, 5.0, 60.0))
-        "blood glucose", "rbs" -> single(VitalField("value", "Glucose", "Blood glucose", unit, 20.0, 600.0))
+        "pulse" -> single(VitalField("value", R.string.device_field_pulse, R.string.device_field_pulse, unit, 30.0, 220.0))
+        "heart rate", "heartrate" -> single(VitalField("value", R.string.device_field_heart_rate_label, R.string.device_field_heart_rate, unit, 30.0, 220.0))
+        "spo2" -> single(VitalField("value", R.string.device_field_spo2, R.string.device_field_spo2, unit, 50.0, 100.0))
+        "respiratory rate", "resprate" -> single(VitalField("value", R.string.device_field_resp_rate_short, R.string.device_field_respiratory_rate, unit, 5.0, 60.0))
+        "blood glucose", "rbs" -> single(VitalField("value", R.string.device_field_glucose, R.string.device_field_blood_glucose, unit, 20.0, 600.0))
         "temperature" -> {
             // Canonical: °C. Backend usually stores °F.
             val backendIsC = backendUnit.contains("C", true) && !backendUnit.contains("F", true)
             VitalSpec(
                 modes = listOf(
                     UnitMode(
-                        "F", "°F", listOf(VitalField("value", "Temp", "Temperature", "°F", 86.0, 110.0, decimals = 1)),
+                        "F", "°F", listOf(VitalField("value", R.string.device_field_temp, R.string.device_field_temperature, "°F", 86.0, 110.0, decimals = 1)),
                         toCanonical = { (it.getValue("value") - 32) * 5 / 9 },
                         fromCanonical = { mapOf("value" to formatValue(round1(it * 9 / 5 + 32))) },
                     ),
                     UnitMode(
-                        "C", "°C", listOf(VitalField("value", "Temp", "Temperature", "°C", 30.0, 43.5, decimals = 1)),
+                        "C", "°C", listOf(VitalField("value", R.string.device_field_temp, R.string.device_field_temperature, "°C", 30.0, 43.5, decimals = 1)),
                     ),
                 ),
                 toBackend = { c -> if (backendIsC) c else c * 9 / 5 + 32 },
@@ -197,9 +221,9 @@ private fun specFor(vitalName: String, unit: String): VitalSpec? {
             val backendIsLb = backendUnit.contains("lb", true)
             VitalSpec(
                 modes = listOf(
-                    UnitMode("kg", "kg", listOf(VitalField("value", "Weight", "Weight", "kg", 2.0, 300.0, decimals = 1))),
+                    UnitMode("kg", "kg", listOf(VitalField("value", R.string.device_field_weight, R.string.device_field_weight, "kg", 2.0, 300.0, decimals = 1))),
                     UnitMode(
-                        "lb", "lb", listOf(VitalField("value", "Weight", "Weight", "lb", 4.0, 660.0, decimals = 1)),
+                        "lb", "lb", listOf(VitalField("value", R.string.device_field_weight, R.string.device_field_weight, "lb", 4.0, 660.0, decimals = 1)),
                         toCanonical = { it.getValue("value") / LB_PER_KG },
                         fromCanonical = { mapOf("value" to formatValue(round1(it * LB_PER_KG))) },
                     ),
@@ -213,12 +237,12 @@ private fun specFor(vitalName: String, unit: String): VitalSpec? {
             val backendIsInch = backendUnit.equals("in", true) || backendUnit.contains("inch", true)
             VitalSpec(
                 modes = listOf(
-                    UnitMode("cm", "cm", listOf(VitalField("value", "Height", "Height", "cm", 30.0, 250.0, decimals = 1))),
+                    UnitMode("cm", "cm", listOf(VitalField("value", R.string.device_field_height, R.string.device_field_height, "cm", 30.0, 250.0, decimals = 1))),
                     UnitMode(
                         "ftin", "ft · in",
                         listOf(
-                            VitalField("ft", "Feet", "Feet", "ft", 1.0, 8.0),
-                            VitalField("in", "Inches", "Inches", "in", 0.0, 11.0, required = false),
+                            VitalField("ft", R.string.device_field_feet, R.string.device_field_feet, "ft", 1.0, 8.0),
+                            VitalField("in", R.string.device_field_inches, R.string.device_field_inches, "in", 0.0, 11.0, required = false),
                         ),
                         toCanonical = { ((it["ft"] ?: 0.0) * 12 + (it["in"] ?: 0.0)) * CM_PER_INCH },
                         fromCanonical = { cm ->
@@ -266,11 +290,12 @@ private fun sanitize(input: String, field: VitalField): String {
 }
 
 /** Why [text] isn't acceptable for [field], or null if it is. Empty optional fields are fine. */
-private fun fieldError(field: VitalField, text: String): String? {
-    if (text.isBlank()) return if (field.required) "Enter ${field.fullName.lowercase()}" else null
-    val value = text.toDoubleOrNull() ?: return "Enter a valid number"
+private fun fieldError(context: android.content.Context, field: VitalField, text: String): String? {
+    val fullName = context.getString(field.fullName)
+    if (text.isBlank()) return if (field.required) context.getString(R.string.device_error_enter_field, fullName.lowercase()) else null
+    val value = text.toDoubleOrNull() ?: return context.getString(R.string.device_error_enter_valid_number)
     if (value < field.min || value > field.max) {
-        return "${field.fullName} should be between ${formatValue(field.min)} and ${formatValue(field.max)} ${field.unit}".trim()
+        return context.getString(R.string.device_error_field_range, fullName, formatValue(field.min), formatValue(field.max), field.unit).trim()
     }
     return null
 }
@@ -312,7 +337,7 @@ fun ConnectionScreen(
 
     Column(Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
         RoundBackTopBar(
-            title = "Connection",
+            title = stringResource(R.string.device_connection_title),
             // New Device is hidden for now; wearables are reached from the row below the devices
             actions = { if (SHOW_NEW_DEVICE) NewDevicePill { navController.navigate(Routes.HEALTHCONNECTSYNC) } },
         )
@@ -332,24 +357,24 @@ fun ConnectionScreen(
                 device.code?.let { navController.navigate("${Routes.OMRON_DEVICE}/$it") }
             }
             if (mine.isNotEmpty()) {
-                AnimatedEnter(index = index++) { Caption("Your devices", modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
+                AnimatedEnter(index = index++) { Caption(stringResource(R.string.device_your_devices), modifier = Modifier.padding(start = 4.dp, top = 6.dp)) }
                 mine.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = paired[device.code]) { open(device) } } }
             }
-            AnimatedEnter(index = index++) { Caption("Watches & health apps", modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
+            AnimatedEnter(index = index++) { Caption(stringResource(R.string.device_watches_health_apps), modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
             AnimatedEnter(index = index++) { WearablesRow { navController.navigate(Routes.HEALTHCONNECTSYNC) } }
             if (others.isNotEmpty()) {
-                AnimatedEnter(index = index++) { Caption("Add an Omron device", modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
+                AnimatedEnter(index = index++) { Caption(stringResource(R.string.device_add_omron_device), modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
                 others.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = null) { open(device) } } }
             }
             if (yonker.isNotEmpty()) {
-                AnimatedEnter(index = index++) { Caption("Yonker devices", modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
-                yonker.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = null, hint = "Tap to connect") { open(device) } } }
+                AnimatedEnter(index = index++) { Caption(stringResource(R.string.device_yonker_devices), modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
+                yonker.forEach { device -> AnimatedEnter(index = index++) { DeviceRow(device, paired = null, hint = stringResource(R.string.device_tap_to_connect)) { open(device) } } }
             }
             Spacer(Modifier.height(8.dp))
         }
 
         Text(
-            "Add Vital Manually",
+            stringResource(R.string.device_add_vital_manually),
             color = colors.primaryBlueColor,
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
@@ -388,7 +413,7 @@ private fun NewDevicePill(onClick: () -> Unit) {
     ) {
         Icon(Icons.Outlined.AddCircleOutline, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(5.dp))
-        Text("New Device", color = colors.primaryBlueColor, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(stringResource(R.string.device_new_device), color = colors.primaryBlueColor, fontSize = 13.sp, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -418,8 +443,8 @@ private fun WearablesRow(onClick: () -> Unit) {
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Smartwatch & Health Apps", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("Galaxy Watch, Fitbit, Garmin & more", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.device_smartwatch_health_apps), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.device_watch_brands_more), color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Box(
             contentAlignment = Alignment.Center,
@@ -429,7 +454,7 @@ private fun WearablesRow(onClick: () -> Unit) {
 }
 
 @Composable
-private fun DeviceRow(device: Device, paired: PairedOmronDevice?, hint: String = "Tap to pair", onClick: () -> Unit) {
+private fun DeviceRow(device: Device, paired: PairedOmronDevice?, hint: String = stringResource(R.string.device_tap_to_pair), onClick: () -> Unit) {
     val colors = LocalMyColorScheme.current
     val p = colors.primaryBlueColor
     val isScale = "Scale" in device.type || "Body" in device.type
@@ -468,16 +493,17 @@ private fun DeviceRow(device: Device, paired: PairedOmronDevice?, hint: String =
                     Text(pairedStatus(paired), color = DeviceGreen, fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1)
                 }
             } else {
-                Text(device.type + " · " + hint, color = colors.textGreyColor, fontSize = 12.sp)
+                Text(stringResource(R.string.device_type_with_hint, deviceKindLabel(device.type), hint), color = colors.textGreyColor, fontSize = 12.sp)
             }
         }
         Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(22.dp))
     }
 }
 
+@Composable
 private fun pairedStatus(device: PairedOmronDevice): String =
-    if (device.lastSyncAt == 0L) "Paired · User ${device.user}"
-    else "User ${device.user} · synced ${syncedAgo(device.lastSyncAt)}"
+    if (device.lastSyncAt == 0L) stringResource(R.string.device_paired_user, device.user)
+    else stringResource(R.string.device_user_synced, device.user, syncedAgo(device.lastSyncAt))
 
 /* ================= DIALOG ================= */
 
@@ -510,16 +536,16 @@ private fun AddVitalDialog(
     var attempted by remember { mutableStateOf(false) }
 
     val isBP = vitalName.equals("Blood Pressure", ignoreCase = true)
-    val title = if (isBP) "Enter BP Value" else "Enter $vitalName Value"
+    val title = if (isBP) stringResource(R.string.device_enter_bp_value) else stringResource(R.string.device_enter_vital_value, vitalName)
 
     fun text(key: String) = values[key].orEmpty()
     fun errorFor(field: VitalField): String? {
-        fieldError(field, text(field.key))?.let { return it }
+        fieldError(context, field, text(field.key))?.let { return it }
         // Systolic is always the higher number.
         if (field.key == "dia") {
             val sys = text("sys").toDoubleOrNull()
             val dia = text("dia").toDoubleOrNull()
-            if (sys != null && dia != null && dia >= sys) return "Diastolic (DIA) must be lower than systolic (SYS)"
+            if (sys != null && dia != null && dia >= sys) return context.getString(R.string.device_error_dia_lower_than_sys)
         }
         return null
     }
@@ -571,7 +597,7 @@ private fun AddVitalDialog(
             return
         }
         val onSuccess = {
-            Toast.makeText(context, "$vitalName saved", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.device_vital_saved, vitalName), Toast.LENGTH_SHORT).show()
             onDismiss()
         }
         val value = backendText().orEmpty()
@@ -618,10 +644,10 @@ private fun AddVitalDialog(
                         .align(Alignment.CenterEnd)
                         .size(32.dp)
                         .clip(CircleShape)
-                        .border(1.dp, Color(0xFFE5E7EB), CircleShape)
+                        .border(1.dp, if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB), CircleShape)
                         .bounceClick(enabled = !addLoading) { onDismiss() },
                 ) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = colors.textDarkColor, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.device_close), tint = colors.textDarkColor, modifier = Modifier.size(18.dp))
                 }
             }
 
@@ -639,7 +665,7 @@ private fun AddVitalDialog(
 
             if (fields == null) {
                 Text(
-                    "$vitalName can't be added manually here yet.",
+                    stringResource(R.string.device_cannot_add_manually, vitalName),
                     color = colors.textGreyColor,
                     fontSize = 14.sp,
                     textAlign = TextAlign.Center,
@@ -669,7 +695,7 @@ private fun AddVitalDialog(
             val typedInBackendUnit = mode != null && mode.fields.size == 1 && spec != null && sameUnit(mode.fields.first().unit, spec.backendUnit)
             AnimatedVisibility(!isBP && sent != null && mode != null && mode.id.isNotEmpty() && !typedInBackendUnit) {
                 Text(
-                    "Will be saved as $sent ${displayUnit(spec?.backendUnit.orEmpty())}",
+                    stringResource(R.string.device_will_be_saved_as, sent.orEmpty(), displayUnit(spec?.backendUnit.orEmpty())),
                     color = colors.textGreyColor,
                     fontSize = 12.sp,
                     textAlign = TextAlign.End,
@@ -679,7 +705,7 @@ private fun AddVitalDialog(
 
             AnimatedVisibility(outOfRange && addError == null) {
                 Text(
-                    "This reading is outside the normal range. Please re-check it before saving.",
+                    stringResource(R.string.device_reading_outside_normal_range),
                     color = Color(0xFFB45309),
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
@@ -687,7 +713,7 @@ private fun AddVitalDialog(
                         .padding(top = 12.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFEF3C7))
+                        .background(softTint(Color(0xFFB45309), Color(0xFFFEF3C7)))
                         .padding(10.dp),
                 )
             }
@@ -701,7 +727,7 @@ private fun AddVitalDialog(
                         .padding(top = 12.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFEE2E2))
+                        .background(softTint(Color(0xFFB91C1C), Color(0xFFFEE2E2)))
                         .padding(10.dp),
                 )
             }
@@ -718,14 +744,14 @@ private fun AddVitalDialog(
                     .height(50.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(bg)
-                    .then(if (ready) Modifier else Modifier.border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(12.dp)))
+                    .then(if (ready) Modifier else Modifier.border(1.dp, if (isAppDark) colors.borderGreyLightColor else Color(0xFFD1D5DB), RoundedCornerShape(12.dp)))
                     .bounceClick(enabled = ready && !addLoading) { save() },
             ) {
                 if (addLoading) {
                     CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
                 } else {
                     Text(
-                        "Save Vitals",
+                        stringResource(R.string.device_save_vitals),
                         color = if (ready) Color.White else Color(0xFFB0B7C3),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
@@ -791,10 +817,10 @@ private fun VitalInputRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(field.label, color = colors.textDarkColor, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(field.label), color = colors.textDarkColor, fontSize = 26.sp, fontWeight = FontWeight.SemiBold)
                     if (!field.required) {
                         Spacer(Modifier.width(6.dp))
-                        Text("optional", color = colors.textGreyColor, fontSize = 11.sp)
+                        Text(stringResource(R.string.device_optional), color = colors.textGreyColor, fontSize = 11.sp)
                     }
                 }
                 Text(field.unit, color = colors.textGreyColor, fontSize = 12.sp)
@@ -829,7 +855,7 @@ private fun VitalInputRow(
                 decorationBox = { inner ->
                     Box(contentAlignment = Alignment.CenterEnd) {
                         if (value.isEmpty()) {
-                            Text("00", color = Color(0xFFE5E9F2), fontSize = 44.sp, fontWeight = FontWeight.Medium)
+                            Text("00", color = if (isAppDark) colors.textGreyColor.copy(alpha = 0.3f) else Color(0xFFE5E9F2), fontSize = 44.sp, fontWeight = FontWeight.Medium)
                         }
                         inner()
                     }
@@ -839,6 +865,6 @@ private fun VitalInputRow(
         if (error != null) {
             Text(error, color = errorColor, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
         }
-        if (!isLast) HorizontalDivider(Modifier.padding(top = 6.dp), color = Color(0xFFF1F3F6))
+        if (!isLast) HorizontalDivider(Modifier.padding(top = 6.dp), color = if (isAppDark) colors.borderGreyLightColor else Color(0xFFF1F3F6))
     }
 }

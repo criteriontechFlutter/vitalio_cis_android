@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -72,17 +74,17 @@ fun InteractionCheckerScreen(
 
     if (errorMessage != null) {
         com.critetiontech.ctvitalio.ui.components.AppDialog(
-            title = "Something went wrong",
+            title = stringResource(R.string.med_something_went_wrong),
             message = errorMessage,
             icon = androidx.compose.material.icons.Icons.Rounded.ErrorOutline,
             iconTint = com.critetiontech.ctvitalio.ui.components.DialogDangerColor,
-            confirmText = "OK",
+            confirmText = stringResource(R.string.med_ok),
             onDismiss = { viewModel.clearError() },
         )
     }
 
     CommonAppBar(
-        title = "Interaction Checker",
+        title = stringResource(R.string.med_interaction_checker_title),
     ) {
         Box(
             modifier = Modifier
@@ -100,7 +102,7 @@ fun InteractionCheckerScreen(
                         .padding(top = 16.dp)
                 ) {
                     Text(
-                        text = "Medicine Name",
+                        text = stringResource(R.string.med_medicine_name_label),
                         style = AppTextStyles.style14GCN()
                     )
 
@@ -109,7 +111,7 @@ fun InteractionCheckerScreen(
                     MyTextField(
                         value = searchText,
                         onValueChange = { viewModel.updateSearchText(it) },
-                        placeholderText = "Search Drugs, Supplements & OTC",
+                        placeholderText = stringResource(R.string.med_search_drugs_placeholder),
                         leadingIcon = {
                             Icon(Icons.Default.Search, contentDescription = null)
                         },
@@ -118,7 +120,7 @@ fun InteractionCheckerScreen(
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                             } else if (searchText.isNotEmpty()) {
                                 HapticIconButton(onClick = { viewModel.updateSearchText("") }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.med_clear))
                                 }
                             }
                         }
@@ -143,9 +145,9 @@ fun InteractionCheckerScreen(
                                     modifier = Modifier.clickable { viewModel.clearSelectedDrugs() },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Clear", color = colors.primaryBlueColor, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                    Text(stringResource(R.string.med_clear), color = colors.primaryBlueColor, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(Icons.Default.Delete, contentDescription = "Clear", tint = colors.primaryBlueColor, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.med_clear), tint = colors.primaryBlueColor, modifier = Modifier.size(14.dp))
                                 }
                             }
 
@@ -166,27 +168,27 @@ fun InteractionCheckerScreen(
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(drug.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.dashboardContainerColor)
+                                                Text(drug.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.textDarkColor)
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Icon(Icons.Default.ArrowOutward, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray.copy(alpha = 0.7f))
+                                                Icon(Icons.Default.ArrowOutward, contentDescription = null, modifier = Modifier.size(14.dp), tint = colors.textGreyColor.copy(alpha = 0.7f))
                                             }
                                             Spacer(modifier = Modifier.height(4.dp))
-                                            Text(drug.activeIngredients, fontSize = 13.sp, color = Color.Gray)
+                                            Text(drug.activeIngredients, fontSize = 13.sp, color = colors.textGreyColor)
                                         }
                                         HapticIconButton(onClick = { viewModel.removeDrug(drug) }) {
-                                            Icon(Icons.Default.RemoveCircle, contentDescription = "Remove", tint = Color.Gray.copy(alpha = 0.4f), modifier = Modifier.size(24.dp))
+                                            Icon(Icons.Default.RemoveCircle, contentDescription = stringResource(R.string.med_remove), tint = colors.textGreyColor.copy(alpha = 0.4f), modifier = Modifier.size(24.dp))
                                         }
                                     }
                                     if (index < selectedDrugs.size - 1) {
-                                        Divider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.3f))
+                                        Divider(modifier = Modifier.padding(horizontal = 16.dp), color = colors.borderGreyLightColor.copy(alpha = 0.3f))
                                     }
                                 }
                             }
 
                             Text(
-                                "Warning: If no interactions are found between two drugs, it does not necessarily mean that no interactions exist. Always consult with a healthcare professional.",
+                                stringResource(R.string.med_interaction_warning),
                                 fontSize = 12.sp,
-                                color = Color.Gray,
+                                color = colors.textGreyColor,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 18.sp,
                                 modifier = Modifier
@@ -214,12 +216,12 @@ fun InteractionCheckerScreen(
                                         .padding(horizontal = 16.dp, vertical = 12.dp)
                                 ) {
                                     val name = if (med.brandName.isEmpty()) med.medicineName else med.brandName
-                                    Text(name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = colors.dashboardContainerColor)
+                                    Text(name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = colors.textDarkColor)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text("${med.medicineName} • ${med.dosageFormName} ${med.doseStrength.toInt()} ${med.unitName}", fontSize = 12.sp, color = Color.Gray)
+                                    Text("${med.medicineName} • ${med.dosageFormName} ${med.doseStrength.toInt()} ${med.unitName}", fontSize = 12.sp, color = colors.textGreyColor)
                                 }
                                 if (index < searchResults.size - 1) {
-                                    Divider(color = Color.LightGray.copy(alpha = 0.3f))
+                                    Divider(color = colors.borderGreyLightColor.copy(alpha = 0.3f))
                                 }
                             }
                         }
@@ -248,7 +250,7 @@ fun InteractionCheckerScreen(
                     if (isCheckingInteraction) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
                     } else {
-                        Text("Check Interaction", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.med_check_interaction), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

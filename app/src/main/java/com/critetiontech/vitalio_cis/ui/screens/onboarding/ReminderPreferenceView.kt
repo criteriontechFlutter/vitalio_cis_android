@@ -1,5 +1,9 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 
@@ -32,10 +36,11 @@ import com.critetiontech.ctvitalio.R
 fun ReminderPreferenceScreen() {
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colors.dashboardContainerColor)
             .padding(16.dp)
     ) {
 
@@ -49,14 +54,14 @@ fun ReminderPreferenceScreen() {
         ) {
 
             Text(
-                text = "Set Preferences",
+                text = stringResource(R.string.auth_onb_set_preferences),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f)
             )
 
             Text(
-                text = "Skip",
+                text = stringResource(R.string.auth_common_skip),
                 color = Color(0xFF2563EB),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
@@ -74,8 +79,8 @@ fun ReminderPreferenceScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "Final Stretch in Sight",
-            subtitle = "You're making great progress-just a little more to go!"
+            title = stringResource(R.string.auth_onb_progress_final_stretch_title),
+            subtitle = stringResource(R.string.auth_onb_progress_final_stretch_subtitle)
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -101,7 +106,7 @@ fun ReminderPreferenceScreen() {
         /// =========================
 
         Text(
-            text = "Set Vital Reminder",
+            text = stringResource(R.string.auth_onb_vital_reminder_title),
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2563EB)
@@ -110,13 +115,13 @@ fun ReminderPreferenceScreen() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Your primary details are completed. Please select the interval for your vital reminders.",
+            text = stringResource(R.string.auth_onb_vital_reminder_subtitle),
 
             fontSize = 13.sp,
 
             lineHeight = 20.sp,
 
-            color = Color.Gray
+            color = colors.textGreyColor
         )
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -126,19 +131,19 @@ fun ReminderPreferenceScreen() {
         /// =========================
 
         ReminderDropDown(
-            title = "Blood Pressure"
+            title = stringResource(R.string.auth_onb_vital_blood_pressure)
         )
 
         ReminderDropDown(
-            title = "Heart Rate"
+            title = stringResource(R.string.auth_onb_vital_heart_rate)
         )
 
         ReminderDropDown(
-            title = "Blood Oxygen (SpO2)"
+            title = stringResource(R.string.auth_onb_vital_spo2)
         )
 
         ReminderDropDown(
-            title = "Respiratory Rate"
+            title = stringResource(R.string.auth_onb_vital_respiratory_rate)
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -165,7 +170,7 @@ fun ReminderPreferenceScreen() {
         ) {
 
             Text(
-                text = "Next",
+                text = stringResource(R.string.auth_common_next),
                 fontSize = 16.sp,
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold
@@ -183,18 +188,19 @@ fun ReminderDropDown(
         mutableStateOf(false)
     }
 
-    var selectedValue by remember {
-        mutableStateOf("3 Times A Day")
-    }
-
+    val colors = LocalMyColorScheme.current
     val reminderList = listOf(
-        "Once A Day",
-        "2 Times A Day",
-        "3 Times A Day",
-        "4 Times A Day",
-        "Every Hour",
-        "Every 2 Hour"
+        stringResource(R.string.auth_onb_interval_once_day),
+        stringResource(R.string.auth_onb_interval_twice_day),
+        stringResource(R.string.auth_onb_interval_thrice_day),
+        stringResource(R.string.auth_onb_interval_four_day),
+        stringResource(R.string.auth_onb_interval_every_hour),
+        stringResource(R.string.auth_onb_interval_every_2_hours)
     )
+
+    var selectedValue by remember {
+        mutableStateOf(reminderList[2])
+    }
 
     Column {
 
@@ -218,7 +224,7 @@ fun ReminderDropDown(
                     Text(
                         text = title,
                         fontSize = 14.sp,
-                        color = Color.Black
+                        color = colors.textDarkColor
                     )
 
                     Spacer(modifier = Modifier.height(3.dp))
@@ -226,7 +232,7 @@ fun ReminderDropDown(
                     Text(
                         text = selectedValue,
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = colors.textGreyColor
                     )
                 }
 
@@ -238,7 +244,7 @@ fun ReminderDropDown(
                             Icons.Default.KeyboardArrowDown,
 
                     contentDescription = null,
-                    tint = Color.Gray
+                    tint = colors.textGreyColor
                 )
             }
 
@@ -249,7 +255,7 @@ fun ReminderDropDown(
                     expanded = false
                 },
 
-                modifier = Modifier.background(Color.White)
+                modifier = Modifier.background(colors.dashboardContainerColor)
             ) {
 
                 reminderList.forEach { item ->
@@ -276,7 +282,7 @@ fun ReminderDropDown(
         }
 
         HorizontalDivider(
-            color = Color(0xFFE5E7EB),
+            color = (if (isAppDark) colors.borderGreyLightColor else Color(0xFFE5E7EB)),
             thickness = 1.dp
         )
     }

@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 import android.widget.Toast
 import com.critetiontech.ctvitalio.permissions.AppPermission
 import com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest
@@ -169,21 +172,21 @@ fun LabReportsScreen(
             scope.launch(Dispatchers.Main) {
                 if (result is ReportDownloader.State.Done) {
                     haptic(HapticEvent.Success)
-                    Toast.makeText(context, "Saved to Downloads/Vitalio", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.report_toast_saved_to_downloads), Toast.LENGTH_SHORT).show()
                 } else {
                     haptic(HapticEvent.Error)
-                    Toast.makeText(context, "Download failed. Check your connection.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.report_toast_download_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }
         if (!started) {
             haptic(HapticEvent.Error)
-            Toast.makeText(context, "This report has no file to download", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.report_toast_no_file_to_download), Toast.LENGTH_SHORT).show()
         }
     }
 
     val storagePermission = rememberPermissionRequest(
-        AppPermission.Storage, "to save this report in your Downloads folder",
+        AppPermission.Storage, stringResource(R.string.perm_reason_save_report),
         onDenied = { pendingDownload = null },
     ) {
         pendingDownload?.let { startDownload(it) }
@@ -194,7 +197,7 @@ fun LabReportsScreen(
         when (val state = downloads[report.downloadKey()]) {
             is ReportDownloader.State.Done ->
                 if (!ReportDownloader.open(context, state))
-                    Toast.makeText(context, "No app found to open this file", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.report_toast_no_app_to_open), Toast.LENGTH_SHORT).show()
             is ReportDownloader.State.Running -> Unit
             else -> {
                 pendingDownload = report
@@ -206,12 +209,12 @@ fun LabReportsScreen(
     val onView: (MediaItem) -> Unit = { report ->
         if (ReportDownloader.isImage(report.fileType, report.fileName)) viewing = report
         else if (!ReportDownloader.openRemote(context, report.url))
-            Toast.makeText(context, "No app found to open this file", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.report_toast_no_app_to_open), Toast.LENGTH_SHORT).show()
     }
 
     // ── UI ─────────────────────────────────────────────────────────────────────
     CommonAppBar(
-        title = "Lab Reports",
+        title = stringResource(R.string.report_lab_reports_title),
         actions = {
             AddReportButton { navController.navigate(Routes.ADDLABRESULTS) }
             Spacer(Modifier.width(12.dp))
@@ -228,7 +231,7 @@ fun LabReportsScreen(
                     isRefreshing = false
                 }
             },
-            refreshingText = "Updating your reports…",
+            refreshingText = stringResource(R.string.report_updating_reports),
             modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor),
         ) {
             LazyColumn(
@@ -269,7 +272,7 @@ fun LabReportsScreen(
                         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 14.dp),
                     ) {
                         Text(
-                            "Recent Reports",
+                            stringResource(R.string.report_recent_reports),
                             color = colors.textDarkColor,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
@@ -277,7 +280,7 @@ fun LabReportsScreen(
                         )
                         if (filtered.isNotEmpty()) {
                             Text(
-                                "${filtered.size} ${if (filtered.size == 1) "item" else "items"}",
+                                if (filtered.size == 1) stringResource(R.string.report_items_count_one, filtered.size) else stringResource(R.string.report_items_count, filtered.size),
                                 color = colors.textGreyColor,
                                 fontSize = 14.sp,
                             )
@@ -339,7 +342,7 @@ private fun AddReportButton(onClick: () -> Unit) {
     ) {
         Icon(Icons.Rounded.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(6.dp))
-        Text("Add Report", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.report_add_report), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -360,7 +363,7 @@ private fun ReportSearchField(query: String, onQueryChange: (String) -> Unit, mo
         Box(Modifier.weight(1f)) {
             if (query.isEmpty()) {
                 Text(
-                    "Search by test name, category or notes…",
+                    stringResource(R.string.report_search_reports_hint),
                     color = colors.textGreyColor.copy(alpha = 0.6f),
                     fontSize = 15.sp,
                     maxLines = 1,
@@ -378,7 +381,7 @@ private fun ReportSearchField(query: String, onQueryChange: (String) -> Unit, mo
         }
         if (query.isNotEmpty()) {
             HapticIconButton(onClick = { onQueryChange("") }, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Rounded.Close, contentDescription = "Clear search", tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.report_clear_search), tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -432,13 +435,18 @@ private fun ReportCategoryCard(name: String, count: Int, selected: Boolean, onCl
         Spacer(Modifier.width(12.dp))
         Column {
             Text(
-                name,
+                // "All" / "Other" are filter keys; only their label is translated.
+                when (name) {
+                    ALL_CATEGORIES -> stringResource(R.string.report_category_all)
+                    "Other" -> stringResource(R.string.report_category_other)
+                    else -> name
+                },
                 color = if (selected) colors.textDarkColor else colors.textGreyColor,
                 fontSize = 16.sp,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                 maxLines = 1,
             )
-            Text("$count ${if (count == 1) "Report" else "Reports"}", color = accent, fontSize = 13.sp)
+            Text(if (count == 1) stringResource(R.string.report_reports_count_one, count) else stringResource(R.string.report_reports_count_other, count), color = accent, fontSize = 13.sp)
         }
     }
 }
@@ -478,7 +486,7 @@ private fun LabReportCard(
             ) {
                 Box(Modifier.size(8.dp).background(style.color, CircleShape))
                 Spacer(Modifier.width(8.dp))
-                Text(report.category?.ifBlank { null } ?: "Other", color = style.color, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                Text(report.category?.ifBlank { null } ?: stringResource(R.string.report_category_other), color = style.color, fontSize = 13.sp, fontWeight = FontWeight.Medium)
             }
             Spacer(Modifier.weight(1f))
             FileTypeBadge(report.fileType, report.fileName, isImage)
@@ -489,7 +497,7 @@ private fun LabReportCard(
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    report.subcategory?.ifBlank { null } ?: "Lab report",
+                    report.subcategory?.ifBlank { null } ?: stringResource(R.string.report_lab_report_fallback),
                     color = colors.textDarkColor,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -530,7 +538,7 @@ private fun LabReportCard(
             Spacer(Modifier.width(8.dp))
             ActionPill(
                 icon = Icons.Rounded.Visibility,
-                label = "View",
+                label = stringResource(R.string.report_view),
                 color = colors.primaryBlueColor,
                 onClick = onView,
             )
@@ -626,7 +634,7 @@ private fun DownloadPill(state: ReportDownloader.State?, onClick: () -> Unit) {
     when (state) {
         is ReportDownloader.State.Running -> ActionPill(
             icon = Icons.Rounded.Download,
-            label = state.progress?.let { "${(it * 100).toInt()}%" } ?: "Saving",
+            label = state.progress?.let { "${(it * 100).toInt()}%" } ?: stringResource(R.string.report_saving),
             color = DownloadGreen,
             onClick = onClick,
             leading = {
@@ -635,11 +643,11 @@ private fun DownloadPill(state: ReportDownloader.State?, onClick: () -> Unit) {
                 else CircularProgressIndicator(color = DownloadGreen, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
             },
         )
-        is ReportDownloader.State.Done -> ActionPill(Icons.Rounded.OpenInNew, "Open", DownloadGreen, onClick, leading = {
+        is ReportDownloader.State.Done -> ActionPill(Icons.Rounded.OpenInNew, stringResource(R.string.report_open), DownloadGreen, onClick, leading = {
             Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = DownloadGreen, modifier = Modifier.size(18.dp))
         })
-        ReportDownloader.State.Failed -> ActionPill(Icons.Rounded.Refresh, "Retry", PdfRed, onClick)
-        null -> ActionPill(Icons.Rounded.Download, "Download", DownloadGreen, onClick)
+        ReportDownloader.State.Failed -> ActionPill(Icons.Rounded.Refresh, stringResource(R.string.report_retry), PdfRed, onClick)
+        null -> ActionPill(Icons.Rounded.Download, stringResource(R.string.report_download), DownloadGreen, onClick)
     }
 }
 
@@ -676,14 +684,14 @@ private fun ReportsEmptyState(searching: Boolean, onAdd: () -> Unit) {
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            if (searching) "No matching reports" else "No reports yet",
+            if (searching) stringResource(R.string.report_no_matching_reports) else stringResource(R.string.report_no_reports_yet),
             color = colors.textDarkColor,
             fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold,
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            if (searching) "Try a different name or category." else "Upload a lab report and Vitalio will read it for you.",
+            if (searching) stringResource(R.string.report_try_different_search) else stringResource(R.string.report_upload_report_prompt),
             color = colors.textGreyColor,
             fontSize = 14.sp,
         )
@@ -787,7 +795,7 @@ private fun ReportImageViewer(
                 is AsyncImagePainter.State.Loading ->
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.align(Alignment.Center))
                 is AsyncImagePainter.State.Error ->
-                    Text("Couldn't load the report", color = Color.White, modifier = Modifier.align(Alignment.Center))
+                    Text(stringResource(R.string.report_couldnt_load_report), color = Color.White, modifier = Modifier.align(Alignment.Center))
                 else -> Unit
             }
 
@@ -800,17 +808,17 @@ private fun ReportImageViewer(
                     .padding(horizontal = 8.dp, vertical = 8.dp),
             ) {
                 HapticIconButton(onClick = onDismiss) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.report_close), tint = Color.White)
                 }
                 Column(Modifier.weight(1f).padding(horizontal = 4.dp)) {
-                    Text(report.subcategory ?: "Report", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    Text(report.subcategory ?: stringResource(R.string.report_report_fallback), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                     Text(report.fileName.orEmpty(), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 HapticIconButton(onClick = onDownload) {
                     when (downloadState) {
                         is ReportDownloader.State.Running -> CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
-                        is ReportDownloader.State.Done -> Icon(Icons.Rounded.OpenInNew, contentDescription = "Open download", tint = Color.White)
-                        else -> Icon(Icons.Rounded.Download, contentDescription = "Download", tint = Color.White)
+                        is ReportDownloader.State.Done -> Icon(Icons.Rounded.OpenInNew, contentDescription = stringResource(R.string.report_open_download), tint = Color.White)
+                        else -> Icon(Icons.Rounded.Download, contentDescription = stringResource(R.string.report_download), tint = Color.White)
                     }
                 }
             }

@@ -28,6 +28,8 @@ import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.permissions.AppPermission
 import com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest
 import kotlinx.coroutines.Dispatchers
@@ -41,12 +43,12 @@ fun BreathingTherapyScreen() {
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
     var micAllowed by remember { mutableStateOf(AppPermission.Microphone.isGranted(context)) }
-    val micPermission = rememberPermissionRequest(AppPermission.Microphone, "to hear your breath and guide each round") {
+    val micPermission = rememberPermissionRequest(AppPermission.Microphone, stringResource(R.string.perm_reason_breathing)) {
         micAllowed = true
     }
 
     CommonAppBar(
-        title = "Breathing Therapy",
+        title = stringResource(R.string.track_breathing_therapy),
         onBack = { navController.popBackStack() }
     ) {
         Column(
@@ -58,7 +60,7 @@ fun BreathingTherapyScreen() {
             Spacer(modifier = Modifier.height(30.dp))
             
             Text(
-                text = "Digital Biofeedback",
+                text = stringResource(R.string.track_digital_biofeedback),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = colors.textDarkColor,
@@ -66,7 +68,7 @@ fun BreathingTherapyScreen() {
             )
 
             Text(
-                text = "Activate your parasympathetic nervous system to quickly lower stress and blood pressure.",
+                text = stringResource(R.string.track_breathing_intro),
                 fontSize = 15.sp,
                 color = colors.textGreyColor,
                 textAlign = TextAlign.Center,
@@ -76,7 +78,7 @@ fun BreathingTherapyScreen() {
             if (!micAllowed) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "Blow gently towards your phone. The microphone measures each breath so the circle can guide you. Nothing is recorded.",
+                    text = stringResource(R.string.track_breathing_mic_explain),
                     fontSize = 14.sp,
                     color = colors.textGreyColor,
                     textAlign = TextAlign.Center,
@@ -88,7 +90,7 @@ fun BreathingTherapyScreen() {
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)
                 ) {
-                    Text("Allow Microphone to Start", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.track_allow_mic_to_start), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(modifier = Modifier.weight(1f))
             } else {
@@ -217,7 +219,7 @@ fun BreathingBiofeedbackVisualizer(modifier: Modifier = Modifier) {
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Breaths Completed: $repetitions",
+                    text = stringResource(R.string.track_breaths_completed, repetitions),
                     color = if (com.critetiontech.ctvitalio.ui.theme.isAppDark) Color(0xFF93C5FD) else Color(0xFF1E40AF),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
@@ -257,9 +259,9 @@ fun BreathingBiofeedbackVisualizer(modifier: Modifier = Modifier) {
         
         Text(
             text = when {
-                breathPower > 0.95f -> "Excellent.\nNow relax and exhale."
-                breathPower > 0.1f -> "Keep blowing smoothly..."
-                else -> "Take a deep breath,\nthen blow slowly into the mic."
+                breathPower > 0.95f -> stringResource(R.string.track_breath_excellent)
+                breathPower > 0.1f -> stringResource(R.string.track_breath_keep_blowing)
+                else -> stringResource(R.string.track_breath_take_deep)
             },
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold,

@@ -59,6 +59,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,6 +77,11 @@ private enum class DoseState { Pending, Saving, Taken, Queued }
 
 /** Full-screen medicine alarm, shown over the lock screen or the app in use. */
 class MedicineAlarmActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.critetiontech.ctvitalio.utils.LocaleHelper.wrap(newBase))
+    }
+
 
     private var alarm by mutableStateOf<ReminderAlarm?>(null)
     private val states = mutableStateMapOf<String, DoseState>()
@@ -240,7 +247,7 @@ private fun AlarmScreen(
             .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Medicine reminder", color = Color.White.copy(alpha = 0.75f), fontSize = 15.sp)
+            Text(stringResource(R.string.med_alarm_header), color = Color.White.copy(alpha = 0.75f), fontSize = 15.sp)
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(now.format(DateTimeFormatter.ofPattern("hh:mm", Locale.getDefault())),
                     color = Color.White, fontSize = 60.sp, fontWeight = FontWeight.Light)
@@ -270,9 +277,9 @@ private fun AlarmScreen(
             Spacer(Modifier.height(16.dp))
             Text(
                 when {
-                    allDone -> "All done!"
-                    single -> "Time to take your medicine"
-                    else -> "Time to take ${alarm.doses.size} medicines"
+                    allDone -> stringResource(R.string.med_alarm_all_done)
+                    single -> stringResource(R.string.med_alarm_time_to_take_one)
+                    else -> stringResource(R.string.med_alarm_time_to_take_many, alarm.doses.size)
                 },
                 color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
             )
@@ -305,8 +312,8 @@ private fun AlarmScreen(
                         Icon(Icons.Rounded.Check, null)
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (single || pendingCount == alarm.doses.size) { if (single) "Mark as taken" else "Mark all as taken" }
-                            else "Mark remaining $pendingCount as taken",
+                            if (single || pendingCount == alarm.doses.size) { if (single) stringResource(R.string.med_action_mark_taken) else stringResource(R.string.med_alarm_mark_all_as_taken) }
+                            else stringResource(R.string.med_alarm_mark_remaining_taken, pendingCount),
                             fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
                         )
                     }
@@ -322,10 +329,10 @@ private fun AlarmScreen(
                 ) {
                     Icon(Icons.Rounded.Snooze, null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Snooze $snoozeMinutes min", fontSize = 16.sp)
+                    Text(stringResource(R.string.med_action_snooze_min, snoozeMinutes), fontSize = 16.sp)
                 }
                 HapticTextButton(onClick = onDismiss, enabled = !busy) {
-                    Text("Dismiss", color = Color.White.copy(alpha = 0.8f), fontSize = 15.sp)
+                    Text(stringResource(R.string.med_dismiss), color = Color.White.copy(alpha = 0.8f), fontSize = 15.sp)
                 }
             }
         }
@@ -360,11 +367,11 @@ private fun DoseCard(dose: ReminderDose, state: DoseState, showTakeButton: Boole
                         onClick = onTake,
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = AlarmBlue),
                         shape = RoundedCornerShape(20.dp),
-                    ) { Text("Taken", fontWeight = FontWeight.SemiBold) }
+                    ) { Text(stringResource(R.string.med_taken), fontWeight = FontWeight.SemiBold) }
                 } else Spacer(Modifier.size(1.dp))
                 DoseState.Saving -> CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(26.dp))
-                DoseState.Taken -> StatusChip(Icons.Rounded.Check, "Taken", AlarmGreen)
-                DoseState.Queued -> StatusChip(Icons.Rounded.CloudQueue, "Will sync", AlarmAmber)
+                DoseState.Taken -> StatusChip(Icons.Rounded.Check, stringResource(R.string.med_taken), AlarmGreen)
+                DoseState.Queued -> StatusChip(Icons.Rounded.CloudQueue, stringResource(R.string.med_will_sync), AlarmAmber)
             }
         }
     }

@@ -59,7 +59,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
+import androidx.compose.ui.res.stringResource
 import com.critetiontech.ctvitalio.model.Problem
 import com.critetiontech.ctvitalio.model.SymptomItem
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
@@ -84,10 +86,10 @@ fun SymptomsView(viewModel: SymptomSelectionViewModel = viewModel()) {
     LaunchedEffect(Unit) { viewModel.message.collect { showToast(context, it) } }
 
     CommonAppBar(
-        title = "Symptoms Tracker",
+        title = stringResource(R.string.track_symptoms_tracker),
         actions = {
             Text(
-                "History",
+                stringResource(R.string.track_history),
                 color = colors.primaryBlueColor,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
@@ -116,7 +118,7 @@ fun SymptomsView(viewModel: SymptomSelectionViewModel = viewModel()) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 Column(Modifier.fillMaxSize()) {
                     Text(
-                        "Highlight any other symptoms you're experiencing from the list below.",
+                        stringResource(R.string.track_symptoms_highlight_hint),
                         color = colors.textGreyColor,
                         fontSize = 16.sp,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
@@ -129,10 +131,10 @@ fun SymptomsView(viewModel: SymptomSelectionViewModel = viewModel()) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.fillMaxWidth().padding(24.dp),
                         ) {
-                            Text("Couldn't load the symptoms list.", color = colors.textGreyColor, fontSize = 14.sp, textAlign = TextAlign.Center)
+                            Text(stringResource(R.string.track_symptoms_list_load_failed), color = colors.textGreyColor, fontSize = 14.sp, textAlign = TextAlign.Center)
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "Try again",
+                                stringResource(R.string.track_try_again),
                                 color = colors.primaryBlueColor,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.clip(RoundedCornerShape(50)).clickable(onClick = viewModel::loadIcons).padding(8.dp),
@@ -175,7 +177,7 @@ fun SymptomsView(viewModel: SymptomSelectionViewModel = viewModel()) {
             }
 
             CommonButton(
-                text = "Save and Update Symptoms",
+                text = stringResource(R.string.track_save_update_symptoms),
                 isLoading = state.saving,
                 enabled = state.selected.isNotEmpty(),
                 cornerRadius = 14.dp,
@@ -207,7 +209,7 @@ private fun SymptomSearchField(value: String, onValueChange: (String) -> Unit, m
         Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f)) {
             if (value.isEmpty()) {
-                Text("Search Symptoms i.e cold, cough", color = colors.textGreyColor, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(R.string.track_search_symptoms_hint), color = colors.textGreyColor, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             BasicTextField(
                 value = value,
@@ -223,7 +225,7 @@ private fun SymptomSearchField(value: String, onValueChange: (String) -> Unit, m
         if (value.isNotEmpty()) {
             Icon(
                 Icons.Rounded.Close,
-                contentDescription = "Clear search",
+                contentDescription = stringResource(R.string.track_clear_search),
                 tint = colors.textGreyColor,
                 modifier = Modifier.size(18.dp).clip(CircleShape).clickable { onValueChange("") },
             )
@@ -253,9 +255,9 @@ private fun SuggestionsDropdown(
             searching && suggestions.isEmpty() -> Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(14.dp)) {
                 CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.primaryBlueColor)
                 Spacer(Modifier.width(10.dp))
-                Text("Searching…", color = colors.textGreyColor, fontSize = 14.sp)
+                Text(stringResource(R.string.track_searching), color = colors.textGreyColor, fontSize = 14.sp)
             }
-            suggestions.isEmpty() -> Text("No matching symptoms", color = colors.textGreyColor, fontSize = 14.sp, modifier = Modifier.padding(14.dp))
+            suggestions.isEmpty() -> Text(stringResource(R.string.track_no_matching_symptoms), color = colors.textGreyColor, fontSize = 14.sp, modifier = Modifier.padding(14.dp))
             else -> LazyColumn(Modifier.heightIn(max = 280.dp)) {
                 items(suggestions, key = { it.problemId }) { problem ->
                     Row(
@@ -267,7 +269,7 @@ private fun SuggestionsDropdown(
                     ) {
                         Text(problem.problemName, color = colors.textDarkColor, fontSize = 15.sp, modifier = Modifier.weight(1f))
                         if (isSelected(problem.problemId)) {
-                            Icon(Icons.Rounded.CheckCircle, contentDescription = "Selected", tint = colors.primaryBlueColor, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Rounded.CheckCircle, contentDescription = stringResource(R.string.track_selected), tint = colors.primaryBlueColor, modifier = Modifier.size(18.dp))
                         }
                     }
                     HorizontalDivider(color = colors.textDarkColor.copy(alpha = 0.06f))
@@ -320,7 +322,7 @@ private fun SelectedSymptoms(selected: List<SymptomItem>, onRemove: (SymptomItem
     Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 20.dp)) {
             Text(
-                "Selected Symptoms",
+                stringResource(R.string.track_selected_symptoms),
                 color = colors.textDarkColor,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -357,7 +359,7 @@ private fun SelectedSymptoms(selected: List<SymptomItem>, onRemove: (SymptomItem
                     Spacer(Modifier.width(4.dp))
                     Icon(
                         Icons.Rounded.Close,
-                        contentDescription = "Remove ${item.details}",
+                        contentDescription = stringResource(R.string.track_remove_item, item.details),
                         tint = colors.textGreyColor,
                         modifier = Modifier.size(22.dp).clip(CircleShape).clickable { onRemove(item) }.padding(5.dp),
                     )

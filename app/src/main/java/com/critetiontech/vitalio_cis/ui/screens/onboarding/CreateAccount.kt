@@ -1,5 +1,12 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
+import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 
 
@@ -31,7 +38,9 @@ import com.critetiontech.ctvitalio.ui.screens.onboarding.components.ProgressCard
 
 data class ProfileItem(
     val title: String,
-    val value: String
+    val value: String,
+    /** True when [value] is the "Add …" prompt (nothing entered yet). */
+    val isMissing: Boolean = false
 )
 
 /// ======================================
@@ -62,49 +71,58 @@ data class UserProfileData(
 /// ======================================
 
 fun getProfilePreviewList(
-    data: UserProfileData
+    data: UserProfileData,
+    context: Context
 ): List<ProfileItem> {
 
     return listOf(
 
         ProfileItem(
-            title = "Name",
-            value = data.name ?: "Add Name"
+            title = context.getString(R.string.auth_onb_profile_name),
+            value = data.name ?: context.getString(R.string.auth_onb_profile_add_name),
+            isMissing = data.name == null
         ),
 
         ProfileItem(
-            title = "Gender",
-            value = data.gender ?: "Add Gender"
+            title = context.getString(R.string.auth_onb_gender_title),
+            value = data.gender ?: context.getString(R.string.auth_onb_profile_add_gender),
+            isMissing = data.gender == null
         ),
 
         ProfileItem(
-            title = "Date of Birth",
-            value = data.dob ?: "Add Date of Birth"
+            title = context.getString(R.string.auth_onb_profile_dob),
+            value = data.dob ?: context.getString(R.string.auth_onb_profile_add_dob),
+            isMissing = data.dob == null
         ),
 
         ProfileItem(
-            title = "Blood Group",
-            value = data.bloodGroup ?: "Add Blood Group"
+            title = context.getString(R.string.auth_onb_profile_blood_group),
+            value = data.bloodGroup ?: context.getString(R.string.auth_onb_profile_add_blood_group),
+            isMissing = data.bloodGroup == null
         ),
 
         ProfileItem(
-            title = "Address",
-            value = data.address ?: "Add Address"
+            title = context.getString(R.string.auth_onb_profile_address),
+            value = data.address ?: context.getString(R.string.auth_onb_profile_add_address),
+            isMissing = data.address == null
         ),
 
         ProfileItem(
-            title = "Weight",
-            value = data.weight ?: "Add Weight"
+            title = context.getString(R.string.auth_onb_weight_label),
+            value = data.weight ?: context.getString(R.string.auth_onb_profile_add_weight),
+            isMissing = data.weight == null
         ),
 
         ProfileItem(
-            title = "Height",
-            value = data.height ?: "Add Height"
+            title = context.getString(R.string.auth_onb_height_label),
+            value = data.height ?: context.getString(R.string.auth_onb_profile_add_height),
+            isMissing = data.height == null
         ),
 
         ProfileItem(
-            title = "Chronic Conditions",
-            value = data.chronicCondition ?: "Add Condition"
+            title = context.getString(R.string.auth_onb_profile_chronic),
+            value = data.chronicCondition ?: context.getString(R.string.auth_onb_profile_add_condition),
+            isMissing = data.chronicCondition == null
         )
     )
 }
@@ -138,21 +156,23 @@ fun CreateAccountPreviewScreen() {
     )
 
     val navController = LocalNavController.current
+    val colors = LocalMyColorScheme.current
+    val context = LocalContext.current
     /// DYNAMIC LIST
 
-    val profileList = getProfilePreviewList(userData)
+    val profileList = getProfilePreviewList(userData, context)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F9FD))
+            .background(if (isAppDark) colors.dashboardBackgroundColor else Color(0xFFF8F9FD))
             .padding(16.dp)
     ) {
 
         /// TITLE
 
         Text(
-            text = "Profile Preview",
+            text = stringResource(R.string.auth_onb_profile_preview),
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
@@ -161,8 +181,8 @@ fun CreateAccountPreviewScreen() {
         // 📊 Progress Card
         ProgressCard(
             progress = 0f,
-            title = "All Done!",
-            subtitle = "You're just one step away from completing the process."
+            title = stringResource(R.string.auth_onb_progress_all_done_title),
+            subtitle = stringResource(R.string.auth_onb_progress_all_done_subtitle)
         )
 
 
@@ -190,10 +210,10 @@ fun CreateAccountPreviewScreen() {
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF3B82F6),
-                disabledContainerColor = Color(0xFFE5E7EB)
+                disabledContainerColor = softTint(colors.textGreyColor, Color(0xFFE5E7EB))
             )
         ) {
-            Text("Next", color = Color.White)
+            Text(stringResource(R.string.auth_common_next), color = Color.White)
         }
     }
 }
@@ -206,6 +226,7 @@ fun CreateAccountPreviewScreen() {
 fun ProfileCard(
     item: ProfileItem
 ) {
+    val colors = LocalMyColorScheme.current
 
     Card(
         modifier = Modifier
@@ -217,7 +238,7 @@ fun ProfileCard(
         shape = RoundedCornerShape(18.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colors.dashboardContainerColor
         ),
 
         elevation = CardDefaults.cardElevation(
@@ -239,7 +260,7 @@ fun ProfileCard(
                 modifier = Modifier
                     .size(34.dp)
                     .background(
-                        Color(0xFFEAF1FF),
+                        softTint(Color(0xFF2962FF), Color(0xFFEAF1FF)),
                         CircleShape
                     ),
 
@@ -264,7 +285,7 @@ fun ProfileCard(
 
                 Text(
                     text = item.title,
-                    color = Color.Gray,
+                    color = colors.textGreyColor,
                     fontSize = 12.sp
                 )
 
@@ -273,10 +294,10 @@ fun ProfileCard(
                 Text(
                     text = item.value,
 
-                    color = if (item.value.startsWith("Add"))
+                    color = if (item.isMissing)
                         Color.Red
                     else
-                        Color.Black,
+                        colors.textDarkColor,
 
                     fontSize = 15.sp,
 
@@ -294,7 +315,7 @@ fun ProfileCard(
                 modifier = Modifier
                     .size(34.dp)
                     .background(
-                        Color(0xFFF4F4F4),
+                        softTint(colors.textGreyColor, Color(0xFFF4F4F4)),
                         CircleShape
                     )
                     .clickable {
@@ -307,7 +328,7 @@ fun ProfileCard(
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = null,
-                    tint = Color.DarkGray,
+                    tint = colors.textGreyColor,
                     modifier = Modifier.size(18.dp)
                 )
             }

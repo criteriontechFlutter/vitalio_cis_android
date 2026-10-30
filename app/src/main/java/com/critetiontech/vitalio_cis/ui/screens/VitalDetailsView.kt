@@ -47,6 +47,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import android.net.Uri
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.ui.theme.isAppDark
+import com.critetiontech.ctvitalio.utils.MyApplication
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.ui.draw.clip
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -66,7 +71,9 @@ import java.util.concurrent.TimeUnit
 
 @Composable
 private fun vitalShimmerBrush(): Brush {
-    val shimmerColors = listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
+    val shimmerBase = LocalMyColorScheme.current.borderGreyLightColor
+    val shimmerColors = if (isAppDark) listOf(shimmerBase.copy(alpha = 0.35f), shimmerBase.copy(alpha = 0.15f), shimmerBase.copy(alpha = 0.35f))
+        else listOf(Color(0xFFE0E0E0), Color(0xFFF5F5F5), Color(0xFFE0E0E0))
     val transition = rememberInfiniteTransition(label = "vitalShimmer")
     val translateX by transition.animateFloat(
         initialValue = -600f, targetValue = 600f,
@@ -129,11 +136,14 @@ private val VitalAbnormal   = Color(0xFFE5172F)
  * How a reading compares with its reference range. [None] is for measurements that have no
  * normal/abnormal range on their own (height, weight) or vitals we don't know.
  */
-enum class VitalStatus(val label: String, val color: Color) {
-    Normal("NORMAL", VitalNormal),
-    Borderline("BORDERLINE", VitalBorderline),
-    Abnormal("ABNORMAL", VitalAbnormal),
-    None("", VitalNormal),
+enum class VitalStatus(@StringRes private val labelRes: Int?, val color: Color) {
+    Normal(R.string.home_status_normal_caps, VitalNormal),
+    Borderline(R.string.home_status_borderline_caps, VitalBorderline),
+    Abnormal(R.string.home_status_abnormal_caps, VitalAbnormal),
+    None(null, VitalNormal);
+
+    /** Localized label ("NORMAL", …); empty for [None]. */
+    val label: String get() = labelRes?.let { MyApplication.appContext.getString(it) } ?: ""
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -154,19 +164,19 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
     val navController = LocalNavController.current
 
     CommonAppBar(
-        title = "Vitals",
+        title = stringResource(R.string.home_vitals_title),
         actions = {
             HapticIconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Analytics,
-                    contentDescription = "Health Orbit",
+                    contentDescription = stringResource(R.string.home_cd_health_orbit),
                     tint = colors.textDarkColor
                 )
             }
             HapticIconButton(onClick = { showInfoDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = "Color info",
+                    contentDescription = stringResource(R.string.home_cd_color_info),
                     tint = colors.textDarkColor
                 )
             }
@@ -193,7 +203,7 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
                         modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No vitals recorded yet", color = Color(0xFF9E9E9E))
+                        Text(stringResource(R.string.home_no_vitals_recorded), color = colors.textGreyColor)
                     }
                 },
             ) {
@@ -233,30 +243,30 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
 fun VitalColorInfoDialog(onDismiss: () -> Unit) {
     val colors = LocalMyColorScheme.current
     com.critetiontech.ctvitalio.ui.components.AppDialog(
-        title = "Vital Color Guide",
-        message = "What the colours on your readings mean.",
+        title = stringResource(R.string.home_vital_color_guide_title),
+        message = stringResource(R.string.home_vital_color_guide_message),
         icon = Icons.Rounded.Palette,
-        confirmText = "Got it",
+        confirmText = stringResource(R.string.home_got_it),
         onDismiss = onDismiss,
     ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                ColorLegendRow(VitalNormal, "Normal", "Values within healthy range")
-                ColorLegendRow(VitalBorderline, "Borderline", "Slightly outside normal range")
-                ColorLegendRow(VitalAbnormal, "Abnormal", "Requires attention")
+                ColorLegendRow(VitalNormal, stringResource(R.string.home_status_normal), stringResource(R.string.home_status_normal_desc))
+                ColorLegendRow(VitalBorderline, stringResource(R.string.home_status_borderline), stringResource(R.string.home_status_borderline_desc))
+                ColorLegendRow(VitalAbnormal, stringResource(R.string.home_status_abnormal), stringResource(R.string.home_status_abnormal_desc))
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp), color = colors.borderGreyLightColor.copy(alpha = 0.4f))
 
-                Text("Normal Ranges", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = colors.textDarkColor)
+                Text(stringResource(R.string.home_normal_ranges), fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = colors.textDarkColor)
 
                 val ranges = listOf(
-                    "Blood Pressure" to "90–120 / 60–80 mmHg",
-                    "Pulse / Heart Rate" to "60–100 /min",
-                    "Temperature" to "97–99 °F (36.1–37.2 °C)",
+                    stringResource(R.string.home_vital_blood_pressure) to "90–120 / 60–80 mmHg",
+                    stringResource(R.string.home_range_pulse_heart_rate) to stringResource(R.string.home_range_per_min, "60–100"),
+                    stringResource(R.string.home_vital_temperature) to "97–99 °F (36.1–37.2 °C)",
                     "SpO2" to "95–100 %",
-                    "Respiratory Rate" to "12–20 /min",
-                    "Blood Glucose (random)" to "70–140 mg/dL",
-                    "Height / Weight" to "Tracked over time"
+                    stringResource(R.string.home_vital_respiratory_rate) to stringResource(R.string.home_range_per_min, "12–20"),
+                    stringResource(R.string.home_range_blood_glucose_random) to "70–140 mg/dL",
+                    stringResource(R.string.home_range_height_weight) to stringResource(R.string.home_range_tracked_over_time)
                 )
                 ranges.forEach { (name, range) ->
                     Row(
@@ -296,6 +306,28 @@ fun displayUnit(raw: String): String = when (val u = raw.trim()) {
     "C", "c" -> "°C"
     else -> u
 }
+
+/** String resource for a vital's English display/backend name, or null when we have no translation. */
+@StringRes
+fun vitalLabelRes(name: String): Int? = when (name.trim().lowercase()) {
+    "blood pressure" -> R.string.home_vital_blood_pressure
+    "pulse" -> R.string.home_vital_pulse
+    "temperature" -> R.string.home_vital_temperature
+    "body temperature" -> R.string.home_vital_body_temperature
+    "respiratory rate", "resprate" -> R.string.home_vital_respiratory_rate
+    "heart rate", "heartrate" -> R.string.home_vital_heart_rate
+    "weight" -> R.string.home_vital_weight
+    "body weight" -> R.string.home_vital_body_weight
+    "height" -> R.string.home_vital_height
+    "blood glucose", "rbs" -> R.string.home_vital_blood_glucose
+    "fasting blood glucose", "fbs" -> R.string.home_vital_fasting_blood_glucose
+    "blood oxygen (spo2)" -> R.string.home_vital_blood_oxygen
+    else -> null
+}
+
+/** Translated label for an English vital name; the name itself stays the identifier. */
+@Composable
+fun localizedVitalName(name: String): String = vitalLabelRes(name)?.let { stringResource(it) } ?: name
 
 fun formatValue(value: Double): String {
     return if (value % 1 == 0.0) {
@@ -407,13 +439,13 @@ fun VitalCard(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = title,
+                text = localizedVitalName(title),
                 style = AppTextStyles.style14BCN().copy(fontSize = 15.sp, fontWeight = FontWeight.Medium),
                 modifier = Modifier.weight(1f)
             )
             if (canAddVitalManually(title)) {
                 Text(
-                    "Add Vital",
+                    stringResource(R.string.home_add_vital),
                     style = AppTextStyles.style12GCN().copy(fontSize = 11.sp, color = colors.textGreyColor),
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
@@ -475,10 +507,10 @@ fun formatTimeAgo(dateTime: String): String {
         val hours = TimeUnit.MILLISECONDS.toHours(diff)
 
         when {
-            minutes < 1 -> "Just now"
-            minutes < 60 -> "$minutes min ago"
-            hours < 24 -> "$hours hr ago"
-            else -> "${TimeUnit.MILLISECONDS.toDays(diff)} days ago"
+            minutes < 1 -> MyApplication.appContext.getString(R.string.home_time_just_now)
+            minutes < 60 -> MyApplication.appContext.getString(R.string.home_time_min_ago, minutes)
+            hours < 24 -> MyApplication.appContext.getString(R.string.home_time_hr_ago, hours)
+            else -> MyApplication.appContext.getString(R.string.home_time_days_ago, TimeUnit.MILLISECONDS.toDays(diff))
         }
 
     } catch (e: Exception) {

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +27,9 @@ class LoginViewModel : ViewModel() {
     val loading: StateFlow<Boolean> = _loading
 
     private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun clearError() { _errorMessage.value = null }
 
     private val _navigationEvent = MutableSharedFlow<String>()
     val navigationEvent: SharedFlow<String> = _navigationEvent
@@ -38,10 +43,10 @@ class LoginViewModel : ViewModel() {
             when (val result = sendOtpUseCase(mobile)) {
                 is DomainResult.Success -> {
                     if (result.data) _navigationEvent.emit("otp/$mobile")
-                    else _errorMessage.value = "You are not registered in any clinic yet"
+                    else _errorMessage.value = MyApplication.appContext.getString(R.string.auth_login_error_not_registered)
                 }
                 is DomainResult.Error -> {
-                    _errorMessage.value = result.exception.message ?: "Unknown error"
+                    _errorMessage.value = result.exception.message ?: MyApplication.appContext.getString(R.string.auth_common_error_unknown)
                     Log.e("LoginViewModel", "sendOTP error", result.exception)
                 }
             }

@@ -45,6 +45,11 @@ import kotlinx.coroutines.launch
  */
 class CallActivity : ComponentActivity() {
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.critetiontech.ctvitalio.utils.LocaleHelper.wrap(newBase))
+    }
+
+
     private val vm: CallViewModel by viewModels()
     private var inPip by mutableStateOf(false)
 
@@ -180,13 +185,13 @@ class CallActivity : ComponentActivity() {
 
     private fun pipParams(): PictureInPictureParams {
         val inCall = vm.phase == CallPhase.InCall
-        val micLabel = if (vm.micOn) "Mute" else "Unmute"
+        val micLabel = getString(if (vm.micOn) R.string.consult_mute else R.string.consult_unmute)
         val mic = RemoteAction(
             Icon.createWithResource(this, if (vm.micOn) R.drawable.ic_call_mic else R.drawable.ic_call_mic_off),
             micLabel, micLabel, pipBroadcast(ACTION_PIP_MIC, 0),
         )
         val hangUp = RemoteAction(
-            Icon.createWithResource(this, R.drawable.ic_call_decline), "Hang up", "Hang up",
+            Icon.createWithResource(this, R.drawable.ic_call_decline), getString(R.string.consult_hang_up), getString(R.string.consult_hang_up),
             pipBroadcast(ACTION_PIP_HANG_UP, 1),
         )
         return PictureInPictureParams.Builder()

@@ -17,6 +17,7 @@ import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.IncomingCall
+import com.critetiontech.ctvitalio.utils.LocaleHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,11 +40,14 @@ object CallNotifier {
     /** Rooms the doctor cancelled while they were ringing here; the call screen listens to close itself. */
     val ended: SharedFlow<String> = _ended
 
+    /** Strings in the in-app language; the caller's context may be a service that isn't wrapped. */
+    private fun Context.str(id: Int, vararg args: Any): String = LocaleHelper.wrap(this).getString(id, *args)
+
     private fun ensureChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannels(listOf(
-            NotificationChannel(CHANNEL_RING, "Video calls", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Rings when your doctor calls for a video consultation"
+            NotificationChannel(CHANNEL_RING, context.str(R.string.consult_channel_video_calls), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = context.str(R.string.consult_channel_video_calls_desc)
                 setSound(
                     RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
                     AudioAttributes.Builder()
@@ -55,7 +59,7 @@ object CallNotifier {
                 vibrationPattern = longArrayOf(0, 1000, 1000)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             },
-            NotificationChannel(CHANNEL_MISSED, "Missed video calls", NotificationManager.IMPORTANCE_DEFAULT),
+            NotificationChannel(CHANNEL_MISSED, context.str(R.string.consult_channel_missed_calls), NotificationManager.IMPORTANCE_DEFAULT),
         ))
     }
 
@@ -74,19 +78,19 @@ object CallNotifier {
             call.putInto(Intent(context, CallDeclineReceiver::class.java)),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val title = call.title ?: "Incoming Video Consultation"
-        val text = call.message ?: "${call.doctorName} is calling you..."
+        val title = call.title ?: context.str(R.string.consult_incoming_video_consultation)
+        val text = call.message ?: context.str(R.string.consult_doctor_is_calling, call.doctorName)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_RING)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setColor(0xFF1564ED.toInt())
             .setContentTitle(title)
             .setContentText(text)
-            .setSubText("Video call")
+            .setSubText(context.str(R.string.consult_video_call))
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             // "Join" rather than CallStyle's fixed "Answer"
-            .addAction(R.drawable.ic_call_decline, "Decline", decline)
-            .addAction(R.drawable.ic_call_join, "Join", join)
+            .addAction(R.drawable.ic_call_decline, context.str(R.string.consult_decline), decline)
+            .addAction(R.drawable.ic_call_join, context.str(R.string.consult_join), join)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -125,8 +129,8 @@ object CallNotifier {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_MISSED)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Missed video call")
-            .setContentText("${call.doctorName} called you for a consultation")
+            .setContentTitle(context.str(R.string.consult_missed_video_call))
+            .setContentText(context.str(R.string.consult_doctor_called_you, call.doctorName))
             .setCategory(NotificationCompat.CATEGORY_MISSED_CALL)
             .setContentIntent(open)
             .setAutoCancel(true)

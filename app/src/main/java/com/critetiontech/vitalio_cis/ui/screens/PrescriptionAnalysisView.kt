@@ -1,5 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
+
 import androidx.compose.material.icons.rounded.LockClock
 
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
@@ -74,11 +77,11 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
 
     if (showSessionAlert) {
         com.critetiontech.ctvitalio.ui.components.AppDialog(
-            title = "Session expired",
-            message = "Patient profile or session data is missing. Please log in again or reselect your profile.",
+            title = stringResource(R.string.report_session_expired_title),
+            message = stringResource(R.string.report_session_expired_message),
             icon = androidx.compose.material.icons.Icons.Rounded.LockClock,
             iconTint = com.critetiontech.ctvitalio.ui.theme.AppColors.Secondary,
-            confirmText = "OK",
+            confirmText = stringResource(R.string.report_ok),
             dismissible = false,
             onDismiss = { viewModel.dismissSessionAlert() },
             onConfirm = {
@@ -88,7 +91,7 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
         )
     }
 
-    CommonAppBar(title = "Prescription Analysis") {
+    CommonAppBar(title = stringResource(R.string.report_prescription_analysis_title)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -109,8 +112,8 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                         IconCircle(Icons.Default.Person, colors.primaryBlueColor, 36)
                         Spacer(Modifier.width(8.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(patient?.name ?: "Patient Record", style = AppTextStyles.style16BCB())
-                            Text("Prescription Details", style = AppTextStyles.style12GCN())
+                            Text(patient?.name ?: stringResource(R.string.report_patient_record), style = AppTextStyles.style16BCB())
+                            Text(stringResource(R.string.report_prescription_details), style = AppTextStyles.style12GCN())
                         }
                         prescription?.date?.let {
                             DetailBadge(Icons.Default.CalendarToday, viewModel.formattedDate(it), colors.primaryBlueColor)
@@ -122,13 +125,13 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                     )
                     Row {
                         patient?.age?.takeIf { it.isNotEmpty() }?.let {
-                            InfoPill("Age", "$it Years", Icons.Default.Accessibility, colors, Modifier.weight(1f))
+                            InfoPill(stringResource(R.string.report_age), stringResource(R.string.report_age_years, it), Icons.Default.Accessibility, colors, Modifier.weight(1f))
                         }
                         patient?.gender?.takeIf { it.isNotEmpty() }?.let {
-                            val g = when (it.uppercase()) { "F" -> "Female"; "M" -> "Male"; else -> it }
-                            InfoPill("Gender", g, Icons.Default.AccountCircle, colors, Modifier.weight(1f))
+                            val g = when (it.uppercase()) { "F" -> stringResource(R.string.report_gender_female); "M" -> stringResource(R.string.report_gender_male); else -> it }
+                            InfoPill(stringResource(R.string.report_gender), g, Icons.Default.AccountCircle, colors, Modifier.weight(1f))
                         }
-                        InfoPill("Medicines", "${medicines.size} Prescribed", Icons.Default.Medication, colors, Modifier.weight(1f))
+                        InfoPill(stringResource(R.string.report_medicines), stringResource(R.string.report_medicines_prescribed_count, medicines.size), Icons.Default.Medication, colors, Modifier.weight(1f))
                     }
                 }
             }
@@ -136,10 +139,10 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
             // ── Medicines ────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Prescribed Medicines", style = AppTextStyles.style16BCB(), modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.report_prescribed_medicines), style = AppTextStyles.style16BCB(), modifier = Modifier.weight(1f))
                     if (insertable.isNotEmpty()) {
                         Text(
-                            if (allSelected) "Deselect All" else "Select All",
+                            if (allSelected) stringResource(R.string.report_deselect_all) else stringResource(R.string.report_select_all),
                             style = AppTextStyles.style12GCB(),
                             color = colors.primaryBlueColor,
                             modifier = Modifier
@@ -153,7 +156,7 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                         )
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text("${medicines.size} items", style = AppTextStyles.style12GCN())
+                    Text(stringResource(R.string.report_items_count, medicines.size), style = AppTextStyles.style12GCN())
                 }
 
                 if (unmapped > 0) {
@@ -168,10 +171,10 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = WarningColor, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(10.dp))
                         Column {
-                            Text("$unmapped of ${medicines.size} medicines require manual addition", style = AppTextStyles.style14BCB())
+                            Text(stringResource(R.string.report_unmapped_medicines, unmapped, medicines.size), style = AppTextStyles.style14BCB())
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                "These medicines could not be automatically matched to the drug database. You will need to add them manually in Pill Reminders.",
+                                stringResource(R.string.report_unmapped_medicines_detail),
                                 style = AppTextStyles.style12GCN()
                             )
                         }
@@ -187,7 +190,7 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                     ) {
                         Icon(Icons.Default.Medication, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.size(28.dp))
                         Spacer(Modifier.height(8.dp))
-                        Text("No medicines extracted from this prescription", style = AppTextStyles.style12GCN())
+                        Text(stringResource(R.string.report_no_medicines_extracted), style = AppTextStyles.style12GCN())
                     }
                 } else {
                     medicines.forEach { med ->
@@ -207,8 +210,8 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconCircle(Icons.Default.MedicalServices, TealColor, 32)
                         Spacer(Modifier.width(8.dp))
-                        Text("Doctor's Advice & Instructions", style = AppTextStyles.style16BCB(), modifier = Modifier.weight(1f))
-                        Text("${adviceList.size} ${if (adviceList.size == 1) "note" else "notes"}", style = AppTextStyles.style12GCN())
+                        Text(stringResource(R.string.report_doctor_advice), style = AppTextStyles.style16BCB(), modifier = Modifier.weight(1f))
+                        Text(if (adviceList.size == 1) stringResource(R.string.report_notes_count_one, adviceList.size) else stringResource(R.string.report_notes_count_other, adviceList.size), style = AppTextStyles.style12GCN())
                     }
                     adviceList.forEach { PrescriptionAdviceCard(it, colors, viewModel) }
                 }
@@ -235,24 +238,24 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                             isSaving -> {
                                 CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Adding to Reminders...", style = AppTextStyles.style16WCB())
+                                Text(stringResource(R.string.report_adding_to_reminders), style = AppTextStyles.style16WCB())
                             }
                             savedOk -> {
                                 Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Medicines Added to Reminders", style = AppTextStyles.style16WCB())
+                                Text(stringResource(R.string.report_medicines_added_to_reminders), style = AppTextStyles.style16WCB())
                             }
                             insertable.isEmpty() -> {
                                 Icon(Icons.Default.Warning, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("All Medicines Require Manual Addition", style = AppTextStyles.style16WCB())
+                                Text(stringResource(R.string.report_all_require_manual), style = AppTextStyles.style16WCB())
                             }
                             else -> {
                                 Icon(Icons.Default.AddCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    if (selectedIds.isNotEmpty()) "Add Selected (${toInsert.size}) to Reminders"
-                                    else "Add All (${insertable.size}) to Medicine Reminders",
+                                    if (selectedIds.isNotEmpty()) stringResource(R.string.report_add_selected_to_reminders, toInsert.size)
+                                    else stringResource(R.string.report_add_all_to_reminders, insertable.size),
                                     style = AppTextStyles.style16WCB()
                                 )
                             }
@@ -267,7 +270,7 @@ fun PrescriptionAnalysisScreen(viewModel: UploadPrescriptionViewModel) {
                         .height(48.dp),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text("Done", style = AppTextStyles.style14BCB())
+                    Text(stringResource(R.string.report_status_done), style = AppTextStyles.style14BCB())
                 }
             }
 
@@ -346,7 +349,7 @@ private fun PrescriptionMedicineCard(
                 ) {
                     Icon(Icons.Default.Warning, contentDescription = null, tint = WarningColor, modifier = Modifier.size(12.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Manual Addition Required • Not matched in database", style = AppTextStyles.style12GCB(), color = WarningColor)
+                    Text(stringResource(R.string.report_manual_addition_required), style = AppTextStyles.style12GCB(), color = WarningColor)
                 }
             }
 
@@ -354,7 +357,7 @@ private fun PrescriptionMedicineCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                med.dosage?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Science, "$it Dose", TealColor) }
+                med.dosage?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Science, stringResource(R.string.report_dose_value, it), TealColor) }
                 med.frequency?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Repeat, it, OrangeColor) }
                 med.timing?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Restaurant, viewModel.formattedTiming(it), colors.primaryBlueColor) }
                 med.duration?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Schedule, it, IndigoColor) }
@@ -399,7 +402,7 @@ private fun PrescriptionAdviceCard(item: PrescriptionAdvice, colors: MyColorSche
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item.duration?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Schedule, "Duration: $it", IndigoColor) }
+                item.duration?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Schedule, stringResource(R.string.report_duration_value, it), IndigoColor) }
                 item.frequency?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Repeat, it, OrangeColor) }
                 item.type?.takeIf { it.isNotEmpty() }?.let { DetailBadge(Icons.Default.Label, it, PurpleColor) }
             }
@@ -424,7 +427,7 @@ private fun TimeSlotsRow(slots: List<String>, tint: Color, viewModel: UploadPres
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.align(Alignment.CenterVertically)) {
             Icon(Icons.Default.Alarm, contentDescription = null, tint = tint, modifier = Modifier.size(12.dp))
             Spacer(Modifier.width(4.dp))
-            Text("Schedule:", style = AppTextStyles.style12GCN())
+            Text(stringResource(R.string.report_schedule_label), style = AppTextStyles.style12GCN())
         }
         slots.forEach { slot ->
             Text(

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.utils.MyApplication
 import com.critetiontech.ctvitalio.utils.NetworkUtils
 import com.critetiontech.ctvitalio.yonker.YonkerEvent
@@ -46,7 +47,10 @@ sealed interface YonkerPhase {
     data class Failed(val message: String) : YonkerPhase
 }
 
-/** Shown instead of a save error when there's no internet; the reading stays on screen to save later. */
+/**
+ * Marker stored as the save error when there's no internet; the reading stays on screen to save later.
+ * It's an identifier only: the screen shows R.string.device_offline_save_again instead.
+ */
 const val OFFLINE = "You're offline. Connect to Wi-Fi or mobile data, then tap Save again."
 
 private const val STEADY_COUNT = 4
@@ -90,10 +94,10 @@ class YonkerDeviceViewModel : ViewModel() {
                 throw e
             } catch (e: YonkerException) {
                 Log.w("YonkerDevice", "error: ${e.message}")
-                _phase.value = YonkerPhase.Failed(e.message ?: "Something went wrong. Please try again.")
+                _phase.value = YonkerPhase.Failed(e.message ?: context.getString(R.string.device_error_something_went_wrong))
             } catch (e: Exception) {
                 Log.e("YonkerDevice", "unexpected", e)
-                _phase.value = YonkerPhase.Failed(e.message ?: "Something went wrong. Please try again.")
+                _phase.value = YonkerPhase.Failed(e.message ?: context.getString(R.string.device_error_something_went_wrong))
             } finally {
                 _connected.value = false
             }
@@ -154,10 +158,10 @@ class YonkerDeviceViewModel : ViewModel() {
     }
 
     private suspend fun saveReading(reading: YonkerReading): String? {
-        val patient = prefs.getPatient() ?: return "Please log in again."
+        val patient = prefs.getPatient() ?: return context.getString(R.string.device_error_log_in_again)
         return when (val result = saveMeasuredVitals(patient, reading.time, YonkerManager.vitalFields(reading))) {
             is DomainResult.Success -> null
-            is DomainResult.Error -> result.exception.message ?: "Couldn't save the vitals. Please try again."
+            is DomainResult.Error -> result.exception.message ?: context.getString(R.string.device_error_save_vitals_failed)
         }
     }
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
 import com.critetiontech.ctvitalio.model.DoctorDetails
 import com.critetiontech.ctvitalio.model.SlotData
@@ -109,14 +111,14 @@ fun DoctorDetailsScreen(
 
     Column(Modifier.fillMaxSize().background(colors.dashboardContainerColor)) {
         RoundBackTopBar(
-            title = "Doctor’s Details",
+            title = stringResource(R.string.consult_doctors_details),
             actions = {
-                HeaderCircleButton(Icons.Rounded.Sos, "Emergency contacts", SosRed) {
+                HeaderCircleButton(Icons.Rounded.Sos, stringResource(R.string.consult_emergency_contacts), SosRed) {
                     navController.navigate(Routes.EMERGENCYCONTACTS)
                 }
                 val mobile = doctor?.mobileNo?.trim().orEmpty()
                 if (mobile.isNotEmpty()) {
-                    HeaderCircleButton(Icons.AutoMirrored.Rounded.Chat, "Message doctor", colors.primaryBlueColor) {
+                    HeaderCircleButton(Icons.AutoMirrored.Rounded.Chat, stringResource(R.string.consult_message_doctor), colors.primaryBlueColor) {
                         runCatching { context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:$mobile"))) }
                     }
                 }
@@ -128,9 +130,9 @@ fun DoctorDetailsScreen(
             Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                 if (profileError) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Couldn't load the doctor's details", color = colors.textDarkColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.consult_doctor_details_load_failed), color = colors.textDarkColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(6.dp))
-                        Text("Check your connection and try again.", color = colors.textGreyColor, fontSize = 14.sp)
+                        Text(stringResource(R.string.consult_check_connection_try_again), color = colors.textGreyColor, fontSize = 14.sp)
                         Spacer(Modifier.height(16.dp))
                         RetryPill { viewModel.initDoctorConfiguration(doctorId) }
                     }
@@ -155,22 +157,22 @@ fun DoctorDetailsScreen(
                 InfoCard(
                     icon = Icons.Rounded.WorkspacePremium,
                     title = doc.experience.trim().ifEmpty { "—" },
-                    subtitle = "Experience",
+                    subtitle = stringResource(R.string.consult_experience),
                     modifier = Modifier.weight(1f),
                 )
                 InfoCard(
                     icon = Icons.Rounded.Person,
                     title = doc.consultedPatientCount.trim().ifEmpty { "0" }.let { if (it == "0") it else "$it+" },
-                    subtitle = "Patients",
+                    subtitle = stringResource(R.string.consult_patients),
                     modifier = Modifier.weight(1f),
                 )
             }
 
             Spacer(Modifier.height(20.dp))
-            SectionTitle("Doctor Biography")
+            SectionTitle(stringResource(R.string.consult_doctor_biography))
             Spacer(Modifier.height(6.dp))
             Text(
-                text = doc.biography.trim().ifEmpty { "No biography available" },
+                text = doc.biography.trim().ifEmpty { stringResource(R.string.consult_no_biography) },
                 fontSize = 13.sp,
                 lineHeight = 20.sp,
                 color = colors.textGreyColor,
@@ -188,7 +190,7 @@ fun DoctorDetailsScreen(
         }
 
         CommonButton(
-            text = "Book Appointment",
+            text = stringResource(R.string.consult_book_appointment),
             enabled = slotTime.isNotEmpty() && (isSlotBased || (latestToken != null && !tokenLoading)),
             cornerRadius = 14.dp,
             containerColor = colors.primaryBlueColor,
@@ -239,7 +241,7 @@ private fun HeaderCircleButton(icon: ImageVector, description: String, color: Co
 private fun RetryPill(onClick: () -> Unit) {
     val colors = LocalMyColorScheme.current
     Text(
-        "Try again",
+        stringResource(R.string.consult_try_again),
         color = colors.primaryBlueColor,
         fontSize = 14.sp,
         fontWeight = FontWeight.SemiBold,
@@ -289,14 +291,14 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel) {
     val slotsError by viewModel.slotsError.collectAsState()
     val slotDate by viewModel.slotDate.collectAsState()
 
-    SectionTitle("Slot’s Availability")
+    SectionTitle(stringResource(R.string.consult_slots_availability))
 
     if (slotSize > 0) {
         Spacer(Modifier.height(10.dp))
-        Text("Appointment Duration", color = colors.textGreyColor, fontSize = 13.sp)
+        Text(stringResource(R.string.consult_appointment_duration), color = colors.textGreyColor, fontSize = 13.sp)
         Spacer(Modifier.height(8.dp))
         Text(
-            "$slotSize min",
+            stringResource(R.string.consult_minutes_value, slotSize),
             color = Color.White,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
@@ -308,18 +310,18 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel) {
     }
 
     Spacer(Modifier.height(14.dp))
-    Text(if (isSlotBased) "Select Time Slot" else "Select Shift", color = colors.textGreyColor, fontSize = 13.sp)
+    Text(if (isSlotBased) stringResource(R.string.consult_select_time_slot) else stringResource(R.string.consult_select_shift), color = colors.textGreyColor, fontSize = 13.sp)
     Spacer(Modifier.height(8.dp))
 
     if (isSlotBased) {
         val shiftList by viewModel.slotList.collectAsState()
         when {
-            loading && shiftList.isEmpty() -> SlotsMessage(loading = true, text = "Checking availability…")
+            loading && shiftList.isEmpty() -> SlotsMessage(loading = true, text = stringResource(R.string.consult_checking_availability))
             slotsError != null -> SlotsMessage(text = slotsError!!, onRetry = { viewModel.onDateSelected(slotDate) })
-            shiftList.isEmpty() -> SlotsMessage(text = "No slots available on this day. Try another date.")
+            shiftList.isEmpty() -> SlotsMessage(text = stringResource(R.string.consult_no_slots_available))
             shiftList.all { shift ->
                 runCatching { Gson().fromJson(shift.slotJson, Array<SlotData>::class.java).none { it.slotStatus == "empty" } }.getOrDefault(false)
-            } -> SlotsMessage(text = "All slots on this day are booked. Try another date.")
+            } -> SlotsMessage(text = stringResource(R.string.consult_all_slots_booked))
             else -> {
                 // First shift open by default; tapping a header toggles it.
                 var expanded by remember(shiftList) { mutableStateOf(setOf(shiftList.first().shiftId)) }
@@ -356,7 +358,7 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel) {
         val nowMinutes = remember(slotDate) { java.time.LocalTime.now().let { it.hour * 60 + it.minute } }
 
         if (scheduleList.isEmpty()) {
-            SlotsMessage(text = "No shifts available on this day. Try another date.")
+            SlotsMessage(text = stringResource(R.string.consult_no_shifts_available))
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 scheduleList.forEach { schedule ->
@@ -389,7 +391,7 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel) {
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
-                            if (ended) "${schedule.shiftName} · Shift has ended for today" else schedule.shiftName,
+                            if (ended) stringResource(R.string.consult_shift_ended_today, schedule.shiftName) else schedule.shiftName,
                             color = colors.textGreyColor.copy(alpha = if (ended) 0.6f else 1f),
                             fontSize = 12.sp,
                         )
@@ -398,7 +400,7 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel) {
                             when {
                                 tokenLoading -> CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp, color = colors.primaryBlueColor)
                                 latestToken != null -> Text(
-                                    "Your Token No: ${latestToken!!.nextQueueNumber}",
+                                    stringResource(R.string.consult_your_token_no, latestToken!!.nextQueueNumber.toString()),
                                     color = colors.textDarkColor,
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
@@ -466,7 +468,8 @@ private fun ShiftAccordion(
                 Text(title, color = colors.textDarkColor, fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 if (subtitle != null) {
                     Text(
-                        "$subtitle · $freeCount ${if (freeCount == 1) "slot" else "slots"} free",
+                        if (freeCount == 1) stringResource(R.string.consult_slot_free_one, subtitle, freeCount)
+                        else stringResource(R.string.consult_slots_free_other, subtitle, freeCount),
                         color = colors.textGreyColor,
                         fontSize = 12.sp,
                     )
@@ -474,7 +477,7 @@ private fun ShiftAccordion(
             }
             Icon(
                 Icons.Rounded.KeyboardArrowDown,
-                contentDescription = if (open) "Collapse" else "Expand",
+                contentDescription = if (open) stringResource(R.string.consult_collapse) else stringResource(R.string.consult_expand),
                 tint = colors.textGreyColor,
                 modifier = Modifier.rotate(arrow),
             )
@@ -660,7 +663,7 @@ fun SelectDateUI(days: String, doctorId: String, viewModel: DoctorDetailsViewMod
     }
 
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        SectionTitle("Select Date", Modifier.weight(1f))
+        SectionTitle(stringResource(R.string.consult_select_date), Modifier.weight(1f))
         MonthYearDropdown(
             month = month,
             months = remember { generateSequence(today.withDayOfMonth(1)) { it.plusMonths(1) }.takeWhile { !it.isAfter(lastDay) }.toList() },
@@ -712,7 +715,7 @@ fun MonthYearDropdown(
                 .padding(horizontal = 4.dp, vertical = 2.dp),
         ) {
             Text(label(month), color = colors.primaryBlueColor, fontSize = 14.sp)
-            Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = "Change month", tint = colors.primaryBlueColor, modifier = Modifier.size(20.dp))
+            Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(R.string.consult_change_month), tint = colors.primaryBlueColor, modifier = Modifier.size(20.dp))
         }
 
         DropdownMenu(
@@ -826,7 +829,7 @@ fun ClinicToggle(selected: Int, onSelect: (Int) -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = label,
+                    text = consultModeLabel(label),
                     color = if (selected == i) Color.White else colors.textGreyColor,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium

@@ -13,6 +13,8 @@ import com.critetiontech.ctvitalio.consultation.CallQuality
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
 import com.critetiontech.ctvitalio.model.IncomingCall
+import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.utils.MyApplication
 import com.twilio.audioswitch.AudioDevice
 import io.livekit.android.LiveKit
 import io.livekit.android.events.RoomEvent
@@ -108,13 +110,13 @@ class CallViewModel(app: Application) : AndroidViewModel(app) {
             if (phase == CallPhase.Ringing) {
                 CallNotifier.decline(getApplication(), incoming, reason = "no_answer")
                 CallNotifier.showMissed(getApplication(), incoming)
-                phase = CallPhase.Ended("Missed call")
+                phase = CallPhase.Ended(MyApplication.appContext.getString(R.string.consult_missed_call))
             }
         }
         // The doctor may hang up before the patient answers
         viewModelScope.launch {
             CallNotifier.ended.collect { roomName ->
-                if (roomName == incoming.roomName && phase == CallPhase.Ringing) phase = CallPhase.Ended("Call cancelled")
+                if (roomName == incoming.roomName && phase == CallPhase.Ringing) phase = CallPhase.Ended(MyApplication.appContext.getString(R.string.consult_call_cancelled))
             }
         }
     }
@@ -123,7 +125,7 @@ class CallViewModel(app: Application) : AndroidViewModel(app) {
         val c = call ?: return
         timeoutJob?.cancel()
         CallNotifier.decline(getApplication(), c, reason = "declined")
-        phase = CallPhase.Ended("Call declined")
+        phase = CallPhase.Ended(MyApplication.appContext.getString(R.string.consult_call_declined))
     }
 
     fun accept(cameraAllowed: Boolean, micAllowed: Boolean) {
@@ -177,8 +179,8 @@ class CallViewModel(app: Application) : AndroidViewModel(app) {
                 Log.w(TAG, "could not join ${c.roomName}", e)
                 leaveRoom()
                 // The repository already words API failures for the patient; this covers LiveKit's own
-                val message = if (e is java.io.IOException) "Couldn't reach the call server. Check your internet connection."
-                    else e.message ?: "Couldn't connect the call"
+                val message = if (e is java.io.IOException) MyApplication.appContext.getString(R.string.consult_call_server_unreachable)
+                    else e.message ?: MyApplication.appContext.getString(R.string.consult_could_not_connect_call)
                 phase = CallPhase.Ended(message, failed = true)
             }
         }
@@ -196,14 +198,14 @@ class CallViewModel(app: Application) : AndroidViewModel(app) {
             is RoomEvent.ParticipantDisconnected -> {
                 refreshTracks()
                 // One-to-one consultation: the doctor leaving ends it
-                if (doctorJoined && room?.remoteParticipants.isNullOrEmpty()) finish("The doctor ended the call")
+                if (doctorJoined && room?.remoteParticipants.isNullOrEmpty()) finish(MyApplication.appContext.getString(R.string.consult_doctor_ended_call))
             }
             is RoomEvent.ConnectionQualityChanged -> {
                 if (event.participant is LocalParticipant) myConnection = event.quality else doctorConnection = event.quality
             }
             is RoomEvent.Reconnecting -> reconnecting = true
             is RoomEvent.Reconnected -> reconnecting = false
-            is RoomEvent.Disconnected -> if (phase == CallPhase.InCall) finish("Call ended")
+            is RoomEvent.Disconnected -> if (phase == CallPhase.InCall) finish(MyApplication.appContext.getString(R.string.consult_call_ended))
             else -> Unit
         }
     }
@@ -290,7 +292,7 @@ class CallViewModel(app: Application) : AndroidViewModel(app) {
             (endCallUseCase(c.roomName, userId, "patient_hung_up") as? DomainResult.Error)
                 ?.let { Log.w(TAG, "end call not sent: ${it.exception.message}") }
         }
-        finish("Call ended")
+        finish(MyApplication.appContext.getString(R.string.consult_call_ended))
     }
 
     private fun finish(message: String) {

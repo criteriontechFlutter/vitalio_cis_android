@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.*
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.utils.CommonButton
 import com.critetiontech.ctvitalio.R
@@ -26,7 +27,7 @@ fun AddMemberScreen() {
     var code by remember { mutableStateOf("") }
 
     CommonAppBar(
-        title = "Add Member",
+        title = stringResource(R.string.profile_add_member),
     ) {
         Column(
             modifier = Modifier
@@ -49,7 +50,7 @@ fun AddMemberScreen() {
 
             /// 🔹 TITLE
             Text(
-                "Stay Connected to Their Health Metrics",
+                stringResource(R.string.profile_add_member_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color(0xFF1E5BB8),
@@ -68,9 +69,9 @@ fun AddMemberScreen() {
                 Column(modifier = Modifier.padding(16.dp)) {
 
                     Text(
-                        "Receive Access to Their Profile as an Observer. Enter the Connection Code Below to Connect.",
+                        stringResource(R.string.profile_add_member_body),
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = colors.textGreyColor,
                         textAlign = TextAlign.Center
                     )
 
@@ -84,7 +85,7 @@ fun AddMemberScreen() {
                         },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = {
-                            Text("Enter connection code")
+                            Text(stringResource(R.string.profile_connection_code_hint))
                         },
                         shape = RoundedCornerShape(10.dp),
                         singleLine = true
@@ -97,7 +98,7 @@ fun AddMemberScreen() {
 
 
             CommonButton(
-                text = "Submit",
+                text = stringResource(R.string.profile_submit),
                 onClick =  {
 
                 }

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens.onboarding
 
+import androidx.compose.ui.res.stringResource
+import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
 
 import androidx.compose.material3.AlertDialog
@@ -24,7 +26,7 @@ fun ReminderScreen( ) {
     val navController = LocalNavController.current
     val timeState = rememberTimePickerState()
     var show by remember { mutableStateOf(false) }
-    var time by remember { mutableStateOf("Select Time") }
+    var time by remember { mutableStateOf<String?>(null) }
 
     if (show) {
         com.critetiontech.ctvitalio.ui.components.AppTimePickerDialog(
@@ -37,15 +39,15 @@ fun ReminderScreen( ) {
                 time = "%d:%02d".format(h, m)
                 show = false
             },
-            title = "Reminder time",
+            title = stringResource(R.string.auth_onb_reminder_time),
         )
     }
 
     OnboardingLayout(
-        title = "Set Reminder",
-        buttonText = "Next",
+        title = stringResource(R.string.auth_onb_set_reminder),
+        buttonText = stringResource(R.string.auth_common_next),
         onNext = { navController.navigate("hydration") }
     ) {
-        SelectionCard(time, false) { show = true }
+        SelectionCard(time ?: stringResource(R.string.auth_onb_select_time), false) { show = true }
     }
 }
