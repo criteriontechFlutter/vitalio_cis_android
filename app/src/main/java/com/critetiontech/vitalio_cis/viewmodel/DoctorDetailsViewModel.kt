@@ -273,8 +273,11 @@ class DoctorDetailsViewModel : ViewModel() {
         }
     }
 
-    /** [consentGiven]: the patient ticked the prescription-sharing consent; only then is it recorded. */
-    fun bookAppointment(did: String, shiftId: Int, sTime: String, appointmentDate: String, queueNo: Int? = null, consentGiven: Boolean = false) {
+    /**
+     * [consentGiven]: the patient ticked the prescription-sharing consent; only then is it recorded.
+     * [isVirtual]: "Virtual" was picked on Doctor's Details; Walk-in books an in-clinic visit.
+     */
+    fun bookAppointment(did: String, shiftId: Int, sTime: String, appointmentDate: String, queueNo: Int? = null, consentGiven: Boolean = false, isVirtual: Boolean = false) {
         viewModelScope.launch {
             _bookingLoading.value = true; _bookingError.value = null
             val patient = prefs.getPatient() ?: run {
@@ -296,7 +299,7 @@ class DoctorDetailsViewModel : ViewModel() {
                 "departmentId" to (_departmentId.value?.toIntOrNull() ?: 3), 
                 "doctorId" to did, 
                 "uhId" to patient.uhId, 
-                "isOnline" to true, 
+                "isOnline" to isVirtual,
                 "clientId" to patient.clientId.toString(), 
                 "shiftId" to shiftId, 
                 "appointmentDate" to appointmentDate

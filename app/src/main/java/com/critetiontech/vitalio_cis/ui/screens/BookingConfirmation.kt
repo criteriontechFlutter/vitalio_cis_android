@@ -274,6 +274,7 @@ fun BookingConfirmationScreen(
                         appointmentDate = details?.onDate.orEmpty(),
                         queueNo = details?.queueNo,
                         consentGiven = consent,
+                        isVirtual = details?.mode == "Virtual",
                     )
                 },
             )
