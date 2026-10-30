@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dashboard / Home -->
+    <string name="home_mic_permission_reason">to hear your voice commands</string>
+    <string name="home_press_back_again">Press back again to exit</string>
+    <string name="home_primary_actions">Primary Actions</string>
+    <string name="home_quick_actions">Quick Actions</string>
+    <string name="home_cd_patient_profile">Patient Profile</string>
+    <string name="home_cd_refresh">Refresh</string>
+    <string name="home_cd_more">More</string>
+    <string name="home_cancel">Cancel</string>
+    <string name="home_update">Update</string>
+    <string name="home_view_all">View All</string>
+    <string name="home_upcoming_appointments">Upcoming Appointments</string>
+    <string name="home_to_take">To Take</string>
+    <string name="home_one_capsule">1 capsule</string>
+    <string name="home_take_empty_stomach">Take on an empty stomach</string>
+    <string name="home_activities">Activities</string>
+    <string name="home_chronicle">Chronicle</string>
+    <string name="home_chronicle_desc">Share today\'s activities with us to understand your health pattern.</string>
+    <string name="home_add_now">Add Now</string>
+    <string name="home_upload_report">Upload Report</string>
+    <string name="home_upload_report_desc">Add your lab reports &amp; documents</string>
+    <string name="home_upload_prescription">Upload Prescription</string>
+    <string name="home_upload_prescription_desc">AI reads medicines &amp; sets reminders</string>
+    <string name="home_lifestyle_intervention">Lifestyle Intervention</string>
+
+    <!-- Time ago -->
+    <string name="home_time_just_now">Just now</string>
+    <string name="home_time_days_short_ago">%1$dd ago</string>
+    <string name="home_time_hours_short_ago">%1$dh ago</string>
+    <string name="home_time_minutes_short_ago">%1$dm ago</string>
+    <string name="home_time_min_ago">%1$d min ago</string>
+    <string name="home_time_hr_ago">%1$d hr ago</string>
+    <string name="home_time_days_ago">%1$d days ago</string>
+
+    <!-- Medications -->
+    <string name="home_todays_medications">Today\'s Medications</string>
+    <string name="home_show_less">Show Less</string>
+    <string name="home_more_count">+%1$d More</string>
+    <string name="home_med_scheduled_for">Scheduled for %1$s. You can mark it once it is due.</string>
+    <string name="home_med_taken">Taken</string>
+    <string name="home_med_skipped">Skipped</string>
+    <string name="home_med_take_now">Take now · %1$s</string>
+    <string name="home_med_as_prescribed">As prescribed</string>
+    <string name="home_med_mark_as_taken">Mark as taken</string>
+    <string name="home_med_manage_medications">Manage medications</string>
+    <string name="home_failed_mark_medicine">Failed to mark medicine</string>
+
+    <!-- Voice assistant -->
+    <string name="home_voice_brand_label">VITALIO VOICE</string>
+    <string name="home_voice_tap_to_speak">Tap to speak</string>
+    <string name="home_voice_listening">Listening...</string>
+    <string name="home_voice_understanding">Understanding...</string>
+    <string name="home_voice_opening">Opening %1$s</string>
+    <string name="home_voice_didnt_catch">Didn\'t catch that</string>
+    <string name="home_voice_mic_unavailable">Mic unavailable</string>
+    <string name="home_voice_try_saying">Try saying</string>
+    <string name="home_voice_no_match_tts">Sorry, I didn\'t catch that. Try saying vitals, medicine, or diet.</string>
+    <string name="home_voice_mic_error_tts">Microphone error. Retrying.</string>
+
+    <!-- Vitals -->
+    <string name="home_vitals_title">Vitals</string>
+    <string name="home_cd_health_orbit">Health Orbit</string>
+    <string name="home_cd_color_info">Color info</string>
+    <string name="home_no_vitals_recorded">No vitals recorded yet</string>
+    <string name="home_add_vital">Add Vital</string>
+    <string name="home_vital_color_guide_title">Vital Color Guide</string>
+    <string name="home_vital_color_guide_message">What the colours on your readings mean.</string>
+    <string name="home_got_it">Got it</string>
+    <string name="home_status_normal">Normal</string>
+    <string name="home_status_borderline">Borderline</string>
+    <string name="home_status_abnormal">Abnormal</string>
+    <string name="home_status_normal_caps">NORMAL</string>
+    <string name="home_status_borderline_caps">BORDERLINE</string>
+    <string name="home_status_abnormal_caps">ABNORMAL</string>
+    <string name="home_status_normal_desc">Values within healthy range</string>
+    <string name="home_status_borderline_desc">Slightly outside normal range</string>
+    <string name="home_status_abnormal_desc">Requires attention</string>
+    <string name="home_normal_ranges">Normal Ranges</string>
+    <string name="home_range_pulse_heart_rate">Pulse / Heart Rate</string>
+    <string name="home_range_blood_glucose_random">Blood Glucose (random)</string>
+    <string name="home_range_height_weight">Height / Weight</string>
+    <string name="home_range_tracked_over_time">Tracked over time</string>
+    <string name="home_range_per_min">%1$s /min</string>
+    <string name="home_vital_blood_pressure">Blood Pressure</string>
+    <string name="home_vital_bp_short">BP</string>
+    <string name="home_vital_pulse">Pulse</string>
+    <string name="home_vital_temperature">Temperature</string>
+    <string name="home_vital_body_temperature">Body Temperature</string>
+    <string name="home_vital_respiratory_rate">Respiratory Rate</string>
+    <string name="home_vital_heart_rate">Heart Rate</string>
+    <string name="home_vital_weight">Weight</string>
+    <string name="home_vital_body_weight">Body Weight</string>
+    <string name="home_vital_height">Height</string>
+    <string name="home_vital_blood_glucose">Blood Glucose</string>
+    <string name="home_vital_fasting_blood_glucose">Fasting Blood Glucose</string>
+    <string name="home_vital_blood_oxygen">Blood Oxygen (SpO2)</string>
+    <string name="home_no_data_caps">NO DATA</string>
+    <string name="home_pulse_caps">PULSE</string>
+    <string name="home_per_min">/min</string>
+    <string name="home_session_expired">Your session has expired. Please log in again.</string>
+    <string name="home_vital_save_failed">Couldn\'t save the vital. Please try again.</string>
+
+    <!-- Biometric HUD (Health Orbit) -->
+    <string name="home_biometric_hud_title">Biometric HUD</string>
+    <string name="home_hud_tachycardia_warn">TACHYCARDIA WARN</string>
+    <string name="home_hud_hypoxia_warn">HYPOXIA WARN</string>
+    <string name="home_hud_hypertension_warn">HYPERTENSION WARN</string>
+    <string name="home_hud_nominal">NOMINAL</string>
+    <string name="home_hud_hr_check">&gt; HR CHECK : %1$s</string>
+    <string name="home_hud_o2_check">&gt; O2 CHECK : %1$s</string>
+    <string name="home_hud_bp_check">&gt; BP CHECK : %1$s</string>
+    <string name="home_hud_action_required">&gt;&gt; ACTION REQUIRED: REFER TO CARE PLAN</string>
+    <string name="home_hud_all_clear">&gt;&gt; OVERALL STATUS: ALL SYSTEMS CLEAR</string>
+    <string name="home_cd_human_core">Human Core</string>
+
+    <!-- Digital Twin -->
+    <string name="home_digital_twin_title">Digital Twin (Beta)</string>
+    <string name="home_twin_health_avatar">Your Health Avatar</string>
+    <string name="home_twin_avatar_subtitle">The avatar responds to your daily logs in real-time.</string>
+    <string name="home_twin_current_state">Current State: %1$s</string>
+    <string name="home_twin_state_perfect">PERFECT</string>
+    <string name="home_twin_state_dehydrated">DEHYDRATED</string>
+    <string name="home_twin_state_needs_medicine">NEEDS_MEDICINE</string>
+    <string name="home_twin_state_critical">CRITICAL</string>
+    <string name="home_twin_dev_panel">Developer Control Panel</string>
+    <string name="home_twin_fluid_intake">Fluid Intake: %1$d%%</string>
+    <string name="home_twin_pending_medicines">Pending Medicines: %1$d</string>
+    <string name="home_twin_vitals_normal">Vitals Normal?</string>
+    <string name="home_cd_human_digital_twin">Human Digital Twin</string>
+    <string name="home_twin_msg_perfect">Your twin is glowing! You are hydrated, taking your meds on time, and vitals are normal. Keep it up!</string>
+    <string name="home_twin_msg_dehydrated">Your twin looks dull. You haven\'t reached your fluid goal today. Please drink some water.</string>
+    <string name="home_twin_msg_needs_medicine">Your twin\'s heart rate is erratic. You have pending medications to take. Please check your schedule.</string>
+    <string name="home_twin_msg_critical">Your twin is fading. Critical vitals detected or multiple missed health goals. Please attend to your health.</string>
+</resources>

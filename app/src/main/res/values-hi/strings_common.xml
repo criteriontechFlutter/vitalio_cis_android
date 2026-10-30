@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Language picker (drawer) -->
+    <string name="language_title">भाषा</string>
+    <string name="language_subtitle">ऐप की भाषा चुनें</string>
+
+    <!-- Permissions: AppPermission copy and the reasons features pass to the permission sheet -->
+    <string name="perm_notifications_title">नोटिफ़िकेशन</string>
+    <string name="perm_notifications_summary">दवा अलार्म, अपॉइंटमेंट अपडेट और हेल्थ अलर्ट</string>
+    <string name="perm_notifications_used_reminders">दवा के समय पर बजने वाले रिमाइंडर</string>
+    <string name="perm_notifications_used_updates">आपकी केयर टीम से अपॉइंटमेंट और प्रिस्क्रिप्शन अपडेट</string>
+    <string name="perm_notifications_used_alerts">जब किसी वाइटल रीडिंग पर ध्यान देना ज़रूरी हो, तब अलर्ट</string>
+    <string name="perm_notifications_privacy">हम कभी प्रमोशनल स्पैम नहीं भेजते। आप बाद में सिस्टम सेटिंग्स में किसी भी प्रकार को म्यूट कर सकते हैं।</string>
+    <string name="perm_camera_title">कैमरा</string>
+    <string name="perm_camera_summary">प्रिस्क्रिप्शन, लैब रिपोर्ट और प्रोफ़ाइल फ़ोटो लें</string>
+    <string name="perm_camera_used_prescription">प्रिस्क्रिप्शन स्कैन करें ताकि हम आपकी दवाएँ पढ़ सकें</string>
+    <string name="perm_camera_used_lab_report">लैब रिपोर्ट की फ़ोटो लेकर उसे अपने रिकॉर्ड में जोड़ें</string>
+    <string name="perm_camera_used_profile_photo">प्रोफ़ाइल फ़ोटो लें</string>
+    <string name="perm_camera_privacy">कैमरा तभी खुलता है जब आप कैप्चर बटन दबाते हैं। फ़ोटो तभी अपलोड होती हैं जब आप उन्हें सेव करना चुनते हैं।</string>
+    <string name="perm_mic_title">माइक्रोफ़ोन</string>
+    <string name="perm_mic_summary">वॉइस असिस्टेंट और साँस की एक्सरसाइज़</string>
+    <string name="perm_mic_used_voice">वॉइस असिस्टेंट से बोलकर वाइटल्स दर्ज करें या कोई स्क्रीन खोलें</string>
+    <string name="perm_mic_used_breathing">ब्रीदिंग थेरेपी हर राउंड में मार्गदर्शन के लिए आपकी साँस सुनती है</string>
+    <string name="perm_mic_privacy">हम सिर्फ़ तभी सुनते हैं जब माइक बटन या एक्सरसाइज़ चालू हो। ऑडियो कभी रिकॉर्ड या सेव नहीं होता।</string>
+    <string name="perm_nearby_title">आस-पास के डिवाइस</string>
+    <string name="perm_nearby_summary">ब्लूटूथ से BP मॉनिटर, ऑक्सीमीटर और वज़न मशीन कनेक्ट करें</string>
+    <string name="perm_nearby_used_pair">अपना Omron या Yonker डिवाइस ढूँढें और पेयर करें</string>
+    <string name="perm_nearby_used_transfer">डिवाइस से नई रीडिंग अपने हेल्थ रिकॉर्ड में भेजें</string>
+    <string name="perm_nearby_privacy">सिर्फ़ आपके हेल्थ डिवाइस से जुड़ने के लिए। हम कभी आपकी लोकेशन ट्रैक नहीं करते।</string>
+    <string name="perm_nearby_privacy_legacy">पुराने Android वर्ज़न में इसे \"लोकेशन\" कहा जाता है क्योंकि ब्लूटूथ स्कैन के लिए यह ज़रूरी है। हम कभी आपकी लोकेशन नहीं पढ़ते या सेव करते।</string>
+    <string name="perm_storage_title">स्टोरेज</string>
+    <string name="perm_storage_summary">डाउनलोड की गई रिपोर्ट को Downloads फ़ोल्डर में सेव करें</string>
+    <string name="perm_storage_used_download">लैब रिपोर्ट और प्रिस्क्रिप्शन अपने फ़ोन में डाउनलोड करें</string>
+    <string name="perm_storage_privacy">हम सिर्फ़ आपकी डाउनलोड की गई फ़ाइलें सेव करते हैं। हम आपकी दूसरी फ़ाइलें नहीं पढ़ते।</string>
+    <string name="perm_notifications_reason">आपके दवा अलार्म बजाने और केयर टीम के अपडेट आप तक पहुँचाने के लिए</string>
+    <string name="perm_camera_reason">प्रिस्क्रिप्शन, लैब रिपोर्ट और प्रोफ़ाइल फ़ोटो लेने के लिए</string>
+    <string name="perm_mic_reason">वॉइस असिस्टेंट और साँस की एक्सरसाइज़ के लिए</string>
+    <string name="perm_nearby_reason">ब्लूटूथ से आपका BP मॉनिटर, ऑक्सीमीटर या वज़न मशीन कनेक्ट करने के लिए</string>
+    <string name="perm_storage_reason">डाउनलोड की गई रिपोर्ट Downloads फ़ोल्डर में सेव करने के लिए</string>
+    <string name="perm_reason_lab_report">आपकी लैब रिपोर्ट की फ़ोटो लेने के लिए</string>
+    <string name="perm_reason_scan_prescription">आपका प्रिस्क्रिप्शन स्कैन करने के लिए</string>
+    <string name="perm_reason_breathing">आपकी साँस सुनने और हर राउंड में मार्गदर्शन के लिए</string>
+    <string name="perm_reason_save_report">यह रिपोर्ट Downloads फ़ोल्डर में सेव करने के लिए</string>
+</resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_channel_name">Health reminders</string>
+    <string name="nudge_channel_desc">Water, missed medicine and appointment reminders</string>
+
+    <string name="nudge_fluid_title">Time for some water 💧</string>
+    <string name="nudge_fluid_text">You\'ve had %1$d of %2$d ml today. Have a glass now to stay on track.</string>
+    <string name="nudge_fluid_goal_title">Water goal reached 🎉</string>
+    <string name="nudge_fluid_goal_text">Great job! You\'ve had %1$d ml today.</string>
+
+    <string name="nudge_missed_dose_title">Did you take your medicine?</string>
+    <string name="nudge_missed_dose_one">You haven\'t marked %1$s (%2$s) as taken yet.</string>
+    <string name="nudge_missed_dose_many">You haven\'t marked %1$d medicines as taken yet: %2$s</string>
+    <string name="nudge_action_taken">Mark taken</string>
+
+    <string name="nudge_appt_hour_title">Appointment in 1 hour</string>
+    <string name="nudge_appt_minutes_title">Appointment in %1$d minutes</string>
+    <string name="nudge_appt_text">With %1$s at %2$s. Tap to open Vitalio.</string>
+    <string name="nudge_appt_today_title">Appointment today</string>
+    <string name="nudge_appt_today_text">You have an appointment with %1$s today.</string>
+
+    <string name="nudge_settings_header">Health reminders</string>
+    <string name="nudge_settings_fluid_title">Water reminders</string>
+    <string name="nudge_settings_fluid_desc">Every ~2 hours (8 AM–9 PM) when you\'re behind your daily goal</string>
+    <string name="nudge_settings_missed_title">Missed dose follow-up</string>
+    <string name="nudge_settings_missed_desc">Reminds you 30 min after an alarm if the dose isn\'t marked taken</string>
+    <string name="nudge_settings_appt_title">Appointment reminders</string>
+    <string name="nudge_settings_appt_desc">1 hour and 10 minutes before each appointment</string>
+
+    <string name="nudge_action_add_ml">+%1$d ml</string>
+    <string name="nudge_water_saving_title">Adding %1$d ml…</string>
+    <string name="nudge_water_saving_text">Saving to your fluid log. It will sync once you\'re online.</string>
+    <string name="nudge_water_added_title">Added %1$d ml ✓</string>
+    <string name="nudge_water_added_text">%1$d of %2$d ml today. Keep it up!</string>
+    <string name="nudge_water_failed_title">Couldn\'t save water</string>
+    <string name="nudge_water_failed_text">Tap to open Vitalio and add it from the Fluid Intake screen.</string>
+    <string name="nudge_water_login_title">Please log in</string>
+    <string name="nudge_water_login_text">Log in to Vitalio to save your water intake.</string>
+</resources>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Language picker (drawer) -->
+    <string name="language_title">Language</string>
+    <string name="language_subtitle">Choose the app language</string>
+
+    <!-- Permissions: AppPermission copy and the reasons features pass to the permission sheet -->
+    <string name="perm_notifications_title">Notifications</string>
+    <string name="perm_notifications_summary">Medicine alarms, appointment updates and health alerts</string>
+    <string name="perm_notifications_used_reminders">Medicine reminders that ring at your dose time</string>
+    <string name="perm_notifications_used_updates">Appointment and prescription updates from your care team</string>
+    <string name="perm_notifications_used_alerts">Alerts when a vital reading needs attention</string>
+    <string name="perm_notifications_privacy">We never send promotional spam. You can mute any type later in system settings.</string>
+    <string name="perm_camera_title">Camera</string>
+    <string name="perm_camera_summary">Photograph prescriptions, lab reports and your profile photo</string>
+    <string name="perm_camera_used_prescription">Scan a prescription so we can read your medicines</string>
+    <string name="perm_camera_used_lab_report">Capture a lab report to add it to your records</string>
+    <string name="perm_camera_used_profile_photo">Take a profile photo</string>
+    <string name="perm_camera_privacy">The camera only opens when you tap a capture button. Photos are uploaded only when you choose to save them.</string>
+    <string name="perm_mic_title">Microphone</string>
+    <string name="perm_mic_summary">Voice assistant and breathing exercises</string>
+    <string name="perm_mic_used_voice">Speak to log vitals or open a screen with the voice assistant</string>
+    <string name="perm_mic_used_breathing">Breathing therapy listens to your breath to guide each round</string>
+    <string name="perm_mic_privacy">We listen only while the mic button or exercise is active. Audio is never recorded or stored.</string>
+    <string name="perm_nearby_title">Nearby devices</string>
+    <string name="perm_nearby_summary">Connect BP monitors, oximeters and weighing scales over Bluetooth</string>
+    <string name="perm_nearby_used_pair">Find and pair your Omron or Yonker device</string>
+    <string name="perm_nearby_used_transfer">Transfer new readings from the device to your health record</string>
+    <string name="perm_nearby_privacy">Used only to talk to your health devices. We never track your location.</string>
+    <string name="perm_nearby_privacy_legacy">Older Android versions call this \"Location\" because Bluetooth scanning needs it. We never read or store your location.</string>
+    <string name="perm_storage_title">Storage</string>
+    <string name="perm_storage_summary">Save downloaded reports to your Downloads folder</string>
+    <string name="perm_storage_used_download">Download lab reports and prescriptions to your phone</string>
+    <string name="perm_storage_privacy">We only write the files you download. We don\'t read your other files.</string>
+    <string name="perm_notifications_reason">so your medicine alarms can ring and your care team\'s updates reach you</string>
+    <string name="perm_camera_reason">to photograph prescriptions, lab reports and your profile photo</string>
+    <string name="perm_mic_reason">for the voice assistant and breathing exercises</string>
+    <string name="perm_nearby_reason">to connect your BP monitor, oximeter or scale over Bluetooth</string>
+    <string name="perm_storage_reason">to save downloaded reports in your Downloads folder</string>
+    <string name="perm_reason_lab_report">to photograph your lab report</string>
+    <string name="perm_reason_scan_prescription">to scan your prescription</string>
+    <string name="perm_reason_breathing">to hear your breath and guide each round</string>
+    <string name="perm_reason_save_report">to save this report in your Downloads folder</string>
+</resources>

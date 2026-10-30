@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vitalio</string>
+
+    <string name="vitals_details">वाइटल्स\nविवरण</string>
+    <string name="fluid_intake">तरल\nसेवन/आउटपुट</string>
+    <string name="symptoms_tracker">लक्षण\nट्रैकर</string>
+
+    <string name="medicine_reminder">दवा\nरिमाइंडर</string>
+    <string name="diet_checklist">आहार\nचेकलिस्ट</string>
+    <string name="interactions_checker">दवा इंटरैक्शन\nचेकर</string>
+
+    <string name="appointments">अपॉइंटमेंट</string>
+    <string name="research_based_articles">शोध आधारित\nलेख</string>
+
+    <string name="home">होम</string>
+    <string name="activity">गतिविधि</string>
+    <string name="reminders">रिमाइंडर</string>
+    <string name="ring">रिंग</string>
+    <string name="chat">चैट</string>
+</resources>

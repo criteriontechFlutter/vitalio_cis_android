@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Shared components -->
+    <string name="auth_common_ok">ठीक है</string>
+    <string name="auth_common_cancel">रद्द करें</string>
+    <string name="auth_common_close">बंद करें</string>
+    <string name="auth_common_back">वापस</string>
+    <string name="auth_common_next">आगे</string>
+    <string name="auth_common_skip">छोड़ें</string>
+    <string name="auth_common_submit">सबमिट करें</string>
+    <string name="auth_common_search">खोजें</string>
+    <string name="auth_common_continue">जारी रखें</string>
+    <string name="auth_common_not_now">अभी नहीं</string>
+    <string name="auth_common_no_data_found">कोई डेटा नहीं मिला</string>
+    <string name="auth_common_select_time">समय चुनें</string>
+    <string name="auth_common_error_unknown">कुछ गड़बड़ हो गई</string>
+    <string name="auth_common_pull_to_refresh">रीफ़्रेश करने के लिए नीचे खींचें</string>
+    <string name="auth_common_release_to_refresh">रीफ़्रेश करने के लिए छोड़ें</string>
+    <string name="auth_common_refreshing_health_data">आपका हेल्थ डेटा अपडेट हो रहा है…</string>
+
+    <!-- Login -->
+    <string name="auth_login_title">लॉगिन</string>
+    <string name="auth_login_subtitle">अपने हेल्थ रिकॉर्ड और सेवाएँ देखें</string>
+    <string name="auth_login_uhid_label">UHID/मोबाइल नंबर डालें</string>
+    <string name="auth_login_uhid_hint">UHID/मोबाइल नंबर डालें</string>
+    <string name="auth_login_send_otp">OTP भेजें</string>
+    <string name="auth_login_sending_otp">OTP भेजा जा रहा है</string>
+    <string name="auth_login_terms_prefix">साइन इन करके आप हमारी इन शर्तों से सहमत होते हैं:</string>
+    <string name="auth_login_terms_link">नियम व शर्तें और प्राइवेसी पॉलिसी</string>
+    <string name="auth_login_error_not_registered">आप अभी किसी भी क्लिनिक में रजिस्टर्ड नहीं हैं</string>
+
+    <!-- OTP -->
+    <string name="auth_otp_header">हमारे स्मार्ट ऐप के साथ\nअपनी सेहत को बेहतर बनाएँ!</string>
+    <string name="auth_otp_title">अपना UHID वेरिफ़ाई करें!</string>
+    <string name="auth_otp_subtitle">आपके नंबर पर भेजा गया 6 अंकों का वेरिफ़िकेशन कोड डालें</string>
+    <string name="auth_otp_verify">वेरिफ़ाई करें</string>
+    <string name="auth_otp_verifying">वेरिफ़ाई हो रहा है</string>
+    <string name="auth_otp_not_received">कोड नहीं मिला?</string>
+    <string name="auth_otp_resend_in">%1$d सेकंड में OTP दोबारा भेजें</string>
+    <string name="auth_otp_resend">OTP दोबारा भेजें</string>
+    <string name="auth_otp_error_failed">OTP वेरिफ़िकेशन नहीं हो सका</string>
+
+    <!-- Onboarding: shared -->
+    <string name="auth_onb_create_account">अकाउंट बनाएँ</string>
+    <string name="auth_onb_progress_getting_started_title">शुरुआत</string>
+    <string name="auth_onb_progress_getting_started_subtitle">बढ़िया शुरुआत! अभी तो शुरुआत है—चलिए आगे बढ़ें!</string>
+    <string name="auth_onb_progress_one_third_title">एक-तिहाई पूरा</string>
+    <string name="auth_onb_progress_one_third_subtitle">बहुत बढ़िया! आप एक-तिहाई रास्ता तय कर चुके हैं!</string>
+    <string name="auth_onb_progress_near_halfway_title">आधे रास्ते के करीब</string>
+    <string name="auth_onb_progress_near_halfway_subtitle">आप करीब पहुँच रहे हैं—आधे रास्ते तक बस थोड़ा और!</string>
+    <string name="auth_onb_progress_on_track_title">सही रास्ते पर</string>
+    <string name="auth_onb_progress_moving_ahead_title">आगे बढ़ रहे हैं</string>
+    <string name="auth_onb_progress_moving_ahead_subtitle">आप आधा रास्ता पार कर चुके हैं—अब तक बढ़िया!</string>
+    <string name="auth_onb_progress_final_stretch_title">मंज़िल अब करीब है</string>
+    <string name="auth_onb_progress_final_stretch_subtitle">आप बढ़िया प्रगति कर रहे हैं—बस थोड़ा और!</string>
+    <string name="auth_onb_progress_final_push_title">बस आखिरी कदम</string>
+    <string name="auth_onb_progress_final_push_subtitle">बहुत करीब! बस कुछ ही कदम बाकी हैं!</string>
+    <string name="auth_onb_progress_all_done_title">सब पूरा हुआ!</string>
+    <string name="auth_onb_progress_all_done_subtitle">प्रक्रिया पूरी होने में बस एक कदम बाकी है।</string>
+    <string name="auth_onb_progress_one_step_title">बस एक कदम दूर</string>
+    <string name="auth_onb_progress_one_step_subtitle">लगभग हो गया — चलिए पूरा करें!</string>
+    <string name="auth_onb_progress_completed_title">आपने प्रक्रिया सफलतापूर्वक पूरी कर ली है!</string>
+    <string name="auth_onb_progress_completed_subtitle">आपकी जानकारी जमा हो गई है, आपको अपने साथ पाकर हमें खुशी है</string>
+
+    <!-- Onboarding: welcome -->
+    <string name="auth_onb_welcome_title">Vitalio में आपका स्वागत है।</string>
+    <string name="auth_onb_welcome_subtitle">हमें अपने बारे में बताएँ ताकि हम आपकी बेहतर मदद कर सकें।</string>
+    <string name="auth_onb_first_name">पहला नाम</string>
+    <string name="auth_onb_first_name_hint">अपना पहला नाम लिखें</string>
+    <string name="auth_onb_last_name">उपनाम</string>
+    <string name="auth_onb_last_name_hint">अपना उपनाम लिखें</string>
+
+    <!-- Onboarding: gender (display labels only; API values stay English) -->
+    <string name="auth_onb_gender_title">लिंग</string>
+    <string name="auth_onb_gender_subtitle">नमस्ते %1$s, हमें बताएँ कि आप पुरुष हैं या महिला।</string>
+    <string name="auth_onb_gender_male">पुरुष</string>
+    <string name="auth_onb_gender_female">महिला</string>
+    <string name="auth_onb_gender_other">अन्य</string>
+
+    <!-- Onboarding: date of birth -->
+    <string name="auth_onb_dob_title">आपकी जन्म तिथि?</string>
+    <string name="auth_onb_dob_subtitle">आपकी जन्म तिथि से हम आपको आपके हिसाब से हेल्थ जानकारी दे पाते हैं।</string>
+
+    <!-- Onboarding: blood group -->
+    <string name="auth_onb_blood_title">और आपका\nब्लड ग्रुप क्या है?</string>
+
+    <!-- Onboarding: location -->
+    <string name="auth_onb_location_title">आप कहाँ रहते हैं?</string>
+    <string name="auth_onb_location_subtitle">आपके पते से हम आपको लोकेशन के हिसाब से सेवाएँ और बेहतर देखभाल दे पाते हैं।</string>
+    <string name="auth_onb_street_address">पता (गली/सड़क)</string>
+    <string name="auth_onb_zip_code">पिन कोड</string>
+    <string name="auth_onb_zip_code_hint">पिन कोड डालें</string>
+    <string name="auth_onb_city">शहर</string>
+    <string name="auth_onb_city_hint">शहर चुनें</string>
+    <string name="auth_onb_state">राज्य</string>
+    <string name="auth_onb_state_hint">राज्य चुनें</string>
+    <string name="auth_onb_country">देश</string>
+    <string name="auth_onb_country_hint">देश चुनें</string>
+
+    <!-- Onboarding: weight -->
+    <string name="auth_onb_weight_title">आपका मौजूदा\nवज़न कितना है?</string>
+    <string name="auth_onb_weight_subtitle">आपके वज़न से हम आपको सही हेल्थ और\nफ़िटनेस सुझाव दे पाते हैं।</string>
+    <string name="auth_onb_weight_label">वज़न</string>
+    <string name="auth_onb_weight_hint">अपना वज़न डालें</string>
+
+    <!-- Onboarding: height -->
+    <string name="auth_onb_height_title">आपकी लंबाई कितनी है?</string>
+    <string name="auth_onb_height_subtitle">आपकी लंबाई से हम आपको ज़्यादा सटीक हेल्थ\nऔर फ़िटनेस जानकारी दे पाते हैं।</string>
+    <string name="auth_onb_height_label">लंबाई</string>
+    <string name="auth_onb_height_hint">अपनी लंबाई चुनें</string>
+    <string name="auth_onb_height_sheet_title">अपनी लंबाई चुनें</string>
+    <string name="auth_onb_height_feet">फ़ुट</string>
+    <string name="auth_onb_height_inch">इंच</string>
+    <string name="auth_onb_height_unit">यूनिट</string>
+
+    <!-- Onboarding: chronic disease / family history (display labels; stored values stay English) -->
+    <string name="auth_onb_chronic_title">अगर आपको कोई पुरानी\nबीमारी है तो हमें बताएँ।</string>
+    <string name="auth_onb_chronic_subtitle">पुरानी बीमारी की जानकारी से हम आपको\nबेहतर हेल्थ सलाह और देखभाल दे पाते हैं।</string>
+    <string name="auth_onb_chronic_label">पुरानी बीमारी</string>
+    <string name="auth_onb_chronic_hint">पुरानी बीमारियाँ चुनें</string>
+    <string name="auth_onb_select_disease">बीमारी चुनें</string>
+    <string name="auth_onb_disease_hypertension">हाई ब्लड प्रेशर (हाइपरटेंशन)</string>
+    <string name="auth_onb_disease_leukemia">ब्लड कैंसर (ल्यूकेमिया)</string>
+    <string name="auth_onb_disease_dvt">खून के थक्के (डीप वेन थ्रोम्बोसिस)</string>
+    <string name="auth_onb_disease_anemia">खून की कमी (एनीमिया)</string>
+    <string name="auth_onb_disease_thalassemia">थैलेसीमिया (खून की बीमारी)</string>
+    <string name="auth_onb_disease_hemophilia">हीमोफ़ीलिया (खून न जमने की बीमारी)</string>
+    <string name="auth_onb_family_title">आपके परिवार की\nहेल्थ हिस्ट्री</string>
+    <string name="auth_onb_family_subtitle">क्या आपके परिवार में कोई\nखानदानी बीमारी है?</string>
+    <string name="auth_onb_select_relation">रिश्ता चुनें</string>
+    <string name="auth_onb_select_relation_subtitle">आपके परिवार में किसे यह बीमारी है?</string>
+    <string name="auth_onb_relation_mother">माँ</string>
+    <string name="auth_onb_relation_father">पिता</string>
+    <string name="auth_onb_relation_brother">भाई</string>
+    <string name="auth_onb_relation_sister">बहन</string>
+    <string name="auth_onb_relation_grandparent">दादा-दादी/नाना-नानी</string>
+
+    <!-- Onboarding: fluid -->
+    <string name="auth_onb_fluid_title">तरल सेवन की जानकारी</string>
+    <string name="auth_onb_fluid_subtitle">हम आपको वाइटल्स के लिए याद दिलाते रहेंगे। अब हमें अपने तरल सेवन के बारे में बताएँ।</string>
+    <string name="auth_onb_fluid_label">तरल सेवन</string>
+    <string name="auth_onb_fluid_goal_subtitle">हाइड्रेटेड रहने में आपकी मदद के लिए, अपना रोज़ का तरल सेवन लक्ष्य बताएँ।</string>
+    <string name="auth_onb_fluid_goal_label">तरल सेवन लक्ष्य</string>
+    <string name="auth_onb_fluid_goal_hint">डालें</string>
+
+    <!-- Onboarding: profile preview -->
+    <string name="auth_onb_profile_preview">प्रोफ़ाइल प्रीव्यू</string>
+    <string name="auth_onb_profile_name">नाम</string>
+    <string name="auth_onb_profile_add_name">नाम जोड़ें</string>
+    <string name="auth_onb_profile_add_gender">लिंग जोड़ें</string>
+    <string name="auth_onb_profile_dob">जन्म तिथि</string>
+    <string name="auth_onb_profile_add_dob">जन्म तिथि जोड़ें</string>
+    <string name="auth_onb_profile_blood_group">ब्लड ग्रुप</string>
+    <string name="auth_onb_profile_add_blood_group">ब्लड ग्रुप जोड़ें</string>
+    <string name="auth_onb_profile_address">पता</string>
+    <string name="auth_onb_profile_add_address">पता जोड़ें</string>
+    <string name="auth_onb_profile_add_weight">वज़न जोड़ें</string>
+    <string name="auth_onb_profile_add_height">लंबाई जोड़ें</string>
+    <string name="auth_onb_profile_chronic">पुरानी बीमारियाँ</string>
+    <string name="auth_onb_profile_add_condition">बीमारी जोड़ें</string>
+
+    <!-- Onboarding: completion, reminders, thank you -->
+    <string name="auth_onb_dashboard_loading">कृपया रुकें, हम आपका डैशबोर्ड तैयार कर रहे हैं।</string>
+    <string name="auth_onb_set_preferences">पसंद सेट करें</string>
+    <string name="auth_onb_vital_reminder_title">वाइटल रिमाइंडर सेट करें</string>
+    <string name="auth_onb_vital_reminder_subtitle">आपकी मुख्य जानकारी पूरी हो गई है। कृपया वाइटल रिमाइंडर कितनी बार चाहिए, चुनें।</string>
+    <string name="auth_onb_vital_blood_pressure">ब्लड प्रेशर</string>
+    <string name="auth_onb_vital_heart_rate">हार्ट रेट</string>
+    <string name="auth_onb_vital_spo2">ब्लड ऑक्सीजन (SpO2)</string>
+    <string name="auth_onb_vital_respiratory_rate">सांस की दर</string>
+    <string name="auth_onb_interval_once_day">दिन में एक बार</string>
+    <string name="auth_onb_interval_twice_day">दिन में 2 बार</string>
+    <string name="auth_onb_interval_thrice_day">दिन में 3 बार</string>
+    <string name="auth_onb_interval_four_day">दिन में 4 बार</string>
+    <string name="auth_onb_interval_every_hour">हर घंटे</string>
+    <string name="auth_onb_interval_every_2_hours">हर 2 घंटे</string>
+    <string name="auth_onb_select_time">समय चुनें</string>
+    <string name="auth_onb_reminder_time">रिमाइंडर का समय</string>
+    <string name="auth_onb_set_reminder">रिमाइंडर सेट करें</string>
+    <string name="auth_onb_thank_you_title">Vitalio के साथ रजिस्टर करने के लिए धन्यवाद!</string>
+    <string name="auth_onb_thank_you_subtitle">आपकी जानकारी जमा हो गई है, आपको अपने साथ पाकर हमें खुशी है।</string>
+    <string name="auth_onb_whats_next">आगे क्या?</string>
+    <string name="auth_onb_whats_next_subtitle">आपकी सेहत अच्छी बनाए रखने के लिए हमें कुछ और जानकारी चाहिए।</string>
+    <string name="auth_onb_set_preferences_cta">बेहतर अनुभव के लिए अपनी पसंद सेट करें</string>
+
+    <!-- Permission sheet -->
+    <string name="auth_perm_location">लोकेशन</string>
+    <string name="auth_perm_ask_notifications">नोटिफ़िकेशन चालू करें</string>
+    <string name="auth_perm_ask_nearby">आस-पास के डिवाइस की अनुमति दें</string>
+    <string name="auth_perm_ask_generic">%1$s एक्सेस की अनुमति दें</string>
+    <string name="auth_perm_turned_off">%1$s बंद है</string>
+    <string name="auth_perm_needs_access">%2$s Vitalio को %1$s एक्सेस चाहिए।</string>
+    <string name="auth_perm_to_turn_on">इसे चालू करने के लिए</string>
+    <string name="auth_perm_step_open_settings">नीचे \"सेटिंग्स खोलें\" पर टैप करें</string>
+    <string name="auth_perm_step_permissions">Permissions (अनुमतियाँ) में जाएँ</string>
+    <string name="auth_perm_step_allow">%1$s पर टैप करें और Allow चुनें</string>
+    <string name="auth_perm_used_for">किसके लिए</string>
+    <string name="auth_perm_open_settings">सेटिंग्स खोलें</string>
+    <string name="auth_perm_change_anytime">आप इसे कभी भी मेन्यू → अनुमतियाँ और प्राइवेसी में बदल सकते हैं।</string>
+
+    <string-array name="auth_onb_months">
+        <item>जनवरी</item>
+        <item>फ़रवरी</item>
+        <item>मार्च</item>
+        <item>अप्रैल</item>
+        <item>मई</item>
+        <item>जून</item>
+        <item>जुलाई</item>
+        <item>अगस्त</item>
+        <item>सितंबर</item>
+        <item>अक्टूबर</item>
+        <item>नवंबर</item>
+        <item>दिसंबर</item>
+    </string-array>
+</resources>

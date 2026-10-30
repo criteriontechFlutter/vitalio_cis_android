@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Shared components -->
+    <string name="auth_common_ok">OK</string>
+    <string name="auth_common_cancel">Cancel</string>
+    <string name="auth_common_close">Close</string>
+    <string name="auth_common_back">Back</string>
+    <string name="auth_common_next">Next</string>
+    <string name="auth_common_skip">Skip</string>
+    <string name="auth_common_submit">Submit</string>
+    <string name="auth_common_search">Search</string>
+    <string name="auth_common_continue">Continue</string>
+    <string name="auth_common_not_now">Not now</string>
+    <string name="auth_common_no_data_found">No Data Found</string>
+    <string name="auth_common_select_time">Select time</string>
+    <string name="auth_common_error_unknown">Unknown error</string>
+    <string name="auth_common_pull_to_refresh">Pull to refresh</string>
+    <string name="auth_common_release_to_refresh">Release to refresh</string>
+    <string name="auth_common_refreshing_health_data">Updating your health data…</string>
+
+    <!-- Login -->
+    <string name="auth_login_title">Login</string>
+    <string name="auth_login_subtitle">Access your health records and services</string>
+    <string name="auth_login_uhid_label">Enter UHID/Mobile No</string>
+    <string name="auth_login_uhid_hint">Enter UHID/Mobile No.</string>
+    <string name="auth_login_send_otp">Send OTP</string>
+    <string name="auth_login_sending_otp">Sending OTP</string>
+    <string name="auth_login_terms_prefix">By signing in you agree to our</string>
+    <string name="auth_login_terms_link">Terms &amp; Conditions and Privacy Policy</string>
+    <string name="auth_login_error_not_registered">You are not registered in any clinic yet</string>
+
+    <!-- OTP -->
+    <string name="auth_otp_header">Empower Your Health with\nOur Smart App!</string>
+    <string name="auth_otp_title">Verify your UHID!</string>
+    <string name="auth_otp_subtitle">Enter 6 digit verification code sent to your number</string>
+    <string name="auth_otp_verify">Verify</string>
+    <string name="auth_otp_verifying">Verifying</string>
+    <string name="auth_otp_not_received">Didn\'t receive the Code?</string>
+    <string name="auth_otp_resend_in">Resend OTP in %1$ds</string>
+    <string name="auth_otp_resend">Resend OTP</string>
+    <string name="auth_otp_error_failed">OTP verification failed</string>
+
+    <!-- Onboarding: shared -->
+    <string name="auth_onb_create_account">Create Account</string>
+    <string name="auth_onb_progress_getting_started_title">Getting Started</string>
+    <string name="auth_onb_progress_getting_started_subtitle">Great start! You’re just beginning—let’s keep going!</string>
+    <string name="auth_onb_progress_one_third_title">One-Third Complete</string>
+    <string name="auth_onb_progress_one_third_subtitle">Nice work! You\'re a third of the way there!</string>
+    <string name="auth_onb_progress_near_halfway_title">Almost There to Halfway</string>
+    <string name="auth_onb_progress_near_halfway_subtitle">You\'re getting closer-just a little more to reach halfway!</string>
+    <string name="auth_onb_progress_on_track_title">Staying on Track</string>
+    <string name="auth_onb_progress_moving_ahead_title">Moving Ahead</string>
+    <string name="auth_onb_progress_moving_ahead_subtitle">You\'re past halfway-great job so far!</string>
+    <string name="auth_onb_progress_final_stretch_title">Final Stretch in Sight</string>
+    <string name="auth_onb_progress_final_stretch_subtitle">You\'re making great progress-just a little more to go!</string>
+    <string name="auth_onb_progress_final_push_title">Final Push Ahead</string>
+    <string name="auth_onb_progress_final_push_subtitle">So close!  Only a few steps remain!</string>
+    <string name="auth_onb_progress_all_done_title">All Done!</string>
+    <string name="auth_onb_progress_all_done_subtitle">You\'re just one step away from completing the process.</string>
+    <string name="auth_onb_progress_one_step_title">One Step Away</string>
+    <string name="auth_onb_progress_one_step_subtitle">You\'re nearly done — let\'s finish up!</string>
+    <string name="auth_onb_progress_completed_title">You\'re successfully completed the process!</string>
+    <string name="auth_onb_progress_completed_subtitle">Your submission is now complete, and we\'re excited to have you on board</string>
+
+    <!-- Onboarding: welcome -->
+    <string name="auth_onb_welcome_title">Welcome to Vitalio.</string>
+    <string name="auth_onb_welcome_subtitle">Let us know about you so we can manage to help you in better ways.</string>
+    <string name="auth_onb_first_name">First Name</string>
+    <string name="auth_onb_first_name_hint">Type your first name</string>
+    <string name="auth_onb_last_name">Last Name</string>
+    <string name="auth_onb_last_name_hint">Type your last name</string>
+
+    <!-- Onboarding: gender (display labels only; API values stay English) -->
+    <string name="auth_onb_gender_title">Gender</string>
+    <string name="auth_onb_gender_subtitle">Hi %1$s, let us know if you are male or female.</string>
+    <string name="auth_onb_gender_male">Male</string>
+    <string name="auth_onb_gender_female">Female</string>
+    <string name="auth_onb_gender_other">Other</string>
+
+    <!-- Onboarding: date of birth -->
+    <string name="auth_onb_dob_title">Your date of birth?.</string>
+    <string name="auth_onb_dob_subtitle">Your date of birth ensures personalized health insights.</string>
+
+    <!-- Onboarding: blood group -->
+    <string name="auth_onb_blood_title">And what is your\nBlood Group?</string>
+
+    <!-- Onboarding: location -->
+    <string name="auth_onb_location_title">Where do you live?</string>
+    <string name="auth_onb_location_subtitle">Your address helps us provide location based services and personalized care.</string>
+    <string name="auth_onb_street_address">Street Address</string>
+    <string name="auth_onb_zip_code">Zip Code</string>
+    <string name="auth_onb_zip_code_hint">Enter Zip Code</string>
+    <string name="auth_onb_city">City</string>
+    <string name="auth_onb_city_hint">Select City</string>
+    <string name="auth_onb_state">State</string>
+    <string name="auth_onb_state_hint">Select State</string>
+    <string name="auth_onb_country">Country</string>
+    <string name="auth_onb_country_hint">Select Country</string>
+
+    <!-- Onboarding: weight -->
+    <string name="auth_onb_weight_title">What is your current\nweight?</string>
+    <string name="auth_onb_weight_subtitle">Your weight helps us provide tailored health and\nfitness recommendations.</string>
+    <string name="auth_onb_weight_label">Weight</string>
+    <string name="auth_onb_weight_hint">Enter your weight</string>
+
+    <!-- Onboarding: height -->
+    <string name="auth_onb_height_title">What is your height?</string>
+    <string name="auth_onb_height_subtitle">Your height helps us offer more accurate health\nand fitness insights.</string>
+    <string name="auth_onb_height_label">Height</string>
+    <string name="auth_onb_height_hint">Select your height</string>
+    <string name="auth_onb_height_sheet_title">Select Your Height</string>
+    <string name="auth_onb_height_feet">Feet</string>
+    <string name="auth_onb_height_inch">Inch</string>
+    <string name="auth_onb_height_unit">Unit</string>
+
+    <!-- Onboarding: chronic disease / family history (display labels; stored values stay English) -->
+    <string name="auth_onb_chronic_title">Inform us if you have\nany chronic conditions.</string>
+    <string name="auth_onb_chronic_subtitle">Sharing any chronic conditions helps us provide\nmore tailored health advice and care.</string>
+    <string name="auth_onb_chronic_label">Chronic Disease</string>
+    <string name="auth_onb_chronic_hint">Select Chronic Diseases</string>
+    <string name="auth_onb_select_disease">Select Disease</string>
+    <string name="auth_onb_disease_hypertension">High Blood Pressure (Hypertension)</string>
+    <string name="auth_onb_disease_leukemia">Blood Cancer (Leukemia)</string>
+    <string name="auth_onb_disease_dvt">Blood Clots (Deep Vein Thrombosis)</string>
+    <string name="auth_onb_disease_anemia">Blood Disorders (Anemia)</string>
+    <string name="auth_onb_disease_thalassemia">Thalassemia (Blood Disorder)</string>
+    <string name="auth_onb_disease_hemophilia">Hemophilia (Blood Clotting Disorder)</string>
+    <string name="auth_onb_family_title">Your Family’s Health\nHistory</string>
+    <string name="auth_onb_family_subtitle">Are there any hereditary conditions in your\nfamily?</string>
+    <string name="auth_onb_select_relation">Select Relation</string>
+    <string name="auth_onb_select_relation_subtitle">Who in your family has been diagnosed with this disease?</string>
+    <string name="auth_onb_relation_mother">Mother</string>
+    <string name="auth_onb_relation_father">Father</string>
+    <string name="auth_onb_relation_brother">Brother</string>
+    <string name="auth_onb_relation_sister">Sister</string>
+    <string name="auth_onb_relation_grandparent">Grand Parent</string>
+
+    <!-- Onboarding: fluid -->
+    <string name="auth_onb_fluid_title">Fluid Intake Details</string>
+    <string name="auth_onb_fluid_subtitle">We\'ve got the time to remind you for your vitals. Let us know about your fluid intake.</string>
+    <string name="auth_onb_fluid_label">Fluid Intake</string>
+    <string name="auth_onb_fluid_goal_subtitle">To help you stay hydrated, please specify your daily fluid intake goal.</string>
+    <string name="auth_onb_fluid_goal_label">Fluid Intake Goal</string>
+    <string name="auth_onb_fluid_goal_hint">Enter</string>
+
+    <!-- Onboarding: profile preview -->
+    <string name="auth_onb_profile_preview">Profile Preview</string>
+    <string name="auth_onb_profile_name">Name</string>
+    <string name="auth_onb_profile_add_name">Add Name</string>
+    <string name="auth_onb_profile_add_gender">Add Gender</string>
+    <string name="auth_onb_profile_dob">Date of Birth</string>
+    <string name="auth_onb_profile_add_dob">Add Date of Birth</string>
+    <string name="auth_onb_profile_blood_group">Blood Group</string>
+    <string name="auth_onb_profile_add_blood_group">Add Blood Group</string>
+    <string name="auth_onb_profile_address">Address</string>
+    <string name="auth_onb_profile_add_address">Add Address</string>
+    <string name="auth_onb_profile_add_weight">Add Weight</string>
+    <string name="auth_onb_profile_add_height">Add Height</string>
+    <string name="auth_onb_profile_chronic">Chronic Conditions</string>
+    <string name="auth_onb_profile_add_condition">Add Condition</string>
+
+    <!-- Onboarding: completion, reminders, thank you -->
+    <string name="auth_onb_dashboard_loading">Hold on, while we ready your dashboard for you.</string>
+    <string name="auth_onb_set_preferences">Set Preferences</string>
+    <string name="auth_onb_vital_reminder_title">Set Vital Reminder</string>
+    <string name="auth_onb_vital_reminder_subtitle">Your primary details are completed. Please select the interval for your vital reminders.</string>
+    <string name="auth_onb_vital_blood_pressure">Blood Pressure</string>
+    <string name="auth_onb_vital_heart_rate">Heart Rate</string>
+    <string name="auth_onb_vital_spo2">Blood Oxygen (SpO2)</string>
+    <string name="auth_onb_vital_respiratory_rate">Respiratory Rate</string>
+    <string name="auth_onb_interval_once_day">Once A Day</string>
+    <string name="auth_onb_interval_twice_day">2 Times A Day</string>
+    <string name="auth_onb_interval_thrice_day">3 Times A Day</string>
+    <string name="auth_onb_interval_four_day">4 Times A Day</string>
+    <string name="auth_onb_interval_every_hour">Every Hour</string>
+    <string name="auth_onb_interval_every_2_hours">Every 2 Hour</string>
+    <string name="auth_onb_select_time">Select Time</string>
+    <string name="auth_onb_reminder_time">Reminder time</string>
+    <string name="auth_onb_set_reminder">Set Reminder</string>
+    <string name="auth_onb_thank_you_title">Thank you for registering with Vitalio!</string>
+    <string name="auth_onb_thank_you_subtitle">Your submission is now complete, and we\'re excited to have you on board.</string>
+    <string name="auth_onb_whats_next">What’s Next?</string>
+    <string name="auth_onb_whats_next_subtitle">To help you maintain optimal health, we need a few more details.</string>
+    <string name="auth_onb_set_preferences_cta">Set preferences for a better experience</string>
+
+    <!-- Permission sheet -->
+    <string name="auth_perm_location">Location</string>
+    <string name="auth_perm_ask_notifications">Turn on notifications</string>
+    <string name="auth_perm_ask_nearby">Allow nearby devices</string>
+    <string name="auth_perm_ask_generic">Allow %1$s access</string>
+    <string name="auth_perm_turned_off">%1$s is turned off</string>
+    <string name="auth_perm_needs_access">Vitalio needs %1$s access %2$s.</string>
+    <string name="auth_perm_to_turn_on">To turn it on</string>
+    <string name="auth_perm_step_open_settings">Tap Open Settings below</string>
+    <string name="auth_perm_step_permissions">Go to Permissions</string>
+    <string name="auth_perm_step_allow">Tap %1$s and choose Allow</string>
+    <string name="auth_perm_used_for">Used for</string>
+    <string name="auth_perm_open_settings">Open Settings</string>
+    <string name="auth_perm_change_anytime">You can change this anytime in Menu → Permissions &amp; Privacy.</string>
+
+    <string-array name="auth_onb_months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+</resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nudge_channel_name">स्वास्थ्य रिमाइंडर</string>
+    <string name="nudge_channel_desc">पानी, छूटी दवा और अपॉइंटमेंट के रिमाइंडर</string>
+
+    <string name="nudge_fluid_title">पानी पीने का समय 💧</string>
+    <string name="nudge_fluid_text">आज आपने %2$d में से %1$d ml पिया है। लक्ष्य पर बने रहने के लिए अभी एक गिलास पी लें।</string>
+    <string name="nudge_fluid_goal_title">पानी का लक्ष्य पूरा 🎉</string>
+    <string name="nudge_fluid_goal_text">बहुत बढ़िया! आज आपने %1$d ml पिया है।</string>
+
+    <string name="nudge_missed_dose_title">क्या आपने दवा ली?</string>
+    <string name="nudge_missed_dose_one">आपने अभी तक %1$s (%2$s) को ली गई के रूप में मार्क नहीं किया है।</string>
+    <string name="nudge_missed_dose_many">आपने अभी तक %1$d दवाओं को ली गई के रूप में मार्क नहीं किया है: %2$s</string>
+    <string name="nudge_action_taken">ले ली</string>
+
+    <string name="nudge_appt_hour_title">1 घंटे में अपॉइंटमेंट</string>
+    <string name="nudge_appt_minutes_title">%1$d मिनट में अपॉइंटमेंट</string>
+    <string name="nudge_appt_text">%1$s के साथ %2$s बजे। Vitalio खोलने के लिए टैप करें।</string>
+    <string name="nudge_appt_today_title">आज अपॉइंटमेंट है</string>
+    <string name="nudge_appt_today_text">आज %1$s के साथ आपका अपॉइंटमेंट है।</string>
+
+    <string name="nudge_settings_header">स्वास्थ्य रिमाइंडर</string>
+    <string name="nudge_settings_fluid_title">पानी के रिमाइंडर</string>
+    <string name="nudge_settings_fluid_desc">हर ~2 घंटे (सुबह 8 – रात 9 बजे) जब आप दैनिक लक्ष्य से पीछे हों</string>
+    <string name="nudge_settings_missed_title">छूटी दवा का फॉलो-अप</string>
+    <string name="nudge_settings_missed_desc">अलार्म के 30 मिनट बाद याद दिलाता है अगर दवा ली गई मार्क नहीं हुई</string>
+    <string name="nudge_settings_appt_title">अपॉइंटमेंट रिमाइंडर</string>
+    <string name="nudge_settings_appt_desc">हर अपॉइंटमेंट से 1 घंटा और 10 मिनट पहले</string>
+
+    <string name="nudge_action_add_ml">+%1$d ml</string>
+    <string name="nudge_water_saving_title">%1$d ml जोड़ा जा रहा है…</string>
+    <string name="nudge_water_saving_text">आपके फ्लूइड लॉग में सेव हो रहा है। ऑनलाइन होते ही सिंक हो जाएगा।</string>
+    <string name="nudge_water_added_title">%1$d ml जोड़ा गया ✓</string>
+    <string name="nudge_water_added_text">आज %2$d में से %1$d ml। ऐसे ही जारी रखें!</string>
+    <string name="nudge_water_failed_title">पानी सेव नहीं हो सका</string>
+    <string name="nudge_water_failed_text">Vitalio खोलें और फ्लूइड इनटेक स्क्रीन से जोड़ें।</string>
+    <string name="nudge_water_login_title">कृपया लॉग इन करें</string>
+    <string name="nudge_water_login_text">पानी का सेवन सेव करने के लिए Vitalio में लॉग इन करें।</string>
+</resources>
