@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_saved_toast">आपके फ़ोन में सेव हो गया। ऑनलाइन होते ही अपने आप सिंक हो जाएगा।</string>
+    <string name="offline_title">आप ऑफ़लाइन हैं</string>
+    <string name="offline_showing_saved">आपका पिछला सेव किया गया डेटा दिख रहा है</string>
+    <plurals name="offline_waiting">
+        <item quantity="one">%1$d एंट्री अपने आप सिंक हो जाएगी</item>
+        <item quantity="other">%1$d एंट्री अपने आप सिंक हो जाएंगी</item>
+    </plurals>
+    <plurals name="offline_syncing">
+        <item quantity="one">%1$d एंट्री सिंक हो रही है…</item>
+        <item quantity="other">%1$d एंट्री सिंक हो रही हैं…</item>
+    </plurals>
+    <string name="offline_all_synced">सब सिंक हो गया ✓</string>
+    <plurals name="offline_failed">
+        <item quantity="one">%1$d एंट्री सेव नहीं हो सकी</item>
+        <item quantity="other">%1$d एंट्री सेव नहीं हो सकीं</item>
+    </plurals>
+    <string name="offline_failed_desc">सर्वर ने इसे स्वीकार नहीं किया। फिर से कोशिश करें, या हटाकर दोबारा दर्ज करें।</string>
+    <string name="offline_retry">फिर कोशिश करें</string>
+    <string name="offline_discard">हटाएं</string>
+    <string name="offline_discard_title">बिना सेव हुई एंट्री हटाएं?</string>
+    <plurals name="offline_discard_message">
+        <item quantity="one">यह एंट्री आपके हेल्थ रिकॉर्ड में कभी सेव नहीं हुई और हटा दी जाएगी।</item>
+        <item quantity="other">ये %1$d एंट्री आपके हेल्थ रिकॉर्ड में कभी सेव नहीं हुईं और हटा दी जाएंगी।</item>
+    </plurals>
+    <string name="offline_pending_row">%1$s · सिंक बाकी</string>
+</resources>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_saved_toast">Saved on your phone. It will sync automatically when you\'re back online.</string>
+    <string name="offline_title">You\'re offline</string>
+    <string name="offline_showing_saved">Showing your last saved data</string>
+    <plurals name="offline_waiting">
+        <item quantity="one">%1$d entry will sync automatically</item>
+        <item quantity="other">%1$d entries will sync automatically</item>
+    </plurals>
+    <plurals name="offline_syncing">
+        <item quantity="one">Syncing %1$d entry…</item>
+        <item quantity="other">Syncing %1$d entries…</item>
+    </plurals>
+    <string name="offline_all_synced">All synced ✓</string>
+    <plurals name="offline_failed">
+        <item quantity="one">%1$d entry couldn\'t be saved</item>
+        <item quantity="other">%1$d entries couldn\'t be saved</item>
+    </plurals>
+    <string name="offline_failed_desc">The server didn\'t accept it. Try again, or discard it and log it again.</string>
+    <string name="offline_retry">Retry</string>
+    <string name="offline_discard">Discard</string>
+    <string name="offline_discard_title">Discard unsaved entries?</string>
+    <plurals name="offline_discard_message">
+        <item quantity="one">This entry was never saved to your health record and will be deleted.</item>
+        <item quantity="other">These %1$d entries were never saved to your health record and will be deleted.</item>
+    </plurals>
+    <string name="offline_pending_row">%1$s · Pending sync</string>
+</resources>
