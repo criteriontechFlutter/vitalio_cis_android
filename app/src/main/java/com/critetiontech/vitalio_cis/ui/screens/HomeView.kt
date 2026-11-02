@@ -439,6 +439,10 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
         // Renders nothing (not even spacing) when there are no appointments.
         AnimatedSection(delayMillis = 150) { HomeScreen(appointments = appointments, loading = loading) }
 
+        AnimatedSection(delayMillis = 175) { com.critetiontech.ctvitalio.ui.screens.DailyDietOverview() }
+
+        Spacer(Modifier.height(20.dp))
+
         AnimatedSection(delayMillis = 200) {
             Text(text = stringResource(R.string.home_primary_actions), style = AppTextStyles.style18BCB())
         }

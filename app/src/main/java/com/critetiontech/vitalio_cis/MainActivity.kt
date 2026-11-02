@@ -175,6 +175,21 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.INTERACTIONINSTRUCTION) { InteractionInstructionView(viewModel = interactionViewModel) }
                             composable(Routes.DIETCHECKLIST) { DietChecklistScreen() }
                             composable(Routes.NUTRIENTS) { com.critetiontech.ctvitalio.ui.screens.NutrientSearchScreen() }
+                            composable(Routes.DIET_BOX) { com.critetiontech.ctvitalio.ui.screens.DietBoxScreen() }
+                            composable(
+                                Routes.DIET_PLAN_BUILDER,
+                                arguments = listOf(navArgument("planId") { type = NavType.IntType; defaultValue = -1 }),
+                            ) { entry ->
+                                val planId = entry.arguments?.getInt("planId")?.takeIf { it > 0 }
+                                com.critetiontech.ctvitalio.ui.screens.DietPlanBuilderScreen(planId = planId)
+                            }
+                            composable(
+                                Routes.DIET_ADD_FOOD,
+                                arguments = listOf(navArgument("mealTimeId") { type = NavType.IntType }),
+                            ) { entry ->
+                                com.critetiontech.ctvitalio.ui.screens.DietAddFoodScreen(mealTimeId = entry.arguments?.getInt("mealTimeId") ?: 1)
+                            }
+                            composable(Routes.NUTRITION_ANALYTICS) { com.critetiontech.ctvitalio.ui.screens.NutritionAnalyticsScreen() }
                             composable(Routes.PRESCRIPTION) { PrescriptionScreen() }
                             composable(Routes.FLUIDDATAINPUT) { FluidDataInputScreen() }
                             composable(Routes.FLUIDOUTPUTHISTORY) { FluidOutputHistoryScreen() }

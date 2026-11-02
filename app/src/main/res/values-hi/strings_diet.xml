@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Diet checklist -->
+    <string name="diet_checklist_title">डाइट चेकलिस्ट</string>
+    <string name="diet_box">डाइट बॉक्स</string>
+    <string name="diet_today">आज</string>
+    <string name="diet_meal_morning">सुबह</string>
+    <string name="diet_meal_mid_morning">मध्य सुबह</string>
+    <string name="diet_meal_afternoon">दोपहर</string>
+    <string name="diet_meal_evening">शाम</string>
+    <string name="diet_meal_night">रात</string>
+    <string name="diet_food_outside_plan">प्लान के बाहर का भोजन</string>
+    <string name="diet_outside_plan_tag">प्लान के बाहर</string>
+    <string name="diet_nutrition_analytics">पोषण विश्लेषण</string>
+    <string name="diet_kcal_value">%1$s kcal</string>
+    <string name="diet_kcal_minus">-%1$s kcal</string>
+    <string name="diet_no_plan_title">अभी कोई डाइट प्लान नहीं</string>
+    <string name="diet_no_plan_msg">अपना प्लान बनाएं, या अपने डॉक्टर से प्लान असाइन करने को कहें।</string>
+    <string name="diet_nothing_planned">इस भोजन के लिए कुछ प्लान नहीं है</string>
+    <string name="diet_future_hint">आप आज से भोजन टिक कर सकते हैं</string>
+    <string name="diet_remove">हटाएं</string>
+
+    <!-- Add food -->
+    <string name="diet_add_food">भोजन जोड़ें</string>
+    <string name="diet_search_hint">भोजन खोजें, जैसे अंडा, ओट्स</string>
+    <string name="diet_trending">ट्रेंडिंग खोजें</string>
+    <string name="diet_popular_today">आज लोकप्रिय</string>
+    <string name="diet_recent">हाल ही में खोजा गया</string>
+    <string name="diet_view_all">सभी देखें</string>
+    <string name="diet_show_less">कम दिखाएं</string>
+    <string name="diet_filter_all">सभी (%1$d)</string>
+    <string name="diet_filter_high_protein">हाई प्रोटीन</string>
+    <string name="diet_filter_low_cal">कम कैलोरी</string>
+    <string name="diet_found_items">\"%2$s\" से मेल खाते %1$d आइटम मिले</string>
+    <string name="diet_sort_popularity">लोकप्रियता</string>
+    <string name="diet_sort_calories">कैलोरी</string>
+    <string name="diet_sort_protein">प्रोटीन</string>
+    <string name="diet_protein_g">%1$sg प्रोटीन</string>
+    <string name="diet_fat_g">%1$sg फैट</string>
+    <string name="diet_carbs_g">%1$sg कार्ब्स</string>
+    <string name="diet_no_results">\"%1$s\" के लिए कोई भोजन नहीं मिला</string>
+    <string name="diet_search_empty">किसी भी भोजन की कैलोरी देखने के लिए खोजें</string>
+    <string name="diet_retry">फिर से कोशिश करें</string>
+
+    <!-- Nutrition facts -->
+    <string name="diet_nutrition_facts">पोषण तथ्य</string>
+    <string name="diet_current">वर्तमान:</string>
+    <string name="diet_serving_unit">सर्विंग यूनिट</string>
+    <string name="diet_quantity">मात्रा</string>
+    <string name="diet_quantity_hint">कुल हिस्सा बदलें</string>
+    <string name="diet_energy_value">ऊर्जा मान</string>
+    <string name="diet_pct_daily">दैनिक का %1$d%%</string>
+    <string name="diet_based_on">%1$s kcal के आधार पर</string>
+    <string name="diet_macronutrients">मैक्रोन्यूट्रिएंट्स</string>
+    <string name="diet_total_g">कुल: %1$sg</string>
+    <string name="diet_carbs">कार्ब्स</string>
+    <string name="diet_protein">प्रोटीन</string>
+    <string name="diet_fat">फैट</string>
+    <string name="diet_pct_kcal">%1$d%% kcal</string>
+    <string name="diet_all_nutrients">सभी पोषक तत्व</string>
+    <string name="diet_per_serving">प्रति सर्विंग</string>
+    <string name="diet_fiber">फाइबर</string>
+    <string name="diet_sugar">शुगर</string>
+    <string name="diet_sodium">सोडियम</string>
+    <string name="diet_add_to_meal">%1$s डाइट में जोड़ें</string>
+
+    <!-- Plan builder -->
+    <string name="diet_scheduled">निर्धारित</string>
+    <string name="diet_required">आवश्यक</string>
+    <string name="diet_kcal_day">kcal/दिन</string>
+    <string name="diet_cancel">रद्द करें</string>
+    <string name="diet_save">सेव करें</string>
+    <string name="diet_save_plan">प्लान सेव करें</string>
+    <string name="diet_rename_plan">प्लान का नाम</string>
+    <string name="diet_required_title">दैनिक कैलोरी लक्ष्य</string>
+    <string name="diet_required_msg">इस डाइट से रोज़ कितनी kcal मिलनी चाहिए।</string>
+    <string name="diet_plan_created">प्लान सफलतापूर्वक बना!</string>
+    <string name="diet_plan_saved_msg">\"%1$s\" आपके डाइट प्लान में सेव हो गया है।</string>
+    <string name="diet_days_planned">प्लान किए दिन</string>
+    <string name="diet_meal_count">भोजन</string>
+    <string name="diet_kcal_per_day">Kcal / दिन</string>
+    <string name="diet_mark_active">सक्रिय करें</string>
+    <string name="diet_later">बाद में</string>
+    <string name="diet_save_failed">प्लान सेव नहीं हो सका</string>
+    <string name="diet_add_some_food">प्लान सेव करने के लिए कम से कम एक भोजन जोड़ें</string>
+
+    <!-- Diet box -->
+    <string name="diet_my_box">मेरा डाइट बॉक्स</string>
+    <string name="diet_active">सक्रिय</string>
+    <string name="diet_created_by_self">द्वारा बनाया- स्वयं</string>
+    <string name="diet_assigned">असाइन किया गया प्लान</string>
+    <string name="diet_create_plan">अपना प्लान बनाएं</string>
+    <string name="diet_set_active">सक्रिय करें</string>
+    <string name="diet_active_plan">सक्रिय प्लान</string>
+
+    <!-- Analytics / overview -->
+    <string name="diet_daily_overview">दैनिक डाइट सारांश</string>
+    <string name="diet_total_energy">कुल ऊर्जा सेवन</string>
+    <string name="diet_kcal_left">%1$s Kcal बाकी</string>
+    <string name="diet_kcal_over">%1$s Kcal ज़्यादा</string>
+    <string name="diet_kcal_consumed">किलोकैलोरी ली गई (%1$d%%)</string>
+    <string name="diet_planned">प्लान</string>
+    <string name="diet_remaining">बाकी</string>
+    <string name="diet_goal">लक्ष्य</string>
+    <string name="diet_kcal_cap">%1$s Kcal</string>
+    <string name="diet_weekly_trend">साप्ताहिक सेवन ट्रेंड</string>
+    <string name="diet_weekly_avg">औसत %1$s Kcal/दिन • %2$d%% पालन</string>
+    <string name="diet_target">लक्ष्य: %1$s</string>
+    <string name="diet_macro_split">मैक्रोन्यूट्रिएंट्स विभाजन</string>
+    <string name="diet_budget">%1$s बजट</string>
+    <string name="diet_consistency_title">शानदार निरंतरता!</string>
+    <string name="diet_keep_going_title">जारी रखें!</string>
+    <string name="diet_protein_days_msg">इस हफ़्ते आपने 7 में से %1$d दिन प्रोटीन लक्ष्य पूरा किया।</string>
+    <string name="diet_meals_breakdown">भोजन विवरण</string>
+    <string name="diet_logged">%1$d दर्ज</string>
+    <string name="diet_breakfast">नाश्ता</string>
+    <string name="diet_lunch">दोपहर का भोजन</string>
+    <string name="diet_dinner">रात का भोजन</string>
+    <string name="diet_snacks">स्नैक्स और पेय</string>
+    <string name="diet_nothing_logged">अभी कुछ दर्ज नहीं</string>
+    <string name="diet_micros">माइक्रोन्यूट्रिएंट्स और हाइड्रेशन</string>
+    <string name="diet_score">स्कोर</string>
+    <string name="diet_dietary_fiber">डाइटरी फाइबर</string>
+    <string name="diet_hydration">हाइड्रेशन</string>
+    <string name="diet_added_sugar">अतिरिक्त शुगर</string>
+    <string name="diet_within_limit">सीमा में</string>
+    <string name="diet_over_limit">सीमा से ज़्यादा</string>
+    <string name="diet_optimal">उपयुक्त</string>
+    <string name="diet_high">ज़्यादा</string>
+    <string name="diet_week_label">सप्ताह %1$d • %2$s</string>
+</resources>

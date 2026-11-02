@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Afternoon: full sun over haze lines. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp" android:height="44dp"
+    android:viewportWidth="56" android:viewportHeight="44">
+    <path android:strokeColor="#FFB020" android:strokeWidth="2" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M28,2v4M12,18h4M40,18h4M16.7,6.7l2.8,2.8M39.3,6.7l-2.8,2.8"/>
+    <path android:fillColor="#FFB020" android:pathData="M28,20m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0"/>
+    <path android:fillColor="#FFD166" android:pathData="M28,20m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0"/>
+    <path android:fillColor="#E3E8F7" android:pathData="M8,29h40a2,2 0,0 1,0 4H8a2,2 0,0 1,0 -4z"/>
+    <path android:fillColor="#C9D2EE" android:pathData="M14,36h28a2,2 0,0 1,0 4H14a2,2 0,0 1,0 -4z"/>
+</vector>

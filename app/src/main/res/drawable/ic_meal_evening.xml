@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Evening: sun setting into blue horizon lines. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp" android:height="44dp"
+    android:viewportWidth="56" android:viewportHeight="44">
+    <path android:strokeColor="#FFB020" android:strokeWidth="2" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M28,4v4M10,22h4M42,22h4M15.3,9.3l2.8,2.8M40.7,9.3l-2.8,2.8"/>
+    <path android:fillColor="#FFB020" android:pathData="M16,26a12,12 0,0 1,24 0z"/>
+    <path android:fillColor="#FFD166" android:pathData="M21,26a7,7 0,0 1,14 0z"/>
+    <path android:fillColor="#5AA9F5" android:pathData="M6,28h44a2,2 0,0 1,0 4H6a2,2 0,0 1,0 -4z"/>
+    <path android:fillColor="#8EC5FA" android:pathData="M12,34h30a2,2 0,0 1,0 4H12a2,2 0,0 1,0 -4z"/>
+    <path android:fillColor="#BFDDFC" android:pathData="M18,40h18a1.5,1.5 0,0 1,0 3H18a1.5,1.5 0,0 1,0 -3z"/>
+</vector>

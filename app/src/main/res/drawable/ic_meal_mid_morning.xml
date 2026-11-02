@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mid morning: sun with a small cloud in front. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp" android:height="44dp"
+    android:viewportWidth="56" android:viewportHeight="44">
+    <path android:strokeColor="#FFB020" android:strokeWidth="2" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M32,4v4M32,36v4M14,22h4M46,22h4M19.3,9.3l2.8,2.8M41.9,31.9l2.8,2.8M44.7,9.3l-2.8,2.8"/>
+    <path android:fillColor="#FFB020" android:pathData="M32,22m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"/>
+    <path android:fillColor="#FFD166" android:pathData="M32,22m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"/>
+    <path android:fillColor="#E3E8F7" android:pathData="M10,40h22a6,6 0,0 0,0 -12a8,8 0,0 0,-15 1a6,6 0,0 0,-7 11z"/>
+    <path android:fillColor="#C9D2EE" android:pathData="M10,40h22a6,6 0,0 0,5.5 -3.6H4.6A6,6 0,0 0,10 40z"/>
+</vector>

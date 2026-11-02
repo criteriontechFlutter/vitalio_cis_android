@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Diet checklist -->
+    <string name="diet_checklist_title">Diet Checklist</string>
+    <string name="diet_box">Diet Box</string>
+    <string name="diet_today">Today</string>
+    <string name="diet_meal_morning">Morning</string>
+    <string name="diet_meal_mid_morning">Mid Morning</string>
+    <string name="diet_meal_afternoon">Afternoon</string>
+    <string name="diet_meal_evening">Evening</string>
+    <string name="diet_meal_night">Night</string>
+    <string name="diet_food_outside_plan">Food Outside Plan</string>
+    <string name="diet_outside_plan_tag">Outside plan</string>
+    <string name="diet_nutrition_analytics">Nutrition Analytics</string>
+    <string name="diet_kcal_value">%1$s kcal</string>
+    <string name="diet_kcal_minus">-%1$s kcal</string>
+    <string name="diet_no_plan_title">No diet plan yet</string>
+    <string name="diet_no_plan_msg">Create your own plan, or ask your doctor to assign one.</string>
+    <string name="diet_nothing_planned">Nothing planned for this meal</string>
+    <string name="diet_future_hint">You can tick foods from today onwards</string>
+    <string name="diet_remove">Remove</string>
+
+    <!-- Add food -->
+    <string name="diet_add_food">Add Food</string>
+    <string name="diet_search_hint">Search food, e.g. Egg, Oats</string>
+    <string name="diet_trending">Trending searches</string>
+    <string name="diet_popular_today">Popular today</string>
+    <string name="diet_recent">Recent searched</string>
+    <string name="diet_view_all">View All</string>
+    <string name="diet_show_less">Show less</string>
+    <string name="diet_filter_all">All (%1$d)</string>
+    <string name="diet_filter_high_protein">High Protein</string>
+    <string name="diet_filter_low_cal">Low Calorie</string>
+    <string name="diet_found_items">Found %1$d items matching \"%2$s\"</string>
+    <string name="diet_sort_popularity">Popularity</string>
+    <string name="diet_sort_calories">Calories</string>
+    <string name="diet_sort_protein">Protein</string>
+    <string name="diet_protein_g">%1$sg Protein</string>
+    <string name="diet_fat_g">%1$sg Fat</string>
+    <string name="diet_carbs_g">%1$sg Carbs</string>
+    <string name="diet_no_results">No food found for \"%1$s\"</string>
+    <string name="diet_search_empty">Search for any food to see its calories</string>
+    <string name="diet_retry">Retry</string>
+
+    <!-- Nutrition facts -->
+    <string name="diet_nutrition_facts">Nutrition Facts</string>
+    <string name="diet_current">Current:</string>
+    <string name="diet_serving_unit">Serving Unit</string>
+    <string name="diet_quantity">Quantity</string>
+    <string name="diet_quantity_hint">Adjust total portion fraction</string>
+    <string name="diet_energy_value">ENERGY VALUE</string>
+    <string name="diet_pct_daily">%1$d%% of Daily</string>
+    <string name="diet_based_on">Based on %1$s kcal</string>
+    <string name="diet_macronutrients">Macronutrients</string>
+    <string name="diet_total_g">Total: %1$sg</string>
+    <string name="diet_carbs">Carbs</string>
+    <string name="diet_protein">Protein</string>
+    <string name="diet_fat">Fat</string>
+    <string name="diet_pct_kcal">%1$d%% kcal</string>
+    <string name="diet_all_nutrients">All nutrients</string>
+    <string name="diet_per_serving">Per serving</string>
+    <string name="diet_fiber">Fiber</string>
+    <string name="diet_sugar">Sugar</string>
+    <string name="diet_sodium">Sodium</string>
+    <string name="diet_add_to_meal">Add to %1$s Diet</string>
+
+    <!-- Plan builder -->
+    <string name="diet_scheduled">Scheduled</string>
+    <string name="diet_required">Required</string>
+    <string name="diet_kcal_day">kcal/day</string>
+    <string name="diet_cancel">Cancel</string>
+    <string name="diet_save">Save</string>
+    <string name="diet_save_plan">Save Plan</string>
+    <string name="diet_rename_plan">Plan name</string>
+    <string name="diet_required_title">Daily calorie goal</string>
+    <string name="diet_required_msg">How many kcal a day this diet should give.</string>
+    <string name="diet_plan_created">Plan Created Successfully!</string>
+    <string name="diet_plan_saved_msg">\"%1$s\" has been saved to your diet plans.</string>
+    <string name="diet_days_planned">Days planned</string>
+    <string name="diet_meal_count">Meal</string>
+    <string name="diet_kcal_per_day">Kcal / day</string>
+    <string name="diet_mark_active">Mark as Active</string>
+    <string name="diet_later">Later</string>
+    <string name="diet_save_failed">Couldn\'t save the plan</string>
+    <string name="diet_add_some_food">Add at least one food to save the plan</string>
+
+    <!-- Diet box -->
+    <string name="diet_my_box">My Diet Box</string>
+    <string name="diet_active">Active</string>
+    <string name="diet_created_by_self">Created by- Self</string>
+    <string name="diet_assigned">Assigned plan</string>
+    <string name="diet_create_plan">Create your own plan</string>
+    <string name="diet_set_active">Set as Active</string>
+    <string name="diet_active_plan">Active plan</string>
+
+    <!-- Analytics / overview -->
+    <string name="diet_daily_overview">Daily Diet Overview</string>
+    <string name="diet_total_energy">Total Energy Intake</string>
+    <string name="diet_kcal_left">%1$s Kcal left</string>
+    <string name="diet_kcal_over">%1$s Kcal over</string>
+    <string name="diet_kcal_consumed">Kilocalories consumed (%1$d%%)</string>
+    <string name="diet_planned">Planned</string>
+    <string name="diet_remaining">Remaining</string>
+    <string name="diet_goal">Goal</string>
+    <string name="diet_kcal_cap">%1$s Kcal</string>
+    <string name="diet_weekly_trend">Weekly Intake Trend</string>
+    <string name="diet_weekly_avg">Avg %1$s Kcal/day • %2$d%% adherence</string>
+    <string name="diet_target">Target: %1$s</string>
+    <string name="diet_macro_split">Macronutrients Split</string>
+    <string name="diet_budget">%1$s Budget</string>
+    <string name="diet_consistency_title">Great consistency!</string>
+    <string name="diet_keep_going_title">Keep going!</string>
+    <string name="diet_protein_days_msg">You\'ve hit your daily protein goal %1$d out of 7 days this week.</string>
+    <string name="diet_meals_breakdown">Meals Breakdown</string>
+    <string name="diet_logged">%1$d Logged</string>
+    <string name="diet_breakfast">Breakfast</string>
+    <string name="diet_lunch">Lunch</string>
+    <string name="diet_dinner">Dinner</string>
+    <string name="diet_snacks">Snacks &amp; Sips</string>
+    <string name="diet_nothing_logged">Nothing logged yet</string>
+    <string name="diet_micros">Micronutrients &amp; Hydration</string>
+    <string name="diet_score">Score</string>
+    <string name="diet_dietary_fiber">Dietary Fiber</string>
+    <string name="diet_hydration">Hydration</string>
+    <string name="diet_added_sugar">Added Sugar</string>
+    <string name="diet_within_limit">Within limit</string>
+    <string name="diet_over_limit">Over limit</string>
+    <string name="diet_optimal">Optimal</string>
+    <string name="diet_high">High</string>
+    <string name="diet_week_label">Week %1$d • %2$s</string>
+</resources>

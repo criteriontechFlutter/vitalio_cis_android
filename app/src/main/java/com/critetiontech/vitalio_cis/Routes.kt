@@ -35,6 +35,13 @@ object Routes {
     const val INTERACTIONINSTRUCTION = "InteractionInstructionScreen"
     const val DIETCHECKLIST  = "DietChecklistScreen"
     const val NUTRIENTS = "NutrientSearchScreen"
+    const val DIET_BOX = "DietBoxScreen"
+    const val DIET_PLAN_BUILDER = "DietPlanBuilderScreen?planId={planId}"
+    const val DIET_ADD_FOOD = "DietAddFoodScreen/{mealTimeId}"
+    const val NUTRITION_ANALYTICS = "NutritionAnalyticsScreen"
+
+    fun dietPlanBuilder(planId: Int? = null) = if (planId == null) "DietPlanBuilderScreen" else "DietPlanBuilderScreen?planId=$planId"
+    fun dietAddFood(mealTimeId: Int) = "DietAddFoodScreen/$mealTimeId"
     const val PRESCRIPTION  = "PrescriptionScreen"
     const val FLUIDDATAINPUT  = "FluidDataInputScreen"
     const val FLUIDOUTPUTHISTORY  = "FluidOutputHistoryScreen"

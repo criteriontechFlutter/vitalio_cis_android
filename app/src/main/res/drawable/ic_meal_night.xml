@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Night: crescent moon and stars behind a cloud. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp" android:height="44dp"
+    android:viewportWidth="56" android:viewportHeight="44">
+    <path android:fillColor="#FFC83D" android:pathData="M32,4a13,13 0,1 0,12 18a10,10 0,1 1,-12 -18z"/>
+    <path android:fillColor="#FFC83D" android:pathData="M12,8l1,2.2 2.2,1 -2.2,1 -1,2.2 -1,-2.2 -2.2,-1 2.2,-1z"/>
+    <path android:fillColor="#FFC83D" android:pathData="M48,4l0.8,1.7 1.7,0.8 -1.7,0.8 -0.8,1.7 -0.8,-1.7 -1.7,-0.8 1.7,-0.8z"/>
+    <path android:fillColor="#5B6FB5" android:pathData="M12,42h32a7,7 0,0 0,0 -14a9,9 0,0 0,-17 -2a7,7 0,0 0,-15 4a6,6 0,0 0,0 12z"/>
+    <path android:fillColor="#4A5C9E" android:pathData="M12,42h32a7,7 0,0 0,6.5 -4.5H5.5A6,6 0,0 0,12 42z"/>
+</vector>
