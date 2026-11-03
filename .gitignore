@@ -21,3 +21,6 @@ local.properties
 *.keystore
 /app/release/
 /wear/build/
+
+# Firebase functions
+firebase/functions/node_modules/

@@ -183,6 +183,9 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-crashlytics:20.1.1")
     implementation("com.google.firebase:firebase-analytics:23.2.0")
+    // Feature switches: read from Remote Config; the admin page writes them to Firestore
+    implementation("com.google.firebase:firebase-config")
+    implementation("com.google.firebase:firebase-firestore")
 
     // Android Health Connect — pulls data from Wear OS / Samsung Health / Google Fit
     implementation(libs.androidx.connect.client)

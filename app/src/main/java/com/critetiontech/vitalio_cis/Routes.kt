@@ -73,5 +73,6 @@ object Routes {
     const val BREATHING_THERAPY = "BreathingTherapyScreen"
     const val EDITPROFILE = "EditProfileScreen"
     const val MEDICINE_REMINDER_SETTINGS = "MedicineReminderSettingsScreen"
+    const val FEATURE_FLAGS_ADMIN = "FeatureFlagsAdminScreen"
 
 }

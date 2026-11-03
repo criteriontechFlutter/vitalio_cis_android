@@ -220,6 +220,7 @@ fun DrawerScreen() {
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     SettingsCard()
+                    AdminFeatureFlagsCard()
                     Spacer(modifier = Modifier.height(12.dp))
                     MenuCard(
                         listOf(
@@ -286,6 +287,7 @@ fun DrawerScreen() {
 //            )
             Spacer(modifier = Modifier.height(12.dp))
             SettingsCard()
+            AdminFeatureFlagsCard()
 
             Spacer(modifier = Modifier.height(12.dp))
             MenuCard(
@@ -854,13 +856,52 @@ fun MedicalProfileCard(
 @Composable
 fun MenuCard(items: List<Pair<String, String>>) {
 
+    // Rows for modules switched off through Remote Config are left out
+    val flags = com.critetiontech.ctvitalio.config.rememberFeatureFlags()
+    val visible = items.filter { menuFeature(it.first)?.let { f -> flags[f] != false } ?: true }
+    if (visible.isEmpty()) return
+
     DrawerCard {
-        items.forEachIndexed { index, item ->
+        visible.forEachIndexed { index, item ->
             if (index > 0) DrawerDivider()
             MenuRow(
                 title = item.first,
                 count = item.second
             )
+        }
+    }
+}
+
+/** The Remote Config feature behind a drawer menu identifier; null for rows that are always shown. */
+private fun menuFeature(title: String): com.critetiontech.ctvitalio.config.AppFeature? = when (title) {
+    "Allergies" -> com.critetiontech.ctvitalio.config.AppFeature.ALLERGIES
+    "Appointments" -> com.critetiontech.ctvitalio.config.AppFeature.APPOINTMENTS
+    "Prescriptions" -> com.critetiontech.ctvitalio.config.AppFeature.PRESCRIPTIONS
+    "Reports" -> com.critetiontech.ctvitalio.config.AppFeature.LAB_REPORTS
+    "Family Health History" -> com.critetiontech.ctvitalio.config.AppFeature.FAMILY_HEALTH_HISTORY
+    "Emergency Contacts" -> com.critetiontech.ctvitalio.config.AppFeature.EMERGENCY_CONTACTS
+    "Share Health Records" -> com.critetiontech.ctvitalio.config.AppFeature.SHARE_HEALTH_RECORDS
+    "FAQ" -> com.critetiontech.ctvitalio.config.AppFeature.FAQ
+    "Feedback" -> com.critetiontech.ctvitalio.config.AppFeature.FEEDBACK
+    else -> null
+}
+
+/** Entry to the Feature Flags admin page; renders nothing for anyone but the admin login. */
+@Composable
+fun AdminFeatureFlagsCard() {
+    val context = LocalContext.current
+    val navController = LocalNavController.current
+    val isAdmin = remember { com.critetiontech.ctvitalio.config.FeatureAdmin.isAdmin(PrefsManager(context).getPatient()) }
+    if (!isAdmin) return
+
+    Spacer(modifier = Modifier.height(12.dp))
+    DrawerCard {
+        DrawerRow(
+            icon = Icons.Default.Settings,
+            title = stringResource(R.string.ff_menu),
+            onClick = { navController.navigate(Routes.FEATURE_FLAGS_ADMIN) },
+        ) {
+            DrawerChevron()
         }
     }
 }

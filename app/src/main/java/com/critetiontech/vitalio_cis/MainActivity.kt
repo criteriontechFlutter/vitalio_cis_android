@@ -18,6 +18,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.critetiontech.ctvitalio.ui.screens.LoginScreen
+import com.critetiontech.ctvitalio.config.AppFeature
+import com.critetiontech.ctvitalio.ui.screens.FeatureGate
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.ui.screens.AddActivityScreen
 import com.critetiontech.ctvitalio.ui.screens.ActivityHistoryScreen
@@ -169,31 +171,31 @@ class MainActivity : ComponentActivity() {
                         ) {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
                             composable(Routes.LOGIN) { LoginScreen() }
-                            composable(Routes.MANAGEMEDICAIONS) { ManageMedicationsPreview() }
-                            composable(Routes.ADDMEDICINEREMINDER) { AddMedicineReminderScreen() }
-                            composable(Routes.INTERACTIONCHECKER) { InteractionCheckerScreen(viewModel = interactionViewModel) }
-                            composable(Routes.INTERACTIONINSTRUCTION) { InteractionInstructionView(viewModel = interactionViewModel) }
-                            composable(Routes.DIETCHECKLIST) { DietChecklistScreen() }
-                            composable(Routes.NUTRIENTS) { com.critetiontech.ctvitalio.ui.screens.NutrientSearchScreen() }
-                            composable(Routes.DIET_BOX) { com.critetiontech.ctvitalio.ui.screens.DietBoxScreen() }
+                            composable(Routes.MANAGEMEDICAIONS) { FeatureGate(AppFeature.MEDICINE) { ManageMedicationsPreview() } }
+                            composable(Routes.ADDMEDICINEREMINDER) { FeatureGate(AppFeature.MEDICINE) { AddMedicineReminderScreen() } }
+                            composable(Routes.INTERACTIONCHECKER) { FeatureGate(AppFeature.INTERACTION_CHECKER) { InteractionCheckerScreen(viewModel = interactionViewModel) } }
+                            composable(Routes.INTERACTIONINSTRUCTION) { FeatureGate(AppFeature.INTERACTION_CHECKER) { InteractionInstructionView(viewModel = interactionViewModel) } }
+                            composable(Routes.DIETCHECKLIST) { FeatureGate(AppFeature.DIET) { DietChecklistScreen() } }
+                            composable(Routes.NUTRIENTS) { FeatureGate(AppFeature.DIET) { com.critetiontech.ctvitalio.ui.screens.NutrientSearchScreen() } }
+                            composable(Routes.DIET_BOX) { FeatureGate(AppFeature.DIET) { com.critetiontech.ctvitalio.ui.screens.DietBoxScreen() } }
                             composable(
                                 Routes.DIET_PLAN_BUILDER,
                                 arguments = listOf(navArgument("planId") { type = NavType.IntType; defaultValue = -1 }),
                             ) { entry ->
                                 val planId = entry.arguments?.getInt("planId")?.takeIf { it > 0 }
-                                com.critetiontech.ctvitalio.ui.screens.DietPlanBuilderScreen(planId = planId)
+                                FeatureGate(AppFeature.DIET) { com.critetiontech.ctvitalio.ui.screens.DietPlanBuilderScreen(planId = planId) }
                             }
                             composable(
                                 Routes.DIET_ADD_FOOD,
                                 arguments = listOf(navArgument("mealTimeId") { type = NavType.IntType }),
                             ) { entry ->
-                                com.critetiontech.ctvitalio.ui.screens.DietAddFoodScreen(mealTimeId = entry.arguments?.getInt("mealTimeId") ?: 1)
+                                FeatureGate(AppFeature.DIET) { com.critetiontech.ctvitalio.ui.screens.DietAddFoodScreen(mealTimeId = entry.arguments?.getInt("mealTimeId") ?: 1) }
                             }
-                            composable(Routes.NUTRITION_ANALYTICS) { com.critetiontech.ctvitalio.ui.screens.NutritionAnalyticsScreen() }
-                            composable(Routes.PRESCRIPTION) { PrescriptionScreen() }
-                            composable(Routes.FLUIDDATAINPUT) { FluidDataInputScreen() }
-                            composable(Routes.FLUIDOUTPUTHISTORY) { FluidOutputHistoryScreen() }
-                            composable(Routes.FLUIDINPUTHISTORY) { FluidInputHistoryScreen() }
+                            composable(Routes.NUTRITION_ANALYTICS) { FeatureGate(AppFeature.DIET) { com.critetiontech.ctvitalio.ui.screens.NutritionAnalyticsScreen() } }
+                            composable(Routes.PRESCRIPTION) { FeatureGate(AppFeature.PRESCRIPTIONS) { PrescriptionScreen() } }
+                            composable(Routes.FLUIDDATAINPUT) { FeatureGate(AppFeature.FLUID) { FluidDataInputScreen() } }
+                            composable(Routes.FLUIDOUTPUTHISTORY) { FeatureGate(AppFeature.FLUID) { FluidOutputHistoryScreen() } }
+                            composable(Routes.FLUIDINPUTHISTORY) { FeatureGate(AppFeature.FLUID) { FluidInputHistoryScreen() } }
                             composable(
                                 route = "${Routes.VITALHISTORY}?vitalIds={vitalIds}&vitalName={vitalName}&unit={unit}",
                                 arguments = listOf(
@@ -205,34 +207,34 @@ class MainActivity : ComponentActivity() {
                                 val vitalIds = backStackEntry.arguments?.getString("vitalIds") ?: ""
                                 val vitalName = backStackEntry.arguments?.getString("vitalName") ?: "Vital"
                                 val unit = backStackEntry.arguments?.getString("unit") ?: ""
-                                VitalHistoryScreen(vitalIds = vitalIds, vitalName = vitalName, unit = unit)
+                                FeatureGate(AppFeature.VITALS) { VitalHistoryScreen(vitalIds = vitalIds, vitalName = vitalName, unit = unit) }
                             }
                             composable(
                                 Routes.ADDLABRESULTS
                             ) {
 
-                                AddLabResultsScreen(
+                                FeatureGate(AppFeature.LAB_REPORTS) { AddLabResultsScreen(
 
                                     viewModel =
                                         uploadReportViewModel
-                                )
+                                ) }
                             }
 
                             composable(
                                 Routes.AIREPORT
                             ) {
 
-                                AiReportScreen(
+                                FeatureGate(AppFeature.LAB_REPORTS) { AiReportScreen(
 
                                     viewModel =
                                         uploadReportViewModel
-                                )
+                                ) }
                             }
                             composable(Routes.UPLOADPRESCRIPTION) {
-                                UploadPrescriptionScreen(viewModel = uploadPrescriptionViewModel)
+                                FeatureGate(AppFeature.PRESCRIPTIONS) { UploadPrescriptionScreen(viewModel = uploadPrescriptionViewModel) }
                             }
                             composable(Routes.PRESCRIPTIONANALYSIS) {
-                                PrescriptionAnalysisScreen(viewModel = uploadPrescriptionViewModel)
+                                FeatureGate(AppFeature.PRESCRIPTIONS) { PrescriptionAnalysisScreen(viewModel = uploadPrescriptionViewModel) }
                             }
                             composable(
                                 route = Routes.CONNECTION + "/{vitalName}/{unitName}"
@@ -252,17 +254,17 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Routes.ARTICALEDETAILS) { ArticleDetailScreen() }
                             composable(Routes.MYOBSERVERS) { MyObserversScreen() }
-                            composable(Routes.FAMILYHEALTH) { FamilyHealthScreen() }
-                            composable(Routes.ADDACTIVITY) { AddActivityScreen() }
-                            composable(Routes.ACTIVITYHISTORY) { ActivityHistoryScreen() }
+                            composable(Routes.FAMILYHEALTH) { FeatureGate(AppFeature.FAMILY_HEALTH_HISTORY) { FamilyHealthScreen() } }
+                            composable(Routes.ADDACTIVITY) { FeatureGate(AppFeature.ACTIVITY) { AddActivityScreen() } }
+                            composable(Routes.ACTIVITYHISTORY) { FeatureGate(AppFeature.ACTIVITY) { ActivityHistoryScreen() } }
                             composable(Routes.REMINDERS) { RemindersScreen() }
-                            composable(Routes.EMERGENCYCONTACTS) { EmergencyContactsScreen() }
-                            composable(Routes.HEALTHSHARE) { HealthShareScreen() }
+                            composable(Routes.EMERGENCYCONTACTS) { FeatureGate(AppFeature.EMERGENCY_CONTACTS) { EmergencyContactsScreen() } }
+                            composable(Routes.HEALTHSHARE) { FeatureGate(AppFeature.SHARE_HEALTH_RECORDS) { HealthShareScreen() } }
                             composable(Routes.CONNECTWATCH) { ConnectWatchScreen() }
                             composable(Routes.SHAREDACCOUNT) { SharedAccountScreen() }
                             composable(Routes.ADDMEMBER) { AddMemberScreen() }
-                            composable(Routes.FAQ) { FAQScreen() }
-                            composable(Routes.FEEDBACK) { FeedbackScreen() }
+                            composable(Routes.FAQ) { FeatureGate(AppFeature.FAQ) { FAQScreen() } }
+                            composable(Routes.FEEDBACK) { FeatureGate(AppFeature.FEEDBACK) { FeedbackScreen() } }
                             composable(
                                 Routes.OTP,
                                 arguments = listOf(navArgument("mobile") { type = NavType.StringType })
@@ -270,7 +272,7 @@ class MainActivity : ComponentActivity() {
                                 val mobile = backStackEntry.arguments?.getString("mobile") ?: ""
                                 OtpScreen(mobile = mobile)
                             }
-                            composable(Routes.SELECTCLINIC) { SelectClinicScreen() }
+                            composable(Routes.SELECTCLINIC) { FeatureGate(AppFeature.APPOINTMENTS) { SelectClinicScreen() } }
                             composable(Routes.MEDICALPROFILE) { MedicalProfileScreen() }
                             composable(Routes.BOOKINGDETAILS+"/{bookingDetails}",
                                 arguments = listOf(
@@ -281,8 +283,8 @@ class MainActivity : ComponentActivity() {
                                 val bookingDetails =
                                     Gson().fromJson(json, BookingDetails::class.java)
 
-                                BookingDetailsScreen(
-                                    bookingDetails =bookingDetails) }
+                                FeatureGate(AppFeature.APPOINTMENTS) { BookingDetailsScreen(
+                                    bookingDetails =bookingDetails) } }
 
                             composable(Routes.BOOKINGCONFERMATION+"/{bookingDetails}",
 
@@ -296,10 +298,10 @@ class MainActivity : ComponentActivity() {
                                 val bookingDetails =
                                     Gson().fromJson(json, BookingDetails::class.java)
 
-                                BookingConfirmationScreen(
+                                FeatureGate(AppFeature.APPOINTMENTS) { BookingConfirmationScreen(
                                 bookingDetails =bookingDetails
 
-                            )
+                            ) }
                             }
                             composable(Routes.DOCTORDETAILS+"/{doctorId}/{days}",
                                 arguments = listOf(
@@ -310,24 +312,24 @@ class MainActivity : ComponentActivity() {
 
                                 val doctorId = backStackEntry.arguments?.getString("doctorId") ?: ""
                                 val days = backStackEntry.arguments?.getString("days") ?: ""
-                                DoctorDetailsScreen(
+                                FeatureGate(AppFeature.APPOINTMENTS) { DoctorDetailsScreen(
                                     doctorId = doctorId,
                                     days = days,
-                                 )}
+                                 ) } }
 
 
-                            composable(Routes.ALLERGIESSCREEN) { AllergiesScreen() }
-                            composable(Routes.VITALS) { VitalsScreen() }
-                            composable(Routes.SYMPTOMSTRACKER) { SymptomTrackerScreen() }
-                            composable(Routes.APPOINTMENTS) { FindDoctorsTopSection() }
-                            composable(Routes.SYMPTOMS) { SymptomsView() }
-                            composable(Routes.SYMPTOMSHISTORY) { SymptomHistoryScreen() }
-                            composable(Routes.MANAGE_MEDICINE) { ManageMedicationsScreen() }
-                            composable(Routes.MEDICINE) { MedicineReminderScreen() }
+                            composable(Routes.ALLERGIESSCREEN) { FeatureGate(AppFeature.ALLERGIES) { AllergiesScreen() } }
+                            composable(Routes.VITALS) { FeatureGate(AppFeature.VITALS) { VitalsScreen() } }
+                            composable(Routes.SYMPTOMSTRACKER) { FeatureGate(AppFeature.SYMPTOMS) { SymptomTrackerScreen() } }
+                            composable(Routes.APPOINTMENTS) { FeatureGate(AppFeature.APPOINTMENTS) { FindDoctorsTopSection() } }
+                            composable(Routes.SYMPTOMS) { FeatureGate(AppFeature.SYMPTOMS) { SymptomsView() } }
+                            composable(Routes.SYMPTOMSHISTORY) { FeatureGate(AppFeature.SYMPTOMS) { SymptomHistoryScreen() } }
+                            composable(Routes.MANAGE_MEDICINE) { FeatureGate(AppFeature.MEDICINE) { ManageMedicationsScreen() } }
+                            composable(Routes.MEDICINE) { FeatureGate(AppFeature.MEDICINE) { MedicineReminderScreen() } }
                             composable(Routes.DRAWER) { DrawerScreen() }
                             composable(Routes.PERSONALIFSCREEN) { PersonalInfoScreen() }
-                            composable(Routes.LABREPORTS) { LabReportsScreen() }
-                            composable(Routes.FINDDOCTOR) { PreviewFindDoctors() }
+                            composable(Routes.LABREPORTS) { FeatureGate(AppFeature.LAB_REPORTS) { LabReportsScreen() } }
+                            composable(Routes.FINDDOCTOR) { FeatureGate(AppFeature.APPOINTMENTS) { PreviewFindDoctors() } }
                             composable(Routes.RESEARCHARTICLES) { ResearchArticlesScreen() }
                             composable(Routes.HEALTHCONNECTSYNC) { HealthConnectSyncScreen() }
                             composable(Routes.PERMISSIONS) { com.critetiontech.ctvitalio.ui.screens.PermissionsScreen() }
@@ -358,7 +360,8 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.DIGITAL_TWIN) { com.critetiontech.ctvitalio.ui.screens.DigitalTwinScreen() }
                             composable(Routes.HEALTH_ORBIT) { com.critetiontech.ctvitalio.ui.screens.HealthOrbitScreen() }
                             composable(Routes.EDITPROFILE) { com.critetiontech.ctvitalio.ui.screens.EditProfileScreen() }
-                            composable(Routes.MEDICINE_REMINDER_SETTINGS) { com.critetiontech.ctvitalio.ui.screens.MedicineReminderSettingsScreen() }
+                            composable(Routes.MEDICINE_REMINDER_SETTINGS) { FeatureGate(AppFeature.MEDICINE) { com.critetiontech.ctvitalio.ui.screens.MedicineReminderSettingsScreen() } }
+                            composable(Routes.FEATURE_FLAGS_ADMIN) { com.critetiontech.ctvitalio.ui.screens.FeatureFlagsAdminScreen() }
                         }
 
                         // Status/navigation bar icons that stay readable on every page: dark icons

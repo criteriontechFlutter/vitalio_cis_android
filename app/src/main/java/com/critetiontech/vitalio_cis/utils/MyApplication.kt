@@ -26,6 +26,7 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         appContext = applicationContext
+        com.critetiontech.ctvitalio.config.FeatureFlags.init()
         MedicineAlarmNotifier.ensureChannels(this)
         HealthNudges.ensureChannel(this)
         HealthNudges.schedule(this)

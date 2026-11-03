@@ -38,6 +38,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
+import com.critetiontech.ctvitalio.config.AppFeature
+import com.critetiontech.ctvitalio.config.rememberFeatureFlags
 import androidx.compose.ui.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -122,6 +124,13 @@ fun DashboardScreen(
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
     val navController = LocalNavController.current
+
+    // Tabs and the mic follow the Remote Config switches; a tab switched off while open falls back to Home
+    val flags = rememberFeatureFlags()
+    val voiceOn = flags[AppFeature.VOICE_ASSISTANT] != false
+    LaunchedEffect(flags, selectedIndex) {
+        if (!isTabEnabled(flags, selectedIndex)) selectedIndex = 0
+    }
 
     // First visit after sign-in: explain notifications, then ask once
     com.critetiontech.ctvitalio.notification.RequestNotificationPermission()
@@ -260,7 +269,7 @@ fun DashboardScreen(
                             Triple(R.drawable.activity, stringResource(R.string.activity), 1),
                             Triple(R.drawable.ring, stringResource(R.string.ring), 2)
                             // Chat is hidden until its screen is built.
-                        )
+                        ).filter { isTabEnabled(flags, it.third) }
                         items.forEach { (iconRes, label, index) ->
                             NavigationRailItem(
                                 selected = selectedIndex == index,
@@ -301,7 +310,7 @@ fun DashboardScreen(
                                 .align(Alignment.BottomEnd)
                                 .padding(bottom = 20.dp, end = 20.dp)
                         ) {
-                            FloatingVoiceFab(
+                            if (voiceOn) FloatingVoiceFab(
                                 isListening  = isListening,
                                 showOverlay  = showListeningOverlay,
                                 onClick = {
@@ -340,7 +349,7 @@ fun DashboardScreen(
                         .align(Alignment.BottomEnd)
                         .padding(bottom = 20.dp, end = 20.dp)
                 ) {
-                    FloatingVoiceFab(
+                    if (voiceOn) FloatingVoiceFab(
                         isListening  = isListening,
                         showOverlay  = showListeningOverlay,
                         onClick = {
@@ -404,6 +413,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
     val loading by viewModel.loading.collectAsState()
 
     val homeDimens = rememberResponsiveDimens()
+    val homeFlags = rememberFeatureFlags()
 
     // Pull-to-refresh is handled by DashboardScreen so the header can stretch with the pull.
     Box(modifier = Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
@@ -420,7 +430,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
                 loading = { VitalsCardShimmer() },
             ) {
                 Column {
-                    AnimatedSection(delayMillis = 50) {
+                    if (homeFlags[AppFeature.MEDICINE] != false) AnimatedSection(delayMillis = 50) {
                         UpcomingMedicationsSection(
                             dailyMedicines = dailyMedicines,
                             markingMedicines = markingMedicines,
@@ -430,16 +440,16 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
                         )
                     }
                     Spacer(Modifier.height(16.dp))
-                    AnimatedSection(delayMillis = 100) { VitalsCard(vitals = vitals, onUpdateClick = { viewModel.fetchDashboardNoCache() }) }
+                    if (homeFlags[AppFeature.VITALS] != false) AnimatedSection(delayMillis = 100) { VitalsCard(vitals = vitals, onUpdateClick = { viewModel.fetchDashboardNoCache() }) }
                 }
             }
 
             Spacer(Modifier.height(20.dp))
 
         // Renders nothing (not even spacing) when there are no appointments.
-        AnimatedSection(delayMillis = 150) { HomeScreen(appointments = appointments, loading = loading) }
+        if (homeFlags[AppFeature.APPOINTMENTS] != false) AnimatedSection(delayMillis = 150) { HomeScreen(appointments = appointments, loading = loading) }
 
-        AnimatedSection(delayMillis = 175) { com.critetiontech.ctvitalio.ui.screens.DailyDietOverview() }
+        if (homeFlags[AppFeature.DIET] != false) AnimatedSection(delayMillis = 175) { com.critetiontech.ctvitalio.ui.screens.DailyDietOverview() }
 
         Spacer(Modifier.height(20.dp))
 
@@ -909,6 +919,7 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
 
     val colors = LocalMyColorScheme.current
     val haptic = rememberHaptics()
+    val flags = rememberFeatureFlags()
 
     NavigationBar(containerColor = colors.dashboardBackgroundColor) {
 
@@ -917,7 +928,7 @@ fun BottomNavigationBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
             Triple(R.drawable.activity, stringResource(R.string.activity), 1),
             Triple(R.drawable.ring, stringResource(R.string.ring), 2)
             // Chat is hidden until its screen is built.
-        )
+        ).filter { isTabEnabled(flags, it.third) }
 
         items.forEach { (iconRes, label, index) ->
             NavigationBarItem(
@@ -1439,10 +1450,23 @@ private fun countUpText(value: String, run: Boolean): String {
     return parts.joinToString("/") { (it.toInt() * progress.value).toInt().toString() }
 }
 
+/** The Remote Config feature behind a Primary Actions tile. */
+private fun gridFeature(type: String): AppFeature? = when (type) {
+    "vitals" -> AppFeature.VITALS
+    "fluid" -> AppFeature.FLUID
+    "symptomsTracker" -> AppFeature.SYMPTOMS
+    "medicine" -> AppFeature.MEDICINE
+    "diet" -> AppFeature.DIET
+    "interaction" -> AppFeature.INTERACTION_CHECKER
+    "findDoctor" -> AppFeature.APPOINTMENTS
+    else -> null
+}
+
 // ------------------- Primary Actions Grid -------------------
 @Composable
 fun PrimaryActionsGrid(   ) {
     val navController = LocalNavController.current
+    val flags = rememberFeatureFlags()
 
     val colors = LocalMyColorScheme.current
     data class GridItem(
@@ -1512,7 +1536,8 @@ fun PrimaryActionsGrid(   ) {
 //        icon = R.drawable.activity,
 //        type = "healthOrbit"
 //    )a
-    )
+    ).filter { item -> gridFeature(item.type)?.let { flags[it] } != false }
+    if (items.isEmpty()) return
 
     var gridVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { gridVisible = true }
@@ -1898,6 +1923,10 @@ fun ArticleCard(title: String, author: String, date: String) {
 // ------------------- Other Section -------------------
 @Composable
 fun OtherSection() {
+    val flags = rememberFeatureFlags()
+    val showReport = flags[AppFeature.LAB_REPORTS] != false
+    val showPrescription = flags[AppFeature.PRESCRIPTIONS] != false
+    if (!showReport && !showPrescription) return
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.home_quick_actions), style = AppTextStyles.style18BCB())
         Spacer(Modifier.height(12.dp))
@@ -1907,8 +1936,8 @@ fun OtherSection() {
                 .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            UploadReportCard(Modifier.weight(1f).fillMaxHeight())
-            UploadPrescriptionCard(Modifier.weight(1f).fillMaxHeight())
+            if (showReport) UploadReportCard(Modifier.weight(1f).fillMaxHeight())
+            if (showPrescription) UploadPrescriptionCard(Modifier.weight(1f).fillMaxHeight())
         }
     }
 }
@@ -2351,4 +2380,11 @@ private fun IntakeCheckbox(status: IntakeStatus, isMarking: Boolean, onClick: ()
             CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MedBlue, strokeWidth = 2.dp)
         }
     }
+}
+
+/** Bottom-nav tab 1 is Activity and tab 2 the Smart Ring; Home (0) is always there. */
+private fun isTabEnabled(flags: Map<AppFeature, Boolean>, index: Int): Boolean = when (index) {
+    1 -> flags[AppFeature.ACTIVITY] != false
+    2 -> flags[AppFeature.SMART_RING] != false
+    else -> true
 }
