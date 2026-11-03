@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /watch_data/{docId} {
+      allow read, write: if true; // Only for testing!
+    }
+
+    // CIS Android app: feature switches set from the in-app admin page (login 9807039752).
+    // The publishFeatureFlags Cloud Function copies them into Remote Config.
+    match /cis_app_config/feature_flags {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly([
+                        'cis_feature_vitals', 'cis_feature_fluid', 'cis_feature_symptoms',
+                        'cis_feature_medicine', 'cis_feature_diet', 'cis_feature_interaction_checker',
+                        'cis_feature_appointments', 'cis_feature_lab_reports', 'cis_feature_prescriptions',
+                        'cis_feature_voice_assistant', 'cis_feature_activity', 'cis_feature_smart_ring',
+                        'cis_feature_allergies', 'cis_feature_emergency_contacts',
+                        'cis_feature_family_health_history', 'cis_feature_share_health_records',
+                        'cis_feature_faq', 'cis_feature_feedback',
+                        'updatedBy', 'updatedByUhid', 'updatedAt'])
+                   && request.resource.data.updatedBy.matches('.*9807039752$');
+    }
+  }
+}

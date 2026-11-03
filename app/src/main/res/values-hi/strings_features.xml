@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ff_title">फ़ीचर फ़्लैग</string>
+    <string name="ff_menu">फ़ीचर फ़्लैग (एडमिन)</string>
+    <string name="ff_info">यहाँ के स्विच ऐप के सभी यूज़र्स के लिए मॉड्यूल चालू या बंद करते हैं। बदलाव कुछ सेकंड में खुले ऐप्स तक पहुँच जाते हैं।</string>
+    <string name="ff_admin_only">यह पेज सिर्फ़ ऐप एडमिन के लिए है।</string>
+    <string name="ff_disabled_message">यह सुविधा अभी उपलब्ध नहीं है।</string>
+    <string name="ff_load_failed">सेव किए गए स्विच लोड नहीं हो सके (%1$s)। cis_app_config/feature_flags के Firestore rules जाँचें।</string>
+    <string name="ff_save_failed">सेव नहीं हो सका: %1$s</string>
+    <string name="ff_status_on">सभी यूज़र्स के लिए चालू</string>
+    <string name="ff_status_off">सभी यूज़र्स के लिए बंद</string>
+    <string name="ff_status_saving">सेव हो रहा है…</string>
+    <string name="ff_status_publishing">सेव हो गया, सभी यूज़र्स तक भेजा जा रहा है…</string>
+
+    <string name="ff_group_home">होम</string>
+    <string name="ff_group_tabs">नीचे के टैब</string>
+    <string name="ff_group_profile">प्रोफ़ाइल मेनू</string>
+
+    <string name="ff_vitals">वाइटल्स</string>
+    <string name="ff_fluid">तरल सेवन</string>
+    <string name="ff_symptoms">लक्षण ट्रैकर</string>
+    <string name="ff_medicine">दवा रिमाइंडर</string>
+    <string name="ff_diet">आहार</string>
+    <string name="ff_interaction_checker">इंटरैक्शन चेकर</string>
+    <string name="ff_appointments">अपॉइंटमेंट</string>
+    <string name="ff_lab_reports">लैब रिपोर्ट</string>
+    <string name="ff_prescriptions">प्रिस्क्रिप्शन</string>
+    <string name="ff_voice_assistant">वॉइस असिस्टेंट</string>
+    <string name="ff_activity">गतिविधि</string>
+    <string name="ff_smart_ring">स्मार्ट रिंग</string>
+    <string name="ff_allergies">एलर्जी</string>
+    <string name="ff_emergency_contacts">आपातकालीन संपर्क</string>
+    <string name="ff_family_health_history">पारिवारिक स्वास्थ्य इतिहास</string>
+    <string name="ff_share_health_records">स्वास्थ्य रिकॉर्ड साझा करें</string>
+    <string name="ff_faq">सामान्य प्रश्न</string>
+    <string name="ff_feedback">फ़ीडबैक</string>
+</resources>

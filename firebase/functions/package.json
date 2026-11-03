@@ -1,0 +1,17 @@
+{
+  "name": "cis-feature-flags-functions",
+  "description": "Publishes the CIS app's feature switches from Firestore to Remote Config",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "deploy": "firebase deploy --only functions:publishFeatureFlags",
+    "logs": "firebase functions:log --only publishFeatureFlags"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0"
+  }
+}

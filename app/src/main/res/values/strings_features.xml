@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ff_title">Feature Flags</string>
+    <string name="ff_menu">Feature Flags (Admin)</string>
+    <string name="ff_info">Switches here turn a module on or off for every user of the app. Changes reach open apps within a few seconds.</string>
+    <string name="ff_admin_only">This page is only for the app admin.</string>
+    <string name="ff_disabled_message">This feature is not available right now.</string>
+    <string name="ff_load_failed">Could not load saved switches (%1$s). Check the Firestore rules for cis_app_config/feature_flags.</string>
+    <string name="ff_save_failed">Could not save: %1$s</string>
+    <string name="ff_status_on">On for all users</string>
+    <string name="ff_status_off">Off for all users</string>
+    <string name="ff_status_saving">Saving…</string>
+    <string name="ff_status_publishing">Saved, publishing to all users…</string>
+
+    <string name="ff_group_home">Home</string>
+    <string name="ff_group_tabs">Bottom tabs</string>
+    <string name="ff_group_profile">Profile menu</string>
+
+    <string name="ff_vitals">Vitals</string>
+    <string name="ff_fluid">Fluid Intake</string>
+    <string name="ff_symptoms">Symptoms Tracker</string>
+    <string name="ff_medicine">Medicine Reminder</string>
+    <string name="ff_diet">Diet</string>
+    <string name="ff_interaction_checker">Interactions Checker</string>
+    <string name="ff_appointments">Appointments</string>
+    <string name="ff_lab_reports">Lab Reports</string>
+    <string name="ff_prescriptions">Prescriptions</string>
+    <string name="ff_voice_assistant">Voice Assistant</string>
+    <string name="ff_activity">Activity</string>
+    <string name="ff_smart_ring">Smart Ring</string>
+    <string name="ff_allergies">Allergies</string>
+    <string name="ff_emergency_contacts">Emergency Contacts</string>
+    <string name="ff_family_health_history">Family Health History</string>
+    <string name="ff_share_health_records">Share Health Records</string>
+    <string name="ff_faq">FAQ</string>
+    <string name="ff_feedback">Feedback</string>
+</resources>
