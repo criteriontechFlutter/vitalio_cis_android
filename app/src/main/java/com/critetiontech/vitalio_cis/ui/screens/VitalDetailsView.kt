@@ -166,13 +166,13 @@ fun VitalsScreen(viewModel: VitalDetailViewModel = viewModel()) {
     CommonAppBar(
         title = stringResource(R.string.home_vitals_title),
         actions = {
-            HapticIconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
-                Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Default.Analytics,
-                    contentDescription = stringResource(R.string.home_cd_health_orbit),
-                    tint = colors.textDarkColor
-                )
-            }
+//            HapticIconButton(onClick = { navController.navigate(Routes.HEALTH_ORBIT) }) {
+//                Icon(
+//                    imageVector = androidx.compose.material.icons.Icons.Default.Analytics,
+//                    contentDescription = stringResource(R.string.home_cd_health_orbit),
+//                    tint = colors.textDarkColor
+//                )
+//            }
             HapticIconButton(onClick = { showInfoDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Info,
