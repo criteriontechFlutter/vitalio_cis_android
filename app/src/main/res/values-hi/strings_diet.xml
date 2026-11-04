@@ -128,4 +128,12 @@
     <string name="diet_optimal">उपयुक्त</string>
     <string name="diet_high">ज़्यादा</string>
     <string name="diet_week_label">सप्ताह %1$d • %2$s</string>
+    <string name="diet_update_failed">अपडेट नहीं हो सका। दोबारा कोशिश करें।</string>
+    <string name="diet_remove_plan_title">यह प्लान हटाएं?</string>
+    <string name="diet_remove_plan_msg">यह डाइट प्लान हटा दिया जाएगा।</string>
+    <string name="diet_foods_unavailable_title">फूड उपलब्ध नहीं हैं</string>
+    <string name="diet_foods_unavailable_msg">इसके फूड देखने के लिए प्लान को एक्टिव करें।</string>
+    <string name="diet_load_failed">फूड लोड नहीं हो सके। दोबारा कोशिश करें।</string>
+    <string name="diet_adding_to_days">%1$d दिनों में जोड़ा जा रहा है</string>
+    <string name="diet_today_only_hint">फूड सिर्फ़ आज के लिए टिक कर सकते हैं</string>
 </resources>

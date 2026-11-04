@@ -4,8 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.critetiontech.ctvitalio.di.AppDependencies
 import com.critetiontech.ctvitalio.domain.model.DomainResult
+import com.critetiontech.ctvitalio.model.DailyDietOverview
 import com.critetiontech.ctvitalio.model.DietLogEntry
-import com.critetiontech.ctvitalio.model.DietPlan
+import com.critetiontech.ctvitalio.model.DietPlanFood
 import com.critetiontech.ctvitalio.model.FoodNutrition
 import com.critetiontech.ctvitalio.model.IntakeItem
 import com.critetiontech.ctvitalio.model.dietDayId
@@ -18,8 +19,9 @@ import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
 /**
- * Nutrition Analytics (and the Daily Diet Overview card on Home), worked out from the foods the
- * user ticked on the Diet Checklist, plus water from fluid intake.
+ * Nutrition Analytics, from the server. Only today has data: GetDailyDietOverview for the calories
+ * and goal, the foods ticked in GetDietPlanByDay for meals (macros from NutriAnalyser), and fluid
+ * intake for water. Other days show only their planned calories until a date-wise API exists.
  */
 class NutritionAnalyticsViewModel : ViewModel() {
 
@@ -59,23 +61,50 @@ class NutritionAnalyticsViewModel : ViewModel() {
     private val _summary = MutableStateFlow<Summary?>(null)
     val summary: StateFlow<Summary?> = _summary.asStateFlow()
 
+    private var overview: DailyDietOverview? = null
+    /** dayId → the calories planned that weekday. */
+    private var plannedKcal: Map<Int, Int> = emptyMap()
+    /** Foods ticked today. */
+    private var eatenToday: List<DietLogEntry> = emptyList()
     private var water: Map<LocalDate, Double> = emptyMap()
 
     fun load() {
         recompute()
         val patient = prefs.getPatient() ?: return
         val date = _date.value
+        val dayId = date.dayOfWeek.dietDayId()
         viewModelScope.launch {
-            // Plan is only for the "planned" figure; the cache is enough when the server is slow.
-            if (repo.cachedDietPlans(patient.pid).isEmpty()) deps.fetchDietPlans()(patient.pid, patient.clientId)
-            water = water + (date to waterMl(deps.fluidRepository.cachedIntakeItems(patient.uhId, date.toString())))
-            recompute()
-            when (val r = deps.fetchIntake()(patient.uhId, patient.clientId.toString(), date.toString())) {
-                is DomainResult.Success -> water = water + (date to waterMl(r.data))
-                is DomainResult.Error -> Unit
-            }
+            val r = deps.fetchDailyDietOverview()(patient.pid, patient.clientId)
+            if (r is DomainResult.Success) overview = r.data.maxByOrNull { it.dietPlanId }
             recompute()
         }
+        viewModelScope.launch {
+            val r = deps.fetchPlanDay()(patient.pid, dayId, patient.clientId)
+            if (r is DomainResult.Success) {
+                plannedKcal = plannedKcal + (dayId to (r.data?.caloriesFor(dayId)?.toInt() ?: 0))
+                recompute()
+                if (date == LocalDate.now()) {
+                    eatenToday = r.data?.mealsFor(dayId).orEmpty().flatMap { meal ->
+                        meal.foods.filter { it.isTaken }.map { eatenEntry(meal.mealTime.id, it) }
+                    }
+                    recompute()
+                }
+            }
+        }
+        viewModelScope.launch {
+            val r = deps.fetchIntake()(patient.uhId, patient.clientId.toString(), date.toString())
+            if (r is DomainResult.Success) water = water + (date to waterMl(r.data))
+            recompute()
+        }
+    }
+
+    private suspend fun eatenEntry(mealTimeId: Int, food: DietPlanFood): DietLogEntry {
+        val unitId = repo.unitIdFor(food.foodId, food.unitName)
+        val nutrition = unitId?.let { (deps.fetchFoodNutrition()(food.foodId, food.quantity, it) as? DomainResult.Success)?.data }
+        return DietLogEntry(
+            "plan:${food.rowId}", mealTimeId, food.foodId, food.foodName, food.quantity, food.unitName,
+            (nutrition ?: FoodNutrition()).copy(kcal = food.calories), fromPlan = true,
+        )
     }
 
     fun selectDate(d: LocalDate) {
@@ -93,24 +122,22 @@ class NutritionAnalyticsViewModel : ViewModel() {
         items.filter { it.unitName.orEmpty().contains("ml", true) }.sumOf { it.foodQuantity.toDouble() }
 
     private fun recompute() {
-        val patient = prefs.getPatient() ?: return
         val date = _date.value
+        val today = LocalDate.now()
         val monday = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val todayTotals = eatenToday.sum().copy(kcal = overview?.consumedCalories ?: 0.0)
         val week = (0L..6L).map { i ->
             val d = monday.plusDays(i)
-            val logs = repo.logsFor(patient.pid, d)
-            DayTotal(d, logs.sum(), logs.isNotEmpty())
+            if (d == today) DayTotal(d, todayTotals, todayTotals.kcal > 0) else DayTotal(d, FoodNutrition(), false)
         }
-        val logs = repo.logsFor(patient.pid, date)
-        val plans = repo.cachedDietPlans(patient.pid)
-        val plan: DietPlan? = plans.firstOrNull { it.id == repo.activePlanId(patient.pid) } ?: plans.maxByOrNull { it.id }
+        val isToday = date == today
         _summary.value = Summary(
             date = date,
-            goalKcal = repo.requiredKcal(patient.pid),
-            plannedKcal = plan?.caloriesFor(date.dayOfWeek.dietDayId())?.toInt() ?: 0,
-            totals = logs.sum(),
+            goalKcal = overview?.totalEnergyIntake?.toInt() ?: 0,
+            plannedKcal = plannedKcal[date.dayOfWeek.dietDayId()] ?: 0,
+            totals = if (isToday) todayTotals else FoodNutrition(),
             week = week,
-            meals = logs.groupBy { it.mealTimeId },
+            meals = if (isToday) eatenToday.groupBy { it.mealTimeId } else emptyMap(),
             waterMl = water[date] ?: 0.0,
         )
     }

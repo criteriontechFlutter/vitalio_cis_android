@@ -53,7 +53,8 @@ class DietFoodViewModel : ViewModel() {
     private val _sort = MutableStateFlow(Sort.POPULARITY)
     val sort: StateFlow<Sort> = _sort.asStateFlow()
 
-    private val _recent = MutableStateFlow(prefs.getPatient()?.pid?.let { repo.recentFoods(it) }.orEmpty())
+    // No recent-foods API yet, so the section stays hidden.
+    private val _recent = MutableStateFlow(emptyList<RecentFood>())
     val recent: StateFlow<List<RecentFood>> = _recent.asStateFlow()
 
     // ── Nutrition Facts ──
@@ -243,9 +244,6 @@ class DietFoodViewModel : ViewModel() {
         )
 
     private fun picked(mealTimeId: Int, food: NutriFood, unit: NutriUnit, qty: Double, n: FoodNutrition): PickedFood {
-        prefs.getPatient()?.pid?.let { pid ->
-            repo.addRecentFood(pid, RecentFood(food.foodId, food.displayName, food.foodImagePath, unit.id, unit.unitName, qty, n))
-        }
         return PickedFood(mealTimeId, food.foodId, food.displayName, food.foodImagePath, unit.id, unit.unitName, qty, n)
     }
 

@@ -62,12 +62,14 @@ import com.critetiontech.ctvitalio.ui.feedback.bounceClick
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.ui.theme.isAppDark
 import com.critetiontech.ctvitalio.ui.theme.softTint
+import com.critetiontech.ctvitalio.viewmodel.HomeViewModel
 import com.critetiontech.ctvitalio.viewmodel.NutritionAnalyticsViewModel
 import com.critetiontech.ctvitalio.viewmodel.NutritionAnalyticsViewModel.Companion.FIBER_GOAL_G
 import com.critetiontech.ctvitalio.viewmodel.NutritionAnalyticsViewModel.Companion.SODIUM_LIMIT_MG
 import com.critetiontech.ctvitalio.viewmodel.NutritionAnalyticsViewModel.Companion.SUGAR_LIMIT_G
 import com.critetiontech.ctvitalio.viewmodel.NutritionAnalyticsViewModel.Companion.WATER_GOAL_ML
 import com.critetiontech.myapplication.utils.LocalNavController
+import com.example.vitalio_cis.ui.screens.shimmerBrush
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.IsoFields
@@ -186,7 +188,7 @@ private fun RoundArrow(icon: ImageVector, enabled: Boolean, onClick: () -> Unit)
 @Composable
 private fun WeeklyTrendCard(s: NutritionAnalyticsViewModel.Summary) {
     val colors = LocalMyColorScheme.current
-    val max = maxOf(s.goalKcal.toDouble(), s.week.maxOf { it.nutrition.kcal }) * 1.15
+    val max = (maxOf(s.goalKcal.toDouble(), s.week.maxOf { it.nutrition.kcal }) * 1.15).coerceAtLeast(1.0)
     val dashed = if (isAppDark) Color(0xFF93C5FD) else Color(0xFF1E40AF)
     DietCard {
         Text(stringResource(R.string.diet_weekly_trend), color = colors.textDarkColor, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -314,7 +316,7 @@ private fun MacroGoalTile(label: String, grams: Double, goal: Double, kcal: Doub
         }
         Text("/ ${goal.roundToInt()}g", color = colors.textGreyColor, fontSize = 11.sp)
         Spacer(Modifier.height(6.dp))
-        SlimBar((grams / goal).toFloat(), accent, track = Color.White)
+        SlimBar((if (goal > 0) grams / goal else 0.0).toFloat(), accent, track = Color.White)
         Spacer(Modifier.height(6.dp))
         Text(stringResource(R.string.diet_kcal_cap, kcalText(kcal)), color = accent, fontSize = 11.sp)
         Text("(${if (totalKcal == null) 0 else (kcal * 100 / totalKcal).roundToInt()}%)", color = accent, fontSize = 11.sp)
@@ -444,18 +446,48 @@ private fun MicroTile(label: String, badge: String, badgeColor: Color, value: St
     }
 }
 
-/** "Daily Diet Overview" on Home: today's calories against the goal; opens the Diet Checklist. */
+/** "Daily Diet Overview" on Home, from GetDailyDietOverview; opens the Diet Checklist. Hidden when there is no plan. */
 @Composable
-fun DailyDietOverview(viewModel: NutritionAnalyticsViewModel = viewModel(key = "homeDietOverview")) {
+fun DailyDietOverview(viewModel: HomeViewModel) {
     val nav = LocalNavController.current
-    val summary by viewModel.summary.collectAsState()
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.selectDate(LocalDate.now()) }
-    val s = summary ?: return
+    val overview by viewModel.dietOverview.collectAsState()
+    val loading by viewModel.dietOverviewLoading.collectAsState()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.fetchDietOverview() }
+    val o = overview
+    if (o == null && !loading) return
     Column {
         Text(stringResource(R.string.diet_daily_overview), style = com.critetiontech.ctvitalio.utils.AppTextStyles.style18BCB())
         Spacer(Modifier.height(12.dp))
-        Box(Modifier.clip(RoundedCornerShape(18.dp)).bounceClick(pressedScale = 0.98f) { nav.navigate(Routes.DIETCHECKLIST) }) {
-            EnergyIntakeCard(s.consumedKcal, s.goalKcal, s.percent)
+        if (o == null) {
+            DailyDietOverviewShimmer()
+        } else {
+            Box(Modifier.clip(RoundedCornerShape(18.dp)).bounceClick(pressedScale = 0.98f) { nav.navigate(Routes.DIETCHECKLIST) }) {
+                EnergyIntakeCard(o.consumedCalories.roundToInt(), o.totalEnergyIntake.roundToInt(), o.consumedPercentage.toInt())
+            }
+        }
+    }
+}
+
+/** Placeholder shaped like [EnergyIntakeCard]. */
+@Composable
+private fun DailyDietOverviewShimmer() {
+    val brush = shimmerBrush()
+    DietCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(18.dp).clip(CircleShape).background(brush))
+            Spacer(Modifier.width(6.dp))
+            Box(Modifier.width(130.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            Spacer(Modifier.weight(1f))
+            Box(Modifier.width(92.dp).height(24.dp).clip(RoundedCornerShape(50)).background(brush))
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Box(Modifier.width(140.dp).height(32.dp).clip(RoundedCornerShape(6.dp)).background(brush))
+                Spacer(Modifier.height(8.dp))
+                Box(Modifier.width(160.dp).height(11.dp).clip(RoundedCornerShape(4.dp)).background(brush))
+            }
+            Box(Modifier.size(76.dp).clip(CircleShape).background(brush))
         }
     }
 }

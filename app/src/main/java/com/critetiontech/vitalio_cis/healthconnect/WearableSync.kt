@@ -266,7 +266,7 @@ class WearableReader(private val client: HealthConnectClient) {
         }
         latest(WeightRecord::class, TimeRangeFilter.before(now))?.let {
             val v = String.format(Locale.US, "%.1f", it.weight.inKilograms)
-            add(VitalMetric.WEIGHT, v, mapOf("vmValueWeight" to v), it.time, it)
+            add(VitalMetric.WEIGHT, v, mapOf("weight" to v), it.time, it)
         }
         latest(HeightRecord::class, TimeRangeFilter.before(now))?.let {
             val v = (it.height.inMeters * 100).toInt().toString()

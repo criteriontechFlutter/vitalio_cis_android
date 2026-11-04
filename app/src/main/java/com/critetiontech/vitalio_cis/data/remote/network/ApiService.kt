@@ -75,6 +75,13 @@ interface ApiService {
         @Body body: Map<String, @JvmSuppressWildcards Any>
     ): Response<ResponseBody>
 
+    @PUT
+    suspend fun dynamicPut(
+        @Url url: String,
+        @HeaderMap headers: Map<String, String> = emptyMap(),
+        @QueryMap(encoded = true) params: Map<String, @JvmSuppressWildcards Any>
+    ): Response<ResponseBody>
+
     @Multipart
     @PUT
     suspend fun dynamicMultipartPut(

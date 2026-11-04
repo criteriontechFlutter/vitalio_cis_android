@@ -29,10 +29,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.HorizontalDivider
@@ -351,7 +351,7 @@ internal fun EnergyIntakeCard(
     val colors = LocalMyColorScheme.current
     DietCard(modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = Color(0xFFEA580C), modifier = Modifier.size(18.dp))
+            Icon(Icons.Outlined.LocalFireDepartment, contentDescription = null, tint = Color(0xFFEA580C), modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text(stringResource(R.string.diet_total_energy), color = colors.textDarkColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             val over = consumed > goal
@@ -380,7 +380,7 @@ internal fun EnergyIntakeCard(
                 }
                 Text(stringResource(R.string.diet_kcal_consumed, percent), color = colors.textGreyColor, fontSize = 11.sp)
             }
-            CalorieRing(percent)
+            CalorieRing(percent, stroke = 10.dp)
         }
         if (footer != null) {
             Spacer(Modifier.height(14.dp))

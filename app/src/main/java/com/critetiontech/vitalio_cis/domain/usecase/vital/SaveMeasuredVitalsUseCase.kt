@@ -27,7 +27,7 @@ class SaveMeasuredVitalsUseCase(private val repository: VitalRepository) {
         /** Every AddVital field, so a request only carries the vitals it is saving. */
         val EMPTY_FIELDS = listOf(
             "vmValueBPSys", "vmValueBPDias", "vmValueSPO2", "vmValueRespiratoryRate", "vmValueHeartRate",
-            "vmValuePulse", "vmValueRbs", "vmValueTemperature", "vmValueWeight", "vmValueHeight"
+            "vmValuePulse", "vmValueRbs", "vmValueTemperature", "weight", "height"
         ).associateWith { "" }
     }
 }

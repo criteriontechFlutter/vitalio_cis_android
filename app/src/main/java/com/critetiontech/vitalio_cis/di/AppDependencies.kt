@@ -87,7 +87,7 @@ object AppDependencies {
     val vitalRepository by lazy { VitalRepositoryImpl(MyApplication.appContext, prefs) }
     val allergyRepository by lazy { AllergyRepositoryImpl(MyApplication.appContext, prefs) }
     val fluidRepository by lazy { FluidRepositoryImpl(MyApplication.appContext, prefs) }
-    val dietRepository by lazy { DietRepositoryImpl(MyApplication.appContext, prefs) }
+    val dietRepository by lazy { DietRepositoryImpl(MyApplication.appContext) }
     val medicineRepository by lazy { MedicineRepositoryImpl(MyApplication.appContext, prefs) }
     val doctorRepository by lazy { DoctorRepositoryImpl(MyApplication.appContext, prefs) }
     val reportRepository by lazy { ReportRepositoryImpl(MyApplication.appContext, prefs) }
@@ -115,6 +115,12 @@ object AppDependencies {
     fun fetchFluidSummary() = FetchFluidSummaryUseCase(fluidRepository)
     fun fetchOutputSummary() = FetchOutputSummaryUseCase(fluidRepository)
     fun fetchDietPlans() = FetchDietPlansUseCase(dietRepository)
+    fun fetchPlanDay() = com.critetiontech.ctvitalio.domain.usecase.diet.FetchPlanDayUseCase(dietRepository)
+    fun updateDietPlanStatus() = com.critetiontech.ctvitalio.domain.usecase.diet.UpdateDietPlanStatusUseCase(dietRepository)
+    fun activateDietPlan() = com.critetiontech.ctvitalio.domain.usecase.diet.ActivateDietPlanUseCase(dietRepository)
+    fun removeDietPlan() = com.critetiontech.ctvitalio.domain.usecase.diet.RemoveDietPlanUseCase(dietRepository)
+    fun updateDietIntake() = com.critetiontech.ctvitalio.domain.usecase.diet.UpdateDietIntakeUseCase(dietRepository)
+    fun fetchDailyDietOverview() = com.critetiontech.ctvitalio.domain.usecase.diet.FetchDailyDietOverviewUseCase(dietRepository)
     fun insertDietPlan() = InsertDietPlanUseCase(dietRepository)
     fun searchFoods() = SearchFoodsUseCase(dietRepository)
     fun fetchFoodUnits() = FetchFoodUnitsUseCase(dietRepository)

@@ -45,6 +45,12 @@ class HomeViewModel : ViewModel() {
     private val _dailyMedicines = MutableStateFlow<List<com.critetiontech.ctvitalio.model.MedicineItem>>(emptyList())
     val dailyMedicines: StateFlow<List<com.critetiontech.ctvitalio.model.MedicineItem>> = _dailyMedicines
 
+    private val _dietOverview = MutableStateFlow<com.critetiontech.ctvitalio.model.DailyDietOverview?>(null)
+    val dietOverview: StateFlow<com.critetiontech.ctvitalio.model.DailyDietOverview?> = _dietOverview
+
+    private val _dietOverviewLoading = MutableStateFlow(true)
+    val dietOverviewLoading: StateFlow<Boolean> = _dietOverviewLoading
+
     init {
         // Offline logs uploaded: the dashboard's latest vitals now include them.
         viewModelScope.launch {
@@ -95,6 +101,21 @@ class HomeViewModel : ViewModel() {
                 Log.e("HomeViewModel", "fetchDashboard error: ${e.message}")
             }
             _loading.value = false
+        }
+    }
+
+    fun fetchDietOverview() {
+        viewModelScope.launch {
+            _dietOverviewLoading.value = true
+            val patient = prefs.getPatient()
+            if (patient != null) {
+                val result = AppDependencies.fetchDailyDietOverview()(patient.pid, patient.clientId)
+                if (result is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
+                    // One entry per active plan; the app follows the newest.
+                    _dietOverview.value = result.data.maxByOrNull { it.dietPlanId }
+                }
+            }
+            _dietOverviewLoading.value = false
         }
     }
 

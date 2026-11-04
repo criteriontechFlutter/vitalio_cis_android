@@ -27,8 +27,13 @@ class ApiEndPointCorporateModule {
     val fluidSummaryByDateRange="api/ManualFoodAssign/FluidSummaryByDateRange"
 
     // Diet plans (ApiClients.module4094)
-    val getDietPlan = "api/DietPlan/GetDietPlan"
+    val getAllDietPlanByPid = "api/DietPlan/GetAllDietPlanByPid"
+    val getDietPlanByDay = "api/DietPlan/GetDietPlanByDay"
+    val updateDietPlanStatus = "api/DietPlan/UpdateDietPlanStatus"
+    val removeDietPlan = "api/DietPlan/RemoveDietPlan"
+    val updateDietIntake = "api/DietPlan/UpdateDietIntake"
     val insertDietPlan = "api/DietPlan/InsertDietPlan"
+    val getDailyDietOverview = "api/DietPlan/GetDailyDietOverview"
 
 
 

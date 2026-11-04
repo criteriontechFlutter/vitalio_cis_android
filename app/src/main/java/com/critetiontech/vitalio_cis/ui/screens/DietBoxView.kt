@@ -60,6 +60,7 @@ fun DietBoxScreen(viewModel: DietBoxViewModel = viewModel()) {
     val plans by viewModel.plans.collectAsState()
     val activeId by viewModel.activeId.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val loadFailed by viewModel.loadFailed.collectAsState()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.load() }
 
@@ -68,7 +69,8 @@ fun DietBoxScreen(viewModel: DietBoxViewModel = viewModel()) {
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp), color = colors.primaryBlueColor)
         if (plans.isEmpty() && !loading) {
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                DietEmptyState(stringResource(R.string.diet_no_plan_title), stringResource(R.string.diet_no_plan_msg))
+                if (loadFailed) DietEmptyState(stringResource(R.string.diet_load_failed), "")
+                else DietEmptyState(stringResource(R.string.diet_no_plan_title), stringResource(R.string.diet_no_plan_msg))
             }
         } else {
             LazyColumn(
@@ -81,7 +83,6 @@ fun DietBoxScreen(viewModel: DietBoxViewModel = viewModel()) {
                         PlanRow(
                             plan = plan,
                             active = plan.id == activeId,
-                            createdAt = viewModel.createdAt(plan.id),
                             onToggle = { viewModel.setActive(plan.id, it) },
                             onOpen = { nav.navigate(Routes.dietPlanBuilder(plan.id)) },
                         )
@@ -97,7 +98,7 @@ fun DietBoxScreen(viewModel: DietBoxViewModel = viewModel()) {
 }
 
 @Composable
-private fun PlanRow(plan: DietPlan, active: Boolean, createdAt: Long?, onToggle: (Boolean) -> Unit, onOpen: () -> Unit) {
+private fun PlanRow(plan: DietPlan, active: Boolean, onToggle: (Boolean) -> Unit, onOpen: () -> Unit) {
     val colors = LocalMyColorScheme.current
     val shape = RoundedCornerShape(14.dp)
     Row(
@@ -125,11 +126,11 @@ private fun PlanRow(plan: DietPlan, active: Boolean, createdAt: Long?, onToggle:
                 }
             }
             Spacer(Modifier.height(3.dp))
-            // GetDietPlan has no author or date; plans made on this device are known to be the user's.
             val meta = buildList {
-                add(if (createdAt != null) stringResource(R.string.diet_created_by_self) else stringResource(R.string.diet_assigned))
-                if (createdAt != null) add(DateUtils.getRelativeTimeSpanString(createdAt, System.currentTimeMillis(), DateUtils.DAY_IN_MILLIS).toString())
-                add(stringResource(R.string.diet_kcal_cap, kcalText(plan.avgCaloriesPerDay)) + "/day")
+                plan.daysAgo?.let { days ->
+                    val now = System.currentTimeMillis()
+                    add(DateUtils.getRelativeTimeSpanString(now - days * DateUtils.DAY_IN_MILLIS, now, DateUtils.DAY_IN_MILLIS).toString())
+                }
             }.joinToString("  |  ")
             Text(meta, color = colors.textGreyColor, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }

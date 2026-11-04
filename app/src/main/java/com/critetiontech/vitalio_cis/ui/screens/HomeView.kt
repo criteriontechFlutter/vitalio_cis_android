@@ -206,6 +206,7 @@ fun DashboardScreen(
         refreshScope.launch {
             val startedAt = System.currentTimeMillis()
             homeViewModel.fetchDashboard()
+            homeViewModel.fetchDietOverview()
             // fetchDashboard flips loading on asynchronously; wait for it to settle.
             delay(300)
             kotlinx.coroutines.withTimeoutOrNull(20_000) { homeViewModel.loading.first { !it } }
@@ -449,7 +450,7 @@ fun HomeView(viewModel: HomeViewModel = viewModel()) {
         // Renders nothing (not even spacing) when there are no appointments.
         if (homeFlags[AppFeature.APPOINTMENTS] != false) AnimatedSection(delayMillis = 150) { HomeScreen(appointments = appointments, loading = loading) }
 
-        if (homeFlags[AppFeature.DIET] != false) AnimatedSection(delayMillis = 175) { com.critetiontech.ctvitalio.ui.screens.DailyDietOverview() }
+        if (homeFlags[AppFeature.DIET] != false) AnimatedSection(delayMillis = 175) { com.critetiontech.ctvitalio.ui.screens.DailyDietOverview(viewModel) }
 
         Spacer(Modifier.height(20.dp))
 

@@ -87,13 +87,12 @@ fun DietChecklistScreen(viewModel: DietChecklistViewModel = viewModel()) {
     val date by viewModel.date.collectAsState()
     val plan by viewModel.plan.collectAsState()
     val loading by viewModel.loading.collectAsState()
-    val logs by viewModel.logs.collectAsState()
+    val loadFailed by viewModel.loadFailed.collectAsState()
     val saving by viewModel.saving.collectAsState()
     val expanded by viewModel.expanded.collectAsState()
 
     // Reload on every return (a plan may have been created or made active in Diet Box).
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.load() }
-    PickedFoodListener { viewModel.addOutsideFood(it) }
 
     Column(Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
         DietTopBar(title = stringResource(R.string.diet_checklist_title)) {
@@ -121,7 +120,7 @@ fun DietChecklistScreen(viewModel: DietChecklistViewModel = viewModel()) {
             label = "dietDay",
             modifier = Modifier.weight(1f),
         ) { day ->
-            if (plan == null && !loading) {
+            if (plan == null && !loading && !loadFailed) {
                 Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                     DietEmptyState(stringResource(R.string.diet_no_plan_title), stringResource(R.string.diet_no_plan_msg))
                     DietPrimaryButton(
@@ -138,13 +137,12 @@ fun DietChecklistScreen(viewModel: DietChecklistViewModel = viewModel()) {
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 12.dp, bottom = 24.dp),
             ) {
                 items(meals, key = { it.mealTime.id }) { meal ->
-                    val extras = logs.filter { !it.fromPlan && it.mealTimeId == meal.mealTime.id }
                     val planned = meal.foods.size
-                    val ticked = meal.foods.count { f -> logs.any { it.key == viewModel.planKey(f) } }
+                    val ticked = meal.foods.count { viewModel.isTicked(it, day) }
                     val status = when {
-                        planned == 0 && extras.isEmpty() -> MealStatus.PENDING
+                        planned == 0 -> MealStatus.PENDING
                         ticked == planned -> MealStatus.DONE
-                        ticked > 0 || extras.isNotEmpty() -> MealStatus.PARTIAL
+                        ticked > 0 -> MealStatus.PARTIAL
                         else -> MealStatus.PENDING
                     }
                     MealSectionCard(
@@ -154,9 +152,9 @@ fun DietChecklistScreen(viewModel: DietChecklistViewModel = viewModel()) {
                         onToggle = { viewModel.toggleExpanded(meal.mealTime) },
                         status = status,
                     ) {
-                        if (meal.foods.isEmpty() && extras.isEmpty()) {
-                            Text(
-                                stringResource(R.string.diet_nothing_planned), color = colors.textGreyColor, fontSize = 13.sp,
+                        if (meal.foods.isEmpty()) {
+                            if (!loading) Text(
+                                stringResource(if (loadFailed) R.string.diet_load_failed else R.string.diet_nothing_planned), color = colors.textGreyColor, fontSize = 13.sp,
                                 modifier = Modifier.padding(vertical = 6.dp, horizontal = 4.dp),
                             )
                         }
@@ -169,30 +167,15 @@ fun DietChecklistScreen(viewModel: DietChecklistViewModel = viewModel()) {
                                 imageUrl = food.imageUrl,
                             ) {
                                 TickBox(
-                                    checked = logs.any { it.key == key },
+                                    checked = viewModel.isTicked(food, day),
                                     busy = key in saving,
                                     enabled = viewModel.canTick,
-                                ) { viewModel.togglePlanFood(meal, food) }
+                                ) { viewModel.togglePlanFood(food) }
                             }
                         }
-                        extras.forEach { entry -> OutsideFoodRow(entry) { viewModel.removeOutsideFood(entry.key) } }
-                        if (viewModel.canTick) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .align(Alignment.End)
-                                    .padding(top = 6.dp)
-                                    .clip(RoundedCornerShape(50))
-                                    .bounceClick { nav.navigate(Routes.dietAddFood(meal.mealTime.id)) }
-                                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                            ) {
-                                Icon(Icons.Rounded.Add, contentDescription = null, tint = colors.primaryBlueColor, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text(stringResource(R.string.diet_food_outside_plan), color = colors.primaryBlueColor, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                            }
-                        } else {
+                        if (!viewModel.canTick && meal.foods.isNotEmpty()) {
                             Text(
-                                stringResource(R.string.diet_future_hint), color = colors.textGreyColor, fontSize = 11.sp,
+                                stringResource(R.string.diet_today_only_hint), color = colors.textGreyColor, fontSize = 11.sp,
                                 modifier = Modifier.align(Alignment.End).padding(top = 6.dp),
                             )
                         }
@@ -256,22 +239,6 @@ private fun TickBox(checked: Boolean, busy: Boolean, enabled: Boolean, onClick: 
             busy -> CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 1.5.dp, color = colors.primaryBlueColor)
             checked -> Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
         }
-    }
-}
-
-@Composable
-private fun OutsideFoodRow(entry: DietLogEntry, onRemove: () -> Unit) {
-    val colors = LocalMyColorScheme.current
-    MealFoodRow(
-        name = entry.foodName,
-        serving = "${DietFoodViewModel.formatQty(entry.quantity)} ${entry.unitName}",
-        kcal = stringResource(R.string.diet_kcal_minus, kcalText(entry.nutrition.kcal)),
-        tag = stringResource(R.string.diet_outside_plan_tag),
-    ) {
-        Icon(
-            Icons.Rounded.Close, contentDescription = stringResource(R.string.diet_remove), tint = colors.textGreyColor,
-            modifier = Modifier.size(20.dp).clip(RoundedCornerShape(50)).bounceClick(onClick = onRemove),
-        )
     }
 }
 

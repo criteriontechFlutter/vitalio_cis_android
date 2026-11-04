@@ -259,16 +259,8 @@ private fun specFor(vitalName: String, unit: String): VitalSpec? {
     }
 }
 
-/**
- * Vitals the AddVital API ignores today: it answers "success" for vmValueWeight/vmValueHeight but
- * doesn't store them. Their entry (with kg/lb and cm/ft·in conversion) is ready; remove a name here
- * once the backend saves it.
- */
-private val NOT_SAVED_BY_BACKEND = setOf("weight", "height")
-
 /** Whether this vital can be entered manually. */
-fun canAddVitalManually(vitalName: String): Boolean =
-    vitalName.trim().lowercase() !in NOT_SAVED_BY_BACKEND && specFor(vitalName, "") != null
+fun canAddVitalManually(vitalName: String): Boolean = specFor(vitalName, "") != null
 
 /** "°F" and "F" (the backend sends both) compare equal. */
 private fun sameUnit(a: String, b: String) = a.replace("°", "").trim().equals(b.replace("°", "").trim(), ignoreCase = true)

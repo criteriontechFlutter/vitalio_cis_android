@@ -2,7 +2,7 @@ package com.critetiontech.ctvitalio.model
 
 import java.time.DayOfWeek
 
-// ── API: api/DietPlan/GetDietPlan ─────────────────────────────────────────────
+// ── API: api/DietPlan/GetAllDietPlanByPid (no days) and GetDietPlanByDay (one day) ──
 
 data class DietPlanResponse(
     val status: Int = 0,
@@ -13,6 +13,8 @@ data class DietPlanResponse(
 data class DietPlanDto(
     val dietPlanId: Int = 0,
     val dietPlanName: String? = null,
+    val isActive: Int = 0,
+    val daysAgo: Int? = null,
     val days: List<DietDayDto>? = null,
 )
 
@@ -33,10 +35,28 @@ data class DietMealDto(
 data class DietPlanFoodDto(
     val id: Int = 0,
     val foodId: Int = 0,
+    val istaken: Boolean = false,
     val foodName: String? = null,
     val quantity: Double = 0.0,
     val unitName: String? = null,
     val calories: Double = 0.0,
+)
+
+// ── API: api/DietPlan/GetDailyDietOverview ────────────────────────────────────
+
+data class DailyDietOverviewResponse(
+    val status: Int = 0,
+    val message: String? = null,
+    val responseValue: List<DailyDietOverview>? = null,
+)
+
+data class DailyDietOverview(
+    val dietPlanId: Int = 0,
+    val dietPlanName: String? = null,
+    val totalEnergyIntake: Double = 0.0,
+    val consumedCalories: Double = 0.0,
+    val remainingCalories: Double = 0.0,
+    val consumedPercentage: Double = 0.0,
 )
 
 // ── API: api/DietPlan/InsertDietPlan (the dietJson string) ────────────────────
@@ -73,6 +93,8 @@ data class DietPlanFood(
     val unitName: String,
     val calories: Double,
     val imageUrl: String? = null,
+    /** Server's tick for this row. It has no date, so it only speaks for today. */
+    val isTaken: Boolean = false,
 )
 
 data class DietMeal(
@@ -85,8 +107,10 @@ data class DietMeal(
 data class DietPlan(
     val id: Int,
     val name: String,
-    /** dayId (1..7) → meals that day; days with no food are absent. */
+    /** dayId (1..7) → meals that day; days with no food are absent. Empty in the plan list. */
     val days: Map<Int, List<DietMeal>>,
+    val isActive: Boolean = false,
+    val daysAgo: Int? = null,
 ) {
     fun mealsFor(dayId: Int): List<DietMeal> = days[dayId].orEmpty()
     fun caloriesFor(dayId: Int): Double = mealsFor(dayId).sumOf { m -> m.foods.sumOf { it.calories } }
@@ -121,7 +145,7 @@ data class PickedFood(
     val nutrition: FoodNutrition,
 )
 
-/** One food the user ticked as eaten, kept on the device per date. */
+/** One food ticked as eaten, as Nutrition Analytics shows it. */
 data class DietLogEntry(
     /** "plan:<rowId>" for a planned food, "extra:<uuid>" for food outside the plan. */
     val key: String,

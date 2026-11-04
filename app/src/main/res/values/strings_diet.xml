@@ -128,4 +128,12 @@
     <string name="diet_optimal">Optimal</string>
     <string name="diet_high">High</string>
     <string name="diet_week_label">Week %1$d • %2$s</string>
+    <string name="diet_update_failed">Couldn\'t update. Please try again.</string>
+    <string name="diet_remove_plan_title">Remove this plan?</string>
+    <string name="diet_remove_plan_msg">This diet plan will be removed.</string>
+    <string name="diet_foods_unavailable_title">Foods not available</string>
+    <string name="diet_foods_unavailable_msg">Set this plan as active to see its foods.</string>
+    <string name="diet_load_failed">Couldn\'t load the foods. Please try again.</string>
+    <string name="diet_adding_to_days">Adding to %1$d days</string>
+    <string name="diet_today_only_hint">Foods can be ticked for today only</string>
 </resources>

@@ -86,7 +86,7 @@ class VitalDetailViewModel : ViewModel() {
             }
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            val body = mapOf("vmValueBPSys" to vmValueBPSys, "vmValueBPDias" to vmValueBPDias, "vmValueSPO2" to vmValueSPO2, "vmValueRespiratoryRate" to vmValueRespiratoryRate, "vmValueHeartRate" to vmValueHeartRate, "vmValuePulse" to vmValuePulse, "vmValueRbs" to vmValueRbs, "vmValueTemperature" to vmValueTemperature, "vmValueWeight" to vmValueWeight, "vmValueHeight" to vmValueHeight, "uhid" to patient.uhId, "userId" to patient.pid.toString(), "vitalDate" to currentDate, "vitalTime" to currentTime, "clientId" to patient.clientId.toString(), "isFromPatient" to "true", "isFromMachine" to "0", "positionId" to "0")
+            val body = mapOf("vmValueBPSys" to vmValueBPSys, "vmValueBPDias" to vmValueBPDias, "vmValueSPO2" to vmValueSPO2, "vmValueRespiratoryRate" to vmValueRespiratoryRate, "vmValueHeartRate" to vmValueHeartRate, "vmValuePulse" to vmValuePulse, "vmValueRbs" to vmValueRbs, "vmValueTemperature" to vmValueTemperature, "weight" to vmValueWeight, "height" to vmValueHeight, "uhid" to patient.uhId, "userId" to patient.pid.toString(), "vitalDate" to currentDate, "vitalTime" to currentTime, "clientId" to patient.clientId.toString(), "isFromPatient" to "true", "isFromMachine" to "0", "positionId" to "0")
             when (val r = addVitalUseCase(body)) {
                 is DomainResult.Success -> { Haptics.success(); fetchLastVital(); onSuccess() }
                 is DomainResult.Error -> {

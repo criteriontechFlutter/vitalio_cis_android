@@ -217,7 +217,7 @@ object ReportDownloader {
             .build()
         try {
             manager.notify(key.hashCode(), notification)
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             // Notification permission revoked mid-download.
         }
     }

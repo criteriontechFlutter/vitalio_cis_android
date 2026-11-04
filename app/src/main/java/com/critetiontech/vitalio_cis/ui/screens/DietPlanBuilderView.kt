@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.RiceBowl
 import androidx.compose.material.icons.rounded.WaterDrop
@@ -70,7 +72,7 @@ import kotlin.math.roundToInt
 
 private val DAY_SHORT = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-/** Create a 7-day plan, or view a saved one ([planId] set). */
+/** Create a plan for the days picked, or view or remove a saved one ([planId] set). */
 @Composable
 fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
@@ -78,12 +80,16 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
     val readOnly by viewModel.readOnly.collectAsState()
     val name by viewModel.name.collectAsState()
     val day by viewModel.day.collectAsState()
+    val selectedDays by viewModel.selectedDays.collectAsState()
     val foods by viewModel.foods.collectAsState()
     val expanded by viewModel.expanded.collectAsState()
     val required by viewModel.requiredKcal.collectAsState()
     val saving by viewModel.saving.collectAsState()
     val error by viewModel.error.collectAsState()
     val saved by viewModel.saved.collectAsState()
+    val loadingDays by viewModel.loadingDays.collectAsState()
+    val failedDays by viewModel.failedDays.collectAsState()
+    val foodsUnavailable by viewModel.foodsUnavailable.collectAsState()
 
     LaunchedEffect(planId) { viewModel.start(planId) }
     PickedFoodListener { viewModel.addFood(it) }
@@ -91,22 +97,29 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
     var renaming by remember { mutableStateOf(false) }
     var editingRequired by remember { mutableStateOf(false) }
     var needFood by remember { mutableStateOf(false) }
+    var confirmRemove by remember { mutableStateOf(false) }
 
-    val dayFoods = foods[day].orEmpty()
-    val scheduled = dayFoods.values.sumOf { list -> list.sumOf { it.calories } }.roundToInt()
+    val dayFoods = if (readOnly) foods[day].orEmpty() else viewModel.selectedFoods(foods, selectedDays)
+    // Selected days can differ, so show the fullest one: this is a per-day figure.
+    val shownDays = if (readOnly) setOf(day) else selectedDays
+    val scheduled = shownDays.maxOf { d -> foods[d].orEmpty().values.sumOf { list -> list.sumOf { it.calories } } }.roundToInt()
 
     Column(Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
         DietTopBar(title = name, titleColor = if (readOnly) null else colors.textGreyColor.copy(alpha = 0.7f)) {
             if (!readOnly) Icon(
                 Icons.Rounded.Edit, contentDescription = stringResource(R.string.diet_rename_plan), tint = colors.textDarkColor,
                 modifier = Modifier.size(40.dp).clip(CircleShape).bounceClick { renaming = true }.padding(9.dp),
+            ) else Icon(
+                Icons.Rounded.Delete, contentDescription = stringResource(R.string.diet_remove), tint = DietColors.Red,
+                modifier = Modifier.size(40.dp).clip(CircleShape).bounceClick { confirmRemove = true }.padding(9.dp),
             )
         }
+        if (readOnly && (day in loadingDays || saving)) LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp), color = colors.primaryBlueColor)
         // Day picker
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             DAY_SHORT.forEachIndexed { i, label ->
                 val id = i + 1
-                val selected = id == day
+                val selected = if (readOnly) id == day else id in selectedDays
                 val hasFood = foods[id].orEmpty().values.any { it.isNotEmpty() }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
@@ -123,6 +136,12 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
                 }
             }
         }
+        if (!readOnly && selectedDays.size > 1) {
+            Text(
+                stringResource(R.string.diet_adding_to_days, selectedDays.size), color = colors.primaryBlueColor, fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
         // Scheduled vs required
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
             Text(stringResource(R.string.diet_scheduled) + " ", color = colors.textGreyColor, fontSize = 13.sp)
@@ -133,13 +152,15 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
                 modifier = Modifier.clip(RoundedCornerShape(6.dp)).bounceClick(enabled = !readOnly) { editingRequired = true }.padding(2.dp),
             ) {
                 Text(stringResource(R.string.diet_required) + " ", color = colors.textGreyColor, fontSize = 13.sp)
-                Text(kcalText(required), color = colors.primaryBlueColor, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(required?.let { kcalText(it) } ?: "—", color = colors.primaryBlueColor, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Text(" " + stringResource(R.string.diet_kcal_day), color = colors.textGreyColor, fontSize = 13.sp)
                 if (!readOnly) Icon(Icons.Rounded.Edit, contentDescription = null, tint = colors.textGreyColor, modifier = Modifier.padding(start = 3.dp).size(14.dp))
             }
         }
 
-        LazyColumn(
+        if (foodsUnavailable) Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            DietEmptyState(stringResource(R.string.diet_foods_unavailable_title), stringResource(R.string.diet_foods_unavailable_msg))
+        } else LazyColumn(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
             modifier = Modifier.weight(1f),
@@ -152,8 +173,8 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
                     expanded = expanded == meal,
                     onToggle = { viewModel.toggleExpanded(meal) },
                 ) {
-                    if (list.isEmpty() && readOnly) {
-                        Text(stringResource(R.string.diet_nothing_planned), color = colors.textGreyColor, fontSize = 13.sp, modifier = Modifier.padding(4.dp))
+                    if (list.isEmpty() && readOnly && day !in loadingDays) {
+                        Text(stringResource(if (day in failedDays) R.string.diet_load_failed else R.string.diet_nothing_planned), color = colors.textGreyColor, fontSize = 13.sp, modifier = Modifier.padding(4.dp))
                     }
                     list.forEachIndexed { index, food ->
                         MealFoodRow(
@@ -164,7 +185,7 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
                         ) {
                             if (!readOnly) Icon(
                                 Icons.Rounded.Close, contentDescription = stringResource(R.string.diet_remove), tint = DietColors.Red,
-                                modifier = Modifier.size(22.dp).clip(CircleShape).bounceClick { viewModel.removeFood(meal, index) }.padding(2.dp),
+                                modifier = Modifier.size(22.dp).clip(CircleShape).bounceClick { viewModel.removeFood(meal, food) }.padding(2.dp),
                             )
                         }
                     }
@@ -221,7 +242,7 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
         }
     }
     if (editingRequired) {
-        var text by remember { mutableStateOf(required.toString()) }
+        var text by remember { mutableStateOf(required?.toString().orEmpty()) }
         AppDialog(
             title = stringResource(R.string.diet_required_title),
             message = stringResource(R.string.diet_required_msg),
@@ -236,6 +257,17 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
                 placeholderText = "2000",
             )
         }
+    }
+    if (confirmRemove) {
+        AppDialog(
+            title = stringResource(R.string.diet_remove_plan_title),
+            message = stringResource(R.string.diet_remove_plan_msg),
+            onDismiss = { confirmRemove = false },
+            confirmText = stringResource(R.string.diet_remove),
+            dismissText = stringResource(R.string.diet_cancel),
+            destructive = true,
+            onConfirm = { confirmRemove = false; viewModel.removePlan { nav.popBackStack() } },
+        )
     }
     if (needFood) {
         AppDialog(title = stringResource(R.string.diet_add_some_food), onDismiss = { needFood = false }, icon = Icons.Rounded.RiceBowl)
@@ -252,8 +284,8 @@ fun DietPlanBuilderScreen(planId: Int?, viewModel: DietPlanBuilderViewModel = vi
             daysPlanned = plan.plannedDays,
             meals = plan.mealCount,
             kcalPerDay = plan.avgCaloriesPerDay.roundToInt(),
-            onActive = { viewModel.markSavedActive(); nav.popBackStack() },
-            onLater = { nav.popBackStack() },
+            onActive = { viewModel.markSavedActive { nav.popBackStack() } },
+            onLater = { viewModel.leaveSavedInactive { nav.popBackStack() } },
         )
     }
 }
