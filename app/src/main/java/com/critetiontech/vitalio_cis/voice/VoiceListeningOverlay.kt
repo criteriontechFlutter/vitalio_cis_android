@@ -430,6 +430,7 @@ private fun UnifiedVoiceConfirmationFullScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(LocalMyColorScheme.current.dashboardContainerColor)
+                    .statusBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {

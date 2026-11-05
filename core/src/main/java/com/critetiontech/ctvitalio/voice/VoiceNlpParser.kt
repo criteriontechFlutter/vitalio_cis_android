@@ -96,26 +96,26 @@ object VoiceNlpParser {
 
     // "bp 120 80", "blood pressure is 130 by 85", "bp mera 140/90"
     private val BP_WITH_KEYWORD = Regex(
-        """(?:\bbp\b|\bblood\s*pressure\b)\D{0,20}?(\d{2,3})\s*(?:/|\bby\b|\bover\b|\band\b|,|\s)\s*(\d{2,3})(?![\d.])"""
+        """(?:\bbp\b|\bblood\s*pressure\b)\D{0,20}?(\d{2,3})\s*(?:/|\bby\b|\bover\b|\band\b|,|\s)\s*(\d{2,3})(?!\d|\.\d)"""
     )
     // A bare pair needs an explicit separator, so "pulse 98 spo2 97" never becomes BP 98/97
     private val BP_WITH_SEPARATOR = Regex(
-        """(?<![\d.])(\d{2,3})\s*(?:/|\bby\b|\bover\b)\s*(\d{2,3})(?![\d.])"""
+        """(?<![\d.])(\d{2,3})\s*(?:/|\bby\b|\bover\b)\s*(\d{2,3})(?!\d|\.\d)"""
     )
 
     private val RBS_PATTERNS = listOf(
-        Regex("""(?:\brbs\b|\brandom\s*blood\s*sugar\b|\bblood\s*sugar\b|\bsugar\b|\bglucose\b)\s*(?:level|value|reading|is|was|=|:|\s)*(\d{2,3})(?![\d.])"""),
+        Regex("""(?:\brbs\b|\brandom\s*blood\s*sugar\b|\bblood\s*sugar\b|\bsugar\b|\bglucose\b)\s*(?:level|value|reading|is|was|=|:|\s)*(\d{2,3})(?!\d|\.\d)"""),
         Regex("""(?<![\d.])(\d{2,3})\s*mg\s*/?\s*dl\b""")
     )
 
     // "hr" only counts when it isn't a duration ("3 hr 30 min")
     private val PULSE_PATTERNS = listOf(
-        Regex("""(?:\bpulse(?:\s*rate)?\b|\bheart(?:\s*(?:rate|beat))?\b|(?<!\d\s)(?<!\d)\bhr\b|\bnabz\b|\bnaad\b|\bdil\s*ki\s*dhadkan\b)\s*(?:is|was|=|:)?\s*(\d{2,3})(?![\d.])"""),
+        Regex("""(?:\bpulse(?:\s*rate)?\b|\bheart(?:\s*(?:rate|beat))?\b|(?<!\d\s)(?<!\d)\bhr\b|\bnabz\b|\bnaad\b|\bdil\s*ki\s*dhadkan\b)\s*(?:is|was|=|:)?\s*(\d{2,3})(?!\d|\.\d)"""),
         Regex("""(?<![\d.])(\d{2,3})\s*(?:bpm|beats\s*per\s*minute|beats)\b""")
     )
 
     private val SPO2_PATTERNS = listOf(
-        Regex("""(?:\bspo2\b|\bsp\s*o2\b|\boxygen\s*saturation\b|\boxygen\b|\bo2\b|\bsaturation\b|\bspo\b)\s*(?:level|reading|is|was|=|:)?\s*(\d{2,3})(?![\d.])"""),
+        Regex("""(?:\bspo2\b|\bsp\s*o2\b|\boxygen\s*saturation\b|\boxygen\b|\bo2\b|\bsaturation\b|\bspo\b)\s*(?:level|reading|is|was|=|:)?\s*(\d{2,3})(?!\d|\.\d)"""),
         Regex("""(?<![\d.])(\d{2,3})\s*%?\s*(?:\bspo2\b|\boxygen\b|\bsaturation\b)""")
     )
 

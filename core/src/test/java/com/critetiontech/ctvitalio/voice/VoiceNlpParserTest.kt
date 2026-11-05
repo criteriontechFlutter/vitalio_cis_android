@@ -110,6 +110,24 @@ class VoiceNlpParserTest {
         assertEquals("96", v["vmValueSPO2"])
     }
 
+    // The dictation backend ends each final segment with a full stop
+    @Test fun `value at the end of a sentence is read`() {
+        assertEquals("96", parse("My pulse is 96.").vitals?.get("vmValuePulse"))
+        assertEquals("72", parse("And my heart rate is 72.").vitals?.get("vmValuePulse"))
+        assertEquals("110" to "80", bp("My blood pressure is 110/80."))
+        assertEquals("125" to "82", bp("125 over 82."))
+        assertEquals("140", parse("My sugar is 140.").vitals?.get("vmValueRbs"))
+        assertEquals("97", parse("My oxygen is 97.").vitals?.get("vmValueSPO2"))
+        assertEquals("98.6", parse("My temperature is 98.6.").vitals?.get("vmValueTemperature"))
+    }
+
+    @Test fun `a decimal is not cut down to a whole number`() {
+        assertNull(parse("pulse 98.6").vitals?.get("vmValuePulse"))
+        assertNull(parse("sugar 5.6").vitals?.get("vmValueRbs"))
+        assertNull(parse("oxygen 97.5").vitals?.get("vmValueSPO2"))
+        assertNull(parse("bp 120/80.5").vitals?.get("vmValueBPSys"))
+    }
+
     @Test fun `mixed sentence`() {
         val data = parse("BP 120/80, pulse 72, 2 glass water piya aur sir dard hai")
         assertEquals("120" to "80", data.vitals?.let { it["vmValueBPSys"] to it["vmValueBPDias"] })

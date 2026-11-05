@@ -524,9 +524,7 @@ object VoiceNavigationManager {
         if (text.length < 2 || !text.any { it.isLetter() }) {
             withContext(Dispatchers.Main) {
                 _isExtractingData.value = false
-                if (_pendingData.value == null) {
-                    _statusMessage.value = "Didn't catch that. Tap Speak again and say your readings."
-                }
+                _statusMessage.value = "Didn't catch that. Tap Speak again and say your readings."
             }
             return
         }
@@ -593,11 +591,8 @@ object VoiceNavigationManager {
             }
             // Nothing extracted: maybe an intent without values ("record my BP")
             val prompt = MultiTurnConversationManager.detectAndStart(text)
-            when {
-                prompt != null -> _multiTurnPrompt.value = prompt
-                _pendingData.value == null ->
-                    _statusMessage.value = "No health readings found in what you said. Tap Speak again to try."
-            }
+            if (prompt != null) _multiTurnPrompt.value = prompt
+            else _statusMessage.value = "No health readings found in what you said. Tap Speak again to try."
         }
     }
 
