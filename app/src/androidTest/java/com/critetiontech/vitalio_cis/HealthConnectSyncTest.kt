@@ -4,12 +4,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
 import androidx.health.connect.client.records.metadata.Metadata
-import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import androidx.health.connect.client.units.BloodGlucose
-import androidx.health.connect.client.units.Energy
-import androidx.health.connect.client.units.Length
-import androidx.health.connect.client.units.Mass
 import androidx.health.connect.client.units.Percentage
 import androidx.health.connect.client.units.Pressure
 import androidx.health.connect.client.units.Temperature
@@ -65,7 +60,6 @@ class HealthConnectSyncTest {
         val zone = ZoneOffset.systemDefault().rules.getOffset(now)
         val older = now.minus(2, ChronoUnit.HOURS)
         val latest = now.minus(1, ChronoUnit.MINUTES)
-        val workoutStart = now.minus(40, ChronoUnit.MINUTES)
         val meta = { Metadata.manualEntry() }
         client.insertRecords(
             listOf(
@@ -77,18 +71,7 @@ class HealthConnectSyncTest {
                     systolic = Pressure.millimetersOfMercury(122.0), diastolic = Pressure.millimetersOfMercury(81.0)),
                 OxygenSaturationRecord(time = latest, zoneOffset = zone, percentage = Percentage(97.0), metadata = meta()),
                 RespiratoryRateRecord(time = latest, zoneOffset = zone, rate = 16.0, metadata = meta()),
-                BodyTemperatureRecord(time = latest, zoneOffset = zone, metadata = meta(), temperature = Temperature.celsius(37.0)),
-                BloodGlucoseRecord(time = latest, zoneOffset = zone, metadata = meta(), level = BloodGlucose.milligramsPerDeciliter(110.0)),
-                WeightRecord(time = latest, zoneOffset = zone, weight = Mass.kilograms(72.5), metadata = meta()),
-                HeightRecord(time = latest, zoneOffset = zone, height = Length.meters(1.76), metadata = meta()),
-                StepsRecord(workoutStart, zone, now.minus(10, ChronoUnit.MINUTES), zone, 5000, meta()),
-                DistanceRecord(workoutStart, zone, now.minus(10, ChronoUnit.MINUTES), zone, Length.meters(3500.0), meta()),
-                ActiveCaloriesBurnedRecord(workoutStart, zone, now.minus(10, ChronoUnit.MINUTES), zone, Energy.kilocalories(180.0), meta()),
-                SleepSessionRecord(now.minus(8, ChronoUnit.HOURS), zone, now.minus(1, ChronoUnit.HOURS), zone, meta()),
-                RestingHeartRateRecord(time = latest, zoneOffset = zone, beatsPerMinute = 62, metadata = meta()),
-                HeartRateVariabilityRmssdRecord(time = latest, zoneOffset = zone, heartRateVariabilityMillis = 45.0, metadata = meta()),
-                ExerciseSessionRecord(workoutStart, zone, now.minus(10, ChronoUnit.MINUTES), zone, meta(),
-                    ExerciseSessionRecord.EXERCISE_TYPE_WALKING, title = "Evening walk")
+                BodyTemperatureRecord(time = latest, zoneOffset = zone, metadata = meta(), temperature = Temperature.celsius(37.0))
             )
         )
 
@@ -100,27 +83,12 @@ class HealthConnectSyncTest {
         assertEquals("97", values[VitalMetric.SPO2])
         assertEquals("16", values[VitalMetric.RESPIRATORY_RATE])
         assertEquals("98.6", values[VitalMetric.BODY_TEMPERATURE])
-        assertEquals("110", values[VitalMetric.BLOOD_GLUCOSE])
-        assertEquals("72.5", values[VitalMetric.WEIGHT])
-        assertEquals("176", values[VitalMetric.HEIGHT])
-        assertEquals(6, first.vitalsSaved) // weight/height are read but not sent (server doesn't store them)
+        assertEquals(5, first.vitalsSaved)
+        assertTrue(first.snapshot.vitals.all { WearableSync.isSaved(context, it) })
 
-        val daily = first.snapshot.daily
-        val rawSteps = client.readRecords(ReadRecordsRequest(StepsRecord::class, TimeRangeFilter.after(now.minus(1, ChronoUnit.DAYS)))).records
-        assertTrue("steps ${daily.steps}, raw=${rawSteps.map { it.count to it.metadata.dataOrigin.packageName }}", (daily.steps ?: 0) >= 5000)
-        assertTrue("sleep ${daily.sleep}", (daily.sleep?.toMinutes() ?: 0) >= 7 * 60)
-        assertEquals(62L, daily.restingHeartRate)
-        assertEquals(45.0, daily.hrvMs!!, 0.01)
-
-        val walk = first.snapshot.workouts.single { it.name == "Evening walk" }
-        assertEquals("Walking", walk.activityName)
-        assertTrue("workout not saved", WearableSync.isSaved(context, walk))
-        assertTrue(first.snapshot.vitals.filter { it.metric.savedToServer }.all { WearableSync.isSaved(context, it) })
-
-        // Running again must not send the same readings or workout twice
+        // Running again must not send the same readings twice
         val second = WearableSync.sync(context, client)
         assertNull(second.error)
         assertEquals(0, second.vitalsSaved)
-        assertEquals(0, second.workoutsSaved)
     }
 }

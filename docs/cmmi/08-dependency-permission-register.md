@@ -102,20 +102,9 @@ The purpose of each permission must be confirmed by the developer who added it, 
 | `android.permission.VIBRATE` | :app, :wear | To be filled |
 | `android.permission.WAKE_LOCK` | :app | To be filled |
 | `android.permission.WRITE_EXTERNAL_STORAGE` | :app | To be filled |
-| `android.permission.health.READ_ACTIVE_CALORIES_BURNED` | :app | To be filled |
-| `android.permission.health.READ_BLOOD_GLUCOSE` | :app | To be filled |
 | `android.permission.health.READ_BLOOD_PRESSURE` | :app | To be filled |
 | `android.permission.health.READ_BODY_TEMPERATURE` | :app | To be filled |
-| `android.permission.health.READ_DISTANCE` | :app | To be filled |
-| `android.permission.health.READ_EXERCISE` | :app | To be filled |
 | `android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND` | :app | To be filled |
 | `android.permission.health.READ_HEART_RATE` | :app | To be filled |
-| `android.permission.health.READ_HEART_RATE_VARIABILITY` | :app | To be filled |
-| `android.permission.health.READ_HEIGHT` | :app | To be filled |
 | `android.permission.health.READ_OXYGEN_SATURATION` | :app | To be filled |
 | `android.permission.health.READ_RESPIRATORY_RATE` | :app | To be filled |
-| `android.permission.health.READ_RESTING_HEART_RATE` | :app | To be filled |
-| `android.permission.health.READ_SLEEP` | :app | To be filled |
-| `android.permission.health.READ_STEPS` | :app | To be filled |
-| `android.permission.health.READ_TOTAL_CALORIES_BURNED` | :app | To be filled |
-| `android.permission.health.READ_WEIGHT` | :app | To be filled |

@@ -49,13 +49,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.ctvitalio.healthconnect.VitalMetric
 import com.critetiontech.ctvitalio.healthconnect.VitalReading
 import com.critetiontech.ctvitalio.healthconnect.WearableData
-import com.critetiontech.ctvitalio.healthconnect.WearableSnapshot
 import com.critetiontech.ctvitalio.healthconnect.WearableSync
-import com.critetiontech.ctvitalio.healthconnect.Workout
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import kotlinx.coroutines.launch
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -202,14 +199,9 @@ fun HealthConnectSyncScreen(
                             SyncState.SYNCING -> RadarBusyCard(stringResource(R.string.device_hc_syncing_health_data), stringResource(R.string.device_hc_reading_from_hc), icon = Icons.Filled.Watch)
                             SyncState.SUCCESS -> StatusCard(
                                 true,
-                                if (savedCount.first + savedCount.second == 0) stringResource(R.string.device_hc_up_to_date) else stringResource(R.string.device_synced),
-                                when {
-                                    savedCount.first + savedCount.second == 0 -> stringResource(R.string.device_hc_no_new_readings)
-                                    savedCount.first > 0 && savedCount.second > 0 ->
-                                        stringResource(R.string.device_hc_saved_vitals_workouts, savedCount.first, savedCount.second)
-                                    savedCount.first > 0 -> stringResource(R.string.device_hc_saved_vitals, savedCount.first)
-                                    else -> stringResource(R.string.device_hc_saved_workouts, savedCount.second)
-                                }
+                                if (savedCount == 0) stringResource(R.string.device_hc_up_to_date) else stringResource(R.string.device_synced),
+                                if (savedCount == 0) stringResource(R.string.device_hc_no_new_readings)
+                                else stringResource(R.string.device_hc_saved_vitals, savedCount)
                             )
                             SyncState.ERROR -> StatusCard(
                                 false, stringResource(R.string.device_hc_sync_failed), errorMessage,
@@ -244,13 +236,6 @@ fun HealthConnectSyncScreen(
                                 AnimatedEnter(index = 3 + i) { VitalCard(v, WearableSync.isSaved(context, v)) }
                             }
                         }
-                        TodayCard(data)
-                        if (data.workouts.isNotEmpty()) {
-                            SectionTitle(stringResource(R.string.device_hc_todays_workouts), null)
-                            data.workouts.forEachIndexed { i, w ->
-                                AnimatedEnter(index = 3 + i) { WorkoutCard(w, WearableSync.isSaved(context, w)) }
-                            }
-                        }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -279,9 +264,6 @@ private fun VitalMetric.icon(): Pair<ImageVector, Color> = when (this) {
     VitalMetric.SPO2             -> Icons.Filled.Air to Color(0xFF00A896)
     VitalMetric.RESPIRATORY_RATE -> Icons.Filled.Waves to Color(0xFF8E59D9)
     VitalMetric.BODY_TEMPERATURE -> Icons.Filled.Thermostat to Color(0xFFF57C00)
-    VitalMetric.BLOOD_GLUCOSE    -> Icons.Filled.WaterDrop to Color(0xFF43A047)
-    VitalMetric.WEIGHT           -> Icons.Filled.MonitorWeight to Color(0xFF8D6E63)
-    VitalMetric.HEIGHT           -> Icons.Filled.Height to Color(0xFF78909C)
 }
 
 @Composable
@@ -371,11 +353,7 @@ private fun VitalCard(reading: VitalReading, saved: Boolean) {
                     Text(" ${reading.metric.unit}", fontSize = 11.sp, color = colors.textGreyColor, modifier = Modifier.padding(bottom = 2.dp))
                 }
                 SavedChip(
-                    when {
-                        !reading.metric.savedToServer -> stringResource(R.string.device_hc_app_only)
-                        saved -> stringResource(R.string.device_hc_saved)
-                        else -> stringResource(R.string.device_hc_not_synced)
-                    },
+                    if (saved) stringResource(R.string.device_hc_saved) else stringResource(R.string.device_hc_not_synced),
                     saved
                 )
             }
@@ -396,77 +374,6 @@ private fun SavedChip(label: String, saved: Boolean) {
             Spacer(Modifier.width(3.dp))
         }
         Text(label, fontSize = 10.sp, color = tint, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun TodayCard(data: WearableSnapshot) {
-    val d = data.daily
-    val tiles = listOfNotNull(
-        d.steps?.let { Triple(Icons.Filled.DirectionsWalk, stringResource(R.string.device_hc_steps), "%,d".format(it)) },
-        d.distanceKm?.let { Triple(Icons.Filled.Straighten, stringResource(R.string.device_hc_distance), String.format(Locale.US, "%.2f km", it)) },
-        d.activeKcal?.let { Triple(Icons.Filled.LocalFireDepartment, stringResource(R.string.device_hc_active_calories), "${it.toInt()} kcal") },
-        d.totalKcal?.let { Triple(Icons.Filled.Whatshot, stringResource(R.string.device_hc_total_calories), "${it.toInt()} kcal") },
-        d.sleep?.takeIf { !it.isZero }?.let { Triple(Icons.Filled.Bedtime, stringResource(R.string.device_hc_sleep), "${it.toHours()}h ${it.toMinutes() % 60}m") },
-        d.restingHeartRate?.let { Triple(Icons.Filled.FavoriteBorder, stringResource(R.string.device_hc_resting_hr), "$it bpm") },
-        d.hrvMs?.let { Triple(Icons.Filled.Timeline, "HRV", "${it.toInt()} ms") }
-    )
-    if (tiles.isEmpty()) return
-    SectionTitle(stringResource(R.string.device_hc_today), stringResource(R.string.device_hc_today_not_saved))
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        tiles.chunked(2).forEachIndexed { r, row ->
-            AnimatedEnter(index = r) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEach { (icon, label, value) -> StatTile(icon, label, value, Modifier.weight(1f)) }
-                    if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatTile(icon: ImageVector, label: String, value: String, modifier: Modifier) {
-    val colors = LocalMyColorScheme.current
-    val p = colors.primaryBlueColor
-    Column(
-        modifier = modifier.clip(RoundedCornerShape(16.dp)).background(colors.dashboardContainerColor).padding(14.dp)
-    ) {
-        Box(
-            Modifier.size(30.dp).clip(RoundedCornerShape(10.dp)).background(tintFill(p)),
-            contentAlignment = Alignment.Center
-        ) { Icon(icon, null, tint = p, modifier = Modifier.size(16.dp)) }
-        Spacer(modifier = Modifier.height(8.dp))
-        Caption(label)
-        Text(value, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = colors.textDarkColor)
-    }
-}
-
-@Composable
-private fun WorkoutCard(workout: Workout, saved: Boolean) {
-    val colors = LocalMyColorScheme.current
-    val minutes = Duration.between(workout.start, workout.end).toMinutes()
-    val tint = Color(0xFFFF7043)
-    FlatCard(padding = 14.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(tintFill(tint)),
-                contentAlignment = Alignment.Center
-            ) { Icon(Icons.Filled.FitnessCenter, null, tint = tint, modifier = Modifier.size(22.dp)) }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(workout.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textDarkColor)
-                Text("${workout.start.display()} · $minutes min · ${workout.source}", fontSize = 11.sp, color = colors.textGreyColor, maxLines = 1)
-            }
-            SavedChip(
-                when {
-                    saved -> stringResource(R.string.device_hc_saved)
-                    workout.activityName == null -> stringResource(R.string.device_hc_not_supported)
-                    else -> stringResource(R.string.device_hc_not_synced)
-                },
-                saved
-            )
-        }
     }
 }
 

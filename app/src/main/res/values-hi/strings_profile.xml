@@ -97,7 +97,7 @@
     <string name="profile_haptic_feedback_subtitle">टैप और एक्शन पर हल्का वाइब्रेशन</string>
     <string name="profile_hc_not_connected">कनेक्ट नहीं है</string>
     <string name="profile_hc_not_installed">Health Connect इंस्टॉल नहीं है</string>
-    <string name="profile_hc_summary">आपकी वॉच और हेल्थ ऐप से वाइटल्स, कदम, नींद और वर्कआउट पढ़ता है। सिर्फ़ पढ़ता है — Vitalio वहां आपका डेटा कभी नहीं लिखता या मिटाता।</string>
+    <string name="profile_hc_summary">आपकी वॉच और हेल्थ ऐप से हार्ट रेट, ब्लड प्रेशर, SpO₂, रेस्पिरेटरी रेट और शरीर का तापमान पढ़ता है। सिर्फ़ पढ़ता है — Vitalio वहां आपका डेटा कभी नहीं लिखता या मिटाता।</string>
     <string name="profile_hc_types_allowed">%2$d में से %1$d डेटा टाइप की अनुमति है</string>
     <string name="profile_height">लंबाई</string>
     <string name="profile_image_read_failed">यह फ़ोटो नहीं खुल पाई। कृपया कोई दूसरी फ़ोटो चुनें।</string>

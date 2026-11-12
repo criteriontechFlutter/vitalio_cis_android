@@ -97,7 +97,7 @@
     <string name="profile_haptic_feedback_subtitle">Gentle vibration on taps and actions</string>
     <string name="profile_hc_not_connected">Not connected</string>
     <string name="profile_hc_not_installed">Health Connect isn\'t installed</string>
-    <string name="profile_hc_summary">Reads vitals, steps, sleep and workouts from your watch and health apps. Read-only — Vitalio never writes or deletes your data there.</string>
+    <string name="profile_hc_summary">Reads heart rate, blood pressure, SpO₂, respiratory rate and body temperature from your watch and health apps. Read-only — Vitalio never writes or deletes your data there.</string>
     <string name="profile_hc_types_allowed">%1$d of %2$d data types allowed</string>
     <string name="profile_height">Height</string>
     <string name="profile_image_read_failed">Couldn\'t read that image. Please try another one.</string>

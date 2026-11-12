@@ -34,9 +34,9 @@ class HealthConnectViewModel : ViewModel() {
     private val _snapshot = MutableStateFlow<WearableSnapshot?>(null)
     val snapshot: StateFlow<WearableSnapshot?> = _snapshot
 
-    /** Vitals and workouts saved to the server in the last sync. */
-    private val _savedCount = MutableStateFlow(0 to 0)
-    val savedCount: StateFlow<Pair<Int, Int>> = _savedCount
+    /** Vitals saved to the server in the last sync. */
+    private val _savedCount = MutableStateFlow(0)
+    val savedCount: StateFlow<Int> = _savedCount
 
     private val _missingPermissions = MutableStateFlow<Set<String>>(emptySet())
     val missingPermissions: StateFlow<Set<String>> = _missingPermissions
@@ -89,10 +89,9 @@ class HealthConnectViewModel : ViewModel() {
             _missingPermissions.value = WearableData.READ_PERMISSIONS - granted
             val result = WearableSync.sync(context, client)
             _snapshot.value = result.snapshot
-            _savedCount.value = result.vitalsSaved to result.workoutsSaved
+            _savedCount.value = result.vitalsSaved
             val snapshot = result.snapshot
-            val nothingRead = snapshot.vitals.isEmpty() && snapshot.workouts.isEmpty() &&
-                    snapshot.daily == com.critetiontech.ctvitalio.healthconnect.DailySummary()
+            val nothingRead = snapshot.vitals.isEmpty()
             _syncState.value = when {
                 result.error != null -> { _errorMessage.value = result.error; SyncState.ERROR }
                 nothingRead -> {
