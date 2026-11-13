@@ -9,6 +9,9 @@ import android.os.VibratorManager
 /** Short tick — data saved. */
 val HAPTIC_SUCCESS = longArrayOf(0, 60)
 
+/** Barely-there tap — button acknowledged. */
+val HAPTIC_TICK = longArrayOf(0, 18)
+
 /** Three strong pulses — critical vital alert. */
 val HAPTIC_CRITICAL = longArrayOf(0, 300, 150, 300, 150, 300)
 

@@ -24,6 +24,23 @@ android {
         versionName = versionProps.getProperty("WEAR_VERSION_NAME").trim()
     }
 
+    // Same upload key as the phone app (RELEASE_* in local.properties). Play rejects debug-signed bundles.
+    val signingProps = Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    }
+    val releaseStoreFile = signingProps.getProperty("RELEASE_STORE_FILE")?.let { rootProject.file(it).takeIf { f -> f.exists() } ?: file(it) }
+
+    signingConfigs {
+        if (releaseStoreFile != null && releaseStoreFile.exists()) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = signingProps.getProperty("RELEASE_STORE_PASSWORD")
+                keyAlias = signingProps.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = signingProps.getProperty("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -32,7 +49,10 @@ android {
                 "proguard-rules.pro"
             )
             // Must match the phone app's signing config (see app/build.gradle.kts)
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug").also {
+                    logger.warn("⚠ Wear release build is signed with the DEBUG key — set RELEASE_* in local.properties")
+                }
         }
     }
     compileOptions {
@@ -58,6 +78,7 @@ dependencies {
     implementation(libs.androidx.wear.compose.material3)
     implementation(libs.androidx.wear.compose.foundation)
     implementation(libs.androidx.wear.tooling.preview)
+    implementation(libs.androidx.wear.remote.interactions)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.services.wearable)
     implementation("com.google.code.gson:gson:2.13.1")

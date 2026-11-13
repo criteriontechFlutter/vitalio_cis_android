@@ -71,6 +71,10 @@ object VoiceNavigationManager {
     private val _isListening           = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
+    /** Mic loudness while listening, 0..1 (for level meters/animations; 0 when idle). */
+    private val _audioLevel            = MutableStateFlow(0f)
+    val audioLevel: StateFlow<Float>   = _audioLevel.asStateFlow()
+
     private val _transcript            = MutableStateFlow("")
     val transcript: StateFlow<String>  = _transcript.asStateFlow()
 
@@ -350,6 +354,7 @@ object VoiceNavigationManager {
         val wasActive = _isListening.value || isStarting.get()
         sessionToken++
         _isListening.value = false
+        _audioLevel.value = 0f
         stopAudioCapture()
 
         scope.launch {
@@ -879,6 +884,8 @@ object VoiceNavigationManager {
                         }
                     }
                     val rms = kotlin.math.sqrt(energySum / read)
+                    // ~0.15 RMS is loud speech close to the mic; sqrt lifts quieter voices
+                    _audioLevel.value = kotlin.math.sqrt((rms / 0.15f).coerceIn(0f, 1f))
 
                     val threshold = maxOf(VAD_MIN_THRESHOLD, noiseFloor * VAD_NOISE_MULTIPLIER)
                     if (rms > threshold) {

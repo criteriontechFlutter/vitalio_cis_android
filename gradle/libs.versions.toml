@@ -40,6 +40,7 @@ contentpager = "1.0.0"
 foundationLayout = "1.12.1"
 wearCompose = "1.7.1"
 wearToolingPreview = "1.0.0"
+wearRemoteInteractions = "1.1.0"
 playServicesWearable = "20.0.1"
 
 
@@ -92,6 +93,7 @@ androidx-compose-foundation-layout = { group = "androidx.compose.foundation", na
 androidx-wear-compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "wearCompose" }
 androidx-wear-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wearCompose" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
+androidx-wear-remote-interactions = { group = "androidx.wear", name = "wear-remote-interactions", version.ref = "wearRemoteInteractions" }
 androidx-wear-tooling-preview ={ group = "androidx.wear", name = "wear-tooling-preview", version.ref = "wearToolingPreview" }
 
 

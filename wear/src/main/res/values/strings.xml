@@ -1,9 +1,25 @@
 <resources>
     <string name="app_name">Vitalio</string>
     <string name="sign_in_on_phone">Open Vitalio on your phone to sign in</string>
+    <string name="sign_in_title">Sign in on your phone</string>
+    <string name="sign_in_body">Sign in to the Vitalio app on your paired phone. Your watch will connect automatically.</string>
+    <string name="open_on_phone">Open on phone</string>
+    <string name="check_your_phone">Check your phone</string>
+    <string name="phone_not_reachable">Phone not reachable. Open Vitalio on your phone.</string>
     <string name="greeting">Hi, %1$s</string>
     <string name="tap_to_speak">Tap to speak</string>
-    <string name="voice_hint">Try “BP 120 by 80” or “2 glass paani”</string>
+    <string name="good_morning">Good morning</string>
+    <string name="good_afternoon">Good afternoon</string>
+    <string name="good_evening">Good evening</string>
+    <string name="try_saying">Try saying</string>
+    <string-array name="voice_examples">
+        <item>BP 120 by 80</item>
+        <item>Pulse 72</item>
+        <item>2 glass paani</item>
+        <item>Sugar 110</item>
+        <item>Took my medicine</item>
+    </string-array>
+    <string name="listening_hint">Say a vital, water or medicine</string>
     <string name="listening">Listening…</string>
     <string name="connecting">Connecting…</string>
     <string name="done">Done</string>
