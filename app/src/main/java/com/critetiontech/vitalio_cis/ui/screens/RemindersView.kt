@@ -183,7 +183,7 @@ fun MedicineItem(
                 }
             } else {
                 HapticIconButton(onClick = onComplete) {
-                    Icon(Icons.Default.MoreVert, null)
+                    Icon(Icons.Default.MoreVert, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_more_options))
                 }
             }
         }

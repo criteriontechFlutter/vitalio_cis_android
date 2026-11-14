@@ -253,7 +253,7 @@ fun CustomDropdown(
             shape = RoundedCornerShape(12.dp),
             trailingIcon = {
                 HapticIconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_show_options))
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(

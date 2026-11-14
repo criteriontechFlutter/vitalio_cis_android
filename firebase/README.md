@@ -37,6 +37,7 @@ admin page goes through Firestore and a Cloud Function.
 | `cis_feature_share_health_records` | Share health records |
 | `cis_feature_faq` | FAQ |
 | `cis_feature_feedback` | Feedback |
+| `cis_feature_subscription` | My Subscription |
 
 Every key defaults to `true` in the app, so a missing key or a failed fetch never hides a module.
 A key can also be changed by hand in the Firebase console (Remote Config → *CIS feature flags*

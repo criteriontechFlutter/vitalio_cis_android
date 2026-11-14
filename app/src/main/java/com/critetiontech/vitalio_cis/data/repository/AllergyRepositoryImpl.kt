@@ -39,12 +39,26 @@ class AllergyRepositoryImpl @Inject constructor(
         DomainResult.Error(e)
     }
 
-    override suspend fun addAllergy(body: Map<String, Any>): DomainResult<Unit> = try {
+    override suspend fun addAllergy(typeAllergy: String, body: Map<String, Any>): DomainResult<Unit> = try {
         val response = ApiHelper().callApi(context, endpoints.addAllergies, showNoConnectionToast = false) { url ->
-            ApiClients.module4082.dynamicRawPost(url = url, body = body)
+            // typeAllergy must be in the query string — the server ignores it in the body and
+            // falls back to FoodAllergy, which filed medicine allergies under food.
+            ApiClients.module4082.dynamicRawPost(
+                url = "$url?typeAllergy=${android.net.Uri.encode(typeAllergy)}",
+                body = body
+            )
         }
-        if (response.isSuccessful) DomainResult.Success(Unit)
-        else DomainResult.Error(Exception("API Error: ${response.code()}"))
+        val status = if (response.isSuccessful) {
+            runCatching {
+                com.google.gson.JsonParser.parseString(response.body()?.string().orEmpty())
+                    .asJsonObject.get("status")?.asInt
+            }.getOrNull()
+        } else null
+        when {
+            !response.isSuccessful -> DomainResult.Error(Exception("API Error: ${response.code()}"))
+            status == 0 -> DomainResult.Error(Exception("AddAllergies returned status 0"))
+            else -> DomainResult.Success(Unit)
+        }
     } catch (e: Exception) {
         DomainResult.Error(e)
     }

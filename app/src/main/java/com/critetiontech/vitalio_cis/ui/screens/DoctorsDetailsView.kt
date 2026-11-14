@@ -782,7 +782,7 @@ fun DateItemView(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+            date.dayOfWeek.getDisplayName(TextStyle.SHORT, androidx.compose.ui.platform.LocalConfiguration.current.locales[0]),
             fontSize = 12.sp,
             color = when {
                 selected -> colors.textDarkColor

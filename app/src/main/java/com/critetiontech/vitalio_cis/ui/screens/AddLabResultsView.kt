@@ -80,6 +80,7 @@ fun AddLabResultsScreen(
     viewModel: UploadReportViewModel = viewModel(),
 ) {
     val context       = LocalContext.current
+    val resources     = androidx.compose.ui.platform.LocalResources.current
     val navController = LocalNavController.current
     val colors       = LocalMyColorScheme.current
     val isAnalyzing  by viewModel.isAnalyzing.collectAsStateWithLifecycle()
@@ -117,7 +118,7 @@ fun AddLabResultsScreen(
             cropImageOptions = CropImageOptions(
                 fixAspectRatio = false,
                 guidelines = CropImageView.Guidelines.ON,
-                activityTitle = context.getString(R.string.report_crop_report_image),
+                activityTitle = resources.getString(R.string.report_crop_report_image),
                 toolbarColor = "#1564ED".toColorInt(),
                 toolbarBackButtonColor = android.graphics.Color.WHITE,
                 toolbarTintColor = android.graphics.Color.WHITE,
@@ -143,9 +144,7 @@ fun AddLabResultsScreen(
     }
 
     val cameraPermission = rememberPermissionRequest(AppPermission.Camera, stringResource(R.string.perm_reason_lab_report)) {
-        val uri = createImageUri(context)
-        cameraUri = uri
-        cameraLauncher.launch(uri)
+        startCameraCapture(context, onUri = { cameraUri = it }, launch = { cameraLauncher.launch(it) })
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -793,15 +792,27 @@ object FileUtils {
     }
 }
 
-fun createImageUri(context: Context): Uri {
+/** A MediaStore entry for the camera to write into; null when storage is full or unavailable. */
+fun createImageUri(context: Context): Uri? {
     val contentValues = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, "camera_${System.currentTimeMillis()}.jpg")
         put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
     }
-    return context.contentResolver.insert(
-        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-        contentValues
-    )!!
+    return runCatching {
+        context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+    }.getOrNull()
+}
+
+/**
+ * Creates the capture file and opens the camera. Shows a toast instead of crashing when the file can't
+ * be created or the phone has no camera app. [onUri] stores the target before the camera opens.
+ */
+fun startCameraCapture(context: Context, onUri: (Uri) -> Unit, launch: (Uri) -> Unit) {
+    val uri = createImageUri(context)
+    val opened = uri != null && runCatching { onUri(uri); launch(uri) }.isSuccess
+    if (!opened) {
+        android.widget.Toast.makeText(context, context.getString(R.string.common_camera_unavailable), android.widget.Toast.LENGTH_LONG).show()
+    }
 }
 
 class TakePictureWithPermission : ActivityResultContracts.TakePicture() {

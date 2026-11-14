@@ -249,10 +249,10 @@ private fun AlarmScreen(
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(stringResource(R.string.med_alarm_header), color = Color.White.copy(alpha = 0.75f), fontSize = 15.sp)
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(now.format(DateTimeFormatter.ofPattern("hh:mm", Locale.getDefault())),
+                Text(now.format(DateTimeFormatter.ofPattern("hh:mm", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])),
                     color = Color.White, fontSize = 60.sp, fontWeight = FontWeight.Light)
                 Spacer(Modifier.width(6.dp))
-                Text(now.format(DateTimeFormatter.ofPattern("a", Locale.getDefault())),
+                Text(now.format(DateTimeFormatter.ofPattern("a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])),
                     color = Color.White.copy(alpha = 0.8f), fontSize = 20.sp, modifier = Modifier.padding(bottom = 13.dp))
             }
 

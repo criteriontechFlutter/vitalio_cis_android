@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.utils.startActivitySafely
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -82,6 +84,7 @@ private val BlockedColor = Color(0xFFEA580C)
 @Composable
 fun PermissionsScreen() {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
     val navController = LocalNavController.current
 
@@ -99,12 +102,12 @@ fun PermissionsScreen() {
     LaunchedEffect(refresh) {
         val client = WearableSync.clientOrNull(context)
         healthOk = false
-        healthStatus = if (client == null) context.getString(R.string.profile_hc_not_installed) else {
+        healthStatus = if (client == null) resources.getString(R.string.profile_hc_not_installed) else {
             val granted = runCatching { client.permissionController.getGrantedPermissions() }.getOrDefault(emptySet())
             val total = WearableData.READ_PERMISSIONS.size
             val allowed = WearableData.READ_PERMISSIONS.count { it in granted }
             healthOk = allowed > 0
-            if (allowed == 0) context.getString(R.string.profile_hc_not_connected) else context.getString(R.string.profile_hc_types_allowed, allowed, total)
+            if (allowed == 0) resources.getString(R.string.profile_hc_not_connected) else resources.getString(R.string.profile_hc_types_allowed, allowed, total)
         }
     }
     val alarmItems = remember(refresh) {
@@ -154,7 +157,7 @@ fun PermissionsScreen() {
                         summary = req.description,
                         status = stringResource(if (req.granted) R.string.profile_perm_allowed else if (req.critical) R.string.profile_perm_needed_for_alarms else R.string.profile_perm_recommended),
                         ok = req.granted,
-                        onClick = { context.startActivity(AlarmSetup.settingsIntent(context, req.item)) },
+                        onClick = { context.startActivitySafely(AlarmSetup.settingsIntent(context, req.item)) },
                     )
                 }
             }
@@ -173,7 +176,7 @@ fun PermissionsScreen() {
             }
 
             HapticOutlinedButton(
-                onClick = { context.startActivity(AppPermission.appSettingsIntent(context)) },
+                onClick = { context.startActivitySafely(AppPermission.appSettingsIntent(context)) },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(24.dp),
             ) {
@@ -278,7 +281,7 @@ private fun RuntimePermissionRow(permission: AppPermission, refresh: Int) {
                 if (granted) {
                     // Android only lets the user revoke from system settings
                     HapticOutlinedButton(
-                        onClick = { context.startActivity(AppPermission.appSettingsIntent(context)) },
+                        onClick = { context.startActivitySafely(AppPermission.appSettingsIntent(context)) },
                         shape = RoundedCornerShape(20.dp),
                     ) { Text(stringResource(R.string.profile_perm_manage_in_settings), color = colors.primaryBlueColor, fontSize = 13.sp) }
                 } else {

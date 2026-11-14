@@ -38,68 +38,68 @@ fun MyObserversScreen() {
 
     val colors = LocalMyColorScheme.current
 
-        CommonAppBar(
-            title = stringResource(R.string.profile_my_observers),
-        )
-        {
+    CommonAppBar(
+        title = stringResource(R.string.profile_my_observers),
+    )
+    {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colors.dashboardBackgroundColor)
+        ) {
+
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(colors.dashboardBackgroundColor)
+                    .weight(1f)
+                    .padding(top = 8.dp)
             ) {
 
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(top = 8.dp)
-                ) {
+                list.forEach {
 
-                    list.forEach {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(colors.dashboardContainerColor)
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-                        Row(
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(colors.dashboardContainerColor)
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(if (isAppDark) colors.borderGreyLightColor else Color.LightGray)
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Column(
+                            modifier = Modifier.weight(1f)
                         ) {
-
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isAppDark) colors.borderGreyLightColor else Color.LightGray)
-                            )
-
-                            Spacer(Modifier.width(12.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(it.name, style = AppTextStyles.style14BCB())
-                                Text(it.id, style = AppTextStyles.style12GCN())
-                            }
-
-                            Text(
-                                stringResource(R.string.profile_remove_access),
-                                style = AppTextStyles.style12GCN().copy(color = Color.Red),
-                                modifier = Modifier.clickable { }
-                            )
+                            Text(it.name, style = AppTextStyles.style14BCB())
+                            Text(it.id, style = AppTextStyles.style12GCN())
                         }
+
+                        Text(
+                            stringResource(R.string.profile_remove_access),
+                            style = AppTextStyles.style12GCN().copy(color = Color.Red),
+                            modifier = Modifier.clickable { }
+                        )
                     }
                 }
-
-                // bottom button
-                CommonButton(
-                    text = stringResource(R.string.profile_add_observer),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    onClick = { }
-                )
             }
+
+            // bottom button
+            CommonButton(
+                text = stringResource(R.string.profile_add_observer),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                onClick = { }
+            )
         }
+    }
 
 }

@@ -101,7 +101,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
             trailingIcon = {
                 if (viewModel.searchText.isNotEmpty()) {
                     HapticIconButton(onClick = { viewModel.onSearchChange("") }) {
-                        Icon(Icons.Default.Close, contentDescription = null, tint = Color.Gray.copy(alpha = 0.6f))
+                        Icon(Icons.Default.Close, contentDescription = androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_clear), tint = Color.Gray.copy(alpha = 0.6f))
                     }
                 }
             },

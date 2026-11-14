@@ -966,7 +966,7 @@ private fun SymptomsSection(
                 }
                 Spacer(Modifier.width(4.dp))
                 HapticIconButton(onClick = { onRemoveSymptom(symptom.detailID, symptom.details) }, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.Delete, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_delete), tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
                 }
             }
         }
@@ -1040,7 +1040,7 @@ private fun FluidOutputSection(
             Text("${output.quantity} ml", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = voiceInk())
             Spacer(Modifier.width(6.dp))
             HapticIconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
+                Icon(Icons.Default.Delete, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_delete), tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
             }
         }
     }
@@ -1088,7 +1088,7 @@ private fun MedicinesSection(
                             }
                         }
                         HapticIconButton(onClick = { onRemove(med.id) }, modifier = Modifier.size(28.dp)) {
-                            Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Delete, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_delete), tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
                         }
                     }
                     Spacer(Modifier.height(6.dp))
@@ -1171,7 +1171,7 @@ fun VitalPreviewRow(
 
         Spacer(Modifier.width(4.dp))
         HapticIconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-            Icon(Icons.Default.Delete, null, tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
+            Icon(Icons.Default.Delete, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_delete), tint = Color(0xFFEF4444).copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
         }
     }
 }

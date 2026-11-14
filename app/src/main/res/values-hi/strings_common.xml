@@ -41,4 +41,15 @@
     <string name="perm_reason_scan_prescription">आपका प्रिस्क्रिप्शन स्कैन करने के लिए</string>
     <string name="perm_reason_breathing">आपकी साँस सुनने और हर राउंड में मार्गदर्शन के लिए</string>
     <string name="perm_reason_save_report">यह रिपोर्ट Downloads फ़ोल्डर में सेव करने के लिए</string>
+    <!-- Screen-reader labels for icon-only buttons -->
+    <string name="a11y_back">वापस</string>
+    <string name="a11y_clear">साफ़ करें</string>
+    <string name="a11y_dismiss">बंद करें</string>
+    <string name="a11y_settings">सेटिंग्स</string>
+    <string name="a11y_previous">पिछला</string>
+    <string name="a11y_next">अगला</string>
+    <string name="a11y_more_options">और विकल्प</string>
+    <string name="a11y_delete">हटाएँ</string>
+    <string name="a11y_show_options">विकल्प दिखाएँ</string>
+    <string name="common_camera_unavailable">कैमरा नहीं खुल सका। देखें कि फ़ोन में खाली जगह और कैमरा ऐप है, फिर दोबारा कोशिश करें।</string>
 </resources>

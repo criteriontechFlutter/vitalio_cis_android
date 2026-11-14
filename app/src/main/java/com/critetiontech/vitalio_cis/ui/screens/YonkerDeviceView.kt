@@ -73,6 +73,7 @@ import java.time.ZoneId
 @Composable
 fun YonkerDeviceScreen(kindCode: String, viewModel: YonkerDeviceViewModel = viewModel()) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
     val haptic = rememberHaptics()
     LaunchedEffect(kindCode) { viewModel.load(kindCode) }
@@ -92,7 +93,7 @@ fun YonkerDeviceScreen(kindCode: String, viewModel: YonkerDeviceViewModel = view
     var pending by remember { mutableStateOf(false) }
     val enableBluetooth = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (context.bluetoothOn()) viewModel.connect()
-        else viewModel.showError(context.getString(R.string.device_yonker_bluetooth_off))
+        else viewModel.showError(resources.getString(R.string.device_yonker_bluetooth_off))
         pending = false
     }
     val nearbyDevices = rememberPermissionRequest(

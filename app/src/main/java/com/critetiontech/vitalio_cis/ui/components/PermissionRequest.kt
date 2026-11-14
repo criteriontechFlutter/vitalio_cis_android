@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.components
 
+import com.critetiontech.ctvitalio.utils.startActivitySafely
+
 import androidx.compose.ui.res.stringResource
 import com.critetiontech.ctvitalio.R
 import android.os.Build
@@ -46,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.critetiontech.ctvitalio.permissions.AppPermission
+import com.critetiontech.ctvitalio.permissions.findActivity
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
@@ -80,9 +83,28 @@ fun rememberPermissionRequest(
     val denied by rememberUpdatedState(onDenied)
     var sheet by remember { mutableStateOf<SheetMode?>(null) }
     var waitingForSettings by remember { mutableStateOf(false) }
+    var requestedAt by remember { mutableStateOf(0L) }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-        if (result.values.all { it }) granted() else denied()
+        if (result.isNotEmpty() && result.values.all { it }) {
+            permission.markBlocked(context, false)
+            granted()
+            return@rememberLauncherForActivityResult
+        }
+        // Android answered without showing its dialog (it came back almost instantly) and gives no
+        // rationale: the permission is turned off for good, so offer Settings right away.
+        // A dialog the user closed with Back takes longer and leaves it askable next time.
+        val instant = android.os.SystemClock.elapsedRealtime() - requestedAt < INSTANT_DENIAL_MS
+        val activity = context.findActivity()
+        val rationale = activity != null && permission.manifestPermissions.any {
+            androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
+        }
+        if (instant && !rationale) {
+            permission.markBlocked(context, true)
+            sheet = SheetMode.Blocked
+        } else {
+            denied()
+        }
     }
 
     // Continue the action when the user comes back from Settings having allowed it
@@ -91,7 +113,10 @@ fun rememberPermissionRequest(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && waitingForSettings) {
                 waitingForSettings = false
-                if (permission.isGranted(context)) granted()
+                if (permission.isGranted(context)) {
+                    permission.markBlocked(context, false)
+                    granted()
+                }
             }
         }
         lifecycle.addObserver(observer)
@@ -106,6 +131,7 @@ fun rememberPermissionRequest(
             onConfirm = {
                 sheet = null
                 permission.markAsked(context)
+                requestedAt = android.os.SystemClock.elapsedRealtime()
                 launcher.launch(permission.manifestPermissions)
             },
             onDismiss = { sheet = null; denied() },
@@ -117,7 +143,7 @@ fun rememberPermissionRequest(
             onConfirm = {
                 sheet = null
                 waitingForSettings = true
-                context.startActivity(AppPermission.appSettingsIntent(context))
+                context.startActivitySafely(AppPermission.appSettingsIntent(context))
             },
             onDismiss = { sheet = null; denied() },
         )
@@ -136,6 +162,9 @@ fun rememberPermissionRequest(
 }
 
 private enum class SheetMode { Explain, Blocked }
+
+/** A permission request answered faster than this never showed a dialog (a person can't tap that fast). */
+private const val INSTANT_DENIAL_MS = 400L
 
 /** The name Android shows for this permission in Settings → Permissions. */
 private val AppPermission.systemName: String

@@ -508,6 +508,7 @@ private fun AddVitalDialog(
 ) {
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val haptic = rememberHaptics()
     val focusManager = LocalFocusManager.current
     val addLoading by viewModel.addLoading.collectAsState()
@@ -537,7 +538,7 @@ private fun AddVitalDialog(
         if (field.key == "dia") {
             val sys = text("sys").toDoubleOrNull()
             val dia = text("dia").toDoubleOrNull()
-            if (sys != null && dia != null && dia >= sys) return context.getString(R.string.device_error_dia_lower_than_sys)
+            if (sys != null && dia != null && dia >= sys) return resources.getString(R.string.device_error_dia_lower_than_sys)
         }
         return null
     }
@@ -589,7 +590,7 @@ private fun AddVitalDialog(
             return
         }
         val onSuccess = {
-            Toast.makeText(context, context.getString(R.string.device_vital_saved, vitalName), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.device_vital_saved, vitalName), Toast.LENGTH_SHORT).show()
             onDismiss()
         }
         val value = backendText().orEmpty()

@@ -135,7 +135,7 @@ class FamilyHealthHistoryViewModel : ViewModel() {
                     Haptics.error()
                     Log.e("FamilyHealthVM", r.exception.message.orEmpty())
                     _message.emit(
-                        if (condition.recordId == null) MyApplication.appContext.getString(R.string.profile_entry_cannot_remove)
+                        if (condition.recordIds.isEmpty()) MyApplication.appContext.getString(R.string.profile_entry_cannot_remove)
                         else MyApplication.appContext.getString(R.string.profile_remove_failed)
                     )
                 }

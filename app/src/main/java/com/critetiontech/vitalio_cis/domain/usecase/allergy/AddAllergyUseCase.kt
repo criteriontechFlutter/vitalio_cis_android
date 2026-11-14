@@ -5,5 +5,6 @@ import com.critetiontech.ctvitalio.domain.repository.AllergyRepository
 import javax.inject.Inject
 
 class AddAllergyUseCase @Inject constructor(private val repository: AllergyRepository) {
-    suspend operator fun invoke(body: Map<String, Any>): DomainResult<Unit> = repository.addAllergy(body)
+    suspend operator fun invoke(typeAllergy: String, body: Map<String, Any>): DomainResult<Unit> =
+        repository.addAllergy(typeAllergy, body)
 }

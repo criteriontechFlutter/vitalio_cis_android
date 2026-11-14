@@ -68,6 +68,7 @@ fun HealthConnectSyncScreen(
     viewModel: HealthConnectViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
 
     val syncState    by viewModel.syncState.collectAsState()
@@ -102,30 +103,33 @@ fun HealthConnectSyncScreen(
     ) { healthConnectClient?.let { viewModel.refresh(it) } }
 
     val requestPermissions = { permissionLauncher.launch(WearableData.READ_PERMISSIONS) }
-    val openHealthConnectSettings = {
+    val openHealthConnectSettings: () -> Unit = {
         try {
             context.startActivity(Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (e: Exception) {
-            context.startActivity(
-                Intent("android.settings.APPLICATION_DETAILS_SETTINGS")
-                    .setData(Uri.fromParts("package", "com.google.android.apps.healthdata", null))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
+            runCatching {
+                context.startActivity(
+                    Intent("android.settings.APPLICATION_DETAILS_SETTINGS")
+                        .setData(Uri.fromParts("package", "com.google.android.apps.healthdata", null))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            }
         }
     }
-    val openPlayStore = {
+    val openPlayStore: () -> Unit = {
         val uri = Uri.parse("market://details?id=com.google.android.apps.healthdata")
         try {
             context.startActivity(Intent(Intent.ACTION_VIEW, uri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
         } catch (e: Exception) {
             val webUri = Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata")
-            context.startActivity(Intent(Intent.ACTION_VIEW, webUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) })
+            // No Play Store and no browser (some kiosk/enterprise phones): nothing to open, so don't crash
+            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, webUri).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }) }
         }
     }
     val sync: () -> Unit = sync@{
         val client = healthConnectClient
         if (client == null) {
-            Toast.makeText(context, context.getString(R.string.device_hc_not_available), Toast.LENGTH_LONG).show()
+            Toast.makeText(context, resources.getString(R.string.device_hc_not_available), Toast.LENGTH_LONG).show()
             return@sync
         }
         if (missing.size == WearableData.READ_PERMISSIONS.size) requestPermissions()
@@ -254,7 +258,7 @@ private val timeFormat = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.get
 @Composable
 private fun Instant.display(): String {
     val local = atZone(ZoneId.systemDefault())
-    return if (local.toLocalDate() == LocalDate.now()) stringResource(R.string.device_hc_today_at, local.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())))
+    return if (local.toLocalDate() == LocalDate.now()) stringResource(R.string.device_hc_today_at, local.format(DateTimeFormatter.ofPattern("h:mm a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])))
     else local.format(timeFormat)
 }
 

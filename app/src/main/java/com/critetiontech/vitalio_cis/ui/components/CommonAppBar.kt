@@ -49,7 +49,7 @@ fun MyAppBar(
                 HapticIconButton(onClick = onBack) {
                     Icon(
                         Icons.Default.ArrowBack,
-                        contentDescription = null
+                        contentDescription = androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_back)
                     )
                 }
             }

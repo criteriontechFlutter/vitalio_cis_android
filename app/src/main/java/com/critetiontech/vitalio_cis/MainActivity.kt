@@ -193,6 +193,26 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Routes.NUTRITION_ANALYTICS) { FeatureGate(AppFeature.DIET) { com.critetiontech.ctvitalio.ui.screens.NutritionAnalyticsScreen() } }
                             composable(Routes.PRESCRIPTION) { FeatureGate(AppFeature.PRESCRIPTIONS) { PrescriptionScreen() } }
+                            composable(Routes.MY_SUBSCRIPTION) { FeatureGate(AppFeature.SUBSCRIPTION) { com.critetiontech.ctvitalio.ui.screens.SubscriptionScreen() } }
+                            composable(
+                                Routes.PRESCRIPTION_DETAIL,
+                                arguments = listOf(
+                                    navArgument("pmId") { type = NavType.IntType },
+                                    navArgument("doctor") { type = NavType.StringType; defaultValue = "" },
+                                    navArgument("dept") { type = NavType.StringType; defaultValue = "" },
+                                    navArgument("date") { type = NavType.StringType; defaultValue = "" },
+                                )
+                            ) { entry ->
+                                val args = entry.arguments
+                                FeatureGate(AppFeature.PRESCRIPTIONS) {
+                                    com.critetiontech.ctvitalio.ui.screens.PrescriptionDetailScreen(
+                                        pmId = args?.getInt("pmId") ?: 0,
+                                        doctorName = args?.getString("doctor")?.takeIf { it.isNotBlank() },
+                                        departmentName = args?.getString("dept")?.takeIf { it.isNotBlank() },
+                                        visitDate = args?.getString("date")?.takeIf { it.isNotBlank() },
+                                    )
+                                }
+                            }
                             composable(Routes.FLUIDDATAINPUT) { FeatureGate(AppFeature.FLUID) { FluidDataInputScreen() } }
                             composable(Routes.FLUIDOUTPUTHISTORY) { FeatureGate(AppFeature.FLUID) { FluidOutputHistoryScreen() } }
                             composable(Routes.FLUIDINPUTHISTORY) { FeatureGate(AppFeature.FLUID) { FluidInputHistoryScreen() } }

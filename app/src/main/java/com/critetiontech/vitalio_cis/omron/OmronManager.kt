@@ -61,6 +61,28 @@ object OmronModels {
 
     fun byCode(code: String) = ALL.firstOrNull { it.code == code }
 
+    /**
+     * Bluetooth-name prefix ("BLEsmart_" + these 8 hex digits) → model, from the library's own device
+     * list (deviceList_001_006_00000.xml, <bleScanLocalName>). The 8 digits are a 4-digit classified
+     * id (0000 = BP, 0001 = scale) plus a 4-digit internal id. Used when the config's group id
+     * can't place a device, e.g. older entries whose "id" isn't the internal id (HBF-222T is "068").
+     */
+    val BLE_PREFIXES: Map<String, String> = mapOf(
+        "0000001F" to "HEM-7600T",
+        "00000413" to "HEM-7280T",
+        "00000458" to "HEM-7361T",
+        "0000047F" to "HEM-7141T1",
+        "00000480" to "HEM-7142T1",
+        "0000057A" to "HEM-7156T",   // HEM-7156T_AP
+        "0000047A" to "HEM-7156T",   // HEM-7156T_AAP
+        "00000044" to "HEM-6232T",
+        "00010408" to "HBF-222T",
+        "00010406" to "HBF-255T",
+        "0001040C" to "HBF-702T",
+        "00010412" to "HN-300T2",    // HN-300T2_AP
+        "00010112" to "HN-300T2",    // HN-300T2-Z
+    )
+
     fun ofKind(kind: OmronKind) = ALL.filter { it.kind == kind }
 
     /** Screen code for "pair whichever supported [kind] device is nearby"; the model is detected while pairing. */
@@ -172,10 +194,18 @@ object OmronManager {
             OmronConstants.OMRONBLEConfigDevice.Identifier).mapNotNull { m[it] }.map(::norm)
 
     /** The library's configuration for [model], preferring its Asia-Pacific ("-AP") variant. */
-    fun deviceConfig(context: Context, model: OmronModel): Map<String, String>? {
+    fun deviceConfig(context: Context, model: OmronModel): Map<String, String>? =
+        deviceConfigVariants(context, model).firstOrNull()
+
+    /**
+     * Every library configuration for [model] (e.g. HEM-7156T_AP and _AAP), "-AP" first. Pairing
+     * offers all of them, so the variant that matches the device in hand is the one configured;
+     * with only the first, an _AAP monitor was reported as unsupported.
+     */
+    fun deviceConfigVariants(context: Context, model: OmronModel): List<Map<String, String>> {
         val code = norm(model.code)
         val matches = deviceConfigs(context).filter { m -> configNames(m).any { it.startsWith(code) } }
-        return matches.firstOrNull { m -> configNames(m).any { it.startsWith(code + "AP") } } ?: matches.firstOrNull()
+        return matches.sortedByDescending { m -> configNames(m).any { it.startsWith(code + "AP") } }
     }
 
     fun userCount(config: Map<String, String>?): Int =
@@ -273,7 +303,7 @@ object OmronManager {
      */
     suspend fun pair(context: Context, kind: OmronKind, user: Int, profile: OmronProfile?): PairedOmronDevice = mutex.withLock {
         val patient = AppDependencies.prefs.getPatient() ?: throw OmronException(0, "Please log in again.")
-        val candidates = OmronModels.ofKind(kind).mapNotNull { m -> deviceConfig(context, m)?.let { m to it } }
+        val candidates = OmronModels.ofKind(kind).flatMap { m -> deviceConfigVariants(context, m).map { m to it } }
         if (candidates.isEmpty()) throw OmronException(8003, "Omron setup is still loading. Please try again in a moment.")
         val (model, config) = findNearby(context, candidates)
         configure(context, patient, listOf(config), kind, pairing = true, profile = profile)
@@ -303,8 +333,13 @@ object OmronManager {
     }
 
     /**
-     * Which of [candidates] a device is: by its device group, then its model name, then the model id
-     * in its Bluetooth name ("BLEsmart_0000057A…" → 0x57A = 1402).
+     * Which of [candidates] a device is: by its device group, then its model name, then the ids in
+     * its Bluetooth name.
+     *
+     * "BLEsmart_" is followed by 8 hex digits: a 4-digit classified id (0000 BP, 0001 scale) and a
+     * 4-digit internal id; the config's group id is the internal id in decimal
+     * ("BLEsmart_0000057A…" → 1402, "BLEsmart_00010408…" → 1032). Reading all 8 digits as one
+     * number only worked for BP monitors (classified 0000) and failed every scale.
      */
     internal fun identify(
         groupId: String?, modelName: String?, localName: String?,
@@ -316,9 +351,17 @@ object OmronManager {
             candidates.firstOrNull { name in configNames(it.second) }?.let { return it }
             candidates.firstOrNull { name.startsWith(norm(it.first.code)) }?.let { return it }
         }
-        val id = localName?.takeIf { it.startsWith("BLEsmart_", ignoreCase = true) }
-            ?.substring("BLEsmart_".length)?.take(8)?.toIntOrNull(16)?.toString()
-        return candidates.firstOrNull { id != null && (it.second[GROUP_ID] == id || it.second[CONFIG_ID] == id) }
+        val hex = localName?.takeIf { it.startsWith("BLEsmart_", ignoreCase = true) }
+            ?.substring("BLEsmart_".length)?.take(8)?.uppercase(Locale.US)
+            ?.takeIf { it.length == 8 && it.all { c -> c.isDigit() || c in 'A'..'F' } }
+            ?: return null
+        val internal = hex.takeLast(4).toInt(16).toString()
+        val whole = hex.toLong(16).toString()
+        candidates.firstOrNull { it.second[GROUP_ID] == internal }?.let { return it }
+        candidates.firstOrNull { it.second[CONFIG_ID] == internal || it.second[CONFIG_ID] == whole }?.let { return it }
+        // Older library entries carry neither id; fall back to the library's own name table
+        val code = OmronModels.BLE_PREFIXES[hex] ?: return null
+        return candidates.firstOrNull { it.first.code == code }
     }
 
     /** Scans for an Omron device ("BLEsmart_…") that is one of [candidates] and returns which. */

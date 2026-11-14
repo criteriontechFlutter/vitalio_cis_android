@@ -16,7 +16,7 @@ service cloud.firestore {
                         'cis_feature_voice_assistant', 'cis_feature_activity', 'cis_feature_smart_ring',
                         'cis_feature_allergies', 'cis_feature_emergency_contacts',
                         'cis_feature_family_health_history', 'cis_feature_share_health_records',
-                        'cis_feature_faq', 'cis_feature_feedback',
+                        'cis_feature_faq', 'cis_feature_feedback', 'cis_feature_subscription',
                         'updatedBy', 'updatedByUhid', 'updatedAt'])
                    && request.resource.data.updatedBy.matches('.*9807039752$');
     }

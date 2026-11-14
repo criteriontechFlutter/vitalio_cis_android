@@ -91,6 +91,11 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        // JVM unit tests run against stubbed android.jar; without this any android.util.Log call in code
+        // under test (e.g. the Omron parser) throws "Method d in android.util.Log not mocked".
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 

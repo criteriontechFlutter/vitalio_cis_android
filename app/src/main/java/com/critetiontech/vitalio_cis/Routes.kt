@@ -43,6 +43,12 @@ object Routes {
     fun dietPlanBuilder(planId: Int? = null) = if (planId == null) "DietPlanBuilderScreen" else "DietPlanBuilderScreen?planId=$planId"
     fun dietAddFood(mealTimeId: Int) = "DietAddFoodScreen/$mealTimeId"
     const val PRESCRIPTION  = "PrescriptionScreen"
+    const val PRESCRIPTION_DETAIL = "PrescriptionDetailScreen/{pmId}?doctor={doctor}&dept={dept}&date={date}"
+
+    fun prescriptionDetail(pmId: Int, doctor: String?, department: String?, date: String?): String {
+        fun enc(v: String?) = android.net.Uri.encode(v.orEmpty())
+        return "PrescriptionDetailScreen/$pmId?doctor=${enc(doctor)}&dept=${enc(department)}&date=${enc(date)}"
+    }
     const val FLUIDDATAINPUT  = "FluidDataInputScreen"
     const val FLUIDOUTPUTHISTORY  = "FluidOutputHistoryScreen"
     const val FLUIDINPUTHISTORY  = "FluidInputHistoryScreen"
@@ -74,5 +80,6 @@ object Routes {
     const val EDITPROFILE = "EditProfileScreen"
     const val MEDICINE_REMINDER_SETTINGS = "MedicineReminderSettingsScreen"
     const val FEATURE_FLAGS_ADMIN = "FeatureFlagsAdminScreen"
+    const val MY_SUBSCRIPTION = "MySubscriptionScreen"
 
 }

@@ -197,4 +197,39 @@
     <string name="report_article_published">प्रकाशित: %1$s</string>
     <string name="report_acknowledgements">आभार</string>
     <string name="report_funding">फ़ंडिंग</string>
+
+    <!-- Prescription history (PatientMedicalSummary / PatientMedicalDetails) -->
+    <string name="rx_prescriptions_title">प्रिस्क्रिप्शन</string>
+    <string name="rx_upload_prescription">प्रिस्क्रिप्शन अपलोड करें</string>
+    <string name="rx_details_title">प्रिस्क्रिप्शन विवरण</string>
+    <string name="rx_created_by">द्वारा बनाया गया:</string>
+    <string name="rx_date">तारीख:</string>
+    <string name="rx_notes">नोट्स:</string>
+    <string name="rx_diagnosis">निदान:</string>
+    <string name="rx_investigations">जांचें:</string>
+    <string name="rx_no_medicines">इस विज़िट के लिए कोई दवा नहीं लिखी गई</string>
+    <string name="rx_for_days">%1$s, %2$s दिनों के लिए</string>
+    <string name="rx_visit_no">विज़िट नंबर: %1$s</string>
+    <string name="rx_opd_visit">ओपीडी विज़िट</string>
+    <string name="rx_share">प्रिस्क्रिप्शन शेयर करें</string>
+    <string name="rx_back">वापस</string>
+    <string name="rx_doctor_name">डॉ. %1$s</string>
+    <string name="rx_prescribed_medicines">लिखी गई दवाएँ</string>
+    <string name="rx_pdf_footer">Vitalio ऐप से शेयर किया गया। अपने डॉक्टर की सलाह मानें; कोई भी दवा बदलने से पहले उनसे बात करें।</string>
+    <string name="rx_share_failed">PDF नहीं बन सकी। कृपया फिर से कोशिश करें।</string>
+    <string name="rx_add_reminders">दवा रिमाइंडर में जोड़ें</string>
+    <string name="rx_adding_reminders">रिमाइंडर में जोड़ रहे हैं…</string>
+    <plurals name="rx_reminders_added">
+        <item quantity="one">%1$d दवा आपके रिमाइंडर में जोड़ी गई</item>
+        <item quantity="other">%1$d दवाएँ आपके रिमाइंडर में जोड़ी गईं</item>
+    </plurals>
+    <string name="rx_reminders_failed">रिमाइंडर नहीं जुड़ सके। कृपया फिर से कोशिश करें।</string>
+    <plurals name="rx_reminders_confirm_title">
+        <item quantity="one">%1$d दवा रिमाइंडर में जोड़ें?</item>
+        <item quantity="other">%1$d दवाएँ रिमाइंडर में जोड़ें?</item>
+    </plurals>
+    <string name="rx_reminders_confirm_body">रिमाइंडर आज से शुरू होंगे और हर दवा का कोर्स पूरा होने पर बंद हो जाएँगे। आप इन्हें बाद में Manage Medicines में बदल सकते हैं।</string>
+    <string name="rx_reminders_confirm_add">जोड़ें</string>
+    <string name="rx_cancel">रद्द करें</string>
+    <string name="rx_open_prescription">%1$s का प्रिस्क्रिप्शन खोलें</string>
 </resources>

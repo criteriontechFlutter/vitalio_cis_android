@@ -21,7 +21,7 @@
     <string name="offline_discard">हटाएं</string>
     <string name="offline_discard_title">बिना सेव हुई एंट्री हटाएं?</string>
     <plurals name="offline_discard_message">
-        <item quantity="one">यह एंट्री आपके हेल्थ रिकॉर्ड में कभी सेव नहीं हुई और हटा दी जाएगी।</item>
+        <item quantity="one">यह %1$d एंट्री आपके हेल्थ रिकॉर्ड में कभी सेव नहीं हुई और हटा दी जाएगी।</item>
         <item quantity="other">ये %1$d एंट्री आपके हेल्थ रिकॉर्ड में कभी सेव नहीं हुईं और हटा दी जाएंगी।</item>
     </plurals>
     <string name="offline_pending_row">%1$s · सिंक बाकी</string>

@@ -72,6 +72,7 @@ fun AllergiesScreen(
     viewModel: AllergyViewModel = viewModel()
 ) {
     val loading by viewModel.loading.collectAsState()
+    val refreshing by viewModel.refreshing.collectAsState()
     val addLoading by viewModel.addLoading.collectAsState()
     val medicineAllergies by viewModel.medicineAllergies.collectAsState()
     val foodAllergies by viewModel.foodAllergies.collectAsState()
@@ -146,11 +147,15 @@ fun AllergiesScreen(
                                 style = AppTextStyles.style14GCB()
                             )
                         }
-                    } else {
+                    } else com.critetiontech.ctvitalio.ui.feedback.StretchPullRefreshBox(
+                        isRefreshing = refreshing,
+                        onRefresh = viewModel::refresh,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                    ) {
                         LazyColumn(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
+                            modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(0.dp)
                         ) {
                             groups.forEach { group ->
@@ -223,7 +228,7 @@ fun AllergyGroupCard(allergies: List<Allergy>) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = colors.dashboardContainerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {

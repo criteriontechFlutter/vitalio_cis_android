@@ -498,14 +498,14 @@ fun fluidDateRow(
             onClick = { onPrevious() },
             colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
         ) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_previous))
         }
         Text(text, style = AppTextStyles.style14GCN())
         HapticIconButton(
             onClick = { onNext() },
             colors = IconButtonDefaults.iconButtonColors(contentColor = colors.btnDarkColor)
         ) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_next))
         }
     }
 }

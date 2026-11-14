@@ -51,6 +51,7 @@ fun UploadPrescriptionScreen(
     viewModel: UploadPrescriptionViewModel = viewModel(),
 ) {
     val context       = LocalContext.current
+    val resources     = androidx.compose.ui.platform.LocalResources.current
     val navController = LocalNavController.current
     val colors        = LocalMyColorScheme.current
     val uploadingFile by viewModel.uploadingFile.collectAsStateWithLifecycle()
@@ -72,9 +73,7 @@ fun UploadPrescriptionScreen(
     }
 
     val cameraPermission = rememberPermissionRequest(AppPermission.Camera, stringResource(R.string.perm_reason_scan_prescription)) {
-        val uri = createImageUri(context)
-        cameraUri = uri
-        cameraLauncher.launch(uri)
+        startCameraCapture(context, onUri = { cameraUri = it }, launch = { cameraLauncher.launch(it) })
     }
 
     val documentLauncher = rememberLauncherForActivityResult(
@@ -82,7 +81,7 @@ fun UploadPrescriptionScreen(
     ) { uri ->
         uri?.let {
             copyUriToCache(context, it)?.let { (file, mime) -> viewModel.setSelectedFile(file, mime) }
-                ?: showToast(context, context.getString(R.string.report_toast_could_not_access_file))
+                ?: showToast(context, resources.getString(R.string.report_toast_could_not_access_file))
         }
     }
 

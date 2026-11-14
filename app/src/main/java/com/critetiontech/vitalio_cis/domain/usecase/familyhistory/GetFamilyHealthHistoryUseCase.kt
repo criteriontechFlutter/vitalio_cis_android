@@ -25,7 +25,7 @@ class GetFamilyHealthHistoryUseCase(private val repository: FamilyHealthHistoryR
                     diseaseName = group.firstNotNullOfOrNull { it.diseaseName?.trim()?.takeIf(String::isNotEmpty) }
                         ?: names[diseaseId] ?: "Unknown condition",
                     relations = group.mapNotNull { FamilyRelation.fromId(it.relationId) }.distinct().sortedBy { it.ordinal },
-                    recordId = group.firstNotNullOfOrNull { it.id },
+                    recordIds = group.mapNotNull { it.id }.distinct(),
                 )
             }
             .filter { it.relations.isNotEmpty() }

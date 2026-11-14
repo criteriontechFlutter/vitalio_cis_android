@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.Science
 import androidx.compose.material.icons.rounded.Vaccines
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material.icons.rounded.Watch
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -64,6 +65,7 @@ import com.critetiontech.ctvitalio.viewmodel.FeatureFlagsAdminViewModel
 @Composable
 fun FeatureFlagsAdminScreen(viewModel: FeatureFlagsAdminViewModel = viewModel()) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
 
     // Guard the route itself too, not just the drawer entry that leads here
@@ -83,7 +85,7 @@ fun FeatureFlagsAdminScreen(viewModel: FeatureFlagsAdminViewModel = viewModel())
 
     LaunchedEffect(error) {
         error?.let {
-            Toast.makeText(context, context.getString(R.string.ff_save_failed, it), Toast.LENGTH_LONG).show()
+            Toast.makeText(context, resources.getString(R.string.ff_save_failed, it), Toast.LENGTH_LONG).show()
             viewModel.clearError()
         }
     }
@@ -211,4 +213,5 @@ private fun featureIcon(feature: AppFeature): ImageVector = when (feature) {
     AppFeature.SHARE_HEALTH_RECORDS -> Icons.Rounded.Share
     AppFeature.FAQ -> Icons.AutoMirrored.Rounded.HelpOutline
     AppFeature.FEEDBACK -> Icons.Rounded.RateReview
+    AppFeature.SUBSCRIPTION -> Icons.Rounded.WorkspacePremium
 }

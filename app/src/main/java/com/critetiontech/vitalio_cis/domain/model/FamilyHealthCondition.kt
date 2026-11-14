@@ -21,8 +21,11 @@ data class FamilyHealthCondition(
     val diseaseId: Int,
     val diseaseName: String,
     val relations: List<FamilyRelation>,
-    /** Server record id, needed to remove the entry; null while the GET API doesn't return it. */
-    val recordId: Int?,
+    /**
+     * Server record ids of every row behind this disease (one row per relation, plus repeats). All of them
+     * must be deleted to remove the disease. Empty while the GET API doesn't return `id`.
+     */
+    val recordIds: List<Int>,
 )
 
 data class Disease(val id: Int, val name: String)

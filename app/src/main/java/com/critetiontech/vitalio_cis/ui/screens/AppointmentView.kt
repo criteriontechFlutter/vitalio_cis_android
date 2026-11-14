@@ -392,7 +392,7 @@ private fun DateBlock(date: LocalDate?, highlighted: Boolean, muted: Boolean) {
     ) {
         Text(date?.dayOfMonth?.toString() ?: "–", color = fg, fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 24.sp)
         Text(
-            date?.month?.getDisplayName(TextStyle.SHORT, Locale.getDefault())?.uppercase().orEmpty(),
+            date?.month?.getDisplayName(TextStyle.SHORT, androidx.compose.ui.platform.LocalConfiguration.current.locales[0])?.uppercase().orEmpty(),
             color = fg.copy(alpha = 0.8f),
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,

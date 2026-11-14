@@ -177,6 +177,7 @@ fun VitalHistoryScreen(
     val latest = displayEntries.firstOrNull()
     val heroKind = heroKindFor(vitalName, isBP)
     val context = androidx.compose.ui.platform.LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val navController = com.critetiontech.myapplication.utils.LocalNavController.current
     val colors = LocalMyColorScheme.current
     val latestCaptionFormat = stringResource(R.string.track_latest_caption)
@@ -193,12 +194,12 @@ fun VitalHistoryScreen(
                 append(": ${latest.primaryValue} ${latest.unit}".trimEnd())
                 if (latest.status != VitalStatus.None) append(" (${latest.status.label.lowercase().replaceFirstChar { it.uppercase() }})")
                 append(" · ${latest.time}")
-                if (displayEntries.size > 1) append("\n" + context.getString(R.string.track_share_readings_count, displayEntries.size))
-            } else append(": " + context.getString(R.string.track_share_no_readings))
+                if (displayEntries.size > 1) append("\n" + resources.getString(R.string.track_share_readings_count, displayEntries.size))
+            } else append(": " + resources.getString(R.string.track_share_no_readings))
         }
         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
             .putExtra(android.content.Intent.EXTRA_TEXT, text)
-        runCatching { context.startActivity(android.content.Intent.createChooser(intent, context.getString(R.string.track_share_title, heroTitleFor(vitalName)))) }
+        runCatching { context.startActivity(android.content.Intent.createChooser(intent, resources.getString(R.string.track_share_title, heroTitleFor(vitalName)))) }
     }
 
     Column(Modifier.fillMaxSize().background(colors.dashboardBackgroundColor)) {
@@ -516,8 +517,16 @@ fun DynamicVitalGraph(entries: List<VitalDisplayEntry>, isBP: Boolean = false) {
     }
     val chronological = entries.reversed()
     val all = chronological.flatMap { listOfNotNull(it.numericValue.takeIf { v -> v > 0 || !isBP }, it.secondaryValue) }
-    val max = all.max()
-    val min = all.min()
+    // BP readings with systolic 0 and no diastolic leave nothing to plot; max() would throw on that
+    val max = all.maxOrNull()
+    val min = all.minOrNull()
+    if (max == null || min == null) {
+        Box(
+            modifier = Modifier.fillMaxWidth().height(220.dp),
+            contentAlignment = Alignment.Center
+        ) { Text(stringResource(R.string.track_graph_min_readings), color = LocalMyColorScheme.current.textGreyColor) }
+        return
+    }
     val range = if (max == min) 1.0 else max - min
     val lineColor = Color(0xFF2F6BFF)
     val diaColor = Color(0xFF8B5CF6)

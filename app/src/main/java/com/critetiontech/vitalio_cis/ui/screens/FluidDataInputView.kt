@@ -127,19 +127,20 @@ fun FluidDataInputScreen(viewModel: IntakeOutputViewModel = viewModel()) {
     }
 
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val intakeSuccess by viewModel.intakeSuccess.collectAsState()
     val outputSuccess by viewModel.outputSuccess.collectAsState()
 
     LaunchedEffect(intakeSuccess) {
         if (intakeSuccess) {
-            Toast.makeText(context, context.getString(R.string.track_fluid_intake_added), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.track_fluid_intake_added), Toast.LENGTH_SHORT).show()
             viewModel.resetIntakeSuccess()
         }
     }
 
     LaunchedEffect(outputSuccess) {
         if (outputSuccess) {
-            Toast.makeText(context, context.getString(R.string.track_output_recorded), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.track_output_recorded), Toast.LENGTH_SHORT).show()
             viewModel.resetOutputSuccess()
         }
     }

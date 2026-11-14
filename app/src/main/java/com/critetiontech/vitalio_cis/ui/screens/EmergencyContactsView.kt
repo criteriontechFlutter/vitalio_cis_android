@@ -114,18 +114,25 @@ fun EmergencyContactsScreen(viewModel: EmergencyContactsViewModel = viewModel())
                         title = stringResource(R.string.profile_no_emergency_contacts),
                         text = stringResource(R.string.profile_no_emergency_contacts_text),
                     )
-                    else -> LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
+                    else -> com.critetiontech.ctvitalio.ui.feedback.StretchPullRefreshBox(
+                        // loadContacts keeps the list on screen while it reloads, so its flag is the refresh state
+                        isRefreshing = loading,
+                        onRefresh = viewModel::loadContacts,
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(contacts, key = { it.id }) { contact ->
-                            ContactItem(
-                                relation = contact.relationship?.trim().orEmpty().let { r -> profileRelationLabelRes(r)?.let { stringResource(it) } ?: r }.ifEmpty { stringResource(R.string.profile_contact) },
-                                name = contact.contactName?.trim().orEmpty(),
-                                phone = contact.contactNumber?.trim().orEmpty(),
-                                onEdit = { editing = contact },
-                                onRemove = { removing = contact },
-                            )
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            items(contacts, key = { it.id }) { contact ->
+                                ContactItem(
+                                    relation = contact.relationship?.trim().orEmpty().let { r -> profileRelationLabelRes(r)?.let { stringResource(it) } ?: r }.ifEmpty { stringResource(R.string.profile_contact) },
+                                    name = contact.contactName?.trim().orEmpty(),
+                                    phone = contact.contactNumber?.trim().orEmpty(),
+                                    onEdit = { editing = contact },
+                                    onRemove = { removing = contact },
+                                )
+                            }
                         }
                     }
                 }

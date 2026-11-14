@@ -127,6 +127,7 @@ fun LabReportsScreen(
 ) {
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val navController = LocalNavController.current
     val haptic = rememberHaptics()
     val scope = rememberCoroutineScope()
@@ -172,16 +173,16 @@ fun LabReportsScreen(
             scope.launch(Dispatchers.Main) {
                 if (result is ReportDownloader.State.Done) {
                     haptic(HapticEvent.Success)
-                    Toast.makeText(context, context.getString(R.string.report_toast_saved_to_downloads), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, resources.getString(R.string.report_toast_saved_to_downloads), Toast.LENGTH_SHORT).show()
                 } else {
                     haptic(HapticEvent.Error)
-                    Toast.makeText(context, context.getString(R.string.report_toast_download_failed), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, resources.getString(R.string.report_toast_download_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }
         if (!started) {
             haptic(HapticEvent.Error)
-            Toast.makeText(context, context.getString(R.string.report_toast_no_file_to_download), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.report_toast_no_file_to_download), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -197,7 +198,7 @@ fun LabReportsScreen(
         when (val state = downloads[report.downloadKey()]) {
             is ReportDownloader.State.Done ->
                 if (!ReportDownloader.open(context, state))
-                    Toast.makeText(context, context.getString(R.string.report_toast_no_app_to_open), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, resources.getString(R.string.report_toast_no_app_to_open), Toast.LENGTH_SHORT).show()
             is ReportDownloader.State.Running -> Unit
             else -> {
                 pendingDownload = report
@@ -209,7 +210,7 @@ fun LabReportsScreen(
     val onView: (MediaItem) -> Unit = { report ->
         if (ReportDownloader.isImage(report.fileType, report.fileName)) viewing = report
         else if (!ReportDownloader.openRemote(context, report.url))
-            Toast.makeText(context, context.getString(R.string.report_toast_no_app_to_open), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.report_toast_no_app_to_open), Toast.LENGTH_SHORT).show()
     }
 
     // ── UI ─────────────────────────────────────────────────────────────────────

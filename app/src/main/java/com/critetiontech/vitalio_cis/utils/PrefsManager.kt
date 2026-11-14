@@ -11,28 +11,33 @@ data class PatientResponse(
     val responseValue: List<Patient>
 )
 
+/**
+ * VerifyOTP's patient. Text fields are nullable on purpose: Gson writes a JSON null straight into the
+ * field (ignoring Kotlin's non-null type and the default), so a non-null String here would crash login
+ * for any patient with, say, no height or email on file.
+ */
 data class VerifyOtpPatient(
     val pid: Int = 0,
     val pmId: Int = 0,
-    val uhId: String = "",
-    val firstName: String = "",
+    val uhId: String? = "",
+    val firstName: String? = "",
     val lastName: String? = null,
     val profileURL: String? = null,
-    val mobileNo: String = "",
-    val emailId: String = "",
-    val address: String = "",
-    val loginDateTime: String = "",
-    val age: String = "",
-    val ageType: String = "",
-    val dob: String = "",
+    val mobileNo: String? = "",
+    val emailId: String? = "",
+    val address: String? = "",
+    val loginDateTime: String? = "",
+    val age: String? = "",
+    val ageType: String? = "",
+    val dob: String? = "",
     val genderId: Int = 0,
     val cityId: Int = 0,
     val stateId: Int = 0,
     val clientId: Int = 0,
-    val height: String = "",
-    val weight: String = "",
+    val height: String? = "",
+    val weight: String? = "",
     val bloodGroupId: Int = 0,
-    val joinedOn: String = "",
+    val joinedOn: String? = "",
     val lastVisitDate: String? = null,
     val patientStatus: String? = null,
     val crNo: String? = null      // CR Number — used by PatientOPDAllHistory API

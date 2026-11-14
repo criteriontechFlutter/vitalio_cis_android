@@ -197,4 +197,39 @@
     <string name="report_article_published">Published: %1$s</string>
     <string name="report_acknowledgements">Acknowledgements</string>
     <string name="report_funding">Funding</string>
+
+    <!-- Prescription history (PatientMedicalSummary / PatientMedicalDetails) -->
+    <string name="rx_prescriptions_title">Prescriptions</string>
+    <string name="rx_upload_prescription">Upload Prescription</string>
+    <string name="rx_details_title">Prescription Details</string>
+    <string name="rx_created_by">Created by:</string>
+    <string name="rx_date">Date:</string>
+    <string name="rx_notes">Notes:</string>
+    <string name="rx_diagnosis">Diagnosis:</string>
+    <string name="rx_investigations">Investigations:</string>
+    <string name="rx_no_medicines">No medicines prescribed for this visit</string>
+    <string name="rx_for_days">%1$s for %2$s days</string>
+    <string name="rx_visit_no">Visit No: %1$s</string>
+    <string name="rx_opd_visit">OPD Visit</string>
+    <string name="rx_share">Share prescription</string>
+    <string name="rx_back">Back</string>
+    <string name="rx_doctor_name">Dr. %1$s</string>
+    <string name="rx_prescribed_medicines">Prescribed medicines</string>
+    <string name="rx_pdf_footer">Shared from the Vitalio app. Follow your doctor\'s advice; contact them before changing any medicine.</string>
+    <string name="rx_share_failed">Couldn\'t create the PDF. Please try again.</string>
+    <string name="rx_add_reminders">Add to medicine reminders</string>
+    <string name="rx_adding_reminders">Adding to reminders…</string>
+    <plurals name="rx_reminders_added">
+        <item quantity="one">%1$d medicine added to your reminders</item>
+        <item quantity="other">%1$d medicines added to your reminders</item>
+    </plurals>
+    <string name="rx_reminders_failed">Couldn\'t add the reminders. Please try again.</string>
+    <plurals name="rx_reminders_confirm_title">
+        <item quantity="one">Add %1$d medicine to reminders?</item>
+        <item quantity="other">Add %1$d medicines to reminders?</item>
+    </plurals>
+    <string name="rx_reminders_confirm_body">Reminders start today and stop when each medicine\'s course ends. You can change them later in Manage Medicines.</string>
+    <string name="rx_reminders_confirm_add">Add</string>
+    <string name="rx_cancel">Cancel</string>
+    <string name="rx_open_prescription">Open prescription from %1$s</string>
 </resources>

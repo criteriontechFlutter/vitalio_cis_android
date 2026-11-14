@@ -65,6 +65,43 @@ class OmronDeviceFilterTest {
         assertEquals("HEM-7156T", OmronManager.identify(null, null, "BLEsmart_0000057A005FBFBF7152", candidates)?.first?.code)
     }
 
+    // Scales: classified id 0001 in front of the internal id
+    private val scales = listOf(
+        OmronModels.byCode("HN-300T2")!! to mapOf(
+            "modelName" to "HN-300T2", "identifier" to "HN-300T2_AP", "deviceGroupIncludedGroupIDKey" to "1042", "id" to "1042",
+        ),
+        // Older entry: "id" is 068, not the internal id; group id may be missing
+        OmronModels.byCode("HBF-222T")!! to mapOf(
+            "modelName" to "HBF-222T", "identifier" to "HBF-222T-AP", "id" to "068",
+        ),
+    )
+
+    @Test
+    fun `a scale is identified from the internal id in its Bluetooth name`() {
+        // 0x0412 = 1042; reading all 8 digits (0x00010412) gave 66578 and matched nothing
+        assertEquals("HN-300T2", OmronManager.identify(null, null, "BLEsmart_00010412005FBFCD0001", scales)?.first?.code)
+    }
+
+    @Test
+    fun `HBF-222T seen on a Pixel is identified by the library's name prefix`() {
+        // The exact advertisement that failed with "isn't a model we support yet"
+        assertEquals("HBF-222T", OmronManager.identify(null, null, "BLEsmart_00010408005FBFCD9709", scales)?.first?.code)
+    }
+
+    @Test
+    fun `the matching variant config is chosen when a model has several`() {
+        val aap = mapOf("modelName" to "HEM-7156T", "identifier" to "HEM-7156T_AAP", "deviceGroupIncludedGroupIDKey" to "1146", "id" to "25003")
+        val both = candidates + (OmronModels.byCode("HEM-7156T")!! to aap)
+        assertEquals(aap, OmronManager.identify(null, null, "BLEsmart_0000047A005FBF000001", both)?.second)
+        assertEquals("1402", OmronManager.identify(null, null, "BLEsmart_0000057A005FBF000001", both)?.second?.get("id"))
+    }
+
+    @Test
+    fun `a BP name is not taken for a scale with the same internal id`() {
+        // Pairing a scale only offers scale candidates, so a nearby BP monitor stays unmatched
+        assertNull(OmronManager.identify(null, null, "BLEsmart_0000057A005FBF000001", scales))
+    }
+
     @Test
     fun `an unknown device is not identified`() {
         assertNull(OmronManager.identify("999", "HEM-9999T", "BLEsmart_000003E7", candidates))

@@ -38,6 +38,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.Air
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.ContactPhone
 import androidx.compose.material.icons.rounded.DarkMode
@@ -156,7 +157,7 @@ fun DrawerScreen() {
                 HapticIconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = null
+                        contentDescription = androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_settings)
                     )
                 }
                 DropdownMenu(
@@ -203,6 +204,7 @@ fun DrawerScreen() {
                     MenuCard(
                         listOf(
                             "Profile" to "",
+                            "My Subscription" to "",
                             "Allergies" to "",
                             "Emergency Contacts" to "",
                             "Family Health History" to "",
@@ -256,6 +258,7 @@ fun DrawerScreen() {
             MenuCard(
                 listOf(
                     "Profile" to "",
+                    "My Subscription" to "",
                     "Allergies" to "",
                     "Emergency Contacts" to "",
                     "Family Health History" to "",
@@ -552,6 +555,7 @@ fun ProfileCard(
 ) {
 
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
     var patient by remember { mutableStateOf(PrefsManager(context).getPatient()) }
     val fullName = remember(patient) {
@@ -578,12 +582,12 @@ fun ProfileCard(
 
     fun upload(uri: android.net.Uri) {
         val p = PrefsManager(context).getPatient() ?: run {
-            android.widget.Toast.makeText(context, context.getString(R.string.profile_session_expired), android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, resources.getString(R.string.profile_session_expired), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
         val file = runCatching { FileUtils.getFile(context, uri) }.getOrNull()
         if (file == null || !file.exists()) {
-            android.widget.Toast.makeText(context, context.getString(R.string.profile_image_read_failed), android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, resources.getString(R.string.profile_image_read_failed), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
         previewUri = uri
@@ -606,14 +610,14 @@ fun ProfileCard(
     LaunchedEffect(uploaded) {
         if (uploaded) {
             patient = PrefsManager(context).getPatient()
-            android.widget.Toast.makeText(context, context.getString(R.string.profile_photo_updated), android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_updated), android.widget.Toast.LENGTH_SHORT).show()
             photoViewModel.resetSuccess()
         }
     }
     LaunchedEffect(uploadError) {
         uploadError?.let {
             previewUri = null
-            android.widget.Toast.makeText(context, context.getString(R.string.profile_photo_not_updated, it), android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_not_updated, it), android.widget.Toast.LENGTH_LONG).show()
             photoViewModel.resetError()
         }
     }
@@ -626,9 +630,7 @@ fun ProfileCard(
     ) { ok -> if (ok) cameraUri?.let(::upload) }
 
     fun launchCamera() {
-        val uri = createImageUri(context)
-        cameraUri = uri
-        cameraLauncher.launch(uri)
+        startCameraCapture(context, onUri = { cameraUri = it }, launch = { cameraLauncher.launch(it) })
     }
 
     val cameraPermission = com.critetiontech.ctvitalio.ui.components.rememberPermissionRequest(
@@ -883,6 +885,7 @@ private fun menuFeature(title: String): com.critetiontech.ctvitalio.config.AppFe
     "Share Health Records" -> com.critetiontech.ctvitalio.config.AppFeature.SHARE_HEALTH_RECORDS
     "FAQ" -> com.critetiontech.ctvitalio.config.AppFeature.FAQ
     "Feedback" -> com.critetiontech.ctvitalio.config.AppFeature.FEEDBACK
+    "My Subscription" -> com.critetiontech.ctvitalio.config.AppFeature.SUBSCRIPTION
     else -> null
 }
 
@@ -919,6 +922,7 @@ fun MenuRow(
     val route = when (title) {
 
         "Profile" -> Routes.PERSONALIFSCREEN
+        "My Subscription" -> Routes.MY_SUBSCRIPTION
         "Breathing Therapy" -> Routes.BREATHING_THERAPY
         "Allergies" -> Routes.ALLERGIESSCREEN
         "Appointments" -> Routes.APPOINTMENTS
@@ -950,6 +954,7 @@ fun MenuRow(
 /** Icon for a drawer menu identifier. */
 private fun menuIcon(title: String): ImageVector = when (title) {
     "Profile" -> Icons.Rounded.Person
+    "My Subscription" -> Icons.Rounded.WorkspacePremium
     "Breathing Therapy" -> Icons.Rounded.Air
     "Allergies" -> Icons.Rounded.Healing
     "Appointments" -> Icons.Rounded.CalendarMonth
@@ -971,6 +976,7 @@ private fun menuIcon(title: String): ImageVector = when (title) {
 @androidx.annotation.StringRes
 private fun menuTitleRes(title: String): Int? = when (title) {
     "Profile" -> R.string.profile_menu_profile
+    "My Subscription" -> R.string.sub_menu_my_subscription
     "Breathing Therapy" -> R.string.profile_menu_breathing_therapy
     "Allergies" -> R.string.profile_menu_allergies
     "Appointments" -> R.string.profile_menu_appointments

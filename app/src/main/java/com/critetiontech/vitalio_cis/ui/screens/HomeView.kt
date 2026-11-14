@@ -123,6 +123,7 @@ fun DashboardScreen(
     var selectedIndex by remember { mutableIntStateOf(0) }
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val navController = LocalNavController.current
 
     // Tabs and the mic follow the Remote Config switches; a tab switched off while open falls back to Home
@@ -172,7 +173,7 @@ fun DashboardScreen(
             (context as? Activity)?.finish()
         } else {
             backPressedOnce = true
-            Toast.makeText(context, context.getString(R.string.home_press_back_again), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, resources.getString(R.string.home_press_back_again), Toast.LENGTH_SHORT).show()
         }
     }
     LaunchedEffect(backPressedOnce) {
@@ -648,6 +649,7 @@ fun VoiceAssistantSheet(
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -731,7 +733,7 @@ fun VoiceAssistantSheet(
             ListeningState.MATCHED -> {
                 // Speak the destination name before navigating so the user hears confirmation
                 ttsEngine.value?.speak(
-                    context.getString(R.string.home_voice_opening, matchedLabel.orEmpty()),
+                    resources.getString(R.string.home_voice_opening, matchedLabel.orEmpty()),
                     TextToSpeech.QUEUE_FLUSH,
                     null,
                     "voice_nav_confirm"
@@ -744,7 +746,7 @@ fun VoiceAssistantSheet(
 
             ListeningState.NO_MATCH -> {
                 ttsEngine.value?.speak(
-                    context.getString(R.string.home_voice_no_match_tts),
+                    resources.getString(R.string.home_voice_no_match_tts),
                     TextToSpeech.QUEUE_FLUSH,
                     null,
                     "voice_no_match"
@@ -756,7 +758,7 @@ fun VoiceAssistantSheet(
 
             ListeningState.ERROR -> {
                 ttsEngine.value?.speak(
-                    context.getString(R.string.home_voice_mic_error_tts),
+                    resources.getString(R.string.home_voice_mic_error_tts),
                     TextToSpeech.QUEUE_FLUSH,
                     null,
                     "voice_mic_error"
@@ -2219,11 +2221,12 @@ fun MedicineCardItem(
 ) {
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val navController = LocalNavController.current
     val status = medicine.intakeStatus()
     val shape = RoundedCornerShape(16.dp)
     val timeText = medicine.scheduledAt()?.format(
-        java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.getDefault())
+        java.time.format.DateTimeFormatter.ofPattern("hh:mm a", androidx.compose.ui.platform.LocalConfiguration.current.locales[0])
     ).orEmpty()
     val strength = medicine.dosageStrength.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() }
     val doseText = "$strength ${medicine.unit.orEmpty()}".trim()
@@ -2233,7 +2236,7 @@ fun MedicineCardItem(
         when (status) {
             IntakeStatus.Due -> onMarkIntake(medicine)
             IntakeStatus.Upcoming -> android.widget.Toast.makeText(
-                context, context.getString(R.string.home_med_scheduled_for, timeText), android.widget.Toast.LENGTH_SHORT
+                context, resources.getString(R.string.home_med_scheduled_for, timeText), android.widget.Toast.LENGTH_SHORT
             ).show()
             else -> Unit
         }

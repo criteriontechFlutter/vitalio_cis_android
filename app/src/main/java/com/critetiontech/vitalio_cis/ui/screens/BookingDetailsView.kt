@@ -62,6 +62,7 @@ private val SuccessGreen = Color(0xFF16A34A)
 fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val navController = LocalNavController.current
 
     val details = bookingDetails
@@ -175,7 +176,7 @@ fun BookingDetailsScreen(bookingDetails: BookingDetails?) {
                     }.getOrNull()
                     if (start != null) {
                         val intent = Intent(Intent.ACTION_INSERT, CalendarContract.Events.CONTENT_URI)
-                            .putExtra(CalendarContract.Events.TITLE, context.getString(R.string.consult_calendar_appointment_with, details?.pName.orEmpty()))
+                            .putExtra(CalendarContract.Events.TITLE, resources.getString(R.string.consult_calendar_appointment_with, details?.pName.orEmpty()))
                             .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, start)
                             .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, start + (if (minutes > 0) minutes else 30) * 60_000L)
                         runCatching { context.startActivity(intent) }

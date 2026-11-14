@@ -66,9 +66,9 @@ class AuthRepositoryImpl @Inject constructor(
             if (parsed.status == 1 && parsed.responseValue != null) {
                 val p = parsed.responseValue
                 val patient = Patient(
-                    pid = p.pid, uhId = p.uhId, firstName = p.firstName, lastName = p.lastName,
-                    dob = p.dob, genderId = p.genderId, mobileNo = p.mobileNo, emailAddress = p.emailId,
-                    age = p.age, address = p.address, cityId = p.cityId, stateId = p.stateId,
+                    pid = p.pid, uhId = p.uhId.orEmpty(), firstName = p.firstName.orEmpty(), lastName = p.lastName,
+                    dob = p.dob.orEmpty(), genderId = p.genderId, mobileNo = p.mobileNo.orEmpty(), emailAddress = p.emailId.orEmpty(),
+                    age = p.age.orEmpty(), address = p.address.orEmpty(), cityId = p.cityId, stateId = p.stateId,
                     bloodGroupId = p.bloodGroupId, clientId = p.clientId, countryCallingCode = "",
                     guardianRelationId = 0, guardianName = "", countryId = 0, imageUrl = profileImageUrl(p.profileURL),
                     // City/state come as ids only; Personal Info looks their names up once
@@ -76,8 +76,8 @@ class AuthRepositoryImpl @Inject constructor(
                     countryName = "", genderName = genderNameFor(p.genderId), guardianRelationName = null,
                     bloodGroupName = bloodGroupNameFor(p.bloodGroupId),
                     crNo = p.crNo,  // ← capture crNo from login response
-                    height = p.height.takeIf { it.isNotBlank() },
-                    weight = p.weight.takeIf { it.isNotBlank() }
+                    height = p.height?.takeIf { it.isNotBlank() },
+                    weight = p.weight?.takeIf { it.isNotBlank() }
                 )
                 prefs.savePatient(patient)
                 DomainResult.Success(patient)

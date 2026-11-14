@@ -43,11 +43,22 @@ class AllergyViewModel : ViewModel() {
     private val _addSuccess = MutableStateFlow(false)
     val addSuccess: StateFlow<Boolean> = _addSuccess
 
-    fun fetchAllergies() {
+    /** True during a pull-to-refresh, while the current list stays on screen. */
+    private val _refreshing = MutableStateFlow(false)
+    val refreshing: StateFlow<Boolean> = _refreshing
+
+    fun refresh() {
+        if (_refreshing.value || _loading.value) return
+        fetchAllergies(asRefresh = true)
+    }
+
+    fun fetchAllergies(asRefresh: Boolean = false) {
+        // A refresh keeps the list visible (refreshing flag); a first load shows the spinner (loading flag)
+        val busy = if (asRefresh) _refreshing else _loading
         viewModelScope.launch {
-            _loading.value = true
+            busy.value = true
             _errorMessage.value = null
-            val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
+            val patient = prefs.getPatient() ?: run { busy.value = false; return@launch }
             try {
                 val medJob = async { fetchAllergiesUseCase(patient.uhId, patient.clientId, "MedicineAllergy") }
                 val foodJob = async { fetchAllergiesUseCase(patient.uhId, patient.clientId, "FoodAllergy") }
@@ -62,7 +73,7 @@ class AllergyViewModel : ViewModel() {
             } catch (e: Exception) {
                 _errorMessage.value = MyApplication.appContext.getString(R.string.profile_allergies_load_failed)
             } finally {
-                _loading.value = false
+                busy.value = false
             }
         }
     }
@@ -73,22 +84,21 @@ class AllergyViewModel : ViewModel() {
             _addLoading.value = true
             _errorMessage.value = null
             val patient = prefs.getPatient() ?: run { _addLoading.value = false; return@launch }
-            val now = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val now = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
             val allergyEntry = listOf(mapOf("detailID" to 0, "detailsDate" to now, "details" to details.ifBlank { "Patient reports allergy to $substanceName." }, "substanceName" to substanceName, "allergy" to severity, "reaction" to reaction))
-            val pdmId = if (typeAllergy == "FoodAllergy") 7 else 8
 
+            // Body matches the swagger AddAllergies schema exactly (additionalProperties: false);
+            // typeAllergy goes in the query string, and the server derives pdmId (7 food / 8 medicine) from it.
             val body = mapOf(
                 "uhId" to patient.uhId,
                 "jsonAllergies" to Gson().toJson(allergyEntry),
                 "userId" to 0,
                 "clientId" to patient.clientId,
-                "isFromPatient" to true,
-                "typeAllergy" to typeAllergy,
-                "pdmId" to pdmId
+                "isFromPatient" to true
             )
-            Log.d("TAG", "addAllergy: $body")
+            Log.d("AllergyVM", "addAllergy[$typeAllergy]: $body")
 
-            when (val r = addAllergyUseCase(body)) {
+            when (val r = addAllergyUseCase(typeAllergy, body)) {
                 is DomainResult.Success -> { _addSuccess.value = true; Haptics.success(); fetchAllergies() }
                 is DomainResult.Error -> { _errorMessage.value = MyApplication.appContext.getString(R.string.profile_allergy_add_failed); Haptics.error(); Log.e("AllergyVM", r.exception.message.orEmpty()) }
             }

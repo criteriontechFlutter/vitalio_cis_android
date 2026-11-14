@@ -2,4 +2,6 @@
 <paths>
     <!-- Reports saved to Downloads/Vitalio on Android 9 and older (newer versions use MediaStore). -->
     <external-path name="report_downloads" path="Download/Vitalio/" />
+    <!-- Prescription PDFs made for sharing (PrescriptionPdf); replaced on each share. -->
+    <cache-path name="shared" path="shared/" />
 </paths>

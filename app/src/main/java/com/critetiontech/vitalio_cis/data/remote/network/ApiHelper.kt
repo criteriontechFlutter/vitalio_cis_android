@@ -62,6 +62,7 @@ class ApiHelper {
                     ?: bodyString
                     ?: "Server error ${response.code()}"
                 Log.e("ApiHelper", "Server error ${response.code()} for $endpoint")
+                com.critetiontech.ctvitalio.utils.ApiErrorReporter.httpError(endpoint, response.code())
                 return@withContext Response.error(
                     response.code(),
                     errorBodyString.toResponseBody(null)
@@ -80,6 +81,7 @@ class ApiHelper {
         } catch (e: Exception) {
 
             Log.e("ApiHelper", "API Failed: ${e.message}")
+            com.critetiontech.ctvitalio.utils.ApiErrorReporter.exception(endpoint, e)
             val cached = PrefsManager(context).getString(context, cacheKey(endpoint))
 
             return@withContext if (cached != null) {

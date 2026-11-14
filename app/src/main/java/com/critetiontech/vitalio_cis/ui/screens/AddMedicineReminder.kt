@@ -105,7 +105,7 @@ fun AddMedicineReminderScreen(viewModel: AddMedicineReminderViewModel = viewMode
                             Spacer(Modifier.width(10.dp))
                             Text(err, style = AppTextStyles.style14BCN().copy(color = if (isAppDark) colors.textDarkColor else Color(0xFF795548)), modifier = Modifier.weight(1f))
                             HapticIconButton(onClick = { viewModel.clearError() }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.Close, null, tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Close, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_dismiss), tint = colors.textGreyColor, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -278,7 +278,7 @@ fun MedicineSearchSection(viewModel: AddMedicineReminderViewModel) {
                     fontSize = 12.sp, color = colors.textGreyColor, maxLines = 1)
             }
             HapticIconButton(onClick = { viewModel.clearMedicineSelection() }) {
-                Icon(Icons.Default.Cancel, null, tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.Cancel, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_clear), tint = colors.textGreyColor, modifier = Modifier.size(20.dp))
             }
         }
     } else {
@@ -291,7 +291,7 @@ fun MedicineSearchSection(viewModel: AddMedicineReminderViewModel) {
             trailingIcon = {
                 if (viewModel.medicineName.isNotEmpty() && !viewModel.isSearching) {
                     HapticIconButton(onClick = { viewModel.onMedicineNameChange("") }) {
-                        Icon(Icons.Default.Cancel, null, tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Cancel, androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_clear), tint = colors.textGreyColor, modifier = Modifier.size(18.dp))
                     }
                 }
             },

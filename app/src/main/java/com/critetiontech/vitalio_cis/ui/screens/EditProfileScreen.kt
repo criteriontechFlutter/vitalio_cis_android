@@ -169,6 +169,7 @@ fun EditProfileScreen(
 ) {
     val colors = LocalMyColorScheme.current
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val navController = LocalNavController.current
     val prefs = remember { PrefsManager(context) }
     // Always read fresh patient data on screen open
@@ -239,9 +240,7 @@ fun EditProfileScreen(
     }
 
     fun launchCamera() {
-        val uri = createImageUri(context)
-        cameraUri = uri
-        cameraLauncher.launch(uri)
+        startCameraCapture(context, onUri = { cameraUri = it }, launch = { cameraLauncher.launch(it) })
     }
 
     // CAMERA is declared in the manifest, so IMAGE_CAPTURE throws SecurityException until it's granted
@@ -259,7 +258,7 @@ fun EditProfileScreen(
 
     LaunchedEffect(updateSuccess) {
         if (updateSuccess) {
-            android.widget.Toast.makeText(context, context.getString(R.string.profile_updated_success), android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, resources.getString(R.string.profile_updated_success), android.widget.Toast.LENGTH_SHORT).show()
             viewModel.resetSuccess()
             navController.popBackStack()
         }

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.utils.startActivitySafely
+
 import com.critetiontech.ctvitalio.ui.feedback.HapticOutlinedButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticSwitch
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
@@ -66,6 +68,7 @@ private val snoozeOptions = listOf(5, 10, 15)
 @Composable
 fun MedicineReminderSettingsScreen() {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
     val settings = remember { ReminderSettings(context) }
 
@@ -110,7 +113,7 @@ fun MedicineReminderSettingsScreen() {
 
     val notificationLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         // Once the user has said no twice the dialog stops showing; send them to settings.
-        if (!granted) context.startActivity(AlarmSetup.settingsIntent(context, AlarmSetup.Item.Notifications))
+        if (!granted) context.startActivitySafely(AlarmSetup.settingsIntent(context, AlarmSetup.Item.Notifications))
         setup = AlarmSetup.requirements(context)
     }
 
@@ -130,7 +133,7 @@ fun MedicineReminderSettingsScreen() {
                     if (item == AlarmSetup.Item.Notifications && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
-                        context.startActivity(AlarmSetup.settingsIntent(context, item))
+                        context.startActivitySafely(AlarmSetup.settingsIntent(context, item))
                     }
                 },
             )
@@ -153,7 +156,7 @@ fun MedicineReminderSettingsScreen() {
                 ChoiceChips(
                     options = offsetOptions,
                     selected = offset,
-                    label = { if (it == 0) context.getString(R.string.med_on_time) else context.getString(R.string.med_min_before, it) },
+                    label = { if (it == 0) resources.getString(R.string.med_on_time) else resources.getString(R.string.med_min_before, it) },
                     enabled = enabled,
                     onSelect = { offset = it; applyChange { offsetMinutes = it } },
                 )
@@ -176,7 +179,7 @@ fun MedicineReminderSettingsScreen() {
                 ChoiceChips(
                     options = snoozeOptions,
                     selected = snooze,
-                    label = { context.getString(R.string.med_minutes_short, it) },
+                    label = { resources.getString(R.string.med_minutes_short, it) },
                     enabled = enabled,
                     onSelect = { snooze = it; applyChange { snoozeMinutes = it } },
                 )
@@ -185,7 +188,7 @@ fun MedicineReminderSettingsScreen() {
                 HapticOutlinedButton(
                     onClick = {
                         MedicineReminderScheduler.scheduleTestAlarm(context)
-                        android.widget.Toast.makeText(context, context.getString(R.string.med_test_alarm_toast), android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, resources.getString(R.string.med_test_alarm_toast), android.widget.Toast.LENGTH_SHORT).show()
                     },
                     enabled = enabled,
                     shape = RoundedCornerShape(24.dp),

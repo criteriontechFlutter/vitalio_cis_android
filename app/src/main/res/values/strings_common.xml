@@ -41,4 +41,15 @@
     <string name="perm_reason_scan_prescription">to scan your prescription</string>
     <string name="perm_reason_breathing">to hear your breath and guide each round</string>
     <string name="perm_reason_save_report">to save this report in your Downloads folder</string>
+    <!-- Screen-reader labels for icon-only buttons -->
+    <string name="a11y_back">Back</string>
+    <string name="a11y_clear">Clear</string>
+    <string name="a11y_dismiss">Dismiss</string>
+    <string name="a11y_settings">Settings</string>
+    <string name="a11y_previous">Previous</string>
+    <string name="a11y_next">Next</string>
+    <string name="a11y_more_options">More options</string>
+    <string name="a11y_delete">Delete</string>
+    <string name="a11y_show_options">Show options</string>
+    <string name="common_camera_unavailable">Couldn\'t open the camera. Check that your phone has free storage and a camera app, then try again.</string>
 </resources>

@@ -36,7 +36,7 @@ class UseCaseTest {
         private val addResult: DomainResult<Unit> = DomainResult.Success(Unit)
     ) : AllergyRepository {
         override suspend fun fetchAllergies(uhid: String, clientId: Int, typeAllergy: String): DomainResult<List<AllergyItem>> = fetchResult
-        override suspend fun addAllergy(body: Map<String, Any>): DomainResult<Unit> = addResult
+        override suspend fun addAllergy(typeAllergy: String, body: Map<String, Any>): DomainResult<Unit> = addResult
     }
 
     private class FakeVitalRepository(
@@ -157,7 +157,7 @@ class UseCaseTest {
     fun `AllergyRepository addAllergy returns Success on valid body`() = runTest {
         val repo = FakeAllergyRepository(addResult = DomainResult.Success(Unit))
         val body = mapOf("uhId" to "UHID001", "substanceName" to "Mango")
-        val result = repo.addAllergy(body)
+        val result = repo.addAllergy("MedicineAllergy", body)
         assertTrue(result is DomainResult.Success)
     }
 

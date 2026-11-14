@@ -70,7 +70,7 @@ fun tintFill(tint: Color): Color = tint.copy(alpha = if (isAppDark) 0.18f else 0
 /** Small uppercase, letter-spaced label. */
 @Composable
 fun Caption(text: String, color: Color = LocalMyColorScheme.current.textGreyColor, modifier: Modifier = Modifier) =
-    Text(text.uppercase(Locale.getDefault()), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp, color = color, modifier = modifier)
+    Text(text.uppercase(androidx.compose.ui.platform.LocalConfiguration.current.locales[0]), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp, color = color, modifier = modifier)
 
 /** Flat card: no elevation and no border, only the theme's card colour. */
 @Composable

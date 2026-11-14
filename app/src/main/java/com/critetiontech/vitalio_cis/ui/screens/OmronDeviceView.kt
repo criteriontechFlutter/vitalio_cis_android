@@ -77,6 +77,7 @@ internal fun Context.bluetoothOn(): Boolean =
 @Composable
 fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewModel()) {
     val context = LocalContext.current
+    val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
     LaunchedEffect(modelCode) { viewModel.load(modelCode) }
 
@@ -92,7 +93,7 @@ fun OmronDeviceScreen(modelCode: String, viewModel: OmronDeviceViewModel = viewM
     var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     val enableBluetooth = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (context.bluetoothOn()) pendingAction?.invoke()
-        else viewModel.showError(context.getString(R.string.device_omron_bluetooth_off))
+        else viewModel.showError(resources.getString(R.string.device_omron_bluetooth_off))
         pendingAction = null
     }
     val nearbyDevices = rememberPermissionRequest(

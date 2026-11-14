@@ -42,6 +42,7 @@ enum class AppFeature(val key: String, @StringRes val label: Int, @StringRes val
     SHARE_HEALTH_RECORDS("cis_feature_share_health_records", R.string.ff_share_health_records, R.string.ff_group_profile),
     FAQ("cis_feature_faq", R.string.ff_faq, R.string.ff_group_profile),
     FEEDBACK("cis_feature_feedback", R.string.ff_feedback, R.string.ff_group_profile),
+    SUBSCRIPTION("cis_feature_subscription", R.string.ff_subscription, R.string.ff_group_profile),
 }
 
 /**

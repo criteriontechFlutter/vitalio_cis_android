@@ -134,18 +134,31 @@ enum class AppPermission(
     }
 
     /**
-     * Android stops showing its dialog after the user declines twice. We can tell that apart
-     * from "never asked" only by remembering that we asked before.
+     * True only when Android has stopped showing its dialog (the user declined twice, or chose
+     * "Don't ask again"); then the only way back is Settings.
+     *
+     * "Asked before + no rationale" is NOT enough: a dialog closed with Back or a tap outside
+     * leaves the permission unanswered with no rationale, and treating that as blocked meant the
+     * dialog never came back (Omron pairing on a Pixel was stuck on the Settings sheet this way).
+     * So "blocked" is recorded from a real result, see [PermissionRequest]: Android answering a
+     * request instantly, without showing anything, with no rationale.
      */
     fun isBlocked(context: Context): Boolean {
-        if (isGranted(context) || !wasAsked(context)) return false
-        val activity = context.findActivity() ?: return false
+        if (isGranted(context)) return false
+        if (!prefs(context).getBoolean(blockedKey, false)) return false
+        // Settings may have reset it to "ask every time": rationale true means the dialog can show again
+        val activity = context.findActivity() ?: return true
         return manifestPermissions.none { ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }
     }
 
     fun wasAsked(context: Context) = prefs(context).getBoolean(name, false)
 
     fun markAsked(context: Context) = prefs(context).edit().putBoolean(name, true).apply()
+
+    fun markBlocked(context: Context, blocked: Boolean) =
+        prefs(context).edit().putBoolean(blockedKey, blocked).apply()
+
+    private val blockedKey get() = "${name}_blocked"
 
     companion object {
         private fun prefs(context: Context) = context.getSharedPreferences("app_permissions", Context.MODE_PRIVATE)
