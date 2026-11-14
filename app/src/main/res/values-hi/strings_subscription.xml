@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sub_menu_my_subscription">मेरी सदस्यता</string>
+    <string name="sub_title">मेरी सदस्यता</string>
+    <string name="sub_current_plan">वर्तमान प्लान</string>
+    <string name="sub_per_patient_month">/ मरीज़ / महीना</string>
+    <plurals name="sub_renews_in_days">
+        <item quantity="one">%1$d दिन में नवीनीकरण</item>
+        <item quantity="other">%1$d दिनों में नवीनीकरण</item>
+    </plurals>
+    <string name="sub_renewal_due">नवीनीकरण बाकी है</string>
+    <string name="sub_next_renewal_on">अगला नवीनीकरण %1$s को।</string>
+    <string name="sub_plan_details">प्लान विवरण</string>
+    <string name="sub_plan_start_date">प्लान शुरू होने की तारीख</string>
+    <string name="sub_validity">वैधता</string>
+    <string name="sub_next_renewal_date">अगले नवीनीकरण की तारीख</string>
+    <string name="sub_status">स्थिति</string>
+    <string name="sub_included_features">%1$s में शामिल सुविधाएँ</string>
+    <string name="sub_feature_full">पूर्ण पहुँच</string>
+    <string name="sub_feature_limit">सीमा %1$d</string>
+    <string name="sub_upgrade_plan">प्लान अपग्रेड करें</string>
+    <string name="sub_view_payment_history">भुगतान इतिहास देखें</string>
+    <string name="sub_coming_soon">जल्द आ रहा है</string>
+    <string name="sub_none_title">कोई सक्रिय सदस्यता नहीं</string>
+    <string name="sub_none_body">आपके पास अभी कोई सदस्यता प्लान नहीं है।</string>
+    <string name="sub_load_failed">आपकी सदस्यता लोड नहीं हो सकी। कृपया फिर से कोशिश करें।</string>
+    <string name="sub_retry">फिर से कोशिश करें</string>
+    <string name="sub_renewal_notif_title">आपका प्लान जल्द नवीनीकृत होगा</string>
+    <string name="sub_renewal_notif_text_plan">%1$s का नवीनीकरण %2$s को होगा। देखने के लिए मेरी सदस्यता खोलें।</string>
+    <string name="sub_renewal_notif_text">आपकी सदस्यता का नवीनीकरण %1$s को होगा। देखने के लिए मेरी सदस्यता खोलें।</string>
+</resources>

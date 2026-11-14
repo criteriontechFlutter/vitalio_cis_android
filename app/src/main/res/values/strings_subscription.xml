@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sub_menu_my_subscription">My Subscription</string>
+    <string name="sub_title">My Subscription</string>
+    <string name="sub_current_plan">Current Plan</string>
+    <string name="sub_per_patient_month">/ patient / month</string>
+    <plurals name="sub_renews_in_days">
+        <item quantity="one">Renews in %1$d Day</item>
+        <item quantity="other">Renews in %1$d Days</item>
+    </plurals>
+    <string name="sub_renewal_due">Renewal due</string>
+    <string name="sub_next_renewal_on">Next renewal on %1$s.</string>
+    <string name="sub_plan_details">Plan Details</string>
+    <string name="sub_plan_start_date">Plan start date</string>
+    <string name="sub_validity">Validity</string>
+    <string name="sub_next_renewal_date">Next renewal Date</string>
+    <string name="sub_status">Status</string>
+    <string name="sub_included_features">Included features in %1$s</string>
+    <string name="sub_feature_full">Full access</string>
+    <string name="sub_feature_limit">Cap %1$d</string>
+    <string name="sub_upgrade_plan">Upgrade Plan</string>
+    <string name="sub_view_payment_history">View Payment History</string>
+    <string name="sub_coming_soon">Coming soon</string>
+    <string name="sub_none_title">No active subscription</string>
+    <string name="sub_none_body">You don\'t have a subscription plan yet.</string>
+    <string name="sub_load_failed">Couldn\'t load your subscription. Please try again.</string>
+    <string name="sub_retry">Retry</string>
+    <string name="sub_renewal_notif_title">Your plan renews soon</string>
+    <string name="sub_renewal_notif_text_plan">%1$s renews on %2$s. Open My Subscription to review it.</string>
+    <string name="sub_renewal_notif_text">Your subscription renews on %1$s. Open My Subscription to review it.</string>
+</resources>
