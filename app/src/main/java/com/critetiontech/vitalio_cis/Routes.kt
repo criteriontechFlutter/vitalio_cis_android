@@ -76,6 +76,8 @@ object Routes {
     const val OMRON_DEVICE = "OmronDeviceScreen"
     const val YONKER_DEVICE = "YonkerDeviceScreen"
     const val PERMISSIONS = "PermissionsScreen"
+    /** Terms / Privacy web page; append "/TERMS" or "/PRIVACY" (LegalPage name). */
+    const val LEGAL = "LegalScreen"
     const val BREATHING_THERAPY = "BreathingTherapyScreen"
     const val EDITPROFILE = "EditProfileScreen"
     const val MEDICINE_REMINDER_SETTINGS = "MedicineReminderSettingsScreen"

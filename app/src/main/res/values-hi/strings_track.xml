@@ -148,4 +148,24 @@
     <string name="track_symptoms_update_failed">आपके लक्षण अपडेट नहीं हो सके। कृपया फिर से कोशिश करें।</string>
     <string name="track_symptoms_added">लक्षण सफलतापूर्वक जोड़े गए!</string>
     <string name="track_symptoms_save_failed">आपके लक्षण सेव नहीं हो सके। कृपया फिर से कोशिश करें।</string>
+    <!-- Activity -->
+    <string name="track_activity_load_failed">एक्टिविटी लोड नहीं हो सकीं।</string>
+    <string name="track_activity_retry">फिर से कोशिश करें</string>
+    <string name="track_activity_saved">एक्टिविटी सेव हो गई</string>
+    <string name="track_activity_save_failed">एक्टिविटी सेव नहीं हो सकी। कृपया फिर से कोशिश करें।</string>
+    <string name="track_activity_already_logged">इस समय के लिए यह एक्टिविटी पहले से दर्ज है।</string>
+    <string name="track_activity_end_after_start">खत्म होने का समय शुरू होने के समय के बाद होना चाहिए।</string>
+    <string name="track_activity_login_required">एक्टिविटी दर्ज करने के लिए कृपया फिर से लॉग इन करें।</string>
+    <string name="track_activity_select_first">पहले एक एक्टिविटी चुनें।</string>
+    <string name="track_activity_delete_failed">एक्टिविटी डिलीट नहीं हो सकी। कृपया फिर से कोशिश करें।</string>
+    <string name="track_activity_delete_title">एक्टिविटी डिलीट करें?</string>
+    <string name="track_activity_delete_message">%1$s आपकी हिस्ट्री से हटा दी जाएगी।</string>
+    <string name="track_activity_delete">डिलीट करें</string>
+    <string name="track_activity_cancel">रद्द करें</string>
+    <string name="track_activity_no_match">आपकी खोज से कोई एक्टिविटी नहीं मिली।</string>
+    <string name="track_activity_today">आज</string>
+    <string name="track_activity_none_on_day">इस दिन कोई एक्टिविटी दर्ज नहीं है</string>
+    <string name="track_activity_previous_day">पिछला दिन</string>
+    <string name="track_activity_next_day">अगला दिन</string>
+    <string name="track_activity_pick_date">तारीख चुनें</string>
 </resources>

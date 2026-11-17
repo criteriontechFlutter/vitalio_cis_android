@@ -171,6 +171,12 @@ class MainActivity : ComponentActivity() {
                         ) {
                             composable(Routes.DASHBOARD) { DashboardScreen() }
                             composable(Routes.LOGIN) { LoginScreen() }
+                            composable(Routes.LEGAL + "/{page}") { backStackEntry ->
+                                val page = backStackEntry.arguments?.getString("page")
+                                    ?.let { runCatching { com.critetiontech.ctvitalio.ui.screens.LegalPage.valueOf(it) }.getOrNull() }
+                                    ?: com.critetiontech.ctvitalio.ui.screens.LegalPage.TERMS
+                                com.critetiontech.ctvitalio.ui.screens.LegalWebViewScreen(page)
+                            }
                             composable(Routes.MANAGEMEDICAIONS) { FeatureGate(AppFeature.MEDICINE) { ManageMedicationsPreview() } }
                             composable(Routes.ADDMEDICINEREMINDER) { FeatureGate(AppFeature.MEDICINE) { AddMedicineReminderScreen() } }
                             composable(Routes.INTERACTIONCHECKER) { FeatureGate(AppFeature.INTERACTION_CHECKER) { InteractionCheckerScreen(viewModel = interactionViewModel) } }

@@ -965,7 +965,11 @@ fun IntakeSelector(
             color = colors.textGreyColor,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             // Pencil icon — opens the custom size sheet; blue when glass/custom mode is active
             Box(
                 modifier = Modifier
@@ -984,18 +988,25 @@ fun IntakeSelector(
             }
 
             options.forEach { value ->
+                // Chips share the row width equally so the last one ("400 ml") never gets clipped.
                 Box(
                     modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
                         .clip(RoundedCornerShape(14.dp))
                         .background(
                             if (selectedPreset == value) Color(0xFF2563EB).copy(.1f)
                             else colors.dashboardContainerColor
                         )
                         .clickable { onPresetSelect(value) }
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 4.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         "$value ml",
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        softWrap = false,
                         color = if (selectedPreset == value) Color(0xFF2563EB) else colors.textGreyColor
                     )
                 }

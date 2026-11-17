@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.R
+import com.critetiontech.ctvitalio.Routes
+import androidx.compose.foundation.clickable
 import com.critetiontech.ctvitalio.ui.theme.AppColors
 import com.critetiontech.ctvitalio.utils.CommonButton
 import com.critetiontech.ctvitalio.utils.CommonTextField
@@ -342,15 +344,36 @@ fun LoginCard(viewModel: LoginViewModel = viewModel()) {
                     .align(Alignment.CenterHorizontally)
                     .graphicsLayer { alpha = titleAlpha }
             )
-            Text(
-                text = stringResource(R.string.auth_login_terms_link),
-                fontSize = 12.sp,
-                color = AppColors.Primary,
-                fontWeight = FontWeight.Medium,
+            Row(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .graphicsLayer { alpha = titleAlpha }
-            )
+                    .graphicsLayer { alpha = titleAlpha },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.auth_login_terms_link),
+                    fontSize = 12.sp,
+                    color = AppColors.Primary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clickable { navController.navigate("${Routes.LEGAL}/${LegalPage.TERMS.name}") }
+                        .padding(vertical = 6.dp, horizontal = 2.dp)
+                )
+                Text(
+                    text = " ${stringResource(R.string.auth_login_terms_and)} ",
+                    fontSize = 12.sp,
+                    color = colors.textGreyColor
+                )
+                Text(
+                    text = stringResource(R.string.auth_login_privacy_link),
+                    fontSize = 12.sp,
+                    color = AppColors.Primary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .clickable { navController.navigate("${Routes.LEGAL}/${LegalPage.PRIVACY.name}") }
+                        .padding(vertical = 6.dp, horizontal = 2.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
         }

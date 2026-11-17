@@ -63,7 +63,7 @@ class ApiEndPointCorporateModule {
     val getAllActivityMaster = "api/ActivityMaster/GetAllActivityMaster"
     val fetchPatientActivity = "api/PatientPhysicalActivityTracker/FetchPatientActivity"
     val addPatientActivity = "api/PatientPhysicalActivityTracker/AddPatientActivity"
-    val deleteActivityMaster = "api/EmployeeActivity/DeleteActivityMasterById"
+    val removePatientActivity = "api/PatientPhysicalActivityTracker/RemovePatientActivity"
 
     // Emergency contacts
     val getEmergencyContacts = "api/EmergencyContact/GetEmergencyContactByPid"

@@ -83,7 +83,13 @@ class ReportRepositoryImpl @Inject constructor(
             uhid = uhid, category = category, dateTime = dateTime, clientId = clientId,
             subCategory = subCategory, remark = remark, formFile = filePart
         )
-        if (response.isSuccessful) DomainResult.Success(Unit) else DomainResult.Error(Exception("API Error: ${response.code()}"))
+        // Failures carry a reason, e.g. 500 {"status":0,"responseValue":"File Not Save"}
+        val raw = (if (response.isSuccessful) response.body() else response.errorBody())?.string().orEmpty()
+        val json = runCatching { com.google.gson.JsonParser.parseString(raw).asJsonObject }.getOrNull()
+        val status = runCatching { json?.get("status")?.asInt }.getOrNull()
+        val reason = runCatching { json?.get("responseValue")?.takeIf { it.isJsonPrimitive }?.asString }.getOrNull()
+        if (response.isSuccessful && status != 0) DomainResult.Success(Unit)
+        else DomainResult.Error(Exception(reason?.takeIf { it.isNotBlank() } ?: "API Error: ${response.code()}"))
     } catch (e: Exception) { DomainResult.Error(e) }
 
     /**
@@ -219,54 +225,14 @@ class ReportRepositoryImpl @Inject constructor(
     override suspend fun insertInvestigationResult(
         responseJson: String,
         uhid: String,
-        clientId: Int
+        clientId: Int,
+        testName: String,
+        dateTime: String,
     ): DomainResult<Unit> = try {
         val gson = Gson()
-
-        // Parse the AI response to extract report items
-        data class AiApiResponse(val response: List<com.critetiontech.ctvitalio.ui.screens.ResponseData> = emptyList())
-        val aiResponse = gson.fromJson(responseJson, AiApiResponse::class.java)
-        val responseData = aiResponse.response.firstOrNull()
-        val reportItems: List<ReportItem> = responseData?.report ?: emptyList()
-        val patientDetails = responseData?.patient_details
-
-        // Build investigationDetailsJson — one entry per distinct lab/item group
-        val investigationDetails = JSONArray().apply {
-            put(JSONObject().apply {
-                put("receiptNo", "")
-                put("itemName", patientDetails?.let { "${it.lab_name} Report".trim() } ?: "Lab Report")
-                put("labName", patientDetails?.lab_name ?: "")
-                put("itemId", "")
-                put("resultDateTime", patientDetails?.collection_date ?: "")
-            })
-        }
-
-        // Build investigationResultJson — one entry per ReportItem / sub-test
-        val investigationResults = JSONArray()
-        reportItems.forEach { item ->
-            // Determine isNormal: 1 = normal (green), 0 = abnormal
-            val rangeColor = com.critetiontech.ctvitalio.ui.screens.parseRangeColor(item.result, item.normal_values)
-            val isNormal = if (rangeColor == null || rangeColor == androidx.compose.ui.graphics.Color(0xFF16A34A)) "1" else "0"
-
-            investigationResults.put(JSONObject().apply {
-                put("result", item.result)
-                put("resultDateTime", "")
-                put("subTestId", item.id ?: "")
-                put("unit", item.unit ?: "")
-                put("range", item.normal_values ?: "")
-                put("isNormal", isNormal)
-                put("subTestName", item.test_name)
-            })
-        }
-
-        // Final payload
-        val payload = mapOf<String, Any>(
-            "userId" to 0,
-            "uhid" to uhid,
-            "investigationDetailsJson" to investigationDetails.toString(),
-            "investigationResultJson" to investigationResults.toString(),
-            "clientId" to clientId
-        )
+        if (uhid.isBlank()) throw IllegalStateException("No patient UHID; not saving lab results")
+        val payload = LabResultMapper.buildInsertPayload(responseJson, uhid, clientId, testName, dateTime)
+            ?: throw IllegalStateException("The report had no readable results to save")
 
         val endpointUrl = "api/InvestigationByPatient/InsertResult"
 
@@ -285,8 +251,12 @@ class ReportRepositoryImpl @Inject constructor(
             Log.d(TAG, "InsertResult ← [${response.code()}] body=$responseBodyStr")
         }
 
-        if (response.isSuccessful) DomainResult.Success(Unit)
-        else DomainResult.Error(Exception("InsertResult API Error: ${response.code()} $responseBodyStr"))
+        // This backend also answers 200 with {"status":0,...} when it didn't save.
+        val status = runCatching {
+            com.google.gson.JsonParser.parseString(responseBodyStr.orEmpty()).asJsonObject.get("status")?.asInt
+        }.getOrNull()
+        if (response.isSuccessful && status != 0) DomainResult.Success(Unit)
+        else DomainResult.Error(Exception("InsertResult API Error: ${response.code()} ${responseBodyStr ?: response.errorBody()?.string().orEmpty()}"))
     } catch (e: Exception) {
         if (BuildConfig.DEBUG) Log.e(TAG, "InsertResult exception: ${e.message}", e)
         DomainResult.Error(e)

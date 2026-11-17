@@ -27,7 +27,11 @@
     <string name="auth_login_send_otp">OTP भेजें</string>
     <string name="auth_login_sending_otp">OTP भेजा जा रहा है</string>
     <string name="auth_login_terms_prefix">साइन इन करके आप हमारी इन शर्तों से सहमत होते हैं:</string>
-    <string name="auth_login_terms_link">नियम व शर्तें और प्राइवेसी पॉलिसी</string>
+    <string name="auth_login_terms_link">नियम व शर्तें</string>
+    <string name="auth_login_terms_and">और</string>
+    <string name="auth_login_privacy_link">प्राइवेसी पॉलिसी</string>
+    <string name="auth_legal_terms_title">उपयोग की शर्तें</string>
+    <string name="auth_legal_privacy_title">प्राइवेसी पॉलिसी</string>
     <string name="auth_login_error_not_registered">आप अभी किसी भी क्लिनिक में रजिस्टर्ड नहीं हैं</string>
 
     <!-- OTP -->

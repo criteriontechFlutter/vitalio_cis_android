@@ -8,6 +8,8 @@ class InsertInvestigationResultUseCase @Inject constructor(private val repositor
     suspend operator fun invoke(
         responseJson: String,
         uhid: String,
-        clientId: Int
-    ): DomainResult<Unit> = repository.insertInvestigationResult(responseJson, uhid, clientId)
+        clientId: Int,
+        testName: String,
+        dateTime: String,
+    ): DomainResult<Unit> = repository.insertInvestigationResult(responseJson, uhid, clientId, testName, dateTime)
 }

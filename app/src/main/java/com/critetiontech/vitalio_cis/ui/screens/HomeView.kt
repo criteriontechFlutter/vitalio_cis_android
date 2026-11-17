@@ -997,10 +997,14 @@ fun Header() {
             .graphicsLayer { this.alpha = alpha; translationY = offsetY },
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Re-read after a photo change in the drawer or Edit Profile.
+        val patientRevision by PrefsManager.patientRevision.collectAsState()
+        val photoUrl = remember(patientRevision) {
+            PrefsManager(context).getPatient()?.imageUrl?.takeIf { it.isNotBlank() }
+        }
         com.critetiontech.ctvitalio.ui.components.ProfileRing(size = 51.dp) {
             AsyncImage(
-                model = PrefsManager(context).getPatient()?.imageUrl
-                    ?.takeIf { it.isNotBlank() },
+                model = photoUrl,
                 placeholder = painterResource(R.drawable.img),
                 error = painterResource(R.drawable.img),
                 contentDescription = stringResource(R.string.home_cd_patient_profile),

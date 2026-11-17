@@ -232,4 +232,5 @@
     <string name="profile_weight_kg">वज़न (kg)</string>
     <string name="profile_weight_placeholder">जैसे 65</string>
     <string name="profile_zip_code">पिन कोड</string>
+    <string name="profile_zip_required_for_photo">फोटो बदलने से पहले Edit Profile में अपना पिन कोड जोड़ें।</string>
 </resources>

@@ -2,8 +2,10 @@ package com.critetiontech.ctvitalio.ui.screens
 
 import com.critetiontech.ctvitalio.ui.feedback.HapticButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
+import com.critetiontech.ctvitalio.ui.feedback.Haptics
 
 import android.app.TimePickerDialog
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,10 +33,9 @@ import com.critetiontech.ctvitalio.utils.AppTextStyles
 import com.critetiontech.myapplication.utils.LocalNavController
 import com.critetiontech.ctvitalio.R
 import com.critetiontech.ctvitalio.Routes
-import com.critetiontech.ctvitalio.model.PatientActivityItem
+import com.critetiontech.ctvitalio.ui.components.showToast
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
 import com.critetiontech.ctvitalio.viewmodel.ActivityViewModel
-import java.text.SimpleDateFormat
 import java.util.*
 
 // ──────────────────────────────────────────────────────
@@ -43,16 +44,25 @@ import java.util.*
 @Composable
 fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
+    val context = LocalContext.current
     val navController = LocalNavController.current
     val allActivities by viewModel.allActivities.collectAsState()
     val recentActivityList by viewModel.recentActivityList.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val isSaving by viewModel.isSaving.collectAsState()
+    val isLoadingMaster by viewModel.isLoadingMaster.collectAsState()
+    val masterLoadFailed by viewModel.masterLoadFailed.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
+    val message by viewModel.message.collectAsState()
     var showBottomSheet by remember { mutableStateOf(false) }
 
-    val filteredActivities = if (viewModel.searchText.isEmpty()) allActivities
-    else allActivities.filter { it.activityName.contains(viewModel.searchText, ignoreCase = true) }
+    val filteredActivities = if (viewModel.searchText.isBlank()) allActivities
+    else allActivities.filter { it.activityName.contains(viewModel.searchText.trim(), ignoreCase = true) }
+
+    // Quick picks: each activity type logged today, once.
+    val recentActivities = remember(recentActivityList, allActivities) {
+        recentActivityList.filter { it.activityId > 0 }.distinctBy { it.activityId }
+            .map { it.activityId to viewModel.displayName(it) }
+            .filter { (_, name) -> name.isNotBlank() }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.getAllActivities()
@@ -62,7 +72,16 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
     LaunchedEffect(saveSuccess) {
         if (saveSuccess) {
             showBottomSheet = false
+            Haptics.success()
             viewModel.resetSaveSuccess()
+        }
+    }
+
+    LaunchedEffect(message) {
+        message?.let {
+            if (it != R.string.track_activity_saved) Haptics.error()
+            showToast(context, context.getString(it))
+            viewModel.clearMessage()
         }
     }
 
@@ -84,9 +103,9 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
                 color = Color(0xFF2E5BFF),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable {
-                    navController.navigate(Routes.ACTIVITYHISTORY)
-                }
+                modifier = Modifier
+                    .clickable { navController.navigate(Routes.ACTIVITYHISTORY) }
+                    .padding(vertical = 8.dp)
             )
         }
 
@@ -101,7 +120,7 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
             trailingIcon = {
                 if (viewModel.searchText.isNotEmpty()) {
                     HapticIconButton(onClick = { viewModel.onSearchChange("") }) {
-                        Icon(Icons.Default.Close, contentDescription = androidx.compose.ui.res.stringResource(com.critetiontech.ctvitalio.R.string.a11y_clear), tint = Color.Gray.copy(alpha = 0.6f))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.a11y_clear), tint = Color.Gray.copy(alpha = 0.6f))
                     }
                 }
             },
@@ -122,8 +141,8 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
 
         // ── Content ──
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            // ── Recent Activities ──
-            if (recentActivityList.isNotEmpty()) {
+            // ── Recent Activities (logged today) ──
+            if (recentActivities.isNotEmpty() && viewModel.searchText.isBlank()) {
                 item {
                     Text(stringResource(R.string.track_recent), style = AppTextStyles.style16BCB())
                     Spacer(Modifier.height(10.dp))
@@ -133,15 +152,14 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        recentActivityList.forEach { item ->
-                            RecentActivityChip(
-                                title = item.activityName,
-                                isSelected = viewModel.selectedActivity == item.activityName,
-                                onSelect = {
-                                    viewModel.selectActivity(item.activityName, item.activityId.toString())
+                        recentActivities.forEach { (activityId, name) ->
+                            ActivityChipItem(
+                                title = name,
+                                isSelected = viewModel.selectedActivityId == activityId,
+                                onClick = {
+                                    viewModel.openActivity(name, activityId)
                                     showBottomSheet = true
-                                },
-                                onDelete = { viewModel.removeRecentActivity(item) }
+                                }
                             )
                         }
                     }
@@ -156,28 +174,47 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
             }
 
             item {
-                if (isLoading && filteredActivities.isEmpty()) {
-                    Box(
+                when {
+                    isLoadingMaster && allActivities.isEmpty() -> Box(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
                         contentAlignment = Alignment.Center
                     ) { CircularProgressIndicator() }
-                } else {
-                    FlowRow(
+
+                    masterLoadFailed -> Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(stringResource(R.string.track_activity_load_failed), color = colors.textGreyColor, fontSize = 14.sp)
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = { viewModel.getAllActivities() }) {
+                            Text(stringResource(R.string.track_activity_retry), color = Color(0xFF2E5BFF), fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    filteredActivities.isEmpty() -> Text(
+                        stringResource(R.string.track_activity_no_match),
+                        color = colors.textGreyColor,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(vertical = 12.dp)
+                    )
+
+                    else -> FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         filteredActivities.forEach { activity ->
                             ActivityChipItem(
                                 title = activity.activityName,
-                                isSelected = viewModel.selectedActivity == activity.activityName,
+                                isSelected = viewModel.selectedActivityId == activity.id,
                                 onClick = {
-                                    viewModel.selectActivity(activity.activityName, activity.id.toString())
+                                    viewModel.openActivity(activity.activityName, activity.id)
                                     showBottomSheet = true
                                 }
                             )
                         }
                     }
                 }
+                Spacer(Modifier.height(24.dp))
             }
         }
     }
@@ -186,9 +223,24 @@ fun AddActivityScreen(viewModel: ActivityViewModel = viewModel()) {
     if (showBottomSheet) {
         ActivityBottomSheet(
             viewModel = viewModel,
-            onDismiss = { showBottomSheet = false },
+            onDismiss = {
+                showBottomSheet = false
+                viewModel.clearSelection()
+            },
             onSave = { viewModel.insertActivity() }
         )
+    }
+}
+
+@Composable
+private fun durationLabel(minutes: Long): String {
+    val m = minutes.coerceAtLeast(0)
+    val hrs = (m / 60).toInt()
+    val mins = (m % 60).toInt()
+    return when {
+        hrs == 0 -> stringResource(R.string.track_duration_mins, mins)
+        mins == 0 -> stringResource(R.string.track_duration_hrs, hrs)
+        else -> stringResource(R.string.track_duration_hrs_mins, hrs, mins)
     }
 }
 
@@ -206,7 +258,15 @@ fun ActivityBottomSheet(
     val context = LocalContext.current
     val isSaving by viewModel.isSaving.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val timeFormat = remember { SimpleDateFormat("h:mm a", Locale.getDefault()) }
+    val is24h = DateFormat.is24HourFormat(context)
+    val timeFormat = remember(is24h) { java.text.SimpleDateFormat(if (is24h) "HH:mm" else "h:mm a", Locale.getDefault()) }
+    val valid = viewModel.isTimeRangeValid
+
+    fun pickTime(initial: Date, onPicked: (Int, Int) -> Unit) {
+        val cal = Calendar.getInstance().apply { time = initial }
+        TimePickerDialog(context, { _, h, m -> onPicked(h, m) },
+            cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), is24h).show()
+    }
 
     com.critetiontech.ctvitalio.ui.components.AppBottomSheet(
         onDismissRequest = onDismiss,
@@ -233,14 +293,18 @@ fun ActivityBottomSheet(
                     text = viewModel.selectedActivity.ifEmpty { stringResource(R.string.track_activity) },
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colors.textDarkColor
+                    color = colors.textDarkColor,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
-                Spacer(Modifier.weight(1f))
+                Spacer(Modifier.width(8.dp))
 
                 // Duration badge
+                val badgeColor = if (valid) Color(0xFF2E5BFF) else Color(0xFFF25959)
                 Row(
                     modifier = Modifier
-                        .background(Color(0xFF2E5BFF).copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+                        .background(badgeColor.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
@@ -248,10 +312,10 @@ fun ActivityBottomSheet(
                     Icon(
                         painter = painterResource(R.drawable.reminders),
                         contentDescription = null,
-                        tint = Color(0xFF2E5BFF),
+                        tint = badgeColor,
                         modifier = Modifier.size(12.dp)
                     )
-                    Text(viewModel.formattedDuration, color = Color(0xFF2E5BFF), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(durationLabel(viewModel.durationMinutes), color = badgeColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -259,36 +323,25 @@ fun ActivityBottomSheet(
 
             // ── Time pickers row ──
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                // Start time
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.track_select_start_time), fontSize = 13.sp, color = colors.textGreyColor)
                     Spacer(Modifier.height(8.dp))
-                    TimePickerCard(
-                        text = timeFormat.format(viewModel.startTime),
-                        onClick = {
-                            val cal = Calendar.getInstance().apply { time = viewModel.startTime }
-                            TimePickerDialog(context, { _, h, m ->
-                                val c = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, h); set(Calendar.MINUTE, m) }
-                                viewModel.updateStartTime(c.time)
-                            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show()
-                        }
-                    )
+                    TimePickerCard(text = timeFormat.format(viewModel.startTime)) {
+                        pickTime(viewModel.startTime) { h, m -> viewModel.updateStartTime(h, m) }
+                    }
                 }
-                // End time
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.track_select_end_time), fontSize = 13.sp, color = colors.textGreyColor)
                     Spacer(Modifier.height(8.dp))
-                    TimePickerCard(
-                        text = timeFormat.format(viewModel.endTime),
-                        onClick = {
-                            val cal = Calendar.getInstance().apply { time = viewModel.endTime }
-                            TimePickerDialog(context, { _, h, m ->
-                                val c = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, h); set(Calendar.MINUTE, m) }
-                                viewModel.updateEndTime(c.time)
-                            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show()
-                        }
-                    )
+                    TimePickerCard(text = timeFormat.format(viewModel.endTime)) {
+                        pickTime(viewModel.endTime) { h, m -> viewModel.updateEndTime(h, m) }
+                    }
                 }
+            }
+
+            if (!valid) {
+                Spacer(Modifier.height(10.dp))
+                Text(stringResource(R.string.track_activity_end_after_start), color = Color(0xFFF25959), fontSize = 13.sp)
             }
 
             Spacer(Modifier.height(24.dp))
@@ -296,7 +349,7 @@ fun ActivityBottomSheet(
             // ── Save button ──
             HapticButton(
                 onClick = onSave,
-                enabled = !isSaving,
+                enabled = !isSaving && valid && viewModel.selectedActivityId != null,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E5BFF)),
                 modifier = Modifier.fillMaxWidth().height(50.dp)
@@ -338,40 +391,6 @@ private fun TimePickerCard(text: String, onClick: () -> Unit) {
 //  Chip Components
 // ──────────────────────────────────────────────────────
 @Composable
-fun RecentActivityChip(
-    title: String,
-    isSelected: Boolean,
-    onSelect: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val colors = LocalMyColorScheme.current
-    Row(
-        modifier = Modifier
-            .background(
-                if (isSelected) Color(0xFF2E5BFF).copy(alpha = 0.12f)
-                else colors.dashboardContainerColor,
-                RoundedCornerShape(12.dp)
-            )
-            .clickable { onSelect() }
-            .padding(start = 14.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = title,
-            fontSize = 14.sp,
-            color = if (isSelected) Color(0xFF2E5BFF) else colors.textDarkColor
-        )
-        Icon(
-            Icons.Default.Close,
-            contentDescription = stringResource(R.string.track_remove),
-            tint = Color(0xFFF25959),
-            modifier = Modifier.size(16.dp).clickable { onDelete() }
-        )
-    }
-}
-
-@Composable
 fun ActivityChipItem(
     title: String,
     isSelected: Boolean,
@@ -380,10 +399,10 @@ fun ActivityChipItem(
     val colors = LocalMyColorScheme.current
     Box(
         modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
             .background(
                 if (isSelected) Color(0xFF2E5BFF).copy(alpha = 0.12f)
-                else colors.dashboardContainerColor,
-                RoundedCornerShape(12.dp)
+                else colors.dashboardContainerColor
             )
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 8.dp)

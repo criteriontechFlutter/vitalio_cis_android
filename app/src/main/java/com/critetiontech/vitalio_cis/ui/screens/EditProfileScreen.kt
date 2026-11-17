@@ -199,11 +199,35 @@ fun EditProfileScreen(
     // ── location state ──
     val locationState by viewModel.locationState.collectAsState()
 
-    // ── image state ──
+    // ── image state: a picked photo uploads right away (no need to press Save) ──
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedImageFile by remember { mutableStateOf<java.io.File?>(null) }
     var showImageSheet by rememberSaveable { mutableStateOf(false) }
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    val photoUploading by viewModel.photoUploading.collectAsState()
+    val photoResult by viewModel.photoResult.collectAsState()
+
+    fun onPhotoPicked(uri: Uri) {
+        val file = runCatching { FileUtils.getFile(context, uri) }.getOrNull()
+        if (file == null || !file.exists()) {
+            android.widget.Toast.makeText(context, resources.getString(R.string.profile_image_read_failed), android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        selectedImageUri = uri
+        viewModel.updatePhoto(file)
+    }
+
+    LaunchedEffect(photoResult) {
+        when (val r = photoResult) {
+            EditProfileViewModel.PhotoResult.Updated ->
+                android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_updated), android.widget.Toast.LENGTH_SHORT).show()
+            is EditProfileViewModel.PhotoResult.Failed -> {
+                selectedImageUri = null // back to the saved photo
+                android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_not_updated, r.reason ?: resources.getString(R.string.profile_update_failed)), android.widget.Toast.LENGTH_LONG).show()
+            }
+            null -> return@LaunchedEffect
+        }
+        viewModel.clearPhotoResult()
+    }
 
     // ── date picker state ──
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
@@ -222,22 +246,10 @@ fun EditProfileScreen(
     // ── launchers ──
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            selectedImageUri = it
-            selectedImageFile = FileUtils.getFile(context, it)
-        }
-    }
+    ) { uri -> uri?.let(::onPhotoPicked) }
     val cameraLauncher = rememberLauncherForActivityResult(
         TakePictureWithPermission()
-    ) { success ->
-        if (success) {
-            cameraUri?.let {
-                selectedImageUri = it
-                selectedImageFile = FileUtils.getFile(context, it)
-            }
-        }
-    }
+    ) { success -> if (success) cameraUri?.let(::onPhotoPicked) }
 
     fun launchCamera() {
         startCameraCapture(context, onUri = { cameraUri = it }, launch = { cameraLauncher.launch(it) })
@@ -245,6 +257,13 @@ fun EditProfileScreen(
 
     // CAMERA is declared in the manifest, so IMAGE_CAPTURE throws SecurityException until it's granted
     val cameraPermission = rememberPermissionRequest(AppPermission.Camera, stringResource(R.string.profile_camera_permission_reason)) { launchCamera() }
+
+    // Login never saves zip; fetch it so the form isn't empty (the server requires it on save).
+    val patientRevision by PrefsManager.patientRevision.collectAsState()
+    LaunchedEffect(Unit) { viewModel.prefillMissingDetails() }
+    LaunchedEffect(patientRevision) {
+        if (zipCode.isBlank()) zipCode = prefs.getPatient()?.zip.orEmpty()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadLocationData(
@@ -303,11 +322,8 @@ fun EditProfileScreen(
                 showImageSheet = false
                 galleryLauncher.launch("image/*")
             },
-            onRemoveClick = {
-                showImageSheet = false
-                selectedImageUri = null
-                selectedImageFile = null
-            }
+            // The API can replace the photo but not delete it (same as the drawer), so no Remove.
+            onRemoveClick = null
         )
     }
 
@@ -332,7 +348,8 @@ fun EditProfileScreen(
                 AvatarHeaderCard(
                     imageUrl = patient?.imageUrl,
                     selectedImageUri = selectedImageUri,
-                    onEditClick = { showImageSheet = true }
+                    uploading = photoUploading,
+                    onEditClick = { if (!photoUploading) showImageSheet = true }
                 )
 
                 // ════ SECTION 1: Personal Information ════
@@ -635,7 +652,8 @@ fun EditProfileScreen(
                             )
                             .clip(RoundedCornerShape(14.dp))
                             .background(Brush.horizontalGradient(gradientColors))
-                            .clickable(enabled = isFormValid && !loading) {
+                            // Wait for a photo upload: both save the whole profile and would race.
+                            .clickable(enabled = isFormValid && !loading && !photoUploading) {
                                 viewModel.updateProfile(
                                     firstName = firstName,
                                     lastName = lastName,
@@ -644,7 +662,7 @@ fun EditProfileScreen(
                                     emailId = email,
                                     address = address,
                                     zip = zipCode,
-                                    imageFile = selectedImageFile,
+                                    imageFile = null, // the photo was already uploaded when picked
                                     gender = gender,
                                     bloodGroupId = if (selectedBloodGroupId > 0) selectedBloodGroupId else (patient?.bloodGroupId ?: 0),
                                     weight = weight,
@@ -695,6 +713,7 @@ fun EditProfileScreen(
 private fun AvatarHeaderCard(
     imageUrl: String?,
     selectedImageUri: Uri?,
+    uploading: Boolean,
     onEditClick: () -> Unit
 ) {
     val colors = LocalMyColorScheme.current
@@ -756,6 +775,17 @@ private fun AvatarHeaderCard(
                             ),
                         contentScale = ContentScale.Crop
                     )
+                }
+                if (uploading) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(104.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.45f))
+                    ) {
+                        CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                    }
                 }
             }
 

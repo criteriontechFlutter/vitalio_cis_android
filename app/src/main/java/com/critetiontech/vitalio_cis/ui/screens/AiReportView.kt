@@ -52,6 +52,15 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
     val uploadSuccess  by viewModel.uploadSuccess.collectAsStateWithLifecycle()
 
     // Navigate back to the previous screen (LabReports) after a successful save
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val toastContext = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            android.widget.Toast.makeText(toastContext, it, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
     LaunchedEffect(uploadSuccess) {
         if (uploadSuccess) {
             viewModel.resetUploadSuccess()
@@ -546,32 +555,13 @@ private fun HeaderInfoItem(label: String, value: String) {
 }
 
 /** Returns green/red/null based on whether result is within normal range */
-fun parseRangeColor(result: String, normalValues: String?): Color? {
-    if (result.isEmpty() || normalValues.isNullOrEmpty()) return null
-    return try {
-        val resultNum = result.trim().toDoubleOrNull() ?: return null
-        // Handles "3.5-5.0" or "< 200" or "> 0.5" etc.
-        when {
-            normalValues.contains("-") -> {
-                val parts = normalValues.split("-")
-                val lo = parts[0].trim().replace(",", ".").toDoubleOrNull()
-                val hi = parts[1].trim().replace(",", ".").toDoubleOrNull()
-                if (lo != null && hi != null) {
-                    if (resultNum in lo..hi) Color(0xFF16A34A) else Color(0xFFDC2626)
-                } else null
-            }
-            normalValues.startsWith("<") -> {
-                val hi = normalValues.removePrefix("<").trim().toDoubleOrNull()
-                if (hi != null) (if (resultNum < hi) Color(0xFF16A34A) else Color(0xFFDC2626)) else null
-            }
-            normalValues.startsWith(">") -> {
-                val lo = normalValues.removePrefix(">").trim().toDoubleOrNull()
-                if (lo != null) (if (resultNum > lo) Color(0xFF16A34A) else Color(0xFFDC2626)) else null
-            }
-            else -> null
-        }
-    } catch (e: Exception) { null }
-}
+/** Green inside the normal range, red outside, null when it can't be judged. Same rule as the saved isNormal. */
+fun parseRangeColor(result: String, normalValues: String?): Color? =
+    when (com.critetiontech.ctvitalio.data.repository.LabResultMapper.isWithinRange(result, normalValues)) {
+        true -> Color(0xFF16A34A)
+        false -> Color(0xFFDC2626)
+        null -> null
+    }
 
 // ─────────────────────────────────────────────────────────
 // API MODELS
