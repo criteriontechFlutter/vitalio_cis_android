@@ -27,7 +27,11 @@
     <string name="auth_login_send_otp">Send OTP</string>
     <string name="auth_login_sending_otp">Sending OTP</string>
     <string name="auth_login_terms_prefix">By signing in you agree to our</string>
-    <string name="auth_login_terms_link">Terms &amp; Conditions and Privacy Policy</string>
+    <string name="auth_login_terms_link">Terms &amp; Conditions</string>
+    <string name="auth_login_terms_and">and</string>
+    <string name="auth_login_privacy_link">Privacy Policy</string>
+    <string name="auth_legal_terms_title">Terms of Use</string>
+    <string name="auth_legal_privacy_title">Privacy Policy</string>
     <string name="auth_login_error_not_registered">You are not registered in any clinic yet</string>
 
     <!-- OTP -->

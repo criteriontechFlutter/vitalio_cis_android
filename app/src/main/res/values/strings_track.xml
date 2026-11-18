@@ -148,4 +148,24 @@
     <string name="track_symptoms_update_failed">Couldn\'t update your symptoms. Please try again.</string>
     <string name="track_symptoms_added">Symptoms Added Successfully!</string>
     <string name="track_symptoms_save_failed">Couldn\'t save your symptoms. Please try again.</string>
+    <!-- Activity -->
+    <string name="track_activity_load_failed">Couldn\'t load activities.</string>
+    <string name="track_activity_retry">Retry</string>
+    <string name="track_activity_saved">Activity saved</string>
+    <string name="track_activity_save_failed">Couldn\'t save the activity. Please try again.</string>
+    <string name="track_activity_already_logged">This activity is already logged for that time.</string>
+    <string name="track_activity_end_after_start">End time must be after start time.</string>
+    <string name="track_activity_login_required">Please log in again to track activity.</string>
+    <string name="track_activity_select_first">Select an activity first.</string>
+    <string name="track_activity_delete_failed">Couldn\'t delete the activity. Please try again.</string>
+    <string name="track_activity_delete_title">Delete activity?</string>
+    <string name="track_activity_delete_message">%1$s will be removed from your history.</string>
+    <string name="track_activity_delete">Delete</string>
+    <string name="track_activity_cancel">Cancel</string>
+    <string name="track_activity_no_match">No activity matches your search.</string>
+    <string name="track_activity_today">Today</string>
+    <string name="track_activity_none_on_day">No activity logged on this day</string>
+    <string name="track_activity_previous_day">Previous day</string>
+    <string name="track_activity_next_day">Next day</string>
+    <string name="track_activity_pick_date">Choose date</string>
 </resources>

@@ -103,6 +103,18 @@ fun profileImageUrl(raw: String?): String {
     if (path.startsWith("http")) return path
     return com.critetiontech.ctvitalio.config.ApiConfig.MODULE_4082 + path.trimStart('/')
 }
+
+/**
+ * Tags a photo URL with a version so image caches fetch the new photo even when the server
+ * keeps the same file name. Replaces an earlier `v=` tag instead of stacking them.
+ */
+fun withPhotoVersion(url: String, version: Long): String {
+    if (url.isBlank()) return url
+    val base = url.substringBefore('?')
+    val kept = url.substringAfter('?', "").split('&')
+        .filter { it.isNotBlank() && !it.startsWith("v=") }
+    return base + "?" + (kept + "v=$version").joinToString("&")
+}
 data class EmployeeGoal(
     val pid: Int,
     val vmId: Int,
@@ -115,6 +127,13 @@ class PrefsManager(context: Context) {
     private val gson = Gson()
 
     companion object {
+        /**
+         * Bumped on every [savePatient]. Screens that show patient data (dashboard avatar, drawer)
+         * collect it so a new photo or name appears without reopening them.
+         */
+        private val _patientRevision = kotlinx.coroutines.flow.MutableStateFlow(0)
+        val patientRevision: kotlinx.coroutines.flow.StateFlow<Int> = _patientRevision
+
         const val PREFS_NAME = "patient_prefs"
         const val KEY_PATIENT = "current_patient"
         private const val KEY_Allergies = "allergies_length"
@@ -144,6 +163,7 @@ class PrefsManager(context: Context) {
         sharedPref.edit {
             putString(KEY_PATIENT, gson.toJson(patient))
         }
+        _patientRevision.value++
     }
 
 

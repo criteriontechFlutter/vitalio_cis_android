@@ -89,6 +89,15 @@ fun AddLabResultsScreen(
         viewModel.navigationEvent.collect { route -> navController.navigate(route) }
     }
 
+    // Analysis failures used to only reach logcat; now the user sees why nothing happened.
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
     // ── Form state ───────────────────────────────────────
     val testTypeList = listOf("Investigation", "Radiology", "Imaging", "Lab")
     var expanded     by remember { mutableStateOf(false) }

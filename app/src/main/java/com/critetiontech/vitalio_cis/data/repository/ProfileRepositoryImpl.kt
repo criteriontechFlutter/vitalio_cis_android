@@ -101,6 +101,13 @@ class ProfileRepositoryImpl(
                     }
                 }
             } catch (_: Exception) { }
+            // New photo sent: make the URL unique so cached copies of the old photo aren't shown.
+            if (imageFile != null && imageFile.exists() && newImageUrl.isNotBlank()) {
+                newImageUrl = com.critetiontech.ctvitalio.utils.withPhotoVersion(newImageUrl, System.currentTimeMillis())
+            } else if (newImageUrl.substringBefore('?') == patient.imageUrl.substringBefore('?')) {
+                // No new photo: keep the versioned URL we already have for the same file.
+                newImageUrl = patient.imageUrl
+            }
 
             prefs.savePatient(
                 patient.copy(
@@ -116,10 +123,63 @@ class ProfileRepositoryImpl(
             )
             DomainResult.Success(Unit)
         } else {
-            DomainResult.Error(Exception("Update failed (${response.code()})"))
+            // 400s carry ASP.NET validation errors, e.g. {"errors":{"Zip":["The Zip field is required."]}}
+            val reason = validationMessage(response.errorBody()?.string().orEmpty())
+            DomainResult.Error(Exception(reason ?: "Update failed (${response.code()})"))
         }
     } catch (e: Exception) {
         DomainResult.Error(e)
+    }
+
+    override suspend fun fillMissingDetails(patient: Patient): Patient = try {
+        val params = mapOf("mobileNo" to patient.mobileNo, "uhid" to patient.uhId, "ClientId" to patient.clientId)
+        val response = com.critetiontech.ctvitalio.data.remote.network.ApiHelper()
+            .callApi(context, endpoints.getPatientDetailsByMobileNo, showNoConnectionToast = false) { url ->
+                ApiClients.module4082.dynamicGet(url = url, params = params)
+            }
+        val body = if (response.isSuccessful) response.body()?.string().orEmpty() else ""
+        mergeServerDetails(patient, body)
+    } catch (e: Exception) {
+        android.util.Log.e("ProfileRepo", "fillMissingDetails: ${e.message}")
+        patient
+    }
+
+    companion object {
+        /** First message from an ASP.NET validation-problem body, or null. */
+        fun validationMessage(body: String): String? = runCatching {
+            val errors = com.google.gson.JsonParser.parseString(body).asJsonObject.getAsJsonObject("errors")
+            errors.entrySet().firstNotNullOfOrNull { (_, v) ->
+                v.takeIf { it.isJsonArray }?.asJsonArray?.firstOrNull()?.asString
+            }
+        }.getOrNull()
+
+        /**
+         * Copies zip/country/state/city from a GetPatientDetailsByMobileNo body into [local], only
+         * where [local] is blank or 0 so values the user already edited are never overwritten.
+         */
+        fun mergeServerDetails(local: Patient, body: String): Patient {
+            val o = runCatching {
+                val rv = com.google.gson.JsonParser.parseString(body).asJsonObject.get("responseValue")
+                when {
+                    rv == null || rv.isJsonNull -> null
+                    rv.isJsonArray -> rv.asJsonArray.firstOrNull()?.takeIf { it.isJsonObject }?.asJsonObject
+                    rv.isJsonObject -> rv.asJsonObject
+                    else -> null
+                }
+            }.getOrNull() ?: return local
+            fun str(k: String) = o.get(k)?.takeIf { it.isJsonPrimitive }?.asString?.trim().orEmpty()
+            fun int(k: String) = str(k).toIntOrNull() ?: 0
+            return local.copy(
+                zip = local.zip.ifBlank { str("zip") },
+                countryId = local.countryId.takeIf { it != 0 } ?: int("countryId"),
+                stateId = local.stateId.takeIf { it != 0 } ?: int("stateId"),
+                cityId = local.cityId.takeIf { it != 0 } ?: int("cityId"),
+                countryName = local.countryName.ifBlank { str("countryName") },
+                stateName = local.stateName.ifBlank { str("stateName") },
+                cityName = local.cityName.ifBlank { str("cityName") },
+                countryCallingCode = local.countryCallingCode.ifBlank { str("countryCallingCode") },
+            )
+        }
     }
 
     // ── Location: Countries ────────────────────────────────────────────────

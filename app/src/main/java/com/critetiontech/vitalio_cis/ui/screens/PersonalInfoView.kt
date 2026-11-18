@@ -65,7 +65,8 @@ fun PersonalInfoScreen(viewModel: PersonalInfoViewModel = viewModel()) {
 
     // What login (VerifyOTP) and Update Profile saved; re-read each time this screen is shown
     val patient by viewModel.patient.collectAsState()
-    LaunchedEffect(Unit) { viewModel.load() }
+    val patientRevision by com.critetiontech.ctvitalio.utils.PrefsManager.patientRevision.collectAsState()
+    LaunchedEffect(patientRevision) { viewModel.load() }
 
     val navController = LocalNavController.current
     val p = patient

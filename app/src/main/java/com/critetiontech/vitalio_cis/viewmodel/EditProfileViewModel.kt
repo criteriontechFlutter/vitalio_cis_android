@@ -147,6 +147,83 @@ class EditProfileViewModel : ViewModel() {
         )
     }
 
+    private val profileRepository = AppDependencies.profileRepository
+
+    /**
+     * The saved patient, with zip/country/city filled from the server when login left them blank
+     * (it always does for zip). The filled copy is saved so this happens once per login.
+     */
+    private suspend fun completePatient(): com.critetiontech.ctvitalio.utils.Patient? {
+        val saved = prefs.getPatient() ?: return null
+        if (saved.zip.isNotBlank() && saved.countryId != 0) return saved
+        val filled = profileRepository.fillMissingDetails(saved)
+        if (filled != saved) prefs.savePatient(filled)
+        return filled
+    }
+
+    /** Called when Edit Profile opens so the form shows the server's zip instead of an empty box. */
+    fun prefillMissingDetails() {
+        viewModelScope.launch { completePatient() }
+    }
+
+    // ── photo only ────────────────────────────────────────────────────────
+    /** Outcome of [updatePhoto]; the UI shows it once and calls [clearPhotoResult]. */
+    sealed interface PhotoResult {
+        data object Updated : PhotoResult
+        data class Failed(val reason: String?) : PhotoResult
+    }
+
+    private val _photoUploading = MutableStateFlow(false)
+    val photoUploading: StateFlow<Boolean> = _photoUploading.asStateFlow()
+
+    private val _photoResult = MutableStateFlow<PhotoResult?>(null)
+    val photoResult: StateFlow<PhotoResult?> = _photoResult.asStateFlow()
+
+    fun clearPhotoResult() { _photoResult.value = null }
+
+    /**
+     * Uploads just a new photo, the moment it's picked. The API only updates the whole profile, so
+     * every other field is sent exactly as saved — never the half-edited values on the form.
+     */
+    fun updatePhoto(imageFile: File) {
+        if (_photoUploading.value) return
+        viewModelScope.launch {
+            _photoUploading.value = true
+            val patient = completePatient() ?: run {
+                _photoResult.value = PhotoResult.Failed(MyApplication.appContext.getString(R.string.profile_session_expired_short))
+                _photoUploading.value = false
+                return@launch
+            }
+            if (patient.zip.isBlank()) {
+                // The server rejects a profile update without Zip (400 "The Zip field is required.")
+                _photoResult.value = PhotoResult.Failed(MyApplication.appContext.getString(R.string.profile_zip_required_for_photo))
+                Haptics.error()
+                _photoUploading.value = false
+                return@launch
+            }
+            val r = updateProfileUseCase(
+                patient,
+                patient.firstName,
+                patient.lastName.orEmpty(),
+                patient.dob.substringBefore('T'),
+                patient.mobileNo,
+                patient.emailAddress.orEmpty(),
+                patient.address.orEmpty(),
+                patient.zip.orEmpty(),
+                imageFile
+            )
+            _photoResult.value = when (r) {
+                is DomainResult.Success -> { Haptics.success(); PhotoResult.Updated }
+                is DomainResult.Error -> {
+                    Log.e("EditProfileVM", "updatePhoto: ${r.exception.message}")
+                    Haptics.error()
+                    PhotoResult.Failed(r.exception.message)
+                }
+            }
+            _photoUploading.value = false
+        }
+    }
+
     // ── update profile ────────────────────────────────────────────────────
     fun updateProfile(
         firstName: String,
@@ -166,7 +243,7 @@ class EditProfileViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             _loading.value = true
-            val patient = prefs.getPatient() ?: run {
+            val patient = completePatient() ?: run {
                 _errorMessage.value = MyApplication.appContext.getString(R.string.profile_session_expired_short)
                 _loading.value = false
                 return@launch
@@ -204,7 +281,7 @@ class EditProfileViewModel : ViewModel() {
                 mobileNo,
                 emailId,
                 address,
-                zip,
+                zip.ifBlank { patient.zip }, // server requires Zip; an empty box keeps the saved one
                 imageFile
             )) {
                 is DomainResult.Success -> {

@@ -18,6 +18,12 @@ interface ProfileRepository {
         imageFile: File?
     ): DomainResult<Unit>
 
+    /**
+     * Login doesn't send zip/country, but UpdatePatientProfile requires Zip. Fills fields that are
+     * blank locally from the server's patient record; returns [patient] unchanged on failure.
+     */
+    suspend fun fillMissingDetails(patient: Patient): Patient = patient
+
     /** Returns list of countries (id, name) */
     suspend fun getCountries(): List<LocationItem>
 

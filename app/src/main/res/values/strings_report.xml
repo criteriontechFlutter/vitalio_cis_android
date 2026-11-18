@@ -232,4 +232,8 @@
     <string name="rx_reminders_confirm_add">Add</string>
     <string name="rx_cancel">Cancel</string>
     <string name="rx_open_prescription">Open prescription from %1$s</string>
+    <string name="report_analysis_failed">Couldn\'t read the report. Please try a clearer photo.</string>
+    <string name="report_upload_failed">Couldn\'t upload the report. Please try again.</string>
+    <string name="report_values_not_saved">Report saved, but its test values couldn\'t be added: %1$s</string>
+    <string name="report_session_expired">Session expired. Please log in again.</string>
 </resources>

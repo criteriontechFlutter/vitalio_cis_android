@@ -232,4 +232,8 @@
     <string name="rx_reminders_confirm_add">जोड़ें</string>
     <string name="rx_cancel">रद्द करें</string>
     <string name="rx_open_prescription">%1$s का प्रिस्क्रिप्शन खोलें</string>
+    <string name="report_analysis_failed">रिपोर्ट पढ़ी नहीं जा सकी। कृपया साफ़ फोटो के साथ कोशिश करें।</string>
+    <string name="report_upload_failed">रिपोर्ट अपलोड नहीं हो सकी। कृपया फिर से कोशिश करें।</string>
+    <string name="report_values_not_saved">रिपोर्ट सेव हो गई, लेकिन उसकी जांच की वैल्यू नहीं जुड़ सकीं: %1$s</string>
+    <string name="report_session_expired">सेशन खत्म हो गया। कृपया फिर से लॉग इन करें।</string>
 </resources>

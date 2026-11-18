@@ -9,6 +9,7 @@ interface ReportRepository {
     suspend fun fetchMedia(uhid: String, clientId: String): DomainResult<List<MediaItem>>
     suspend fun uploadMedia(uhid: String, clientId: String, category: String, dateTime: String, subCategory: String, remark: String, file: File): DomainResult<Unit>
     suspend fun analyzeReport(file: File): DomainResult<String>
-    suspend fun insertInvestigationResult(responseJson: String, uhid: String, clientId: Int): DomainResult<Unit>
+    /** [testName] is the test the user typed (sent as itemName); [dateTime] is "yyyy-MM-dd HH:mm". */
+    suspend fun insertInvestigationResult(responseJson: String, uhid: String, clientId: Int, testName: String, dateTime: String): DomainResult<Unit>
     suspend fun uploadPrescription(file: File, mimeType: String): DomainResult<PrescriptionResponseItem>
 }

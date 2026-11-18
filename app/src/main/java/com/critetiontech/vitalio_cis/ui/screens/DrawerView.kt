@@ -557,7 +557,9 @@ fun ProfileCard(
     val context = LocalContext.current
     val resources = androidx.compose.ui.platform.LocalResources.current
     val colors = LocalMyColorScheme.current
-    var patient by remember { mutableStateOf(PrefsManager(context).getPatient()) }
+    // Re-read whenever the saved patient changes (photo here, or Edit Profile).
+    val patientRevision by PrefsManager.patientRevision.collectAsState()
+    val patient = remember(patientRevision) { PrefsManager(context).getPatient() }
     val fullName = remember(patient) {
         listOfNotNull(patient?.firstName, patient?.lastName?.takeIf { it.isNotBlank() })
             .joinToString(" ")
@@ -573,15 +575,14 @@ fun ProfileCard(
 
     var showSheet by rememberSaveable { mutableStateOf(false) }
 
-    // ── Photo change: same upload as Edit Profile, keeping every other field as saved ──
-    val uploading by photoViewModel.loading.collectAsState()
-    val uploaded by photoViewModel.updateSuccess.collectAsState()
-    val uploadError by photoViewModel.errorMessage.collectAsState()
+    // ── Photo change: uploads as soon as a picture is picked, other fields as saved ──
+    val uploading by photoViewModel.photoUploading.collectAsState()
+    val photoResult by photoViewModel.photoResult.collectAsState()
     var previewUri by remember { mutableStateOf<android.net.Uri?>(null) }
     var cameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
     fun upload(uri: android.net.Uri) {
-        val p = PrefsManager(context).getPatient() ?: run {
+        if (PrefsManager(context).getPatient() == null) {
             android.widget.Toast.makeText(context, resources.getString(R.string.profile_session_expired), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
@@ -591,35 +592,20 @@ fun ProfileCard(
             return
         }
         previewUri = uri
-        photoViewModel.updateProfile(
-            firstName = p.firstName,
-            lastName = p.lastName.orEmpty(),
-            dob = p.dob.substringBefore('T'),
-            mobileNo = p.mobileNo,
-            emailId = p.emailAddress.orEmpty(),
-            address = p.address.orEmpty(),
-            zip = p.zip.orEmpty(),
-            imageFile = file,
-            bloodGroupId = p.bloodGroupId,
-            countryId = p.countryId,
-            stateId = p.stateId,
-            cityId = p.cityId,
-        )
+        photoViewModel.updatePhoto(file)
     }
 
-    LaunchedEffect(uploaded) {
-        if (uploaded) {
-            patient = PrefsManager(context).getPatient()
-            android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_updated), android.widget.Toast.LENGTH_SHORT).show()
-            photoViewModel.resetSuccess()
+    LaunchedEffect(photoResult) {
+        when (val r = photoResult) {
+            com.critetiontech.ctvitalio.viewmodel.EditProfileViewModel.PhotoResult.Updated ->
+                android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_updated), android.widget.Toast.LENGTH_SHORT).show()
+            is com.critetiontech.ctvitalio.viewmodel.EditProfileViewModel.PhotoResult.Failed -> {
+                previewUri = null
+                android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_not_updated, r.reason ?: resources.getString(R.string.profile_update_failed)), android.widget.Toast.LENGTH_LONG).show()
+            }
+            null -> return@LaunchedEffect
         }
-    }
-    LaunchedEffect(uploadError) {
-        uploadError?.let {
-            previewUri = null
-            android.widget.Toast.makeText(context, resources.getString(R.string.profile_photo_not_updated, it), android.widget.Toast.LENGTH_LONG).show()
-            photoViewModel.resetError()
-        }
+        photoViewModel.clearPhotoResult()
     }
 
     val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
