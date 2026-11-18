@@ -230,14 +230,19 @@ class ReportRepositoryImpl @Inject constructor(
         val reportItems: List<ReportItem> = responseData?.report ?: emptyList()
         val patientDetails = responseData?.patient_details
 
+        // The stored procedure splits these strings with LEFT/SUBSTRING, so empty dates or
+        // ranges without a '-' fail with "Invalid length parameter passed to the LEFT or
+        // SUBSTRING function". Always send a full date-time and a 'min-max' shaped range.
+        val resultDateTime = normalizeResultDateTime(patientDetails?.collection_date)
+
         // Build investigationDetailsJson — one entry per distinct lab/item group
         val investigationDetails = JSONArray().apply {
             put(JSONObject().apply {
                 put("receiptNo", "")
                 put("itemName", patientDetails?.let { "${it.lab_name} Report".trim() } ?: "Lab Report")
                 put("labName", patientDetails?.lab_name ?: "")
-                put("itemId", "")
-                put("resultDateTime", patientDetails?.collection_date ?: "")
+                put("itemId", "0")
+                put("resultDateTime", resultDateTime)
             })
         }
 
@@ -250,10 +255,10 @@ class ReportRepositoryImpl @Inject constructor(
 
             investigationResults.put(JSONObject().apply {
                 put("result", item.result)
-                put("resultDateTime", "")
-                put("subTestId", item.id ?: "")
+                put("resultDateTime", resultDateTime)
+                put("subTestId", item.id?.takeIf { it.isNotBlank() } ?: "0")
                 put("unit", item.unit ?: "")
-                put("range", item.normal_values ?: "")
+                put("range", normalizeRange(item.normal_values))
                 put("isNormal", isNormal)
                 put("subTestName", item.test_name)
             })
@@ -285,7 +290,9 @@ class ReportRepositoryImpl @Inject constructor(
             Log.d(TAG, "InsertResult ← [${response.code()}] body=$responseBodyStr")
         }
 
-        if (response.isSuccessful) DomainResult.Success(Unit)
+        // The API returns HTTP 200 even on failure; the real outcome is in "status" (1 = success).
+        val apiStatus = runCatching { JSONObject(responseBodyStr.orEmpty()).optInt("status", 1) }.getOrDefault(1)
+        if (response.isSuccessful && apiStatus == 1) DomainResult.Success(Unit)
         else DomainResult.Error(Exception("InsertResult API Error: ${response.code()} $responseBodyStr"))
     } catch (e: Exception) {
         if (BuildConfig.DEBUG) Log.e(TAG, "InsertResult exception: ${e.message}", e)
@@ -340,5 +347,67 @@ class ReportRepositoryImpl @Inject constructor(
             }
         } else DomainResult.Error(Exception("Prescription analysis failed"))
     } catch (e: Exception) { DomainResult.Error(e) }
+}
+
+private val RESULT_DATE_TIME_FORMAT: java.time.format.DateTimeFormatter =
+    java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", java.util.Locale.US)
+
+private fun formatter(pattern: String): java.time.format.DateTimeFormatter =
+    java.time.format.DateTimeFormatterBuilder().parseCaseInsensitive()
+        .appendPattern(pattern).toFormatter(java.util.Locale.US)
+
+private val DATE_TIME_PATTERNS = listOf(
+    "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm",
+    "dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm", "dd-MM-yyyy HH:mm:ss", "dd-MM-yyyy HH:mm",
+    "dd/MM/yyyy hh:mm a", "dd-MM-yyyy hh:mm a", "dd-MMM-yyyy HH:mm", "dd MMM yyyy HH:mm",
+    "dd-MMM-yyyy hh:mm a", "dd MMM yyyy hh:mm a"
+).map(::formatter)
+
+private val DATE_PATTERNS = listOf(
+    "yyyy-MM-dd", "dd/MM/yyyy", "dd-MM-yyyy", "dd.MM.yyyy", "dd-MMM-yyyy", "dd MMM yyyy",
+    "dd-MMM-yy", "dd/MM/yy", "MMM dd, yyyy", "dd MMMM yyyy"
+).map(::formatter)
+
+/**
+ * Converts the AI's collection date (format varies by lab) to "yyyy-MM-dd HH:mm".
+ * Falls back to the current time when it is empty or unparseable.
+ */
+internal fun normalizeResultDateTime(raw: String?): String {
+    val text = raw?.trim().orEmpty()
+    if (text.isNotEmpty()) {
+        DATE_TIME_PATTERNS.firstNotNullOfOrNull { f ->
+            runCatching { java.time.LocalDateTime.parse(text, f) }.getOrNull()
+        }?.let { return it.format(RESULT_DATE_TIME_FORMAT) }
+        DATE_PATTERNS.firstNotNullOfOrNull { f ->
+            runCatching { java.time.LocalDate.parse(text, f) }.getOrNull()
+        }?.let { return it.atStartOfDay().format(RESULT_DATE_TIME_FORMAT) }
+    }
+    return java.time.LocalDateTime.now().format(RESULT_DATE_TIME_FORMAT)
+}
+
+private val NUMBER_REGEX = Regex("""\d+(?:[.,]\d+)?""")
+
+/**
+ * Normalizes a reference range so it always contains a '-' separator:
+ * "3.5 - 5.0" / "3.5–5.0" / "3.5 to 5.0" → "3.5-5.0", "< 200" → "0-200", "> 40" → "40-",
+ * anything else (empty, "Negative", …) → "-".
+ */
+internal fun normalizeRange(raw: String?): String {
+    val text = raw?.trim().orEmpty()
+        .replace('–', '-').replace('—', '-')
+        .replace(Regex("\\s+to\\s+", RegexOption.IGNORE_CASE), "-")
+    fun num(s: String) = NUMBER_REGEX.find(s)?.value?.replace(',', '.')
+    return when {
+        text.startsWith("<") || text.startsWith("≤") || text.startsWith("up", ignoreCase = true) ->
+            num(text)?.let { "0-$it" } ?: "-"
+        text.startsWith(">") || text.startsWith("≥") ->
+            num(text)?.let { "$it-" } ?: "-"
+        text.contains('-') -> {
+            val lo = num(text.substringBefore('-'))
+            val hi = num(text.substringAfter('-'))
+            if (lo != null || hi != null) "${lo.orEmpty()}-${hi.orEmpty()}" else "-"
+        }
+        else -> "-"
+    }
 }
 
