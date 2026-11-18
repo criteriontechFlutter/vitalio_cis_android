@@ -17,6 +17,7 @@ import com.critetiontech.ctvitalio.model.SearchMedicineItem
 import com.critetiontech.ctvitalio.model.SearchMedicineResponse
 import com.critetiontech.ctvitalio.model.DrugInteractionItem
 import com.critetiontech.ctvitalio.model.DrugInteractionResponse
+import com.critetiontech.ctvitalio.model.sanitized
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -40,7 +41,10 @@ class MedicineRepositoryImpl @Inject constructor(
         }
         val list = if (!json.isNullOrEmpty()) {
             val parsed = Gson().fromJson(json, MedicineIntakeResponse::class.java)
-            if (parsed.status == 1) parsed.responseValue else emptyList()
+            // The server sends null names for some medicines; clean them before any screen reads them
+            if (parsed.status == 1) (parsed.responseValue as List<com.critetiontech.ctvitalio.model.MedicinePeriod?>?).orEmpty()
+                .filterNotNull().map { it.sanitized() }
+            else emptyList()
         } else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }

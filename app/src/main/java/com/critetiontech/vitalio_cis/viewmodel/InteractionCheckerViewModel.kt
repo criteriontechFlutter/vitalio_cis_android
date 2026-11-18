@@ -98,8 +98,8 @@ class InteractionCheckerViewModel : ViewModel() {
         val ingredients = if (med.medicineName.isEmpty()) med.dosageFormName else "${med.medicineName} • ${med.dosageFormName}"
         
         val currentList = _selectedDrugs.value.toMutableList()
-        if (currentList.none { it.medicineId == med.medicineID }) {
-            currentList.add(Drug(medicineId = med.medicineID, name = name, activeIngredients = ingredients))
+        if (currentList.none { it.medicineId == med.id }) {
+            currentList.add(Drug(medicineId = med.id, name = name, activeIngredients = ingredients))
             _selectedDrugs.value = currentList
         }
         _searchText.value = ""
@@ -125,7 +125,9 @@ class InteractionCheckerViewModel : ViewModel() {
             return
         }
 
-        val brandIdString = drugs.map { it.medicineId.toString() }.filter { it.isNotEmpty() && it != "0" }.joinToString(",,,")
+        // Send each drug's id from the brand search (GetBrandList "id"), not Drug.id, which is only a
+        // random UUID for the on-screen list and means nothing to the server.
+        val brandIdString = drugs.map { it.medicineId }.filter { it > 0 }.distinct().joinToString(",,,")
         
         if (interactionCache.containsKey(brandIdString)) {
             _displayInstructions.value = interactionCache[brandIdString] ?: emptyList()

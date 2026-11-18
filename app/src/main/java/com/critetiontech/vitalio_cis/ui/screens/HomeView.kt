@@ -178,7 +178,7 @@ fun DashboardScreen(
     }
     LaunchedEffect(backPressedOnce) {
         if (backPressedOnce) {
-            delay(2000)
+            delay(2000.milliseconds)
             backPressedOnce = false
         }
     }
