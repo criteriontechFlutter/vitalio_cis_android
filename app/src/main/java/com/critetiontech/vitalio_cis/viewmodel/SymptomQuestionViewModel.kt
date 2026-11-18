@@ -37,9 +37,12 @@ class SymptomQuestionViewModel : ViewModel() {
     private val _state = MutableStateFlow(SymptomQuestionUiState())
     val state: StateFlow<SymptomQuestionUiState> = _state.asStateFlow()
 
-    /** Fired once every answer is saved; the screen moves on to the tracker. */
-    private val _completed = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val completed: SharedFlow<Unit> = _completed
+    /**
+     * Fired once every answer is saved. Carries true when the patient still has at least one symptom
+     * (the screen moves on to adding symptoms), false when every answer was "No" (the screen goes back).
+     */
+    private val _completed = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val completed: SharedFlow<Boolean> = _completed
 
     private val _message = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val message: SharedFlow<String> = _message
@@ -85,8 +88,9 @@ class SymptomQuestionViewModel : ViewModel() {
                 return@launch
             }
             _state.update { it.copy(saving = true) }
-            when (val r = deps.saveSymptoms()(patient.uhId, patient.clientId, answers.values.flatten())) {
-                is DomainResult.Success -> { Haptics.success(); _completed.emit(Unit) }
+            val rows = answers.values.flatten()
+            when (val r = deps.saveSymptoms()(patient.uhId, patient.clientId, rows)) {
+                is DomainResult.Success -> { Haptics.success(); _completed.emit(rows.any { it.isStillFeeling }) }
                 is DomainResult.Error -> {
                     Haptics.error()
                     _message.emit(MyApplication.appContext.getString(R.string.track_symptoms_update_failed))

@@ -3,6 +3,7 @@ package com.critetiontech.ctvitalio.data.repository
 import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
 import com.critetiontech.ctvitalio.data.offline.SendResult
 import android.content.Context
+import android.util.Log
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
@@ -14,6 +15,7 @@ import com.critetiontech.ctvitalio.model.SymptomApiResponse
 import com.critetiontech.ctvitalio.model.SymptomItem
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
+import org.json.JSONObject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -58,8 +60,16 @@ class SymptomRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
         val raw = if (response.isSuccessful) null else response.errorBody()?.string()
+        if (!response.isSuccessful) Log.e("SymptomRepository", "AddSymtomsOrDiagnosis ← [${response.code()}] $raw")
         when {
             response.isSuccessful -> SendResult.Sent
+            // When the last open symptom is answered "No" the update succeeds, but the backend then
+            // finds no active symptoms left and answers
+            // 404 {"status":1,"message":"success","responseValue":"No data Found"}.
+            // "status": 1 is the backend's own success flag, so trust it over the HTTP code.
+            raw != null && runCatching { JSONObject(raw).optInt("status", 0) == 1 }.getOrDefault(false) -> SendResult.Sent
+            raw?.contains("no data found", ignoreCase = true) == true ||
+                raw?.contains("no record", ignoreCase = true) == true -> SendResult.Sent
             SendResult.isNetworkFailure(response, raw) -> SendResult.Offline
             else -> SendResult.Rejected("API Error: ${response.code()}")
         }
