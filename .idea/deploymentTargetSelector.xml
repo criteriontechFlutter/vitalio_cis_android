@@ -2,18 +2,18 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="app">
+      <SelectionState runConfigName="wear">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-11-14T12:53:21.693285100Z">
+        <DropdownSelection timestamp="2026-10-13T11:23:48.645636300Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=69231XEA36O717" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\CT-Animesh\.android\avd\Pixel_8_Pro.avd" />
             </handle>
           </Target>
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="wear">
+      <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-10-13T11:23:48.645636300Z">
           <Target type="DEFAULT_BOOT">
