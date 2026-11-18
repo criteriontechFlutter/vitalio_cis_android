@@ -303,6 +303,9 @@ object OmronManager {
      */
     suspend fun pair(context: Context, kind: OmronKind, user: Int, profile: OmronProfile?): PairedOmronDevice = mutex.withLock {
         val patient = AppDependencies.prefs.getPatient() ?: throw OmronException(0, "Please log in again.")
+        // Without the partner key the library never loads its device list, which otherwise
+        // shows up below as a misleading "setup is still loading".
+        if (BuildConfig.OMRON_PARTNER_KEY.isBlank()) throw OmronException(6000, "Omron isn't set up in this build (partner key missing). Please contact support.")
         val candidates = OmronModels.ofKind(kind).flatMap { m -> deviceConfigVariants(context, m).map { m to it } }
         if (candidates.isEmpty()) throw OmronException(8003, "Omron setup is still loading. Please try again in a moment.")
         val (model, config) = findNearby(context, candidates)
