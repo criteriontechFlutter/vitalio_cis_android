@@ -11,7 +11,7 @@
         <domain includeSubdomains="false">food.shopright.ai</domain>
         <domain includeSubdomains="false">182.156.200.178</domain>
         <domain includeSubdomains="false">172.16.61.15</domain>
-        <!-- Local video consultation server (ApiConfig.CONSULTATION) -->
+        <!-- Local test server (ApiEnvironment.LOCAL) -->
         <domain includeSubdomains="false">172.16.61.31</domain>
     </domain-config>
 
