@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.config.ApiConfig
 
 import com.critetiontech.ctvitalio.BuildConfig
@@ -99,7 +101,7 @@ class NutriRepository(
     private companion object {
         const val BASE_URL = ApiConfig.NUTRI_ANALYSER
         val JSON = "application/json; charset=utf-8".toMediaType()
-        val gson = Gson()
+        val gson = AppGson
         val client: OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)

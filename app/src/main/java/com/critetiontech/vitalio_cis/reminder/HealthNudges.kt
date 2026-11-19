@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.reminder
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -92,7 +94,7 @@ class NudgeSettings(context: Context) {
         }.orEmpty()
         set(value) = sp.edit { putString(KEY_APPOINTMENT_ALERTS, gson.toJson(value)) }
 
-    private val gson = Gson()
+    private val gson = AppGson
 
     private companion object {
         const val KEY_FLUID = "fluid_enabled"
@@ -428,6 +430,29 @@ object AppointmentReminders {
         scope.launch { sync(app) }
     }
 
+    /**
+     * For broadcast receivers (boot, app update, time change): puts back the last known alarms at
+     * once and fetches appointments in a WorkManager job. [sync] makes two network calls, which
+     * inside goAsync() can outlive the broadcast time limit and trigger "Vitalio isn't responding".
+     */
+    fun syncFromReceiver(context: Context) {
+        val app = context.applicationContext
+        val settings = NudgeSettings(app)
+        if (settings.appointmentEnabled) {
+            runCatching { register(app, settings, settings.appointmentAlerts) }
+                .onFailure { Log.e(TAG, "restore appointment alarms failed", it) }
+        }
+        val request = androidx.work.OneTimeWorkRequestBuilder<AppointmentReminderSyncWorker>()
+            .setConstraints(
+                androidx.work.Constraints.Builder()
+                    .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+        androidx.work.WorkManager.getInstance(app)
+            .enqueueUniqueWork("appointment_reminder_sync", androidx.work.ExistingWorkPolicy.REPLACE, request)
+    }
+
     suspend fun sync(context: Context) = lock.withLock {
         val settings = NudgeSettings(context)
         val patient = AppDependencies.prefs.getPatient()
@@ -455,7 +480,8 @@ object AppointmentReminders {
             val date = parseIsoDate(match?.appointmentDate) ?: parseDmyDate(item.visitDate) ?: return@mapNotNull null
             Upcoming(
                 key = "${item.appoientmentId}_${item.visitNo}",
-                doctor = item.doctorName.trim().ifEmpty { context.getString(R.string.consult_doctor_fallback) },
+                // Gson can leave this null despite the non-null type; .trim() on it crashed in the background
+                doctor = (item.doctorName as String?).orEmpty().trim().ifEmpty { context.getString(R.string.consult_doctor_fallback) },
                 date = date,
                 time = parseSlotTime(item.slotTime),
             )
@@ -556,12 +582,18 @@ class NudgeReceiver : BroadcastReceiver() {
         when (intent.action) {
             AppointmentReminders.ACTION_APPOINTMENT -> AppointmentReminders.show(app, intent)
             WaterQuickAdd.ACTION_ADD_WATER -> WaterQuickAdd.onTap(app, intent.getIntExtra(WaterQuickAdd.EXTRA_ML, 0))
-            else -> {
-                val pending = goAsync()
-                CoroutineScope(Dispatchers.IO).launch {
-                    try { AppointmentReminders.sync(app) } finally { pending.finish() }
-                }
-            }
+            // Boot, app update, time change: network work goes to a worker, not this receiver
+            else -> AppointmentReminders.syncFromReceiver(app)
         }
+    }
+}
+
+/** Runs [AppointmentReminders.sync] outside a broadcast receiver's time limit. */
+class AppointmentReminderSyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        // sync() restores the cached alarms itself when the server can't be reached
+        runCatching { AppointmentReminders.sync(applicationContext) }
+            .onFailure { Log.e("AppointmentReminders", "background sync failed", it) }
+        return Result.success()
     }
 }

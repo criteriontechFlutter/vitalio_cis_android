@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.ui.feedback.Haptics
 
 import android.util.Log
@@ -62,45 +64,51 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun fetchDashboard() {
+    /** When the last full load finished; coming back to Home within a minute reuses it. */
+    private var lastLoadedAt = 0L
+
+    /**
+     * Loads Home. Opening Home again (e.g. back from another screen) within a minute of the last
+     * load keeps what's shown, since these APIs take 10-18 s; [force] (pull-to-refresh) always reloads.
+     */
+    fun fetchDashboard(force: Boolean = false) {
+        if (!force && _loading.value) return
+        if (!force && System.currentTimeMillis() - lastLoadedAt < 60_000L) return
         viewModelScope.launch {
             _loading.value = true
-            val patient = prefs.getPatient() ?: run { _loading.value = false; return@launch }
-            try {
-                // 1. Fetch Dashboard (Vitals + Appointments)
-                val params = mapOf("UHID" to patient.uhId, "clientId" to patient.clientId.toString())
-                val response = ApiHelper().callApi(
-                    MyApplication.appContext,
-                    endpoints.getPatientDashboardData,
-                    cacheResponse = true
-                ) { url ->
-                    ApiClients.module4082.dynamicGet(url = url, params = params)
-                }
-                if (response.isSuccessful) {
-                    val body = response.body()?.string()
-                    val parsed = Gson().fromJson(body, DashboardResponse::class.java)
-                    if (parsed.status == 1) {
-                        _vitalList.value = PendingEntries.overlayVitals(parsed.responseValue.latestVitals)
-                        _appointments.value = parsed.responseValue.upcomingAppointments
-                    }
-                }
-
-                // 2. Fetch Full Daily Medicine Intake (To show upcoming/taken status)
-                val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                val medsRes = AppDependencies.fetchMedicineIntake()(patient.pid, currentDate, patient.clientId)
-                if (medsRes is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
-                    val allMeds = medsRes.data.flatMap { it.medicineData }
-                        .filter { it.medicineName.isNotBlank() }
-                        .sortedBy { it.scheduledDateTime }
-                        .withLocallyTaken(MyApplication.appContext)
-                    _dailyMedicines.value = allMeds
-                    MedicineReminderScheduler.requestSync(MyApplication.appContext)
-                }
-
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "fetchDashboard error: ${e.message}")
+            // Vitals/appointments and today's medicines come from two slow APIs (~10 s each);
+            // load them side by side instead of one after the other.
+            kotlinx.coroutines.coroutineScope {
+                launch { loadDashboard(cache = true) }
+                launch { refreshTodayMedicines(syncReminders = true) }
             }
+            lastLoadedAt = System.currentTimeMillis()
             _loading.value = false
+        }
+    }
+
+    /** Vitals and upcoming appointments. */
+    private suspend fun loadDashboard(cache: Boolean) {
+        val patient = prefs.getPatient() ?: return
+        try {
+            val params = mapOf("UHID" to patient.uhId, "clientId" to patient.clientId.toString())
+            val response = ApiHelper().callApi(
+                MyApplication.appContext,
+                endpoints.getPatientDashboardData,
+                cacheResponse = cache
+            ) { url ->
+                ApiClients.module4082.dynamicGet(url = url, params = params)
+            }
+            if (response.isSuccessful) {
+                val body = response.body()?.string()
+                val parsed = AppGson.fromJson(body, DashboardResponse::class.java)
+                if (parsed.status == 1) {
+                    _vitalList.value = PendingEntries.overlayVitals(parsed.responseValue.latestVitals)
+                    _appointments.value = parsed.responseValue.upcomingAppointments
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "loadDashboard error: ${e.message}")
         }
     }
 
@@ -139,9 +147,9 @@ class HomeViewModel : ViewModel() {
                         if (it.id == medicine.id) it.copy(isTaken = true, takenDateTime = now) else it
                     }
                     Haptics.success()
-                    refreshTodayMedicines()
-                    // Drop the alarm for the dose that was just taken.
-                    MedicineReminderScheduler.requestSync(MyApplication.appContext)
+                    // Refresh the card, and drop the alarm for the dose just taken using the same
+                    // download (this used to fetch today's schedule twice).
+                    refreshTodayMedicines(syncReminders = true)
                 } else if (result is com.critetiontech.ctvitalio.domain.model.DomainResult.Error) {
                     Log.e("HomeViewModel", "🔴 markMedicineIntake API error: ${result.exception.message}", result.exception)
                     Haptics.error()
@@ -155,46 +163,32 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    private suspend fun refreshTodayMedicines() {
+    /**
+     * Today's medicines for the card. With [syncReminders], the same download is handed to the
+     * reminder scheduler so it doesn't fetch today's schedule again.
+     */
+    private suspend fun refreshTodayMedicines(syncReminders: Boolean = false) {
         val patient = prefs.getPatient() ?: return
-        val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-        val medsRes = AppDependencies.fetchMedicineIntake()(patient.pid, currentDate, patient.clientId)
-        if (medsRes is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
-            _dailyMedicines.value = medsRes.data.flatMap { it.medicineData }
-                .filter { it.medicineName.isNotBlank() }
-                .sortedBy { it.scheduledDateTime }
-                .withLocallyTaken(MyApplication.appContext)
+        try {
+            val today = java.time.LocalDate.now()
+            val medsRes = AppDependencies.fetchMedicineIntake()(patient.pid, today.toString(), patient.clientId)
+            if (medsRes is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
+                _dailyMedicines.value = medsRes.data.flatMap { it.medicineData }
+                    .filter { it.medicineName.isNotBlank() }
+                    .sortedBy { it.scheduledDateTime }
+                    .withLocallyTaken(MyApplication.appContext)
+                if (syncReminders) MedicineReminderScheduler.requestSync(MyApplication.appContext, today to medsRes.data)
+            }
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "refreshTodayMedicines error: ${e.message}")
         }
     }
 
+    /** Same as [fetchDashboard] but skips the cache, both loads side by side. */
     fun fetchDashboardNoCache() {
         viewModelScope.launch {
-            val patient = prefs.getPatient() ?: return@launch
-            try {
-                val params = mapOf("UHID" to patient.uhId, "clientId" to patient.clientId.toString())
-                val response = ApiHelper().callApi(MyApplication.appContext, endpoints.getPatientDashboardData, cacheResponse = false) { url ->
-                    ApiClients.module4082.dynamicGet(url = url, params = params)
-                }
-                if (response.isSuccessful) {
-                    val body = response.body()?.string()
-                    val parsed = Gson().fromJson(body, DashboardResponse::class.java)
-                    if (parsed.status == 1) {
-                        _vitalList.value = PendingEntries.overlayVitals(parsed.responseValue.latestVitals)
-                        _appointments.value = parsed.responseValue.upcomingAppointments
-                    }
-                }
-                val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                val medsRes = AppDependencies.fetchMedicineIntake()(patient.pid, currentDate, patient.clientId)
-                if (medsRes is com.critetiontech.ctvitalio.domain.model.DomainResult.Success) {
-                    val allMeds = medsRes.data.flatMap { it.medicineData }
-                        .filter { it.medicineName.isNotBlank() }
-                        .sortedBy { it.scheduledDateTime }
-                        .withLocallyTaken(MyApplication.appContext)
-                    _dailyMedicines.value = allMeds
-                }
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "fetchDashboardNoCache error: ${e.message}")
-            }
+            launch { loadDashboard(cache = false) }
+            launch { refreshTodayMedicines() }
         }
     }
 

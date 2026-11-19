@@ -124,7 +124,7 @@ data class EmployeeGoal(
 )
 class PrefsManager(context: Context) {
     private val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val gson = Gson()
+    private val gson = AppGson
 
     companion object {
         /**

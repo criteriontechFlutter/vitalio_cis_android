@@ -202,4 +202,7 @@ dependencies {
 
     // Retries medicine "taken" logs from alarms when offline
     implementation(libs.androidx.work.runtime)
+
+    // Reads Kotlin nullability at runtime so null JSON text never reaches a non-null String (utils/AppGson.kt)
+    implementation("org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.10")
  }

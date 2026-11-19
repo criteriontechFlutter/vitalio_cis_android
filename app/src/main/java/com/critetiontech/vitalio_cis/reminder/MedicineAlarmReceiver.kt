@@ -59,12 +59,9 @@ class MedicineAlarmReceiver : BroadcastReceiver() {
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
             AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
-                // Put back what we know right away, then refresh from the server.
-                MedicineReminderScheduler.reschedule(app)
-                val pending = goAsync()
-                scope.launch {
-                    try { MedicineReminderScheduler.sync(app) } finally { pending.finish() }
-                }
+                // Put back what we know right away, then refresh from the server in a worker:
+                // the network sync ran past the broadcast time limit and caused an ANR.
+                MedicineReminderScheduler.syncFromReceiver(app)
             }
         }
     }

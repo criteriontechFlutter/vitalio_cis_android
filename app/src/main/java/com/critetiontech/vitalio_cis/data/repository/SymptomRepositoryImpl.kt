@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
 import com.critetiontech.ctvitalio.data.offline.SendResult
 import android.content.Context
@@ -48,7 +50,7 @@ class SymptomRepositoryImpl @Inject constructor(
         }
         // Null here means the call failed and nothing was cached, so the caller can offer a retry.
         if (json.isNullOrEmpty()) throw Exception("Couldn't load symptoms")
-        val parsed = Gson().fromJson(json, SymptomApiResponse::class.java)
+        val parsed = AppGson.fromJson(json, SymptomApiResponse::class.java)
         DomainResult.Success(if (parsed.status == 1) parsed.responseValue.orEmpty() else emptyList())
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -116,7 +118,7 @@ class SymptomRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -129,7 +131,7 @@ class SymptomRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
         if (body != null) {
-            val list = if (body.isNotEmpty()) Gson().fromJson(body, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
+            val list = if (body.isNotEmpty()) AppGson.fromJson(body, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
             DomainResult.Success(list)
         } else {
             // Offline and never searched this term: search the common-problems list we do have.

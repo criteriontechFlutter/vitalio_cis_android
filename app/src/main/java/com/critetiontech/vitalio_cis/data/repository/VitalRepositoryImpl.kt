@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
 import com.critetiontech.ctvitalio.data.offline.SendResult
 import android.content.Context
@@ -35,7 +37,7 @@ class VitalRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string()
             else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, VitalApiResponse::class.java).responseValue.lastVital else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, VitalApiResponse::class.java).responseValue.lastVital else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) {
         DomainResult.Error(e)
@@ -78,10 +80,10 @@ class VitalRepositoryImpl @Inject constructor(
             body == null -> DomainResult.Error(Exception("Couldn't load vital history"))
             body.isEmpty() -> DomainResult.Success(emptyList())
             else -> {
-                val parsed = Gson().fromJson(body, VitalAnalyticsResponse::class.java)
+                val parsed = AppGson.fromJson(body, VitalAnalyticsResponse::class.java)
                 val entries = if (parsed.status == 1) {
                     parsed.responseValue.patientGraph.map { item ->
-                        val details = try { Gson().fromJson(item.vitalDetails, Array<VitalGraphDetail>::class.java).toList() } catch (e: Exception) { emptyList() }
+                        val details = try { AppGson.fromJson(item.vitalDetails, Array<VitalGraphDetail>::class.java).toList() } catch (e: Exception) { emptyList() }
                         VitalGraphEntry(item.vitalDateTime, details)
                     }
                 } else emptyList()

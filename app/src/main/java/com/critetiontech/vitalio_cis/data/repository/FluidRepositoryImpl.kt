@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
 import com.critetiontech.ctvitalio.data.offline.SendResult
 import okhttp3.ResponseBody
@@ -45,13 +47,13 @@ class FluidRepositoryImpl @Inject constructor(
 
     private fun parseManualFood(json: String?): List<ManualFoodAssignItem> {
         if (json.isNullOrEmpty()) return emptyList()
-        val parsed = Gson().fromJson(json, ManualFoodAssignResponse::class.java)
+        val parsed = AppGson.fromJson(json, ManualFoodAssignResponse::class.java)
         return if (parsed.status == 1) parsed.responseValue?.filter { !it.foodName.isNullOrBlank() } ?: emptyList() else emptyList()
     }
 
     private fun parseIntake(json: String?): List<IntakeItem> {
         if (json.isNullOrEmpty()) return emptyList()
-        val parsed = Gson().fromJson(json, IntakeResponse::class.java)
+        val parsed = AppGson.fromJson(json, IntakeResponse::class.java)
         return if (parsed.status == 1) parsed.responseValue ?: emptyList() else emptyList()
     }
 
@@ -109,7 +111,7 @@ class FluidRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
         val list = if (!json.isNullOrEmpty()) {
-            val parsed = Gson().fromJson(json, OutputResponse::class.java)
+            val parsed = AppGson.fromJson(json, OutputResponse::class.java)
             if (parsed.status == 1) parsed.responseValue else emptyList()
         } else emptyList()
         DomainResult.Success(list)
@@ -131,7 +133,7 @@ class FluidRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
         val list = if (!json.isNullOrEmpty()) {
-            val parsed = Gson().fromJson(json, FluidSummaryResponse::class.java)
+            val parsed = AppGson.fromJson(json, FluidSummaryResponse::class.java)
             if (parsed.status == 1) parsed.responseValue ?: emptyList() else emptyList()
         } else emptyList()
         DomainResult.Success(list)
@@ -146,7 +148,7 @@ class FluidRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
         val list = if (!json.isNullOrEmpty()) {
-            val parsed = Gson().fromJson(json, OutputSummaryResponse::class.java)
+            val parsed = AppGson.fromJson(json, OutputSummaryResponse::class.java)
             if (parsed.status == 1) parsed.responseValue else emptyList()
         } else emptyList()
         DomainResult.Success(list)

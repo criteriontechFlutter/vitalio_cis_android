@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -40,7 +42,7 @@ class MedicineRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
         val list = if (!json.isNullOrEmpty()) {
-            val parsed = Gson().fromJson(json, MedicineIntakeResponse::class.java)
+            val parsed = AppGson.fromJson(json, MedicineIntakeResponse::class.java)
             // The server sends null names for some medicines; clean them before any screen reads them
             if (parsed.status == 1) (parsed.responseValue as List<com.critetiontech.ctvitalio.model.MedicinePeriod?>?).orEmpty()
                 .filterNotNull().map { it.sanitized() }
@@ -75,7 +77,7 @@ class MedicineRepositoryImpl @Inject constructor(
             body == null -> DomainResult.Error(Exception("Couldn't load medicines"))
             body.isEmpty() -> DomainResult.Success(Pair(emptyList(), emptyList()))
             else -> {
-                val parsed = Gson().fromJson(body, MedicineIntakeByDateResponse::class.java)
+                val parsed = AppGson.fromJson(body, MedicineIntakeByDateResponse::class.java)
                 if (parsed.status == 1) DomainResult.Success(Pair(parsed.responseValue?.loggedMedicines.orEmpty(), parsed.responseValue?.allMedicines.orEmpty()))
                 else DomainResult.Success(Pair(emptyList(), emptyList()))
             }
@@ -90,7 +92,7 @@ class MedicineRepositoryImpl @Inject constructor(
         if (response.isSuccessful) {
             val body = response.body()?.string()
             if (!body.isNullOrEmpty()) {
-                val parsed = Gson().fromJson(body, SearchMedicineResponse::class.java)
+                val parsed = AppGson.fromJson(body, SearchMedicineResponse::class.java)
                 DomainResult.Success(parsed.responseValue.take(50))
             } else DomainResult.Success(emptyList())
         } else DomainResult.Error(Exception("API Error: ${response.code()}"))
@@ -118,7 +120,7 @@ class MedicineRepositoryImpl @Inject constructor(
         if (response.isSuccessful) {
             val bodyStr = response.body()?.string()
             if (!bodyStr.isNullOrEmpty()) {
-                val parsed = Gson().fromJson(bodyStr, InsertMedicineResponse::class.java)
+                val parsed = AppGson.fromJson(bodyStr, InsertMedicineResponse::class.java)
                 DomainResult.Success(parsed)
             } else DomainResult.Error(Exception("Empty response"))
         } else DomainResult.Error(Exception("API Error: ${response.code()}"))
@@ -131,7 +133,7 @@ class MedicineRepositoryImpl @Inject constructor(
         if (response.isSuccessful) {
             val bodyStr = response.body()?.string()
             if (!bodyStr.isNullOrEmpty()) {
-                val parsed = Gson().fromJson(bodyStr, DrugInteractionResponse::class.java)
+                val parsed = AppGson.fromJson(bodyStr, DrugInteractionResponse::class.java)
                 DomainResult.Success(parsed.responseValue ?: emptyList())
             } else DomainResult.Error(Exception("Empty response"))
         } else DomainResult.Error(Exception("API Error: ${response.code()}"))

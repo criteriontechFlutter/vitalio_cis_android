@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -196,7 +198,7 @@ class PrescriptionHistoryViewModel : ViewModel() {
                 params = mapOf("uhid" to keys.uhid, "clientId" to keys.clientId, "userId" to keys.userId),
                 emptyBody = """{"status":1,"responseValue":[]}""",
             ) ?: return RxUiState.Error(str(R.string.report_something_went_wrong))
-            val parsed = Gson().fromJson(body, MedicalSummaryResponse::class.java)
+            val parsed = AppGson.fromJson(body, MedicalSummaryResponse::class.java)
             RxUiState.Success(parsed?.responseValue.orEmpty().sortedByDescending { it.visitDate.orEmpty() })
         } catch (e: Exception) {
             Log.e("PrescriptionHistoryVM", "Summary failed", e)
@@ -242,7 +244,7 @@ class PrescriptionDetailViewModel : ViewModel() {
                     emptyBody = """{"status":1,"responseValue":{}}""",
                 )
                 if (body == null) RxUiState.Error(str(R.string.report_something_went_wrong))
-                else RxUiState.Success(Gson().fromJson(body, MedicalDetailsResponse::class.java)?.responseValue ?: MedicalDetailsValue())
+                else RxUiState.Success(AppGson.fromJson(body, MedicalDetailsResponse::class.java)?.responseValue ?: MedicalDetailsValue())
             } catch (e: Exception) {
                 Log.e("PrescriptionDetailVM", "Details failed", e)
                 RxUiState.Error(str(R.string.report_something_went_wrong))

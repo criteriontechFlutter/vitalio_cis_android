@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -34,7 +36,7 @@ class FamilyHealthHistoryRepositoryImpl(
         val value = json?.get("responseValue")
         when {
             response.isSuccessful && value != null && value.isJsonArray ->
-                DomainResult.Success(Gson().fromJson(value, Array<FamilyHealthHistoryRow>::class.java).toList())
+                DomainResult.Success(AppGson.fromJson(value, Array<FamilyHealthHistoryRow>::class.java).toList())
             // Nothing recorded yet: {"status":0,"responseValue":"No record found"}.
             json?.status() == 0 && value?.takeIf { it.isJsonPrimitive }?.asString
                 ?.contains("no record", ignoreCase = true) == true -> DomainResult.Success(emptyList())
@@ -55,7 +57,7 @@ class FamilyHealthHistoryRepositoryImpl(
         if (body.isNullOrEmpty()) throw Exception("Couldn't load diseases")
         val value = JsonParser.parseString(body).asJsonObject.get("responseValue")
         val list = if (value != null && value.isJsonArray) {
-            Gson().fromJson(value, Array<DiseaseItem>::class.java)
+            AppGson.fromJson(value, Array<DiseaseItem>::class.java)
                 .mapNotNull { d -> d.problemName?.trim()?.takeIf { it.isNotEmpty() }?.let { Disease(d.id, it) } }
         } else emptyList()
         diseases = list

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -46,7 +48,7 @@ class DoctorRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
         val list = if (!json.isNullOrEmpty()) {
-            val response = Gson().fromJson(json, DoctorResponse::class.java)
+            val response = AppGson.fromJson(json, DoctorResponse::class.java)
             response.responseValue.map { it.copy(assignedUserId = if (it.assignedUserId != 0) it.assignedUserId else it.doctorId) }
         } else emptyList()
         DomainResult.Success(list)
@@ -62,7 +64,7 @@ class DoctorRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.DepartmentResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, com.critetiontech.ctvitalio.model.DepartmentResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -78,7 +80,7 @@ class DoctorRepositoryImpl @Inject constructor(
         // DoctorDetails' non-null fields and crash later, so drop them and let the defaults apply.
         val doctor = if (!json.isNullOrEmpty()) {
             val root = JsonParser.parseString(json).withoutNulls()
-            Gson().fromJson(root, DoctorResponsedata::class.java).responseValue.firstOrNull()
+            AppGson.fromJson(root, DoctorResponsedata::class.java).responseValue.firstOrNull()
         } else null
         DomainResult.Success(doctor)
     } catch (e: Exception) { DomainResult.Error(e) }
@@ -107,7 +109,7 @@ class DoctorRepositoryImpl @Inject constructor(
             response.code() == 400 || response.code() == 404 -> null
             else -> throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, ShiftResponse::class.java).responseValue.orEmpty() else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, ShiftResponse::class.java).responseValue.orEmpty() else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -157,7 +159,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, UpcomingAppointmentsResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, UpcomingAppointmentsResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -167,7 +169,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, AppointmentHistoryResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, AppointmentHistoryResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -177,7 +179,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.ShiftTypeSettingResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, com.critetiontech.ctvitalio.model.ShiftTypeSettingResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -189,7 +191,7 @@ class DoctorRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val doctor = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.SingleDoctorResponse::class.java).responseValue else null
+        val doctor = if (!json.isNullOrEmpty()) AppGson.fromJson(json, com.critetiontech.ctvitalio.model.SingleDoctorResponse::class.java).responseValue else null
         DomainResult.Success(doctor)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -199,7 +201,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.ScheduleResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, com.critetiontech.ctvitalio.model.ScheduleResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -209,7 +211,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.LatestTokenResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, com.critetiontech.ctvitalio.model.LatestTokenResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -219,7 +221,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicGet(url = url, params = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.ConsentResponse::class.java).responseValue else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, com.critetiontech.ctvitalio.model.ConsentResponse::class.java).responseValue else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -228,7 +230,7 @@ class DoctorRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicRawPost(url = url, body = params)
         }
         val json = if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
-        val msg = if (!json.isNullOrEmpty()) Gson().fromJson(json, com.critetiontech.ctvitalio.model.AddConsentResponse::class.java).message else null
+        val msg = if (!json.isNullOrEmpty()) AppGson.fromJson(json, com.critetiontech.ctvitalio.model.AddConsentResponse::class.java).message else null
         DomainResult.Success(msg)
     } catch (e: Exception) { DomainResult.Error(e) }
 }

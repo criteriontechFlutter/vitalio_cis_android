@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.reminder
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.edit
@@ -86,7 +88,7 @@ data class ReminderAlarm(
 
     companion object {
         private const val EXTRA_ALARM = "reminder_alarm"
-        private val gson = Gson()
+        private val gson = AppGson
 
         fun from(intent: Intent?): ReminderAlarm? =
             intent?.getStringExtra(EXTRA_ALARM)?.let {
@@ -99,7 +101,7 @@ data class ReminderAlarm(
 class ReminderSettings(context: Context) {
 
     private val sp = context.applicationContext.getSharedPreferences("medicine_reminders", Context.MODE_PRIVATE)
-    private val gson = Gson()
+    private val gson = AppGson
 
     var enabled: Boolean
         get() = sp.getBoolean(KEY_ENABLED, true)

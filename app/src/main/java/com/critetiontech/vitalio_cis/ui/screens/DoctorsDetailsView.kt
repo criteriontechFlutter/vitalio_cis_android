@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -320,7 +322,7 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel) {
             slotsError != null -> SlotsMessage(text = slotsError!!, onRetry = { viewModel.onDateSelected(slotDate) })
             shiftList.isEmpty() -> SlotsMessage(text = stringResource(R.string.consult_no_slots_available))
             shiftList.all { shift ->
-                runCatching { Gson().fromJson(shift.slotJson, Array<SlotData>::class.java).none { it.slotStatus == "empty" } }.getOrDefault(false)
+                runCatching { AppGson.fromJson(shift.slotJson, Array<SlotData>::class.java).none { it.slotStatus == "empty" } }.getOrDefault(false)
             } -> SlotsMessage(text = stringResource(R.string.consult_all_slots_booked))
             else -> {
                 // First shift open by default; tapping a header toggles it.
@@ -328,7 +330,7 @@ fun SlotScreen(viewModel: DoctorDetailsViewModel) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     shiftList.forEach { shift ->
                         val slots: List<SlotData> = remember(shift.slotJson) {
-                            runCatching { Gson().fromJson(shift.slotJson, Array<SlotData>::class.java).toList() }.getOrDefault(emptyList())
+                            runCatching { AppGson.fromJson(shift.slotJson, Array<SlotData>::class.java).toList() }.getOrDefault(emptyList())
                         }
                         val open = shift.shiftId in expanded
                         ShiftAccordion(

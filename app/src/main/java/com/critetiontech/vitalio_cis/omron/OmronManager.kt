@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.omron
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
@@ -149,7 +151,7 @@ object OmronManager {
     private const val GROUP_ID = "deviceGroupIncludedGroupIDKey"
     private const val CONFIG_ID = "id"
 
-    private val gson = Gson()
+    private val gson = AppGson
     private val mutex = Mutex()
 
     private val _configReady = MutableStateFlow(false)

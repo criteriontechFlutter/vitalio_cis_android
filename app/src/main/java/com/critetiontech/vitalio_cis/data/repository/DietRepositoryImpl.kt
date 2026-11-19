@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -28,7 +30,7 @@ class DietRepositoryImpl(
     private val nutri: NutriRepository = NutriRepository(),
 ) : DietRepository {
     private val endpoints = ApiEndPointCorporateModule()
-    private val gson = Gson()
+    private val gson = AppGson
 
     private val slowHeaders = mapOf(RetrofitInstance.READ_TIMEOUT_HEADER to "60")
     // GetDietPlanByDay took 20-130 s when measured; the default 20 s read timeout cuts it off.

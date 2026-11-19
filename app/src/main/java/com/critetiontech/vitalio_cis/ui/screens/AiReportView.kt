@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import androidx.compose.ui.res.stringResource
 import com.critetiontech.ctvitalio.R
 
@@ -71,7 +73,7 @@ fun AiReportScreen(viewModel: UploadReportViewModel) {
     // ── Parse JSON ───────────────────────────────────────
     val reportData = remember(responseStr) {
         if (responseStr.isNotEmpty()) {
-            try { Gson().fromJson(responseStr, ApiResponse::class.java) }
+            try { AppGson.fromJson(responseStr, ApiResponse::class.java) }
             catch (e: Exception) { ApiResponse() }
         } else ApiResponse()
     }

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.config.ApiConfig
 
 import android.content.Context
@@ -63,7 +65,7 @@ class ReportRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, MediaResponse::class.java).responseValue ?: emptyList() else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, MediaResponse::class.java).responseValue ?: emptyList() else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -229,7 +231,7 @@ class ReportRepositoryImpl @Inject constructor(
         testName: String,
         dateTime: String,
     ): DomainResult<Unit> = try {
-        val gson = Gson()
+        val gson = AppGson
         if (uhid.isBlank()) throw IllegalStateException("No patient UHID; not saving lab results")
         val payload = LabResultMapper.buildInsertPayload(responseJson, uhid, clientId, testName, dateTime)
             ?: throw IllegalStateException("The report had no readable results to save")
@@ -302,7 +304,7 @@ class ReportRepositoryImpl @Inject constructor(
                 is JSONArray -> when {
                     response.length() == 0 -> DomainResult.Error(Exception("No data returned from server"))
                     response.get(0) is JSONObject -> DomainResult.Success(
-                        Gson().fromJson(response.getJSONObject(0).toString(), PrescriptionResponseItem::class.java)
+                        AppGson.fromJson(response.getJSONObject(0).toString(), PrescriptionResponseItem::class.java)
                     )
                     else -> DomainResult.Error(Exception(response.getString(0)))
                 }

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.ui.feedback.AppNavTransitions
 import android.os.Build
 import android.os.Bundle
@@ -306,7 +308,7 @@ class MainActivity : ComponentActivity() {
                                 val json = backStackEntry.arguments?.getString("bookingDetails")
 
                                 val bookingDetails =
-                                    Gson().fromJson(json, BookingDetails::class.java)
+                                    AppGson.fromJson(json, BookingDetails::class.java)
 
                                 FeatureGate(AppFeature.APPOINTMENTS) { BookingDetailsScreen(
                                     bookingDetails =bookingDetails) } }
@@ -321,7 +323,7 @@ class MainActivity : ComponentActivity() {
                                 val json = backStackEntry.arguments?.getString("bookingDetails")
 
                                 val bookingDetails =
-                                    Gson().fromJson(json, BookingDetails::class.java)
+                                    AppGson.fromJson(json, BookingDetails::class.java)
 
                                 FeatureGate(AppFeature.APPOINTMENTS) { BookingConfirmationScreen(
                                 bookingDetails =bookingDetails
