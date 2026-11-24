@@ -23,9 +23,9 @@ android {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.android)
-    implementation("com.google.code.gson:gson:2.13.1")
+    implementation(libs.gson)
     // Dictation WebSocket
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit)
 }
