@@ -63,6 +63,8 @@ import com.critetiontech.ctvitalio.viewmodel.HomeViewModel
 import com.critetiontech.ctvitalio.voice.VoiceNavigationManager
 import com.critetiontech.ctvitalio.voice.VoiceListeningOverlay
 import com.critetiontech.ctvitalio.voice.FloatingVoiceFab
+import com.critetiontech.ctvitalio.ui.feedback.rememberOnScreen
+import com.critetiontech.ctvitalio.ui.feedback.trackOnScreen
 import kotlinx.coroutines.delay
 import java.util.Locale
 import com.critetiontech.ctvitalio.R
@@ -178,7 +180,7 @@ fun DashboardScreen(
     }
     LaunchedEffect(backPressedOnce) {
         if (backPressedOnce) {
-            delay(2000)
+            delay(2000.milliseconds)
             backPressedOnce = false
         }
     }
@@ -206,7 +208,7 @@ fun DashboardScreen(
         isRefreshing = true
         refreshScope.launch {
             val startedAt = System.currentTimeMillis()
-            homeViewModel.fetchDashboard()
+            homeViewModel.fetchDashboard(force = true)
             homeViewModel.fetchDietOverview()
             // fetchDashboard flips loading on asynchronously; wait for it to settle.
             delay(300)
@@ -1049,10 +1051,15 @@ fun Header() {
 @Composable
 private fun TimeOfDayIcon() {
     val hour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
-    val motion = rememberInfiniteTransition(label = "timeOfDay")
-    val spin by motion.animateFloat(0f, 360f, infiniteRepeatable(tween(12000, easing = LinearEasing)), label = "sunSpin")
-    val rock by motion.animateFloat(-10f, 10f, infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "moonRock")
-    val glow by motion.animateFloat(0.75f, 1f, infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
+    // Moves only while visible; once the header scrolls away the icon holds still
+    val onScreen = rememberOnScreen()
+    var spin = 0f; var rock = 0f; var glow = 1f
+    if (onScreen.visible) {
+        val motion = rememberInfiniteTransition(label = "timeOfDay")
+        spin = motion.animateFloat(0f, 360f, infiniteRepeatable(tween(12000, easing = LinearEasing)), label = "sunSpin").value
+        rock = motion.animateFloat(-10f, 10f, infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "moonRock").value
+        glow = motion.animateFloat(0.75f, 1f, infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow").value
+    }
     val (icon, tint, rotation) = when (hour) {
         in 5..17 -> Triple(Icons.Default.WbSunny, Color(0xFFF59E0B), spin)
         in 18..21 -> Triple(Icons.Default.WbTwilight, Color(0xFFF97316), 0f)
@@ -1060,7 +1067,10 @@ private fun TimeOfDayIcon() {
     }
     Icon(
         icon, contentDescription = null, tint = tint,
-        modifier = Modifier.size(14.dp).graphicsLayer { rotationZ = rotation; this.alpha = glow; scaleX = glow; scaleY = glow }
+        modifier = Modifier
+            .trackOnScreen(onScreen)
+            .size(14.dp)
+            .graphicsLayer { rotationZ = rotation; this.alpha = glow; scaleX = glow; scaleY = glow }
     )
 }
 
@@ -1283,17 +1293,24 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
 
     val pagerState = rememberPagerState(pageCount = { mergedVitals.size })
 
+    // Slides and the heartbeat run only while the card is on screen, not after it's scrolled away
+    val onScreen = rememberOnScreen()
+
     // Auto slide, unhurried, and held while the user is swiping
-    LaunchedEffect(pagerState) {
+    LaunchedEffect(pagerState, onScreen.visible) {
+        if (!onScreen.visible) return@LaunchedEffect
         while (true) {
             delay(3500.milliseconds)
             if (pagerState.isScrollInProgress) continue
-            val nextPage = (pagerState.currentPage + 1) % mergedVitals.size
+            // pageCount, not the list captured when this started, so a refreshed list can't go stale
+            val pages = pagerState.pageCount
+            if (pages < 2) continue
+            val nextPage = (pagerState.currentPage + 1) % pages
             pagerState.animateScrollToPage(nextPage, animationSpec = tween(700, easing = FastOutSlowInEasing))
         }
     }
 
-    Column(modifier = Modifier.graphicsLayer { alpha = cardAlpha; scaleX = cardScale; scaleY = cardScale }) {
+    Column(modifier = Modifier.trackOnScreen(onScreen).graphicsLayer { alpha = cardAlpha; scaleX = cardScale; scaleY = cardScale }) {
 
         Text(
             stringResource(R.string.home_vitals_title),
@@ -1338,15 +1355,19 @@ fun VitalsCard(vitals: List<Vital>, onUpdateClick: () -> Unit = {}) {
                             .background(com.critetiontech.ctvitalio.ui.theme.softTint(colors.primaryBlueColor, Color(0xFFEAF2FF))),
                         contentAlignment = Alignment.Center
                     ) {
-                        val beat = rememberInfiniteTransition(label = "vitalBeat")
-                        val beatScale by beat.animateFloat(
-                            1f, 1.12f, infiniteRepeatable(tween(650, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "beatScale"
-                        )
+                        // Beats only on the page in view and while the card is on screen; the pager keeps
+                        // neighbouring pages composed, and each used to run its own endless animation.
+                        val beatScale: androidx.compose.runtime.State<Float>? =
+                            if (isCurrent && onScreen.visible) {
+                                rememberInfiniteTransition(label = "vitalBeat").animateFloat(
+                                    1f, 1.12f, infiniteRepeatable(tween(650, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "beatScale"
+                                )
+                            } else null
                         Image(
                             painter = painterResource(id = R.drawable.vital_details),
                             contentDescription = null,
                             modifier = Modifier.size(24.dp).graphicsLayer {
-                                val s = if (isCurrent) beatScale else 1f
+                                val s = beatScale?.value ?: 1f
                                 scaleX = s; scaleY = s
                             }
                         )

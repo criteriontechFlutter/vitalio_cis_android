@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.model
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
@@ -64,7 +66,7 @@ data class PrescriptionAdvice(
 
 private fun parseTimeSlots(json: String?): List<String> = try {
     if (json.isNullOrBlank()) emptyList()
-    else Gson().fromJson<List<PrescriptionTimeSlot>>(json, object : TypeToken<List<PrescriptionTimeSlot>>() {}.type)
+    else AppGson.fromJson<List<PrescriptionTimeSlot>>(json, object : TypeToken<List<PrescriptionTimeSlot>>() {}.type)
         ?.mapNotNull { it.timeSlot } ?: emptyList()
 } catch (e: Exception) { emptyList() }
 

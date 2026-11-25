@@ -70,8 +70,12 @@ fun SymptomTrackerScreen(viewModel: SymptomQuestionViewModel = viewModel()) {
     val colors = LocalMyColorScheme.current
     val state by viewModel.state.collectAsState()
 
-    // Every answer saved → on to adding any other symptoms.
-    LaunchedEffect(Unit) { viewModel.completed.collect { navController.openSymptomSelection() } }
+    // Every answer saved → on to adding any other symptoms, or straight back if every answer was "No".
+    LaunchedEffect(Unit) {
+        viewModel.completed.collect { stillHasSymptoms ->
+            if (stillHasSymptoms) navController.openSymptomSelection() else navController.popBackStack()
+        }
+    }
     LaunchedEffect(Unit) { viewModel.message.collect { showToast(context, it) } }
 
     CommonAppBar(title = stringResource(R.string.track_symptom_tracker)) {

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ui.screens
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -74,7 +76,7 @@ internal fun PickedFoodListener(onPicked: (PickedFood) -> Unit) {
     LaunchedEffect(json) {
         val value = json ?: return@LaunchedEffect
         entry.savedStateHandle[PICKED_FOOD_KEY] = null
-        runCatching { Gson().fromJson(value, PickedFood::class.java) }.getOrNull()?.let(onPicked)
+        runCatching { AppGson.fromJson(value, PickedFood::class.java) }.getOrNull()?.let(onPicked)
     }
 }
 

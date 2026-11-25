@@ -1,8 +1,11 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.data.offline.OfflineOutbox
 import com.critetiontech.ctvitalio.data.offline.SendResult
 import android.content.Context
+import android.util.Log
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
 import com.critetiontech.ctvitalio.utils.ApiEndPointCorporateModule
@@ -14,6 +17,7 @@ import com.critetiontech.ctvitalio.model.SymptomApiResponse
 import com.critetiontech.ctvitalio.model.SymptomItem
 import com.critetiontech.ctvitalio.utils.PrefsManager
 import com.google.gson.Gson
+import org.json.JSONObject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -46,7 +50,7 @@ class SymptomRepositoryImpl @Inject constructor(
         }
         // Null here means the call failed and nothing was cached, so the caller can offer a retry.
         if (json.isNullOrEmpty()) throw Exception("Couldn't load symptoms")
-        val parsed = Gson().fromJson(json, SymptomApiResponse::class.java)
+        val parsed = AppGson.fromJson(json, SymptomApiResponse::class.java)
         DomainResult.Success(if (parsed.status == 1) parsed.responseValue.orEmpty() else emptyList())
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -58,8 +62,16 @@ class SymptomRepositoryImpl @Inject constructor(
             ApiClients.module4082.dynamicRawPost(url = url, body = body)
         }
         val raw = if (response.isSuccessful) null else response.errorBody()?.string()
+        if (!response.isSuccessful) Log.e("SymptomRepository", "AddSymtomsOrDiagnosis ← [${response.code()}] $raw")
         when {
             response.isSuccessful -> SendResult.Sent
+            // When the last open symptom is answered "No" the update succeeds, but the backend then
+            // finds no active symptoms left and answers
+            // 404 {"status":1,"message":"success","responseValue":"No data Found"}.
+            // "status": 1 is the backend's own success flag, so trust it over the HTTP code.
+            raw != null && runCatching { JSONObject(raw).optInt("status", 0) == 1 }.getOrDefault(false) -> SendResult.Sent
+            raw?.contains("no data found", ignoreCase = true) == true ||
+                raw?.contains("no record", ignoreCase = true) == true -> SendResult.Sent
             SendResult.isNetworkFailure(response, raw) -> SendResult.Offline
             else -> SendResult.Rejected("API Error: ${response.code()}")
         }
@@ -106,7 +118,7 @@ class SymptomRepositoryImpl @Inject constructor(
             }
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
-        val list = if (!json.isNullOrEmpty()) Gson().fromJson(json, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
+        val list = if (!json.isNullOrEmpty()) AppGson.fromJson(json, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
         DomainResult.Success(list)
     } catch (e: Exception) { DomainResult.Error(e) }
 
@@ -119,7 +131,7 @@ class SymptomRepositoryImpl @Inject constructor(
             if (response.isSuccessful) response.body()?.string() else throw Exception("API Error: ${response.code()}")
         }
         if (body != null) {
-            val list = if (body.isNotEmpty()) Gson().fromJson(body, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
+            val list = if (body.isNotEmpty()) AppGson.fromJson(body, ProblemResponse::class.java).responseValue ?: emptyList() else emptyList()
             DomainResult.Success(list)
         } else {
             // Offline and never searched this term: search the common-problems list we do have.

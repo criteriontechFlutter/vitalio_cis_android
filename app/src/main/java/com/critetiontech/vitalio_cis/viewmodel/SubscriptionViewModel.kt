@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.viewmodel
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,7 +38,7 @@ data class SubscriptionDetails(
     val parsedFeatures: List<SubscriptionFeature>
         get() = try {
             if (features.isNullOrBlank()) emptyList()
-            else Gson().fromJson<List<SubscriptionFeature>>(features, object : TypeToken<List<SubscriptionFeature>>() {}.type)
+            else AppGson.fromJson<List<SubscriptionFeature>>(features, object : TypeToken<List<SubscriptionFeature>>() {}.type)
                 ?.filter { !it.featureName.isNullOrBlank() }.orEmpty()
         } catch (e: Exception) {
             emptyList()
@@ -100,7 +102,7 @@ class SubscriptionViewModel : ViewModel() {
             ) ?: return SubscriptionUiState.Error
             val value = JsonParser.parseString(body).asJsonObject.get("responseValue")
             if (value == null || !value.isJsonArray) return SubscriptionUiState.Error
-            val plans = Gson().fromJson(value, Array<SubscriptionDetails>::class.java).toList()
+            val plans = AppGson.fromJson(value, Array<SubscriptionDetails>::class.java).toList()
             // Prefer the active plan if the server ever sends history alongside it.
             val plan = plans.firstOrNull { it.isActive } ?: plans.firstOrNull()
             SubscriptionRenewalReminder.schedule(

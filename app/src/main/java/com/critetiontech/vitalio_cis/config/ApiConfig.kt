@@ -104,6 +104,12 @@ object ApiConfig {
     val MODULE_4119 = service(4119)
     val MODULE_44374 = service(44374)
 
+    /**
+     * Video consultation (LiveKit) APIs: api/consultation/join, decline, end, status. Served by
+     * the 4082 service, so it follows the environment: Staging → staging, Production → production.
+     */
+    val CONSULTATION = MODULE_4082
+
     // ── Other services (same for every environment) ─────────────────────────────
     const val DIGI_DOCTOR = "http://52.172.134.222:205/api/v1.0/"
     /** Lab report and prescription reading (OCR). */
@@ -114,10 +120,4 @@ object ApiConfig {
     /** Smart ring token storage and vitals. */
     const val RING_TOKENS = "https://vitalioapi.medvantage.tech:5082/"
     const val RING_VITALS = "https://demo.vitalio.care:5082/"
-    /**
-     * Video consultation (LiveKit) APIs: api/consultation/join, decline, end, status.
-     * Only on the local test server for now; change this one line when it goes live
-     * (e.g. to MODULE_4082 once the main backend has them).
-     */
-    const val CONSULTATION = "http://172.16.61.31:4082/"
 }

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.networking
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.config.ApiConfig
 
 import com.critetiontech.ctvitalio.network.RetryInterceptor
@@ -105,7 +107,7 @@ object RetrofitInstance {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(AppGson))
             .build()
             .create(ApiService::class.java)
     }

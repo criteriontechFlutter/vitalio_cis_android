@@ -4,6 +4,8 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import com.critetiontech.ctvitalio.ui.feedback.rememberOnScreen
+import com.critetiontech.ctvitalio.ui.feedback.trackOnScreen
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,9 +37,14 @@ fun ProfileRing(
     content: @Composable () -> Unit,
 ) {
     val primary = LocalMyColorScheme.current.primaryBlueColor
-    val angle by rememberInfiniteTransition(label = "profileRing")
-        .animateFloat(0f, 360f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "ringAngle")
-    Box(contentAlignment = Alignment.Center, modifier = modifier.size(size)) {
+    // Turns only while on screen; scrolled away it holds still instead of redrawing every frame
+    val onScreen = rememberOnScreen()
+    val angle = if (onScreen.visible) {
+        val turning by rememberInfiniteTransition(label = "profileRing")
+            .animateFloat(0f, 360f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "ringAngle")
+        turning
+    } else 0f
+    Box(contentAlignment = Alignment.Center, modifier = modifier.size(size).trackOnScreen(onScreen)) {
         Box(
             Modifier.size(size).graphicsLayer { rotationZ = angle }.clip(CircleShape)
                 .background(Brush.sweepGradient(listOf(primary, Color(0xFF22D3EE), Color(0xFF34D399), primary)))

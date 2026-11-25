@@ -57,3 +57,9 @@
 -assumenosideeffects class kotlin.io.ConsoleKt {
     public static void println(...);
 }
+
+# utils/AppGson.kt reads Kotlin nullability from @kotlin.Metadata at runtime; keep the annotation
+# (and the metadata library's own classes) so release builds still fill null non-null Strings.
+-keep class kotlin.Metadata { *; }
+-keep class kotlin.metadata.** { *; }
+-dontwarn kotlin.metadata.**

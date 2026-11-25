@@ -14,6 +14,8 @@ import com.critetiontech.ctvitalio.model.MedicinePeriod
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -41,14 +43,40 @@ object MedicineReminderScheduler {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val syncLock = Mutex()
 
-    /** Fire-and-forget [sync], safe to call from ViewModels and receivers alike. */
-    fun requestSync(context: Context) {
+    /**
+     * Fire-and-forget [sync], safe to call from ViewModels. A screen that has just loaded today's
+     * schedule passes it as [today] so it isn't downloaded a second time (that API takes ~10 s).
+     */
+    fun requestSync(context: Context, today: Pair<LocalDate, List<MedicinePeriod>>? = null) {
         val app = context.applicationContext
-        scope.launch { sync(app) }
+        scope.launch { sync(app, today) }
+    }
+
+    /**
+     * For broadcast receivers (boot, app update, time change): re-arms alarms from the saved doses
+     * at once, then refreshes from the server in a WorkManager job.
+     *
+     * [sync] makes two network calls that can each take ~10 s with retries on top. Run inside a
+     * receiver's goAsync() it outlived the broadcast time limit and Android showed
+     * "Vitalio isn't responding" (seen on BOOT_COMPLETED and MY_PACKAGE_REPLACED). A worker has no
+     * such limit and waits for a network.
+     */
+    fun syncFromReceiver(context: Context) {
+        val app = context.applicationContext
+        runCatching { reschedule(app) }.onFailure { Log.e(TAG, "reschedule failed", it) }
+        val request = androidx.work.OneTimeWorkRequestBuilder<MedicineReminderSyncWorker>()
+            .setConstraints(
+                androidx.work.Constraints.Builder()
+                    .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+        androidx.work.WorkManager.getInstance(app)
+            .enqueueUniqueWork("medicine_reminder_sync", androidx.work.ExistingWorkPolicy.REPLACE, request)
     }
 
     /** Fetches today's and tomorrow's doses and reschedules every alarm. */
-    suspend fun sync(context: Context): Boolean = syncLock.withLock {
+    suspend fun sync(context: Context, prefetched: Pair<LocalDate, List<MedicinePeriod>>? = null): Boolean = syncLock.withLock {
         val settings = ReminderSettings(context)
         val patient = AppDependencies.prefs.getPatient()
         if (patient == null) {
@@ -59,8 +87,14 @@ object MedicineReminderScheduler {
         }
 
         val today = LocalDate.now()
-        val results = listOf(today, today.plusDays(1)).map { date ->
-            AppDependencies.fetchMedicineIntake()(patient.pid, date.toString(), patient.clientId)
+        // Reuse a day the caller already loaded; fetch the rest at the same time, not one by one
+        val results = kotlinx.coroutines.coroutineScope {
+            listOf(today, today.plusDays(1)).map { date ->
+                async {
+                    if (prefetched != null && prefetched.first == date) DomainResult.Success(prefetched.second)
+                    else AppDependencies.fetchMedicineIntake()(patient.pid, date.toString(), patient.clientId)
+                }
+            }.awaitAll()
         }
         if (results.none { it is DomainResult.Success }) {
             Log.w(TAG, "sync: could not fetch schedule, keeping existing alarms")
@@ -199,5 +233,18 @@ object MedicineReminderScheduler {
             context, requestCode, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+    }
+}
+
+/** Runs [MedicineReminderScheduler.sync] outside a broadcast receiver's time limit. */
+class MedicineReminderSyncWorker(
+    context: Context,
+    params: androidx.work.WorkerParameters,
+) : androidx.work.CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        // sync() keeps the existing alarms and books a daily resync when the server can't be reached
+        runCatching { MedicineReminderScheduler.sync(applicationContext) }
+            .onFailure { Log.e("MedicineReminder", "background sync failed", it) }
+        return Result.success()
     }
 }

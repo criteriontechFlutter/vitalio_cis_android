@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.ring
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import com.critetiontech.ctvitalio.config.ApiConfig
 
 import android.util.Log
@@ -31,7 +33,7 @@ object SmartRingService {
     private const val INSERT_TOKEN_URL = "${ApiConfig.RING_TOKENS}api/APITokens/InsertAPITokens"
     private const val VITALS_URL = "${ApiConfig.RING_VITALS}api/UltrahumanVitals/GetUltrahumanVitalsByPid"
 
-    private val gson = Gson()
+    private val gson = AppGson
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)

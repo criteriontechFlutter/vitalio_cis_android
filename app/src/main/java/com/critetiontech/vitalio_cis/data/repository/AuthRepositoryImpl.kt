@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -46,7 +48,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
         if (response.isSuccessful) {
             val body = response.body()?.string()
-            val parsed = Gson().fromJson(body, SendOtpDto::class.java)
+            val parsed = AppGson.fromJson(body, SendOtpDto::class.java)
             DomainResult.Success(parsed.responseValue.isRegisterd == 1)
         } else {
             DomainResult.Error(Exception("API Error: ${response.code()}"))
@@ -62,7 +64,7 @@ class AuthRepositoryImpl @Inject constructor(
         }
         if (response.isSuccessful) {
             val body = response.body()?.string()
-            val parsed = Gson().fromJson(body, VerifyOtpResponse::class.java)
+            val parsed = AppGson.fromJson(body, VerifyOtpResponse::class.java)
             if (parsed.status == 1 && parsed.responseValue != null) {
                 val p = parsed.responseValue
                 val patient = Patient(

@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -28,7 +30,7 @@ class ActivityRepositoryImpl(
             ApiClients.module4082.dynamicGet(url = url, params = emptyMap())
         }
         if (!response.isSuccessful) throw Exception("API Error: ${response.code()}")
-        val list = Gson().fromJson(response.body()?.string().orEmpty(), ActivityMasterResponse::class.java)?.responseValue.orEmpty()
+        val list = AppGson.fromJson(response.body()?.string().orEmpty(), ActivityMasterResponse::class.java)?.responseValue.orEmpty()
         DomainResult.Success(list)
     } catch (e: Exception) {
         DomainResult.Error(e)
@@ -102,9 +104,9 @@ class ActivityRepositoryImpl(
             val trimmed = body.trim()
             if (trimmed.isEmpty()) return emptyList()
             return if (trimmed.startsWith("[")) {
-                Gson().fromJson(trimmed, Array<PatientActivityItem>::class.java)?.toList().orEmpty()
+                AppGson.fromJson(trimmed, Array<PatientActivityItem>::class.java)?.toList().orEmpty()
             } else {
-                Gson().fromJson(trimmed, PatientActivityResponse::class.java)?.responseValue.orEmpty()
+                AppGson.fromJson(trimmed, PatientActivityResponse::class.java)?.responseValue.orEmpty()
             }
         }
     }

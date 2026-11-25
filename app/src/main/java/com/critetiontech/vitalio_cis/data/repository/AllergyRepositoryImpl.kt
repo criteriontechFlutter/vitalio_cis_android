@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
 import com.critetiontech.ctvitalio.data.remote.network.ApiHelper
@@ -31,7 +33,7 @@ class AllergyRepositoryImpl @Inject constructor(
             else throw Exception("API Error: ${response.code()}")
         }
         val list = if (!json.isNullOrEmpty()) {
-            val parsed = Gson().fromJson(json, AllergyApiResponse::class.java)
+            val parsed = AppGson.fromJson(json, AllergyApiResponse::class.java)
             if (parsed.status == 1) parsed.responseValue else emptyList()
         } else emptyList()
         DomainResult.Success(list)

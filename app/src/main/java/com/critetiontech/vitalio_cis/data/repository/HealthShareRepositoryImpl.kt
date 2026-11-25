@@ -1,5 +1,7 @@
 package com.critetiontech.ctvitalio.data.repository
 
+import com.critetiontech.ctvitalio.utils.AppGson
+
 import android.content.Context
 import com.critetiontech.ctvitalio.data.offline.SendResult
 import com.critetiontech.ctvitalio.data.remote.network.ApiClients
@@ -33,7 +35,7 @@ class HealthShareRepositoryImpl(
         val value = json?.get("responseValue")
         when {
             response.isSuccessful && json?.status() != 0 && value != null && value.isJsonArray ->
-                DomainResult.Success(Gson().fromJson(value, Array<HealthShareLink>::class.java).toList())
+                DomainResult.Success(AppGson.fromJson(value, Array<HealthShareLink>::class.java).toList())
             // No links yet: an empty or missing list, or a "no record" reply.
             response.isSuccessful && (value == null || value.isJsonNull) -> DomainResult.Success(emptyList())
             json?.serverMessage()?.contains("no record", ignoreCase = true) == true -> DomainResult.Success(emptyList())
@@ -60,7 +62,7 @@ class HealthShareRepositoryImpl(
         val (json, raw) = response.parse()
         val value = json?.get("responseValue")
         if (response.isSuccessful && json?.status() == 1) {
-            val created = if (value != null && value.isJsonObject) Gson().fromJson(value, HealthShareCreated::class.java) else HealthShareCreated()
+            val created = if (value != null && value.isJsonObject) AppGson.fromJson(value, HealthShareCreated::class.java) else HealthShareCreated()
             DomainResult.Success(created)
         } else response.failure(json, raw)
     } catch (e: Exception) {
