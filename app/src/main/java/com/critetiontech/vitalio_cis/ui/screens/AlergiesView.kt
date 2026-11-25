@@ -1,10 +1,8 @@
 package com.critetiontech.ctvitalio.ui.screens
 
 import com.critetiontech.ctvitalio.ui.feedback.AnimatedEnter
-
 import com.critetiontech.ctvitalio.ui.feedback.HapticIconButton
 import com.critetiontech.ctvitalio.ui.feedback.HapticTextButton
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,7 +26,6 @@ import com.critetiontech.ctvitalio.model.AllergyItem as ApiAllergyItem
 import com.critetiontech.ctvitalio.ui.components.AddPillButton
 import com.critetiontech.ctvitalio.ui.components.CommonAppBar
 import com.critetiontech.ctvitalio.ui.theme.LocalMyColorScheme
-import com.critetiontech.ctvitalio.utils.CommonButton
 import com.critetiontech.ctvitalio.viewmodel.AllergyViewModel
 import com.critetiontech.ctvitalio.ui.adaptive.rememberResponsiveDimens
 
