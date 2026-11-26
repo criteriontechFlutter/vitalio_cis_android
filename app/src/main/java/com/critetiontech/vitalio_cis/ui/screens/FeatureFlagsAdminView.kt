@@ -16,11 +16,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.ContactPhone
 import androidx.compose.material.icons.rounded.Description
-import androidx.compose.material.icons.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.FamilyRestroom
 import androidx.compose.material.icons.rounded.Healing
 import androidx.compose.material.icons.rounded.Info
@@ -205,7 +205,7 @@ private fun featureIcon(feature: AppFeature): ImageVector = when (feature) {
     AppFeature.LAB_REPORTS -> Icons.Rounded.Science
     AppFeature.PRESCRIPTIONS -> Icons.Rounded.Description
     AppFeature.VOICE_ASSISTANT -> Icons.Rounded.Mic
-    AppFeature.ACTIVITY -> Icons.Rounded.DirectionsRun
+    AppFeature.ACTIVITY -> Icons.AutoMirrored.Rounded.DirectionsRun
     AppFeature.SMART_RING -> Icons.Rounded.Watch
     AppFeature.ALLERGIES -> Icons.Rounded.Healing
     AppFeature.EMERGENCY_CONTACTS -> Icons.Rounded.ContactPhone

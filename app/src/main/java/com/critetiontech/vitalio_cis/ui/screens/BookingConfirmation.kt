@@ -80,7 +80,7 @@ internal fun BookingDetails.timeRange(): String {
 internal fun parseBookingDate(raw: String): LocalDate? = try {
     val parts = raw.replace('/', '-').split('-').map { it.trim().toInt() }
     LocalDate.of(parts[0], parts[1], parts[2])
-} catch (e: Exception) {
+} catch (_: Exception) {
     null
 }
 
